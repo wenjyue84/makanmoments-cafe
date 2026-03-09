@@ -7,13 +7,15 @@ import type { BlogPost } from "@/types/blog";
 
 interface PostCardProps {
   post: BlogPost;
+  isAdmin?: boolean;
 }
 
-export function PostCard({ post }: PostCardProps) {
+export function PostCard({ post, isAdmin }: PostCardProps) {
   const locale = useLocale();
 
   return (
-    <Link href={`/blog/${post.slug}`} className="group block">
+    <div className="relative">
+      <Link href={`/blog/${post.slug}`} className="group block">
       <article className="overflow-hidden rounded-xl border border-border bg-card transition-all hover:-translate-y-0.5 hover:shadow-lg">
         {post.coverImage && (
           <div className="relative aspect-video w-full overflow-hidden">
@@ -57,6 +59,15 @@ export function PostCard({ post }: PostCardProps) {
           )}
         </div>
       </article>
-    </Link>
+      </Link>
+      {isAdmin && (
+        <Link
+          href={`/blog/${post.slug}`}
+          className="absolute right-3 top-3 rounded-md bg-amber-600/90 px-2.5 py-1 text-xs font-semibold text-white shadow hover:bg-amber-700"
+        >
+          Edit
+        </Link>
+      )}
+    </div>
   );
 }

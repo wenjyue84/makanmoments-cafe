@@ -230,3 +230,76 @@ Completed: Blog Page with Full Article Layout (ID: US-003) in 3m
 
 ## Iteration 4 - Tue, Mar 10, 2026
 Completed: Import Markdown Blog Posts from 3-resources/posts (ID: US-004)
+## Iteration 4 - Tue, Mar 10, 2026  2:09:12 AM
+Completed: Import Markdown Blog Posts from 3-resources/posts (ID: US-004) in 7m
+
+
+## Pre-analysis for US-005 (Gemini 2.5 Pro)
+### **Technical Brief: US-005 Admin WYSIWYG Blog Editor**
+
+**1. Python Files to Modify:**
+This user story is for a Next.js (TypeScript/JavaScript) frontend, not a Frappe/Python backend. The primary files to modify will be TypeScript/TSX files within the `src/` directory.
+
+*   `src/app/[locale]/blog/page.tsx`: To add the admin banner and pass the `isAdmin` prop to post cards.
+*   `src/app/[locale]/blog/[slug]/page.tsx`: To implement the main inline editing functionality.
+*   `src/components/blog/BlogPostCard.tsx` (or similar): To add the conditional 'Edit' button for admins.
+*   `src/lib/auth.ts` (or similar utility): To centralize the admin check logic (reading from cookies).
+
+**2. Frappe DocTypes / Hooks Involved:**
+No Frappe DocTypes are involved. This implementation centers on Next.js pages and a new API route. A new component will be created:
+
+*   `src/app/api/admin/blog/[slug]/route.ts`: A new API route handler for `PATCH` requests to save blog content.
+*   `src/components/admin/AdminBlogEditor.tsx`: A new client component to manage the `contenteditable` state and save logic.
+
+**3. Recommended Implementation Approach:**
+1.  **Backend First:** Create the `PATCH` API route at `src/app/api/admin/blog/[slug]/route.ts`. Secure it with admin authentication (reuse the cookie-based check from the menu page). The handler must read the post's source (e.g., from a hidden field) to decide whether to write to a local `.md` file (using `gray-matter`) or to call the Notion API.
+2.  **Admin Prop:** In both `blog/page.tsx` and `blog/[slug]/page.tsx`, read the admin cookie on the server and pass an `isAdmin={true}` prop to the page and relevant child components.
+3.  **UI Implementation:**
+    *   On the listing page, conditionally render an "Edit" button on each post card if `isAdmin` is true.
+    *   On the detail page, create an `AdminBlogEditor` client component that wraps the title and content. This component will use `useState` to toggle a `contentEditable` attribute on the elements when an "Edit" button is clicked.
+4.  **Save & Revalidate:** The "Save" button in `AdminBlogEditor` will `fetch` the `PATCH` API with the new content. On success, it will trigger `revalidatePath('/[locale]/blog')` via a Server Action to ensure the UI refreshes with the saved data.
+
+**4. Edge Cases & Gotchas:**
+*   **Security:** The `PATCH` API endpoint is critical and must be robustly protected against unauthorized access. Do not rely solely on a client-side flag.
+*   **Data Parity:** The API logic must carefully distinguish between Notion-based posts and local Markdown files to apply the correct update mechanism.
+*   **Markdown Formatting:** When updating `.md` files, ensure the frontmatter structure is preserved correctly to avoid breaking post metadata.
+*   **UX:** Provide clear user feedback during the save process (e.g., loading spinners, success/error toasts) and after revalidation. `contenteditable` can be finicky; ensure clean data is sent to the API.
+
+
+## Iteration 5 - Story: Admin WYSIWYG Blog Editor (US-005)
+
+### What was implemented
+- CREATED `src/app/api/admin/blog/[slug]/route.ts` — PATCH endpoint that:
+  - Detects if slug is a local markdown file (content/blog/{slug}.md) or SQL post
+  - For local: updates frontmatter + content using gray-matter.stringify
+  - For SQL: updates via parameterized query
+  - Calls revalidatePath for both /[locale]/blog and /[locale]/blog/[slug]
+  - Protected by middleware (all /api/admin/* routes require admin JWT)
+- CREATED `src/components/admin/blog-inline-editor.tsx` — client component:
+  - Shows amber admin banner with "Edit Post" button when not editing
+  - In edit mode: title input + markdown textarea + Save/Cancel buttons
+  - Calls PATCH /api/admin/blog/[slug] on save
+  - Uses router.refresh() after successful save
+- UPDATED `src/app/[locale]/blog/page.tsx` — admin check via cookies
+  - Shows amber edit banner when isAdmin
+  - Passes isAdmin to FeaturedPost and PostCard
+- UPDATED `src/components/blog/featured-post.tsx` — added isAdmin prop
+  - Shows absolute-positioned "Edit" link badge (top-right) when admin
+  - Wrapped in relative div; outer Link preserved for non-admin
+- UPDATED `src/components/blog/post-card.tsx` — added isAdmin prop
+  - Same Edit badge pattern as FeaturedPost
+- UPDATED `src/app/[locale]/blog/[slug]/page.tsx` — admin check via cookies
+  - When isAdmin: renders BlogInlineEditor (title + content editable)
+  - When non-admin: renders PostContent (read-only, unchanged)
+
+### Patterns discovered
+- gray-matter.stringify(content, data) preserves frontmatter + updates fields — correct way to rewrite .md files
+- Middleware at middleware.ts already protects ALL /api/admin/* routes — no need for manual auth in route handlers
+- Existing AdminBlogEditor in admin panel uses /api/admin/blog/[id] (numeric ID) — new endpoint uses slug-based URL
+- For blog detail page, wrap title + content in BlogInlineEditor when isAdmin (replaces h1 + PostContent)
+- isAdmin check: `const token = cookieStore.get(COOKIE_NAME)?.value; const isAdmin = token ? await verifyAdminToken(token) : false;`
+
+### Gotchas
+- gray-matter parses Date fields as JS Date objects — stringify preserves them correctly
+- Python on Windows needs encoding='utf-8' when reading/writing prd.json (has special chars in acceptanceCriteria)
+- revalidatePath uses "/[locale]/blog" with literal [locale] bracket notation for Next.js cache invalidation
