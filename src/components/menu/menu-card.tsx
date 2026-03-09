@@ -2,22 +2,23 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { useLocale } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Plus, Info } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
-import type { MenuItem } from "@/types/menu";
+import type { MenuItemWithRules } from "@/types/menu";
 import { formatPrice, getLocalizedName } from "@/lib/utils";
 import { DietaryBadge } from "./dietary-badge";
 import { RecipeModal } from "./recipe-modal";
 import { getRecipeInfo } from "@/data/recipe-info";
 
 interface MenuCardProps {
-  item: MenuItem;
+  item: MenuItemWithRules;
   priority?: boolean;
 }
 
 export function MenuCard({ item, priority = false }: MenuCardProps) {
   const locale = useLocale();
+  const tc = useTranslations("common");
   const { addItem } = useTray();
   const name = getLocalizedName(item, locale);
   const [imgError, setImgError] = useState(false);
@@ -27,7 +28,7 @@ export function MenuCard({ item, priority = false }: MenuCardProps) {
 
   return (
     <>
-      <div className="group rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-md">
+      <div className="group rounded-xl border border-border bg-card p-4 hover-lift">
         {/* Photo — clickable only when recipe data exists */}
         <div
           className={`mb-3 relative aspect-[4/3] overflow-hidden rounded-lg bg-muted ${hasRecipe ? "cursor-pointer" : ""}`}
@@ -42,8 +43,8 @@ export function MenuCard({ item, priority = false }: MenuCardProps) {
               src={`/images/menu/${item.code}.jpg`}
               alt={name}
               fill
-              className="object-cover transition-transform group-hover:scale-105"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover img-scale"
+              sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 50vw, 33vw"
               priority={priority}
               loading={priority ? "eager" : "lazy"}
               onError={() => setImgError(true)}
@@ -56,6 +57,11 @@ export function MenuCard({ item, priority = false }: MenuCardProps) {
           {item.featured && (
             <span className="absolute left-2 top-2 rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
               ★
+            </span>
+          )}
+          {item.discountPercent && (
+            <span className="absolute right-2 top-2 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+              -{item.discountPercent}%
             </span>
           )}
           {/* Info icon — only shown when recipe exists, appears on hover */}
@@ -71,7 +77,16 @@ export function MenuCard({ item, priority = false }: MenuCardProps) {
           <div className="flex items-start justify-between gap-2">
             <h3 className="font-semibold leading-tight">{name}</h3>
             <span className="shrink-0 text-sm font-bold text-primary">
-              {formatPrice(item.price)}
+              {item.originalPrice ? (
+                <>
+                  <s className="text-muted-foreground text-xs font-normal mr-1">
+                    {formatPrice(item.originalPrice)}
+                  </s>
+                  {formatPrice(item.price)}
+                </>
+              ) : (
+                formatPrice(item.price)
+              )}
             </span>
           </div>
           {item.description && (
@@ -88,15 +103,14 @@ export function MenuCard({ item, priority = false }: MenuCardProps) {
           )}
         </div>
 
-        <div className="mt-3 flex items-center justify-between border-t pt-3">
-          <p className="text-xs text-muted-foreground/60">{item.code}</p>
+        <div className="mt-3 flex items-center justify-end border-t pt-3">
           <button
             type="button"
             onClick={() => addItem({ id: item.code, name, price: item.price })}
             className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
           >
             <Plus className="h-4 w-4" />
-            Add
+            {tc("add")}
           </button>
         </div>
       </div>

@@ -1,9 +1,9 @@
 export function HighlightsSkeleton() {
   return (
     <section className="mx-auto max-w-6xl px-4 py-16">
-      <div className="mb-8 text-center">
-        <div className="mx-auto h-8 w-48 animate-pulse rounded-lg bg-muted" />
-        <div className="mx-auto mt-2 h-5 w-64 animate-pulse rounded-lg bg-muted" />
+      <div className="mb-8">
+        <div className="h-8 w-48 animate-pulse rounded-lg bg-muted" />
+        <div className="mt-2 h-5 w-64 animate-pulse rounded-lg bg-muted" />
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {Array.from({ length: 6 }).map((_, i) => (

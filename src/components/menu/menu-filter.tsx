@@ -43,7 +43,7 @@ export function MenuFilter({
         <button
           onClick={() => onCategoryChange(null)}
           className={cn(
-            "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+            "rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
             selectedCategory === null
               ? "bg-primary text-primary-foreground"
               : "bg-secondary text-secondary-foreground hover:bg-secondary/80"

@@ -5,14 +5,16 @@ import { useTranslations, useLocale } from "next-intl";
 import type { MenuItem } from "@/types/menu";
 import { getLocalizedName } from "@/lib/utils";
 import { MenuCard } from "./menu-card";
+import { EditableMenuCard } from "./editable-menu-card";
 import { MenuFilter } from "./menu-filter";
 
 interface MenuGridProps {
   items: MenuItem[];
   categories: string[];
+  isAdmin?: boolean;
 }
 
-export function MenuGrid({ items, categories }: MenuGridProps) {
+export function MenuGrid({ items, categories, isAdmin = false }: MenuGridProps) {
   const t = useTranslations("common");
   const locale = useLocale();
   const [category, setCategory] = useState<string | null>(null);
@@ -57,9 +59,13 @@ export function MenuGrid({ items, categories }: MenuGridProps) {
         </div>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((item) => (
-            <MenuCard key={item.id} item={item} />
-          ))}
+          {filtered.map((item) =>
+            isAdmin ? (
+              <EditableMenuCard key={item.id} item={item} />
+            ) : (
+              <MenuCard key={item.id} item={item} />
+            )
+          )}
         </div>
       )}
     </div>

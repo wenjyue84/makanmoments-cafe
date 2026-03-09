@@ -1,20 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import type { MenuItem } from "@/types/menu";
+import type { MenuItemWithRules } from "@/types/menu";
 import type { BlogPost } from "@/types/blog";
 import { AdminMenuTable } from "./admin-menu-table";
 import { AdminCategoriesPanel } from "./admin-categories-panel";
 import { AdminBlogTable } from "./admin-blog-table";
+import { AdminRulesPanel } from "./admin-rules-panel";
 import { cn } from "@/lib/utils";
 
 interface AdminTabsProps {
-  items: MenuItem[];
+  items: MenuItemWithRules[];
   categories: string[];
   posts: BlogPost[];
 }
 
-const TABS = ["Menu", "Categories", "Blog"] as const;
+const TABS = ["Menu", "Categories", "Rules", "Blog"] as const;
 type Tab = (typeof TABS)[number];
 
 export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
@@ -44,6 +45,9 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
       )}
       {activeTab === "Categories" && (
         <AdminCategoriesPanel initialCategories={categories} />
+      )}
+      {activeTab === "Rules" && (
+        <AdminRulesPanel categories={categories} />
       )}
       {activeTab === "Blog" && <AdminBlogTable initialPosts={posts} />}
     </div>

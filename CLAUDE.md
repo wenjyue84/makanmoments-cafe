@@ -157,6 +157,32 @@ See `.env.example` for all required vars:
 - **Decorative elements:** hide on mobile (`hidden lg:block`) to reduce paint cost
 - **Info-strip and similar static display components:** use RSC (`getTranslations`) not client hooks
 
+## Design Context
+
+### Users
+Local Johor Bahru residents (families, young professionals, students), plus occasional tourists passing through Skudai. They're on mobile phones, browsing during lunch breaks or while deciding where to eat. The job to be done: quickly feel the vibe, find the menu and prices, and get directions. They want to feel like they've already discovered a gem before they walk in.
+
+### Brand Personality
+**Authentic · Cultural · Soulful** — Makan Moments is not just food; it's the story of Thai-Malaysian fusion told through a neighbourhood corner shop. The brand feels like a well-loved place, not a chain. Multilingual identity (English / Bahasa / Chinese) is a feature, not an afterthought. Warmth is the core emotion.
+
+### Aesthetic Direction
+**Organic / Earthy** — Warm linen backgrounds, terracotta and amber tones (already defined in OKLCH palette), botanical touches, handcrafted texture. Inspired by editorial food publications from Southeast Asia. References: natural materials, indoor plants (matches real café ambiance), hand-drawn wall art. Anti-references: generic tech startup aesthetics, cyan/purple gradients, glassmorphism, neon-on-dark. Cuisine should be the visual hero — food photography front and centre always.
+
+### Theme
+Light mode as default (warm cream background, not pure white — already defined). Dark mode toggle available. Both modes should feel earthy and warm, never cold or blue-tinted.
+
+### Logo
+User has a logo image file (PNG/SVG). Place at `public/images/logo.png` (or `.svg`) and update header + footer to use it. Until provided, use bold text wordmark.
+
+### Design Principles
+1. **Food first** — every page should make the viewer hungry within 3 seconds
+2. **Handcrafted over polished** — slight imperfection, texture, and warmth beats clinical perfection
+3. **Mobile = primary** — design at 390px first; desktop is enhancement
+4. **Multilingual by default** — typography must work across Latin, Malay, and CJK scripts
+5. **Moments, not transactions** — tone is storytelling, not sales; the word "Makan" (eat) and "Moments" imply memory and gathering, lean into that
+
+---
+
 ## Critical Rules
 
 1. **Read before editing** — always read a file before modifying it

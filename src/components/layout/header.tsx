@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { Menu, X, Globe } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 import type { Locale } from "@/i18n/routing";
 
 const NAV_ITEMS = [
@@ -28,6 +29,18 @@ export function Header() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+
+  // /harden: Close mobile menu and lang picker on Escape key
+  useEffect(() => {
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setMobileOpen(false);
+        setLangOpen(false);
+      }
+    }
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, []);
 
   function switchLocale(newLocale: string) {
     router.replace(pathname, { locale: newLocale as Locale });
@@ -54,15 +67,18 @@ export function Header() {
                 "rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
                 pathname === item.href
                   ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground"
+                  : "text-foreground/70 hover:text-foreground"
               )}
             >
               {t(item.key)}
             </Link>
           ))}
 
+          {/* Theme Toggle */}
+          <ThemeToggle />
+
           {/* Language Switcher */}
-          <div className="relative ml-2">
+          <div className="relative ml-1">
             <button
               onClick={() => setLangOpen(!langOpen)}
               className="flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
@@ -89,18 +105,22 @@ export function Header() {
           </div>
         </nav>
 
-        {/* Mobile Menu Button */}
-        <button
-          className="rounded-md p-2 md:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
+        {/* Mobile controls */}
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <button
+            className="rounded-md p-2"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
+            aria-expanded={mobileOpen}
         >
           {mobileOpen ? (
             <X className="h-5 w-5" />
           ) : (
             <Menu className="h-5 w-5" />
           )}
-        </button>
+          </button>
+        </div>
       </div>
 
       {/* Mobile Nav */}

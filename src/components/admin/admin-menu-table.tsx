@@ -1,18 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import type { MenuItem } from "@/types/menu";
+import Image from "next/image";
+import type { MenuItemWithRules } from "@/types/menu";
 import { cn } from "@/lib/utils";
+import { ImagePickerModal } from "./image-picker-modal";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DIETARY_OPTIONS = ["Spicy", "Vegetarian", "Vegan", "Gluten Free"];
 
 interface AdminMenuTableProps {
-  initialItems: MenuItem[];
+  initialItems: MenuItemWithRules[];
   categories: string[];
 }
 
-type EditableItem = MenuItem & { _dirty?: boolean; _new?: boolean };
+type EditableItem = MenuItemWithRules & { _dirty?: boolean; _new?: boolean };
 
 export function AdminMenuTable({
   initialItems,
@@ -21,6 +23,8 @@ export function AdminMenuTable({
   const [items, setItems] = useState<EditableItem[]>(initialItems);
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [imagePickerCode, setImagePickerCode] = useState<string | null>(null);
+  const [imgVersion, setImgVersion] = useState(0);
 
   function updateItem(id: string, patch: Partial<EditableItem>) {
     setItems((prev) =>
@@ -164,6 +168,7 @@ export function AdminMenuTable({
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <th className="px-3 py-3">Image</th>
               <th className="px-3 py-3">Code</th>
               <th className="px-3 py-3">Name EN / MS / ZH</th>
               <th className="px-3 py-3">Price</th>
@@ -184,9 +189,40 @@ export function AdminMenuTable({
                 key={item.id}
                 className={cn(
                   "align-top",
-                  item._dirty ? "bg-amber-50" : "bg-white"
+                  item.disabledByRule
+                    ? "bg-red-50/60"
+                    : item._dirty
+                      ? "bg-amber-50"
+                      : "bg-white"
                 )}
               >
+                {/* Image */}
+                <td className="px-3 py-2">
+                  <button
+                    onClick={() => item.code && setImagePickerCode(item.code)}
+                    className="group relative h-12 w-16 overflow-hidden rounded-lg border border-gray-200 bg-gray-50 hover:border-orange-400 hover:shadow-sm transition-all"
+                    title={item.code ? `Change image for ${item.code}` : "Set code first"}
+                    disabled={!item.code}
+                  >
+                    {item.code ? (
+                      <Image
+                        src={`/images/menu/${item.code}.jpg?v=${imgVersion}`}
+                        alt={item.code}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                        unoptimized
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : null}
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/0 text-transparent group-hover:bg-black/40 group-hover:text-white transition-all text-[10px] font-medium">
+                      {item.code ? "Edit" : "—"}
+                    </span>
+                  </button>
+                </td>
+
                 {/* Code */}
                 <td className="px-3 py-2">
                   <input
@@ -227,12 +263,25 @@ export function AdminMenuTable({
                     type="number"
                     step="0.1"
                     min="0"
-                    value={item.price}
+                    value={item.originalPrice ?? item.price}
                     onChange={(e) =>
                       updateItem(item.id, { price: parseFloat(e.target.value) || 0 })
                     }
                     className="w-20 rounded border border-gray-300 px-2 py-1 text-xs"
                   />
+                  {item.discountPercent && item.discountPercent > 0 && (
+                    <div className="mt-1 flex items-center gap-1">
+                      <span className="text-xs text-gray-400 line-through">
+                        RM{(item.originalPrice ?? item.price).toFixed(2)}
+                      </span>
+                      <span className="text-xs font-medium text-green-700">
+                        RM{item.price.toFixed(2)}
+                      </span>
+                      <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
+                        -{item.discountPercent}%
+                      </span>
+                    </div>
+                  )}
                 </td>
 
                 {/* Available toggle */}
@@ -251,6 +300,14 @@ export function AdminMenuTable({
                       )}
                     />
                   </button>
+                  {item.disabledByRule && (
+                    <span
+                      className="mt-0.5 block rounded-full bg-red-100 px-1.5 py-0.5 text-center text-[10px] font-medium text-red-700 whitespace-nowrap"
+                      title={item.appliedRules?.filter((r) => r.ruleType === "disable").map((r) => r.ruleName).join(", ")}
+                    >
+                      Disabled: {item.appliedRules?.find((r) => r.ruleType === "disable")?.ruleName ?? "rule"}
+                    </span>
+                  )}
                 </td>
 
                 {/* Featured star */}
@@ -264,6 +321,11 @@ export function AdminMenuTable({
                   >
                     ★
                   </button>
+                  {item.featuredByRule && (
+                    <span className="mt-0.5 block rounded-full bg-amber-100 px-1.5 py-0.5 text-center text-[10px] font-medium text-amber-700">
+                      Rule
+                    </span>
+                  )}
                 </td>
 
                 {/* Categories */}
@@ -400,6 +462,13 @@ export function AdminMenuTable({
           </tbody>
         </table>
       </div>
+
+      <ImagePickerModal
+        open={!!imagePickerCode}
+        code={imagePickerCode || ""}
+        onClose={() => setImagePickerCode(null)}
+        onImageChanged={() => setImgVersion((v) => v + 1)}
+      />
     </div>
   );
 }

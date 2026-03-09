@@ -1,4 +1,4 @@
-import { getAllMenuItemsForAdmin, getCategories } from "@/lib/menu";
+import { getAllMenuItemsWithRulesForAdmin, getCategories } from "@/lib/menu";
 import { getAllBlogPostsForAdmin } from "@/lib/blog";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { verifyAdminToken, COOKIE_NAME } from "@/lib/auth";
@@ -14,7 +14,7 @@ export default async function AdminPage() {
   if (!valid) redirect("/admin/login");
 
   const [items, categories, posts] = await Promise.all([
-    getAllMenuItemsForAdmin(),
+    getAllMenuItemsWithRulesForAdmin(),
     getCategories(),
     getAllBlogPostsForAdmin(),
   ]);

@@ -39,8 +39,7 @@ export function ChatWidget() {
       <button
         onClick={() => (open ? setOpen(false) : handleOpen())}
         className={cn(
-          "fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110",
-          !open && "animate-breathe",
+          "fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110 active:scale-95",
           open && "md:flex hidden"
         )}
         aria-label="Open AI Waiter chat"
@@ -53,9 +52,7 @@ export function ChatWidget() {
 
         {/* Unread badge */}
         {!open && hasUnread && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
-            1
-          </span>
+          <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-red-500 ring-2 ring-background" aria-label="New message" />
         )}
       </button>
     </>

@@ -46,19 +46,24 @@ export default async function AboutPage({
     <div className="mx-auto max-w-4xl px-4 py-12">
       {/* Header */}
       <div className="mb-12">
-        <h1 className="text-3xl font-bold lg:text-4xl">{t("title")}</h1>
+        <h1 className="font-display text-3xl font-bold lg:text-4xl">{t("title")}</h1>
         <p className="mt-2 text-lg text-muted-foreground">{t("subtitle")}</p>
       </div>
 
-      {/* Story */}
+      {/* Story — /critique: break the wall of text with a decorative element */}
       <section className="mb-16">
-        <h2 className="mb-4 text-2xl font-bold">{t("storyTitle")}</h2>
-        <p className="leading-8 text-muted-foreground">{t("storyContent")}</p>
+        <div className="mb-1 flex items-center gap-3">
+          <div className="h-px flex-1 bg-border" />
+          <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">Our Story</span>
+          <div className="h-px flex-1 bg-border" />
+        </div>
+        <h2 className="mt-5 mb-4 font-display text-2xl font-bold">{t("storyTitle")}</h2>
+        <p className="max-w-2xl leading-8 text-muted-foreground">{t("storyContent")}</p>
       </section>
 
       {/* Ambiance */}
       <section className="mb-16">
-        <h2 className="mb-6 text-2xl font-bold">{t("ambianceTitle")}</h2>
+        <h2 className="mb-6 font-display text-2xl font-bold">{t("ambianceTitle")}</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {CAFE.ambiance.map((feature) => (
             <div
@@ -73,18 +78,18 @@ export default async function AboutPage({
 
       {/* Values */}
       <section>
-        <h2 className="mb-6 text-2xl font-bold">{t("valuesTitle")}</h2>
-        <div className="grid gap-6 sm:grid-cols-3">
+        <h2 className="mb-6 font-display text-2xl font-bold">{t("valuesTitle")}</h2>
+        <div className="grid gap-4 sm:grid-cols-3">
           {values.map((value) => (
             <div
               key={value.title}
-              className="rounded-xl border border-border bg-card p-6 text-center"
+              className="rounded-xl border border-border bg-card p-5"
             >
-              <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <value.icon className="h-6 w-6 text-primary" />
+              <div className="mb-3 flex items-center gap-3">
+                <value.icon className="h-5 w-5 shrink-0 text-primary" />
+                <h3 className="font-semibold">{value.title}</h3>
               </div>
-              <h3 className="mb-2 font-semibold">{value.title}</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 {value.description}
               </p>
             </div>

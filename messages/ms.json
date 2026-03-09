@@ -19,13 +19,14 @@
     "backToBlog": "Kembali ke Blog",
     "featured": "Pilihan",
     "new": "Baru",
-    "popular": "Popular"
+    "popular": "Popular",
+    "add": "Tambah"
   },
   "home": {
     "heroTitle": "Gabungan Thai-Malaysia",
-    "heroSubtitle": "Rasa Thai asli dengan sentuhan Malaysia, dihidangkan di jantung Skudai",
-    "highlightsTitle": "Pilihan Kami",
-    "highlightsSubtitle": "Pilihan chef dan kegemaran pelanggan",
+    "heroSubtitle": "Rasa Thai yang berani, jiwa Johor yang asli. Kedai sudut jiran yang menjadikan setiap makan sebagai kenangan.",
+    "highlightsTitle": "Kegemaran Pelanggan",
+    "highlightsSubtitle": "Hidangan yang sentiasa membawa pelanggan kami kembali",
     "infoHours": "Dibuka Setiap Hari 11PG – 11MLM",
     "infoLocation": "Taman Impian Emas, Skudai",
     "infoDietary": "Tanpa Babi · Tanpa Lard · Mesra Halal",

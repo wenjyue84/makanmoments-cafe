@@ -23,3 +23,42 @@ export interface MenuFilters {
   search: string;
   dietaryOnly: boolean;
 }
+
+// ── Rules (bulk operations) ─────────────────────────────────────────────────
+
+export type RuleType = "disable" | "discount" | "featured";
+export type TargetType = "category" | "items";
+
+export interface Rule {
+  id: string;
+  name: string;
+  ruleType: RuleType;
+  targetType: TargetType;
+  targetCategories: string[];
+  targetItemIds: string[];
+  excludeItemIds: string[];
+  value: number;
+  active: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
+  timeFrom: string;       // daily recurring start "HH:MM" (empty = no constraint)
+  timeUntil: string;      // daily recurring end "HH:MM" (empty = no constraint)
+  priority: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AppliedRule {
+  ruleId: string;
+  ruleName: string;
+  ruleType: RuleType;
+  value?: number;
+}
+
+export interface MenuItemWithRules extends MenuItem {
+  originalPrice?: number;
+  discountPercent?: number;
+  featuredByRule?: boolean;
+  disabledByRule?: boolean;
+  appliedRules?: AppliedRule[];
+}
