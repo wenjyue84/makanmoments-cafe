@@ -48,3 +48,6 @@ next-env.d.ts
 
 # OS artifacts
 Thumbs.db
+
+# Runtime data (admin-configurable settings)
+/data/chat-settings.json

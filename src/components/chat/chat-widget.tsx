@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { MessageCircle, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MessageCircle, X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 const ChatPanel = dynamic(() => import("./chat-panel").then((mod) => mod.ChatPanel), {
   ssr: false,
@@ -12,6 +13,13 @@ const ChatPanel = dynamic(() => import("./chat-panel").then((mod) => mod.ChatPan
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/verify", { credentials: "include", redirect: "manual" })
+      .then((r) => setIsAdmin(r.ok))
+      .catch(() => setIsAdmin(false));
+  }, []);
 
   function handleOpen() {
     setOpen(true);
@@ -33,6 +41,18 @@ export function ChatWidget() {
             <ChatPanel onClose={() => setOpen(false)} />
           </div>
         </>
+      )}
+
+      {/* Admin gear icon */}
+      {isAdmin && (
+        <Link
+          href="/admin/chat-settings"
+          className="fixed bottom-20 right-4 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-700 shadow-sm transition-colors hover:bg-amber-200 md:bottom-4 md:right-20"
+          aria-label="AI Waiter Settings"
+          title="AI Waiter Settings"
+        >
+          <Settings className="h-4 w-4" />
+        </Link>
       )}
 
       {/* Floating button */}
@@ -58,4 +78,3 @@ export function ChatWidget() {
     </>
   );
 }
-

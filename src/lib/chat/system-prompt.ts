@@ -1,7 +1,8 @@
 import { readFileSync } from "fs";
 import { join } from "path";
+import { readChatSettings } from "./settings";
 
-let cachedPrompt: string | null = null;
+let cachedKnowledge: string | null = null;
 
 function loadKnowledge(filename: string): string {
   try {
@@ -14,14 +15,34 @@ function loadKnowledge(filename: string): string {
   }
 }
 
-export function getSystemPrompt(): string {
-  if (cachedPrompt) return cachedPrompt;
+function buildKnowledgeBlock(): string {
+  if (cachedKnowledge) return cachedKnowledge;
 
   const menuKnowledge = loadKnowledge("menu-knowledge.md");
   const cafeFacts = loadKnowledge("cafe-facts.md");
   const faq = loadKnowledge("faq.md");
 
-  cachedPrompt = `You are the AI Waiter for Makan Moments Cafe (食光记忆 / Kafe Kenangan Makan), a Thai-Malaysian fusion cafe in Skudai, Johor, Malaysia.
+  cachedKnowledge = `## Cafe Facts
+${cafeFacts}
+
+## Menu Knowledge
+${menuKnowledge}
+
+## FAQ
+${faq}`;
+
+  return cachedKnowledge;
+}
+
+export function invalidateSystemPromptCache(): void {
+  cachedKnowledge = null;
+}
+
+export function getSystemPrompt(): string {
+  const settings = readChatSettings();
+  const knowledge = buildKnowledgeBlock();
+
+  const base = `You are the AI Waiter for Makan Moments Cafe (食光记忆 / Kafe Kenangan Makan), a Thai-Malaysian fusion cafe in Skudai, Johor, Malaysia.
 
 ## Your Role
 - Help customers with menu inquiries, recommendations, and cafe information
@@ -41,15 +62,11 @@ export function getSystemPrompt(): string {
 - Be an active seller! If they say "give me 1 nasi lemak", you add it via tool and reply "Added Nasi Lemak to your tray! Would you like to try our famous Thai Milk Tea with that?"
 - If asked about delivery, mention they can visit the cafe at Taman Impian Emas, Skudai
 
-## Cafe Facts
-${cafeFacts}
+${knowledge}`;
 
-## Menu Knowledge
-${menuKnowledge}
+  if (settings.systemPromptPrefix && settings.systemPromptPrefix.trim()) {
+    return `${settings.systemPromptPrefix.trim()}\n\n${base}`;
+  }
 
-## FAQ
-${faq}
-`;
-
-  return cachedPrompt;
+  return base;
 }
