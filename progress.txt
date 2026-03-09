@@ -303,3 +303,56 @@ No Frappe DocTypes are involved. This implementation centers on Next.js pages an
 - gray-matter parses Date fields as JS Date objects — stringify preserves them correctly
 - Python on Windows needs encoding='utf-8' when reading/writing prd.json (has special chars in acceptanceCriteria)
 - revalidatePath uses "/[locale]/blog" with literal [locale] bracket notation for Next.js cache invalidation
+## Iteration 5 - Tue, Mar 10, 2026  2:19:19 AM
+Completed: Admin WYSIWYG Blog Editor (ID: US-005) in 9m
+
+
+## Pre-analysis for US-006 (Gemini 2.5 Pro)
+**Technical Brief: US-006 Admin WYSIWYG About Page Editor**
+
+**Note:** The user story targets a **Next.js/TypeScript** application, not Frappe/Python. All file paths and implementation details are for the Next.js frontend.
+
+*   **Primary Files to Modify/Create:**
+    *   `src/app/[locale]/about/page.tsx`: To read markdown and conditionally render the editor.
+    *   `src/app/api/admin/content/about/route.ts` (new): API endpoint to handle content saving.
+    *   `src/components/admin/admin-page-editor.tsx` (new): The client-side WYSIWYG editor component.
+    *   `content/about.md` (new): The markdown file acting as the content source.
+
+*   **Framework Constructs Involved:**
+    *   **Next.js App Router:** Server Components (`about/page.tsx`), API Route Handlers (`route.ts`).
+    *   **React:** Client Components (`admin-page-editor.tsx`) using state (`useState`) and effects (`useEffect`).
+    *   **No Frappe DocTypes/Hooks are involved.**
+
+*   **Implementation Approach:**
+    1.  Refactor `about/page.tsx` to be a Server Component that reads its content from `content/about.md`.
+    2.  In this page, check for an admin session cookie to determine if the user is an admin.
+    3.  If admin, pass the content and a "save" callback to a new client component, `AdminPageEditor`.
+    4.  The `AdminPageEditor` will manage an "edit mode" state, render content in `contenteditable` divs, and display a floating "Save" button.
+    5.  On save, the editor will `POST` the updated content to the `/api/admin/content/about` endpoint.
+    6.  The API route will validate the admin session, then use `fs.writeFile` to persist the content to `content/about.md`.
+    7.  Use Next.js's `router.refresh()` for a soft refresh after saving to display updated content.
+
+*   **Gotchas & Edge Cases:**
+    *   **Security:** The API route *must* be rigorously protected to prevent unauthorized file writes.
+    *   **Filesystem Writes:** This approach assumes a server environment where the app process has write permissions. It will fail on read-only serverless platforms like Vercel.
+    *   **UX:** `contenteditable` can be brittle; sanitize input to prevent HTML injection.
+
+
+## Iteration 6 - Story: Admin WYSIWYG About Page Editor (US-006)
+
+### What was implemented
+- CREATED `content/about.md` — YAML frontmatter stores all editable text fields (title, subtitle, storyTitle, ambianceTitle, valuesTitle, and 3 values with descriptions); markdown body holds storyContent paragraph
+- CREATED `src/app/api/admin/content/about/route.ts` — POST endpoint that reads current about.md, merges updated fields, writes back with gray-matter.stringify, calls revalidatePath for /[locale]/about; protected by middleware (all /api/admin/* routes require admin JWT)
+- CREATED `src/components/admin/about-inline-editor.tsx` — client component that: shows amber admin banner with "Edit Mode" / "Save Changes" / "Cancel" buttons; renders all text fields as editable inputs/textareas in edit mode; in view mode renders the same layout as the static page (but without icons for value cards); calls POST /api/admin/content/about on save; uses router.refresh() after success
+- UPDATED `src/app/[locale]/about/page.tsx` — added `export const runtime = "nodejs"` (required for fs); reads content/about.md via gray-matter with i18n translations as fallback; checks admin cookie via COOKIE_NAME + verifyAdminToken; when isAdmin: renders AboutInlineEditor; when not: renders static page as before (with icons restored)
+
+### Patterns discovered
+- `CAFE.ambiance` is `readonly string[]` in constants.ts — component props must accept `readonly string[]` not `string[]`
+- about page needs `export const runtime = "nodejs"` because it uses `fs` directly (same as blog slug route)
+- Admin editor replaces the ENTIRE page content (not just a banner + overlay) — cleanest pattern for pages with many distinct sections
+- Value card icons (Leaf, Users, ShieldCheck) are only rendered in the non-admin view since the editor shows generic inputs; icons aren't editable
+
+### Gotchas
+- gray-matter.stringify adds trailing newline — file will have consistent formatting
+- The editor component renders the full page layout (including padding/max-width container) rather than being injected into the existing page — avoids prop-drilling the content to every section
+- TypeScript: `ambianceFeatures` prop must be `readonly string[]` to accept `CAFE.ambiance` (which is inferred as readonly tuple)
