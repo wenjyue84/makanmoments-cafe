@@ -118,3 +118,53 @@ This brief translates the user story's Next.js technical notes into a Frappe imp
 ### Gotchas
 - Original `editable-menu-card.tsx` uses `group` class; added `group/card` for named group to enable scoped hover on "Set as Highlight" button
 - Chef's Pick badge replaces the `featured` star badge to avoid overlap (not shown simultaneously)
+## Iteration 2 - Tue, Mar 10, 2026  1:56:19 AM
+Completed: Per-Category Highlighted Item on Menu Page (ID: US-002) in 6m
+
+
+## Pre-analysis for US-003 (Gemini 2.5 Pro)
+### Technical Brief: US-003 Blog Page Redesign
+
+**Objective:** Redesign the primary blog listing page to feature one main post prominently and display the rest in a modern card grid.
+
+**1. Key Files & Components:**
+*   **Modify:** `src/app/[locale]/blog/page.tsx`
+    *   This is the main entry point. Logic to split posts will go here.
+*   **Modify:** `src/components/blog/post-card.tsx`
+    *   Update this card to match the new design specs (image, tags, date).
+*   **Create:** `src/components/blog/featured-post.tsx`
+    *   A new component for the full-width hero post at the top.
+*   **Verify:** `src/app/[locale]/blog/[slug]/page.tsx`
+    *   Ensure the detail page renders the full article content correctly.
+
+**2. Implementation Approach:**
+1.  In `src/app/[locale]/blog/page.tsx`, fetch all blog posts.
+2.  Destructure the posts array to get the first post (`featuredPost`) and the remainder (`...otherPosts`).
+3.  Render the new `<FeaturedPost post={featuredPost} />` component at the top.
+4.  Render the `otherPosts` array below it, mapping each post to an updated `<PostCard />` component within a 2-column grid.
+5.  Update `<PostCard />` to display the cover image, tags (as pills), title, a 2-line excerpt, and formatted publish date. Add specified hover effects.
+
+**3. Gotchas & Edge Cases:**
+*   **Data Handling:** Gracefully handle cases where there are zero posts or only one post.
+*   **Styling:** Use Tailwind's `@tailwindcss/line-clamp` plugin for consistent excerpt truncation.
+*   **CLS:** Ensure `next/image` is used with `priority` for the featured post's image to optimize LCP and prevent layout shift.
+
+
+
+## Iteration 3 - Story: Blog Page with Full Article Layout (US-003)
+
+### What was implemented
+- CREATED src/components/blog/featured-post.tsx - full-width hero post with large aspect-[16/7] image (priority), tags, date, 3-line excerpt, title, scale-on-hover
+- UPDATED src/components/blog/post-card.tsx - removed padding from article root, wrapped content in inner div, added overflow-hidden + hover:-translate-y-0.5 + hover:shadow-lg + image group-hover:scale-105
+- UPDATED src/app/[locale]/blog/page.tsx - destructures [featuredPost, ...otherPosts], renders FeaturedPost above 2-col PostCard grid
+
+### Patterns discovered
+- post-card.tsx already had line-clamp-2 and tag pills - only needed structural refactor (move image outside padding div) + hover effects
+- blog detail page ([slug]/page.tsx) already renders content correctly - no changes needed
+- Both FeaturedPost and PostCard are client components (need useLocale() for date formatting)
+
+### Gotchas
+- Original post-card had p-5 on the article element causing image padding; moved padding to inner div and added overflow-hidden to article
+
+## Iteration 3 - Mon, Mar 09, 2026 05:59:43 PM
+Completed: Blog Page with Full Article Layout (ID: US-003)
