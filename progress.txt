@@ -424,3 +424,49 @@ Here is the technical brief based on the actual story content:
 - Gear icon position: `bottom-20 right-4` on mobile (above chat button), `bottom-4 right-20` on desktop (left of chat button)
 ## Iteration 7 - Tue, Mar 10, 2026  2:35:34 AM
 Completed: AI Waiter Admin Settings Panel (ID: US-007)
+## Iteration 7 - Tue, Mar 10, 2026  2:36:44 AM
+Completed: AI Waiter Admin Settings Panel (ID: US-007) in 8m
+
+
+## Pre-analysis for US-008 (Gemini 2.5 Pro)
+Technical Brief for Claude: US-008 Contact Page Editor
+
+**Project:** Next.js / TypeScript (Note: Not Frappe/Python)
+**Objective:** Implement inline editing for the contact page, accessible only by admins. The implementation pattern should mirror the existing About page editor (US-006).
+
+**1. Primary Files for Modification:**
+*   `src/app/[locale]/contact/page.tsx`: Refactor this server component to read its content from `content/contact.md` instead of having hardcoded text. It will conditionally render the admin editing UI.
+*   `content/contact.md`: Create this new file. It will store the page's editable content using YAML frontmatter for structured data (e.g., address, phone, mapUrl) and Markdown for the body.
+
+**2. Key Architectural Components:**
+*   **API Route:** The `POST` request will be handled by the existing dynamic route: `src/app/api/admin/content/[page]/route.ts`, with `contact` as the `[page]` parameter.
+*   **Shared Component:** Reuse the `AdminPageEditor` client component created in US-006 to provide the WYSIWYG controls and handle the save logic.
+
+**3. Recommended Implementation Approach:**
+1.  Create `content/contact.md` with YAML frontmatter for `address`, `phone`, `email`, `hours`, `mapEmbedUrl`, and `tagline`.
+2.  In `contact/page.tsx`, use a library (likely `gray-matter`) to parse the content from the new Markdown file.
+3.  Check for an admin session on the server.
+4.  If admin, wrap the page's output with the `AdminPageEditor` component, passing the parsed content and the page slug "contact" as props.
+
+**4. Gotchas & Edge Cases:**
+*   **Security:** Ensure the API endpoint strictly verifies admin authentication before writing to the filesystem.
+*   **Data Consistency:** The data structure in the `contact.md` frontmatter must perfectly match the fields expected by the `contact/page.tsx` component.
+*   **Caching:** The API route should use `revalidatePath` on the contact page after a successful save to prevent serving stale content.
+
+
+## Iteration 8 - Story: Admin WYSIWYG Contact Page Editor (US-008)
+
+### What was implemented
+- CREATED `content/contact.md` — structured frontmatter: title, subtitle, address, neighborhood, phone, hoursDaily, hoursLastOrder, googleMapsEmbed
+- CREATED `src/components/admin/contact-inline-editor.tsx` — client component with admin banner, Edit Mode toggle, inline fields for all editable contact data, POST to /api/admin/content/contact, router.refresh() on save
+- CREATED `src/app/api/admin/content/contact/route.ts` — POST handler reads/writes contact.md via gray-matter; calls revalidatePath("/[locale]/contact", "page")
+- UPDATED `src/app/[locale]/contact/page.tsx` — reads from content/contact.md (fallback to CAFE constants + translations); checks admin JWT; renders ContactInlineEditor for admins, normal view otherwise
+
+### Patterns discovered
+- Contact page content falls back to CAFE constants (not just translations) — use those as fallback values in readContactContent()
+- WiFi password and social links kept read-only in editor (managed via CAFE constants / translations); only address/hours/phone/mapEmbed are editable
+- Same pattern as US-006 (about editor) — reuse with minimal adaptation
+
+### Gotchas
+- TypeScript check passes clean (no errors introduced)
+- gray-matter.stringify produces trailing newline — consistent with about.md
