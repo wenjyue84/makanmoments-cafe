@@ -13,7 +13,7 @@ export function AdminBlogTable({ initialPosts }: AdminBlogTableProps) {
   const [editingPost, setEditingPost] = useState<BlogPost | "new" | null>(null);
 
   async function togglePublished(post: BlogPost) {
-    const res = await fetch(`/api/admin/blog/${post.id}`, {
+    const res = await fetch(`/api/admin/blog/by-id/${post.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ published: !post.published }),
@@ -29,7 +29,7 @@ export function AdminBlogTable({ initialPosts }: AdminBlogTableProps) {
 
   async function deletePost(id: string) {
     if (!confirm("Delete this blog post?")) return;
-    await fetch(`/api/admin/blog/${id}`, { method: "DELETE" });
+    await fetch(`/api/admin/blog/by-id/${id}`, { method: "DELETE" });
     setPosts((prev) => prev.filter((p) => p.id !== id));
   }
 
