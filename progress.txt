@@ -1,0 +1,70 @@
+## Codebase Patterns
+
+- TrayWidget in `src/components/menu/tray-widget.tsx` — combines button + panel in one component (not split into tray-button/tray-panel as PRD suggests)
+- ErrorBoundary wraps floating widgets in layout: `<ErrorBoundary fallback={null}><Widget /></ErrorBoundary>`
+- Layout at `src/app/[locale]/layout.tsx` — TrayProvider wraps everything; add new widgets inside TrayProvider but outside the flex column
+- Pre-existing lint errors (8000+) in the codebase — do not try to fix them, only validate that changed files are clean
+- `npx tsc --noEmit` (not `rtk tsc`) is the correct TypeScript check command here
+- Chat widget at `bottom-4 right-4`; Tray widget at `bottom-4 right-20` (avoids overlap)
+
+---
+
+# Ralph Progress Log - Tue, Mar 10, 2026  1:41:07 AM
+Started autonomous agent loop for PRD completion
+
+## Iteration 1 - Story: Floating Order Tray Panel (US-001)
+
+### What was implemented
+- Added `TrayWidget` import to `src/app/[locale]/layout.tsx`
+- Added `<ErrorBoundary fallback={null}><TrayWidget /></ErrorBoundary>` inside `TrayProvider` in layout
+
+### Patterns discovered
+- `tray-widget.tsx` was already fully built — combines floating button (bottom-4 right-20) + side panel + checkout flow in one component
+- Translations for `tray.*` namespace already existed in all 3 message files
+- The widget hides itself when tray is empty (`if (totalItems === 0 && !open) return null`)
+- Upsell/pairing banners are already wired in the widget
+
+### Gotchas
+- TypeScript check: use `npx tsc --noEmit` (not `rtk tsc` which fails here)
+- 8000+ pre-existing lint errors/warnings in the repo — only validate that your changed files are clean
+- `tray-widget.tsx` was NOT yet wired into layout despite being complete — that was the only missing piece
+
+
+## Pre-analysis for US-001 (Gemini 2.5 Pro)
+Here is a technical brief for the "Floating Order Tray Panel" user story.
+
+**Project:** Makan Moments Cafe (Next.js/React)
+**User Story:** US-001 - Floating Order Tray Panel
+
+### 1. Files to Modify/Create
+
+*   **Create:** `src/components/menu/tray-panel.tsx`
+    *   This will be a client component (`'use client'`) that renders the floating panel/bottom sheet UI. It will consume the `TrayContext` to display the list of items, quantities, and total price.
+*   **Create:** `src/components/menu/tray-button.tsx`
+    *   A client component for the floating cart icon. It will use `TrayContext` to display the item count in a badge and will act as the trigger to open the `TrayPanel`.
+*   **Modify:** `src/app/[locale]/layout.tsx`
+    *   Import and render the new `TrayButton` and `TrayPanel` components within the main layout to ensure they are available globally across the application.
+*   **Modify:** `src/lib/tray-context.tsx`
+    *   Add state management for the panel's visibility (e.g., an `isTrayOpen` boolean and `toggleTray` function) to the existing context.
+
+### 2. Core Components & Hooks
+
+*   **DocTypes/Context:** `TrayContext` is the primary state management hook. No Frappe DocTypes are involved.
+*   **Components:** `TrayPanel`, `TrayButton`. These will be interactive "islands" of functionality.
+
+### 3. Implementation Approach
+
+1.  **Extend Context:** Update `TrayProvider` in `tray-context.tsx` to include a state for managing the panel's open/closed status.
+2.  **Build UI Components:**
+    *   `TrayButton`: Create a fixed-position button (e.g., `bottom-4 left-4`) that calls the `toggleTray` function from the context on click. The item count badge will be updated by reading the `items` array length from the context.
+    *   `TrayPanel`: This component will conditionally render based on the `isTrayOpen` state. It will map through the `items` from the context to render each item's details. It should include controls that call the existing `addItem`, `removeItem`, and `clearTray` functions.
+3.  **Responsive Styling:** Use Tailwind CSS media queries to implement the dual behavior: a full-width bottom sheet on mobile (`max-w-md`) and a smaller, floating side panel on desktop (`lg:`).
+4.  **Integrate into Layout:** Wrap the main `{children}` in `layout.tsx` with the updated `TrayProvider`, and place `<TrayButton />` and `<TrayPanel />` just before the closing `</body>` tag.
+
+### 4. Edge Cases & Gotchas
+
+*   **UI Overlap:** The `TrayButton` must be positioned carefully at `bottom-left` to avoid conflicting with the existing chat widget, which is typically at `bottom-right`.
+*   **Body Scroll Lock:** When the `TrayPanel` is open, prevent the background page from scrolling by conditionally adding an `overflow-hidden` class to the `<body>` tag.
+*   **Dismissal:** Ensure the panel can be closed by clicking an explicit 'X' icon, pressing the Escape key, or clicking on a backdrop overlay.
+*   **Hydration:** Both new components must be declared with `'use client'` as they rely on context and user interaction. The `TrayProvider` itself must also be within a client boundary in the main layout file.
+

@@ -1,6 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Noto_Sans, Noto_Sans_SC } from "next/font/google";
+import { Playfair_Display, Noto_Sans, Noto_Sans_SC } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
@@ -8,10 +8,17 @@ import { CAFE } from "@/lib/constants";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ChatWidget } from "@/components/chat/chat-widget";
+import { TrayWidget } from "@/components/menu/tray-widget";
 import { RestaurantJsonLd } from "@/components/seo/json-ld";
 import "../globals.css";
 import { TrayProvider } from "@/lib/tray-context";
 import { ErrorBoundary } from "@/components/error-boundary";
+
+const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 const notoSans = Noto_Sans({
   subsets: ["latin"],
@@ -26,6 +33,13 @@ const notoSansSC = Noto_Sans_SC({
   display: "swap",
   preload: false, // only activated when zh locale is active; avoids loading large CJK font for EN/MS
 });
+
+// /adapt: viewport-fit=cover handles notches and home indicator on iOS/Android
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export function generateMetadata({
   params,
@@ -87,7 +101,7 @@ export default async function LocaleLayout({
         <RestaurantJsonLd />
       </head>
       <body
-        className={`${notoSans.variable} ${locale === "zh" ? notoSansSC.variable : ""} font-sans antialiased`}
+        className={`${playfairDisplay.variable} ${notoSans.variable} ${locale === "zh" ? notoSansSC.variable : ""} font-sans antialiased`}
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <TrayProvider>
@@ -97,6 +111,7 @@ export default async function LocaleLayout({
               <Footer />
             </div>
             <ErrorBoundary fallback={null}><ChatWidget /></ErrorBoundary>
+            <ErrorBoundary fallback={null}><TrayWidget /></ErrorBoundary>
           </TrayProvider>
         </NextIntlClientProvider>
       </body>

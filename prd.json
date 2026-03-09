@@ -1,0 +1,307 @@
+{
+  "productName": "Makan Moments Cafe Website",
+  "branchName": "feature/ux-improvements",
+  "overview": "A series of UX improvements, WYSIWYG admin editing, full blog content support (markdown-sourced from 3-resources/posts), a functional order tray panel, AI waiter admin settings, and a comprehensive test suite. Dev server: http://localhost:3030. Each iteration must verify changes with Chrome DevTools or Playwright before marking passes: true.",
+  "goals": [
+    "Make the order tray functional so guests can show their order to the human waiter",
+    "Add per-category highlighted item that admin can change via WYSIWYG on the menu page",
+    "Display blog posts with full content, sourced from markdown files in 3-resources/posts/ai-posts",
+    "Enable WYSIWYG editing for blog, about, and contact pages when admin is logged in",
+    "Add AI waiter admin settings panel linked from the chat widget",
+    "Add a Tests tab in /admin with runnable smoke/unit/integration/e2e tests",
+    "All implementations verified visually with Chrome DevTools or Playwright"
+  ],
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Floating Order Tray Panel",
+      "priority": 1,
+      "description": "When guests click '+ Add' on any menu item, the item should be added to a visible floating tray/cart panel. The tray should show all selected items with quantities and total price. Guests can show this tray to the human waiter or use it as a reference when ordering at the POS. The tray must float above other content, be dismissible, and work on mobile. The TrayContext (src/lib/tray-context.tsx) already stores items \u00e2\u20ac\u201d we just need the visible UI panel. Also add a floating tray button (cart icon with badge count) near the chat widget button.",
+      "acceptanceCriteria": [
+        "Clicking '+ Add' on a menu item adds it to the tray (quantity increments if added again)",
+        "A floating cart icon button appears at bottom-left (or bottom-right near chat but non-overlapping) with a badge showing total item count",
+        "Clicking the cart icon opens a tray panel showing: item name, quantity (+/- controls), price, and total",
+        "The panel has a 'Clear Order' button and a title like 'Your Order \u00e2\u20ac\u201d Show to Waiter'",
+        "On mobile the tray is a bottom sheet; on desktop it's a floating panel",
+        "The tray is dismissible (X button or click outside)",
+        "Verify in Chrome DevTools: click Add \u00e2\u2020\u2019 badge count updates, open tray \u00e2\u2020\u2019 items visible"
+      ],
+      "technicalNotes": [
+        "TrayContext already in src/lib/tray-context.tsx with addItem/removeItem/clearTray/totalPrice",
+        "Create src/components/menu/tray-panel.tsx \u00e2\u20ac\u201d the floating panel UI",
+        "Create src/components/menu/tray-button.tsx \u00e2\u20ac\u201d the floating button with badge",
+        "Add TrayButton and TrayPanel to src/app/[locale]/layout.tsx alongside ChatWidget",
+        "Use Tailwind for mobile bottom-sheet vs desktop floating panel",
+        "Position: tray button at bottom-left, chat at bottom-right to avoid overlap",
+        "Use TrayContext items.reduce to calculate total count for badge"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Per-Category Highlighted Item on Menu Page",
+      "priority": 2,
+      "description": "On the menu page (/en/menu), each category section should have one item visually highlighted as the 'chef's pick' or 'must try'. By default, the first item in each category (by sortOrder) is highlighted. When admin is logged in, they can click any item to set it as the highlighted item for its category (WYSIWYG). The highlighted item gets a prominent badge/border treatment. The selected highlight per category is persisted in the DB (new column or separate table).",
+      "acceptanceCriteria": [
+        "Each category section shows exactly one item with a prominent 'Chef's Pick' or '\u00e2\u02dc\u2026 Highlighted' visual treatment (gold border or badge)",
+        "Default highlighted item is the lowest sort_order item in the category",
+        "When admin is logged in, hovering an item shows a 'Set as Highlight' button",
+        "Clicking 'Set as Highlight' immediately updates the UI and persists to DB via POST /api/admin/highlights",
+        "Non-admin users never see the 'Set as Highlight' button",
+        "Highlighted state survives page reload",
+        "Verify in Chrome DevTools: admin clicks set \u00e2\u2020\u2019 highlight updates without full page reload"
+      ],
+      "technicalNotes": [
+        "Add a new DB table `category_highlights` (category TEXT PRIMARY KEY, item_id TEXT) or a column `highlight_for_category` on menu_items",
+        "Create API route src/app/api/admin/highlights/route.ts (GET + POST, admin-auth required)",
+        "Update MenuGrid or MenuCard to accept isHighlighted prop and render visual treatment",
+        "Add admin click handler in editable-menu-card.tsx or MenuCard when isAdmin=true",
+        "Pass highlightedByCategory map from menu page server component to MenuGrid",
+        "Use a gold ring or amber badge: className='ring-2 ring-amber-400' on the card wrapper"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-003",
+      "title": "Blog Page with Full Article Layout",
+      "priority": 3,
+      "description": "The blog page (/en/blog) currently shows only a card grid with title and excerpt. Redesign it to look like a proper blog listing: a featured/hero post at the top (full-width with large image and excerpt), then a grid of smaller cards below. Each card should show cover image, title, excerpt (2-3 lines), tags, and publish date. Clicking a post goes to a full article page at /en/blog/[slug].",
+      "acceptanceCriteria": [
+        "Blog listing page has a featured post section at the top (full-width) with large image, title, and first 3 lines of excerpt",
+        "Below the featured post, remaining posts appear in a 2-column card grid",
+        "Each card shows: cover image (aspect-video), tags (pill badges), title, 2-line excerpt, and date",
+        "Cards have hover effects (shadow lift, slight scale on image)",
+        "Blog detail page (/en/blog/[slug]) shows full article content with proper typography",
+        "Verify in browser at http://localhost:3030/en/blog: featured post visible, grid below it"
+      ],
+      "technicalNotes": [
+        "Redesign src/app/[locale]/blog/page.tsx \u00e2\u20ac\u201d split posts into featured (first) + rest",
+        "Update src/components/blog/post-card.tsx for the card variant",
+        "Create src/components/blog/featured-post.tsx for the hero section",
+        "Blog detail page already exists at src/app/[locale]/blog/[slug]/page.tsx \u00e2\u20ac\u201d ensure it renders content",
+        "Use prose typography class from Tailwind for article body"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-004",
+      "title": "Import Markdown Blog Posts from 3-resources/posts",
+      "priority": 4,
+      "description": "Blog posts currently only come from Notion. The ai-posts folder at C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\posts\\ai-posts contains rich markdown blog posts. Import these into the website's blog system by: (1) copying them to a content/blog/ folder inside the project, and (2) updating src/lib/blog.ts to read from both Notion AND local markdown files (merging the two sources). The markdown posts contain full content, tags, and dates in their frontmatter/filename.",
+      "acceptanceCriteria": [
+        "A content/blog/ directory exists in the project root with markdown post files copied from 3-resources/posts/ai-posts",
+        "The blog listing page shows posts from both Notion and markdown files",
+        "Each markdown post renders with its full content on the detail page /en/blog/[slug]",
+        "Posts are sorted by date (newest first) regardless of source",
+        "Markdown post frontmatter parsed for: title, date, tags, excerpt (first paragraph after ---)",
+        "Verify: http://localhost:3030/en/blog shows markdown posts; click one \u00e2\u2020\u2019 full content displayed"
+      ],
+      "technicalNotes": [
+        "Copy markdown files from C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\posts\\ai-posts to project root: content/blog/",
+        "Install gray-matter for frontmatter parsing: npm install gray-matter",
+        "Install marked or remark for markdown \u00e2\u2020\u2019 HTML: npm install marked",
+        "Create src/lib/blog-local.ts with readLocalPosts() function using fs.readdirSync on content/blog/",
+        "Update src/lib/blog.ts getBlogPosts() to merge Notion posts + local markdown posts",
+        "Slug = filename without .md, date from filename prefix YYYY-MM-DD or frontmatter",
+        "For the detail page, parse full markdown body to HTML and render with dangerouslySetInnerHTML (safe, admin-controlled content)",
+        "Add content/blog/ to .gitignore if posts are too large, otherwise commit them"
+      ],
+      "dependencies": [
+        "US-003"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-005",
+      "title": "Admin WYSIWYG Blog Editor",
+      "priority": 5,
+      "description": "After admin login, the blog listing page (/en/blog) should show an edit banner and allow admin to click 'Edit' on any post to edit it inline. The blog detail page (/en/blog/[slug]) should allow direct inline editing of the title and body content. Use a simple rich-text approach: show a textarea or contenteditable with markdown, and save via API. This is WYSIWYG in the sense that edits are saved and immediately reflect on the page.",
+      "acceptanceCriteria": [
+        "Admin edit banner appears on /en/blog when logged in (same pattern as menu page)",
+        "Each post card shows an 'Edit' button when admin is logged in",
+        "Blog detail page shows an edit mode button for admin: clicking it makes title and content editable",
+        "Changes auto-save or have a 'Save' button that calls PATCH /api/admin/blog/[slug]",
+        "After saving, the page refreshes/revalidates and shows the updated content",
+        "Non-admin users see no editing UI",
+        "Verify: admin clicks edit on a post \u00e2\u2020\u2019 edits title \u00e2\u2020\u2019 saves \u00e2\u2020\u2019 page shows new title"
+      ],
+      "technicalNotes": [
+        "Add isAdmin prop to blog listing and detail pages (via cookies check in server component, same pattern as menu page)",
+        "Create API route src/app/api/admin/blog/[slug]/route.ts with PATCH handler (admin-auth required)",
+        "For local markdown posts: PATCH handler writes updated frontmatter + body back to content/blog/{slug}.md",
+        "For Notion posts: PATCH handler calls Notion API to update page content",
+        "In blog detail page: add AdminBlogEditor client component that wraps title/content with contenteditable when isAdmin",
+        "Use revalidatePath('/[locale]/blog') after save to refresh the cached pages"
+      ],
+      "dependencies": [
+        "US-003",
+        "US-004"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-006",
+      "title": "Admin WYSIWYG About Page Editor",
+      "priority": 6,
+      "description": "After admin login, the about page (/en/about) should show an edit banner and allow inline editing of the page content (story text, team info, values, etc.). Text blocks should become contenteditable when admin clicks 'Edit'. Changes persist to a local JSON or markdown file (content/about.md). The page re-renders with updated content after save.",
+      "acceptanceCriteria": [
+        "Admin edit banner appears at top of /en/about when admin is logged in",
+        "Clicking 'Edit Mode' makes text sections contenteditable (title, paragraphs, sections)",
+        "A floating 'Save Changes' button appears in edit mode",
+        "Saving calls POST /api/admin/content/about and writes to content/about.md",
+        "After saving, the page shows the updated content without a full reload",
+        "Non-admin users see no editing UI \u00e2\u20ac\u201d the page looks identical to current",
+        "Verify: admin edits a paragraph on about page, saves, refreshes \u00e2\u2020\u2019 new text persists"
+      ],
+      "technicalNotes": [
+        "Read the current src/app/[locale]/about/page.tsx to understand current content structure",
+        "Create content/about.md (markdown with sections) that the about page reads for its text content",
+        "Update about/page.tsx to read from content/about.md via fs (server component)",
+        "Create src/components/admin/admin-page-editor.tsx \u00e2\u20ac\u201d generic WYSIWYG editor wrapper component",
+        "Create API route src/app/api/admin/content/[page]/route.ts with POST handler",
+        "The page editor uses contenteditable divs for each text block, tracks changes in state",
+        "Add isAdmin check via cookies in about/page.tsx (same pattern as menu page)",
+        "Inject AdminPageEditor only when isAdmin=true"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-007",
+      "title": "AI Waiter Admin Settings Panel",
+      "priority": 7,
+      "description": "After admin login, the chat widget (bottom-right floating button) should show a small gear/settings icon. Clicking it opens an AI waiter settings panel (modal or page at /admin/chat-settings) where admin can configure: system prompt text, AI model selection (Groq vs OpenRouter), response style, and view recent conversation logs. The interface should feel similar to an AI assistant management panel (like in the digiman project's rainbow AI assistant).",
+      "acceptanceCriteria": [
+        "When admin is logged in, a small \u00e2\u0161\u2122 gear icon appears on or near the chat widget button",
+        "Clicking the gear opens a settings panel (full-page modal or /admin/chat-settings route)",
+        "Settings panel shows: current system prompt (editable textarea), model selector (Groq / OpenRouter), temperature slider",
+        "A 'Save Settings' button persists changes to a settings file or DB",
+        "The AI chat API reads these settings instead of hardcoded values",
+        "An optional 'Recent Conversations' section shows last 10 chat sessions (if logging exists)",
+        "Verify: admin edits system prompt, saves, sends a chat message \u00e2\u2020\u2019 AI responds with updated persona"
+      ],
+      "technicalNotes": [
+        "Check if admin is logged in by calling GET /api/admin/verify from the chat widget client component",
+        "Add conditional gear icon render in src/components/chat/chat-widget.tsx when isAdmin",
+        "Create src/app/admin/chat-settings/page.tsx for the settings page (admin-protected)",
+        "Create src/app/api/admin/chat-settings/route.ts (GET + POST) for reading/writing settings",
+        "Store settings in a local JSON file: data/chat-settings.json (gitignored)",
+        "Update src/lib/chat/provider.ts to read from chat-settings.json at startup",
+        "Update src/lib/chat/system-prompt.ts to accept a configurable prompt prefix",
+        "Link gear icon to /admin/chat-settings using next/navigation router.push"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-008",
+      "title": "Admin WYSIWYG Contact Page Editor",
+      "priority": 8,
+      "description": "After admin login, the contact page (/en/contact) should show an edit banner and allow inline editing of the contact information: address, phone, hours, Google Maps embed URL, and any other text content. Changes persist to content/contact.md or a DB entry. Pattern is identical to the About page editor (US-006).",
+      "acceptanceCriteria": [
+        "Admin edit banner appears at top of /en/contact when admin is logged in",
+        "Clicking 'Edit Mode' makes contact fields editable (address, phone, hours, map URL, description)",
+        "A floating 'Save Changes' button appears in edit mode",
+        "Saving calls POST /api/admin/content/contact and writes to content/contact.md",
+        "After saving, the page shows updated content",
+        "Non-admin users see no editing UI",
+        "Verify: admin changes opening hours, saves, refreshes \u00e2\u2020\u2019 new hours displayed"
+      ],
+      "technicalNotes": [
+        "Read the current src/app/[locale]/contact/page.tsx to understand existing contact content",
+        "Create content/contact.md with structured contact fields (YAML-like frontmatter)",
+        "Update contact/page.tsx to read from content/contact.md (server component)",
+        "Reuse AdminPageEditor component created in US-006",
+        "Reuse API route src/app/api/admin/content/[page]/route.ts \u00e2\u20ac\u201d 'contact' as [page] param",
+        "Fields to make editable: address, phone, email, hours (per day), map embed URL, tagline"
+      ],
+      "dependencies": [
+        "US-006"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-009",
+      "title": "Admin Tests Tab with Programmatic Test Suite",
+      "priority": 9,
+      "description": "Add a 'Tests' tab to the /admin panel (alongside Menu, Categories, Rules, Blog). This tab shows a list of tests (smoke, unit, integration, e2e) with a 'Run All' button and individual 'Run' buttons per test. Tests run programmatically via API calls and return pass/fail status with output logs. Test results are displayed in real-time. Passing tests can auto-generate new user stories to insert into prd.json.",
+      "acceptanceCriteria": [
+        "A 'Tests' tab appears in /admin alongside the existing Menu/Categories/Rules/Blog tabs",
+        "The Tests tab shows a categorized list: Smoke Tests, Unit Tests, Integration Tests, E2E Tests",
+        "Each test has a name, description, status (pending/running/pass/fail), and output log",
+        "'Run All' button runs all tests sequentially and shows live status updates",
+        "Individual 'Run' button runs a single test",
+        "Test results show: total passed, failed, duration",
+        "A 'Generate Stories' button creates new prd.json entries for failing tests",
+        "Verify: click 'Run All' \u00e2\u2020\u2019 tests run \u00e2\u2020\u2019 results display with pass/fail status"
+      ],
+      "technicalNotes": [
+        "Add 'Tests' to TABS array in src/components/admin/admin-tabs.tsx",
+        "Create src/components/admin/admin-tests-panel.tsx",
+        "Create src/app/api/admin/tests/route.ts \u00e2\u20ac\u201d GET (list tests), POST (run test by id)",
+        "Create src/lib/tests/ directory with test definitions:",
+        "  - smoke.ts: check homepage 200, menu page 200, blog page 200, contact page 200, about page 200",
+        "  - unit.ts: test menu data parsing, blog post slug generation, price formatting, tray context logic",
+        "  - integration.ts: test API routes (GET /api/admin/menu, GET /api/admin/blog), DB connection, auth flow",
+        "  - e2e.ts: use Playwright to test add-to-tray flow, admin login, menu filter, chat widget open",
+        "Each test is a function: async () => { steps, assertions, return { pass: boolean, log: string } }",
+        "API POST /api/admin/tests runs the test and streams results using TransformStream",
+        "Install @playwright/test if not already installed; use headless Chrome for e2e tests",
+        "Generate stories button: POST to /api/admin/tests/generate-stories \u00e2\u20ac\u201d reads failing tests and appends to prd.json"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "large",
+      "passes": false
+    },
+    {
+      "id": "US-010",
+      "title": "Chrome DevTools Verification for All Features",
+      "priority": 10,
+      "description": "After implementing each feature, use Chrome DevTools (via MCP or Playwright) to verify the implementation has no console errors, no network failures, and renders correctly on mobile (390px) and desktop (1280px). This is a quality gate story \u00e2\u20ac\u201d it does not add new features but ensures all previous stories are working in the browser.",
+      "acceptanceCriteria": [
+        "Navigate to http://localhost:3030/en \u00e2\u20ac\u201d no console errors, hero image loads within 3s",
+        "Navigate to http://localhost:3030/en/menu \u00e2\u20ac\u201d click Add on 3 items \u00e2\u2020\u2019 tray badge shows 3 \u00e2\u2020\u2019 open tray \u00e2\u2020\u2019 items listed correctly",
+        "Navigate to http://localhost:3030/en/blog \u00e2\u20ac\u201d featured post visible, grid below it, click a markdown post \u00e2\u2020\u2019 full content renders",
+        "Navigate to http://localhost:3030/en/about \u00e2\u20ac\u201d page renders without errors",
+        "Navigate to http://localhost:3030/en/contact \u00e2\u20ac\u201d page renders without errors",
+        "Log in as admin (POST /api/admin/login) \u00e2\u20ac\u201d menu edit banner visible, blog edit buttons visible",
+        "Open chat widget \u00e2\u2020\u2019 gear icon visible (admin) \u00e2\u2020\u2019 clicking opens settings panel",
+        "Navigate to http://localhost:3030/admin \u00e2\u2020\u2019 Tests tab visible \u00e2\u2020\u2019 Run All \u00e2\u2020\u2019 at least smoke tests pass",
+        "No 404 image errors, no hydration mismatches, no TypeScript build errors (rtk tsc check)",
+        "Mobile (390px): tray button not overlapping chat button, no horizontal scroll"
+      ],
+      "technicalNotes": [
+        "Use Chrome DevTools MCP tools: mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__list_console_messages",
+        "Or use agent-browser skill / webapp-testing skill for Playwright automation",
+        "Run rtk tsc to check for TypeScript errors before marking passes: true",
+        "Run rtk next build to ensure no build errors",
+        "For each prior story (US-001 through US-009), re-verify the acceptance criteria using browser tools",
+        "If any test fails, create a bug fix sub-story or fix inline before marking this story done"
+      ],
+      "dependencies": [
+        "US-001",
+        "US-002",
+        "US-003",
+        "US-004",
+        "US-005",
+        "US-006",
+        "US-007",
+        "US-008",
+        "US-009"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    }
+  ]
+}
