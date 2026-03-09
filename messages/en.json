@@ -1,0 +1,94 @@
+{
+  "common": {
+    "cafeName": "Makan Moments Cafe",
+    "tagline": "Thai Begins, Moments Stay",
+    "home": "Home",
+    "menu": "Menu",
+    "blog": "Blog",
+    "about": "About",
+    "contact": "Contact",
+    "language": "Language",
+    "search": "Search",
+    "allCategories": "All",
+    "noResults": "No items found",
+    "loading": "Loading...",
+    "viewMenu": "View Menu",
+    "orderNow": "Visit Us",
+    "learnMore": "Learn More",
+    "backToMenu": "Back to Menu",
+    "backToBlog": "Back to Blog",
+    "featured": "Featured",
+    "new": "New",
+    "popular": "Popular"
+  },
+  "home": {
+    "heroTitle": "Thai-Malaysian Fusion",
+    "heroSubtitle": "Authentic Thai flavors with a Malaysian twist, served in the heart of Skudai",
+    "highlightsTitle": "Our Highlights",
+    "highlightsSubtitle": "Chef's picks and customer favorites",
+    "infoHours": "Open Daily 11AM – 11PM",
+    "infoLocation": "Taman Impian Emas, Skudai",
+    "infoDietary": "No Pork · No Lard · Halal-Friendly",
+    "infoWifi": "Free WiFi Available"
+  },
+  "menu": {
+    "title": "Our Menu",
+    "subtitle": "384+ dishes from Thai-Malaysian fusion cuisine",
+    "searchPlaceholder": "Search dishes...",
+    "filterCategory": "Category",
+    "itemsCount": "{count} items",
+    "price": "RM {price}",
+    "unavailable": "Currently Unavailable"
+  },
+  "blog": {
+    "title": "Stories & Updates",
+    "subtitle": "Behind the scenes, recipes, and cafe life",
+    "readMore": "Read More",
+    "publishedOn": "Published on {date}",
+    "noPosts": "No blog posts yet. Check back soon!"
+  },
+  "about": {
+    "title": "Our Story",
+    "subtitle": "From Bangkok streets to Skudai's heart",
+    "storyTitle": "About Makan Moments",
+    "storyContent": "Makan Moments Cafe (食光记忆) opened its doors in October 2024 in Taman Impian Emas, Skudai. We bring authentic Thai flavors with a Malaysian twist — a fusion born from passion for both cuisines. Our cozy corner shop features hand-drawn wall art, indoor plants, and natural ventilation, creating the perfect spot to enjoy a meal with friends and family.",
+    "ambianceTitle": "Our Space",
+    "valuesTitle": "What We Stand For",
+    "valueQuality": "Quality Ingredients",
+    "valueQualityDesc": "Fresh ingredients, authentic recipes, and dishes prepared with care.",
+    "valueCommunity": "Community First",
+    "valueCommunityDesc": "A neighborhood cafe where everyone is welcome.",
+    "valueHalal": "Halal-Friendly",
+    "valueHalalDesc": "No pork, no lard — everyone can enjoy our food with confidence."
+  },
+  "contact": {
+    "title": "Visit Us",
+    "subtitle": "We'd love to see you",
+    "addressTitle": "Address",
+    "hoursTitle": "Opening Hours",
+    "phoneTitle": "Phone",
+    "socialTitle": "Follow Us",
+    "wifiTitle": "WiFi",
+    "wifiPassword": "Password: ilovemakan"
+  },
+  "chat": {
+    "title": "AI Waiter",
+    "subtitle": "Ask me anything about our menu!",
+    "placeholder": "Ask about our dishes, prices, recommendations...",
+    "welcome": "Hi! 👋 I'm the Makan Moments AI Waiter. Ask me about our menu, prices, recommendations, or anything about the cafe!",
+    "error": "Sorry, I'm having trouble right now. Please try again.",
+    "rateLimit": "You're sending messages too quickly. Please wait a moment."
+  },
+  "tray": {
+    "title": "Your Order",
+    "empty": "Your tray is empty",
+    "total": "Total",
+    "checkout": "Show Order to Waiter",
+    "checkoutInstructions": "Show this screen to the waiter to place your order."
+  },
+  "recipe": {
+    "ingredients": "Key Ingredients",
+    "preparation": "How We Make It",
+    "close": "Close"
+  }
+}

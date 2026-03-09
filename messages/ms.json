@@ -1,0 +1,94 @@
+{
+  "common": {
+    "cafeName": "Kafe Kenangan Makan",
+    "tagline": "Thai Bermula, Kenangan Kekal",
+    "home": "Utama",
+    "menu": "Menu",
+    "blog": "Blog",
+    "about": "Tentang Kami",
+    "contact": "Hubungi",
+    "language": "Bahasa",
+    "search": "Cari",
+    "allCategories": "Semua",
+    "noResults": "Tiada item ditemui",
+    "loading": "Memuatkan...",
+    "viewMenu": "Lihat Menu",
+    "orderNow": "Lawati Kami",
+    "learnMore": "Ketahui Lagi",
+    "backToMenu": "Kembali ke Menu",
+    "backToBlog": "Kembali ke Blog",
+    "featured": "Pilihan",
+    "new": "Baru",
+    "popular": "Popular"
+  },
+  "home": {
+    "heroTitle": "Gabungan Thai-Malaysia",
+    "heroSubtitle": "Rasa Thai asli dengan sentuhan Malaysia, dihidangkan di jantung Skudai",
+    "highlightsTitle": "Pilihan Kami",
+    "highlightsSubtitle": "Pilihan chef dan kegemaran pelanggan",
+    "infoHours": "Dibuka Setiap Hari 11PG – 11MLM",
+    "infoLocation": "Taman Impian Emas, Skudai",
+    "infoDietary": "Tanpa Babi · Tanpa Lard · Mesra Halal",
+    "infoWifi": "WiFi Percuma"
+  },
+  "menu": {
+    "title": "Menu Kami",
+    "subtitle": "384+ hidangan masakan gabungan Thai-Malaysia",
+    "searchPlaceholder": "Cari hidangan...",
+    "filterCategory": "Kategori",
+    "itemsCount": "{count} item",
+    "price": "RM {price}",
+    "unavailable": "Tidak Tersedia Buat Masa Ini"
+  },
+  "blog": {
+    "title": "Cerita & Kemas Kini",
+    "subtitle": "Di sebalik tabir, resipi, dan kehidupan kafe",
+    "readMore": "Baca Lagi",
+    "publishedOn": "Diterbitkan pada {date}",
+    "noPosts": "Belum ada catatan blog. Nantikan!"
+  },
+  "about": {
+    "title": "Cerita Kami",
+    "subtitle": "Dari jalanan Bangkok ke hati Skudai",
+    "storyTitle": "Tentang Makan Moments",
+    "storyContent": "Makan Moments Cafe (食光记忆) membuka pintunya pada Oktober 2024 di Taman Impian Emas, Skudai. Kami membawa rasa Thai asli dengan sentuhan Malaysia — gabungan yang lahir dari minat terhadap kedua-dua masakan. Kedai sudut kami yang selesa menampilkan seni dinding lukisan tangan, tumbuhan dalaman, dan pengudaraan semula jadi, menjadi tempat sempurna untuk menikmati hidangan bersama rakan dan keluarga.",
+    "ambianceTitle": "Ruang Kami",
+    "valuesTitle": "Apa Yang Kami Perjuangkan",
+    "valueQuality": "Bahan Berkualiti",
+    "valueQualityDesc": "Bahan segar, resipi asli, dan hidangan disediakan dengan penuh kasih.",
+    "valueCommunity": "Komuniti Utama",
+    "valueCommunityDesc": "Kafe kejiranan di mana semua orang dialu-alukan.",
+    "valueHalal": "Mesra Halal",
+    "valueHalalDesc": "Tanpa babi, tanpa lard — semua orang boleh menikmati makanan kami dengan yakin."
+  },
+  "contact": {
+    "title": "Lawati Kami",
+    "subtitle": "Kami ingin bertemu anda",
+    "addressTitle": "Alamat",
+    "hoursTitle": "Waktu Operasi",
+    "phoneTitle": "Telefon",
+    "socialTitle": "Ikuti Kami",
+    "wifiTitle": "WiFi",
+    "wifiPassword": "Kata Laluan: ilovemakan"
+  },
+  "chat": {
+    "title": "AI Waiter",
+    "subtitle": "Tanya saya apa sahaja tentang menu kami!",
+    "placeholder": "Tanya tentang hidangan, harga, cadangan...",
+    "welcome": "Hai! 👋 Saya AI Waiter Makan Moments. Tanya saya tentang menu, harga, cadangan, atau apa sahaja tentang kafe!",
+    "error": "Maaf, saya menghadapi masalah sekarang. Sila cuba lagi.",
+    "rateLimit": "Anda menghantar mesej terlalu cepat. Sila tunggu sebentar."
+  },
+  "tray": {
+    "title": "Pesanan Anda",
+    "empty": "Dulang anda kosong",
+    "total": "Jumlah",
+    "checkout": "Tunjuk Pesanan kepada Pelayan",
+    "checkoutInstructions": "Tunjukkan skrin ini kepada pelayan untuk membuat pesanan anda."
+  },
+  "recipe": {
+    "ingredients": "Bahan-Bahan Utama",
+    "preparation": "Cara Memasak",
+    "close": "Tutup"
+  }
+}

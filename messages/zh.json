@@ -1,0 +1,94 @@
+{
+  "common": {
+    "cafeName": "食光记忆",
+    "tagline": "泰味开始，食光留下",
+    "home": "首页",
+    "menu": "菜单",
+    "blog": "博客",
+    "about": "关于我们",
+    "contact": "联系我们",
+    "language": "语言",
+    "search": "搜索",
+    "allCategories": "全部",
+    "noResults": "未找到项目",
+    "loading": "加载中...",
+    "viewMenu": "查看菜单",
+    "orderNow": "到店用餐",
+    "learnMore": "了解更多",
+    "backToMenu": "返回菜单",
+    "backToBlog": "返回博客",
+    "featured": "推荐",
+    "new": "新品",
+    "popular": "热门"
+  },
+  "home": {
+    "heroTitle": "泰马融合料理",
+    "heroSubtitle": "正宗泰式风味融合马来西亚特色，在士古来心脏地带为您呈献",
+    "highlightsTitle": "精选推荐",
+    "highlightsSubtitle": "主厨推荐与顾客最爱",
+    "infoHours": "每天营业 上午11时 – 晚上11时",
+    "infoLocation": "金山园, 士古来",
+    "infoDietary": "无猪肉 · 无猪油 · 清真友好",
+    "infoWifi": "免费WiFi"
+  },
+  "menu": {
+    "title": "我们的菜单",
+    "subtitle": "384+道泰马融合料理",
+    "searchPlaceholder": "搜索菜品...",
+    "filterCategory": "分类",
+    "itemsCount": "{count} 道菜",
+    "price": "RM {price}",
+    "unavailable": "暂时缺货"
+  },
+  "blog": {
+    "title": "故事与动态",
+    "subtitle": "幕后花絮、食谱分享与咖啡馆日常",
+    "readMore": "阅读更多",
+    "publishedOn": "发布于 {date}",
+    "noPosts": "暂无博客文章，敬请期待！"
+  },
+  "about": {
+    "title": "我们的故事",
+    "subtitle": "从曼谷街头到士古来的心",
+    "storyTitle": "关于食光记忆",
+    "storyContent": "食光记忆（Makan Moments Cafe）于2024年10月在士古来金山园开业。我们带来正宗的泰式风味融合马来西亚特色——这是对两种美食热爱而生的融合。我们舒适的角落店铺设有手绘墙壁艺术、室内绿植和自然通风，是与亲朋好友共享美食的理想场所。",
+    "ambianceTitle": "我们的空间",
+    "valuesTitle": "我们的理念",
+    "valueQuality": "优质食材",
+    "valueQualityDesc": "新鲜食材，正宗食谱，用心烹制每一道菜。",
+    "valueCommunity": "社区优先",
+    "valueCommunityDesc": "一家欢迎所有人的邻里咖啡馆。",
+    "valueHalal": "清真友好",
+    "valueHalalDesc": "无猪肉，无猪油——每个人都能安心享用我们的美食。"
+  },
+  "contact": {
+    "title": "到访我们",
+    "subtitle": "期待与您见面",
+    "addressTitle": "地址",
+    "hoursTitle": "营业时间",
+    "phoneTitle": "电话",
+    "socialTitle": "关注我们",
+    "wifiTitle": "WiFi",
+    "wifiPassword": "密码：ilovemakan"
+  },
+  "chat": {
+    "title": "AI 服务员",
+    "subtitle": "随时为您解答菜单问题！",
+    "placeholder": "询问菜品、价格、推荐...",
+    "welcome": "你好！👋 我是食光记忆的AI服务员。问我关于菜单、价格、推荐，或者咖啡馆的任何事！",
+    "error": "抱歉，我现在遇到了一些问题。请稍后再试。",
+    "rateLimit": "您发送消息太快了，请稍等片刻。"
+  },
+  "tray": {
+    "title": "您的订单",
+    "empty": "您的托盘是空的",
+    "total": "总计",
+    "checkout": "向服务员展示订单",
+    "checkoutInstructions": "请向服务员展示此屏幕以完成下单。"
+  },
+  "recipe": {
+    "ingredients": "主要食材",
+    "preparation": "烹饪方式",
+    "close": "关闭"
+  }
+}
