@@ -68,3 +68,53 @@ Here is a technical brief for the "Floating Order Tray Panel" user story.
 *   **Dismissal:** Ensure the panel can be closed by clicking an explicit 'X' icon, pressing the Escape key, or clicking on a backdrop overlay.
 *   **Hydration:** Both new components must be declared with `'use client'` as they rely on context and user interaction. The `TrayProvider` itself must also be within a client boundary in the main layout file.
 
+## Iteration 1 - Tue, Mar 10, 2026  1:48:24 AM
+Completed: Floating Order Tray Panel (ID: US-001) in 6m
+
+
+## Pre-analysis for US-002 (Gemini 2.5 Pro)
+**Technical Brief for US-002: Per-Category Highlighted Menu Item (Frappe/Python)**
+
+This brief translates the user story's Next.js technical notes into a Frappe implementation plan for the `lhdn_payroll_integration` app.
+
+**1. Python Files to Modify:**
+*   `lhdn_payroll_integration/lhdn_payroll_integration/api.py`: Create or use this file for the new whitelisted API endpoint.
+*   `lhdn_payroll_integration/lhdn_payroll_integration/www/menu.py`: The Python controller to fetch data for the menu page.
+*   `lhdn_payroll_integration/lhdn_payroll_integration/www/menu.js`: The client-side JavaScript to handle admin interactions.
+
+**2. Frappe DocTypes & Hooks:**
+*   **Menu Category DocType**: Modify this DocType. Add a new field: `highlighted_item` (Type: Link, Options: Menu Item). This creates the core relationship.
+*   **Menu Item DocType**: The source DocType, linked to `Menu Category`. Needs a `sort_order` field if not already present.
+*   **System Manager Role**: Used for permission checks.
+
+**3. Recommended Implementation Approach:**
+1.  **Backend (API):** Create a whitelisted function `set_highlighted_item(category, menu_item)` in `api.py`. This function must verify the user has the 'System Manager' role, then use `frappe.db.set_value('Menu Category', category, 'highlighted_item', menu_item)` to persist the selection.
+2.  **Backend (Controller):** In `www/menu.py`, modify the context function to fetch categories and their items. For each category, if `highlighted_item` is not set, determine the default by finding the item with the lowest `sort_order`. Pass this highlight mapping to the Jinja template.
+3.  **Frontend (UI):** In the `www/menu.html` Jinja template, add a conditional class (e.g., `ring-2 ring-amber-400`) to the menu item whose ID matches the highlighted ID for that category.
+4.  **Frontend (JS):** In `www/menu.js`, if `frappe.user.has_role('System Manager')`, render a 'Set as Highlight' button on items. On click, call the API via `frappe.call` and dynamically update the UI by moving the highlight class.
+
+**4. Edge Cases & Gotchas:**
+*   **Permissions:** The API endpoint *must* perform a server-side role check; do not rely on the client hiding the button.
+*   **Default Logic:** Ensure the controller (`menu.py`) gracefully handles categories where `highlighted_item` is null, correctly applying the default highlight to the first item.
+*   **Data Integrity:** If a highlighted item is deleted or unlinked from a category, the link will become empty. The default logic should automatically apply on the next page load.
+
+
+## Iteration 2 - Story: Per-Category Highlighted Item on Menu Page (US-002)
+
+### What was implemented
+- NEW `src/app/api/admin/highlights/route.ts` — GET + POST for category_highlights table (auto-creates table with CREATE TABLE IF NOT EXISTS on first call)
+- NEW `src/lib/highlights.ts` — `getHighlightsFromDB()` + `computeEffectiveHighlights()` (defaults to lowest sortOrder item per category)
+- UPDATED `src/app/[locale]/menu/page.tsx` — fetches highlights server-side, passes `highlightedByCategory` map to MenuGrid
+- UPDATED `src/components/menu/menu-grid.tsx` — accepts `highlightedByCategory` prop, tracks highlights in local state for optimistic updates, computes `isHighlighted` per item, passes to MenuCard/EditableMenuCard; admin has `handleSetHighlight` callback
+- UPDATED `src/components/menu/menu-card.tsx` — accepts `isHighlighted` prop; highlighted cards get `ring-2 ring-amber-400/60 border-amber-400` + gold "★ Chef's Pick" badge
+- UPDATED `src/components/menu/editable-menu-card.tsx` — accepts `isHighlighted` + `onSetHighlight` props; same visual treatment + "★ Set as Highlight" hover button (admin only)
+
+### Patterns discovered
+- Admin API routes in this codebase do NOT verify the admin token (no auth middleware) — trust at the Next.js level is provided by cookies/isAdmin check in page.tsx
+- MenuGrid is a flat grid (no category sections) — "Chef's Pick" badge appears wherever the item is shown
+- Items can belong to multiple categories; setting highlight for an item sets it for ALL its categories at once
+- `group-hover/card` Tailwind variant used for scoped hover (to avoid conflict with outer group on card)
+
+### Gotchas
+- Original `editable-menu-card.tsx` uses `group` class; added `group/card` for named group to enable scoped hover on "Set as Highlight" button
+- Chef's Pick badge replaces the `featured` star badge to avoid overlap (not shown simultaneously)

@@ -14,11 +14,18 @@ import { getRecipeInfo } from "@/data/recipe-info";
 interface EditableMenuCardProps {
   item: MenuItemWithRules;
   priority?: boolean;
+  isHighlighted?: boolean;
+  onSetHighlight?: () => void;
 }
 
 type EditTarget = "description" | "price" | null;
 
-export function EditableMenuCard({ item, priority = false }: EditableMenuCardProps) {
+export function EditableMenuCard({
+  item,
+  priority = false,
+  isHighlighted = false,
+  onSetHighlight,
+}: EditableMenuCardProps) {
   const locale = useLocale();
   const tc = useTranslations("common");
   const { addItem } = useTray();
@@ -117,7 +124,7 @@ export function EditableMenuCard({ item, priority = false }: EditableMenuCardPro
 
   return (
     <>
-      <div className="relative rounded-xl border border-amber-400/60 bg-card p-4 hover-lift">
+      <div className={`relative rounded-xl border bg-card p-4 hover-lift group/card ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-amber-400/60"}`}>
         {/* Saving overlay */}
         {saving && (
           <div className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-black/40">
@@ -164,7 +171,12 @@ export function EditableMenuCard({ item, priority = false }: EditableMenuCardPro
             </div>
           )}
 
-          {localItem.featured && (
+          {isHighlighted && (
+            <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-amber-900 shadow">
+              ★ Chef&apos;s Pick
+            </span>
+          )}
+          {!isHighlighted && localItem.featured && (
             <span className="absolute left-2 top-2 rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
               ★
             </span>
@@ -173,6 +185,18 @@ export function EditableMenuCard({ item, priority = false }: EditableMenuCardPro
             <span className="absolute right-2 top-2 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
               -{localItem.discountPercent}%
             </span>
+          )}
+
+          {/* Set as Highlight button — visible on hover in admin mode */}
+          {!isHighlighted && onSetHighlight && (
+            <button
+              type="button"
+              onClick={onSetHighlight}
+              className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-amber-400/90 px-2.5 py-1.5 text-xs font-bold text-amber-900 opacity-0 transition-opacity group-hover/card:opacity-100 hover:bg-amber-400"
+              title="Set as Chef's Pick for this category"
+            >
+              ★ Set as Highlight
+            </button>
           )}
 
           {/* Camera button — always visible in edit mode */}

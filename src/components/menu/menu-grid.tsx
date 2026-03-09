@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import type { MenuItem } from "@/types/menu";
 import { getLocalizedName } from "@/lib/utils";
@@ -12,13 +12,20 @@ interface MenuGridProps {
   items: MenuItem[];
   categories: string[];
   isAdmin?: boolean;
+  highlightedByCategory?: Record<string, string>;
 }
 
-export function MenuGrid({ items, categories, isAdmin = false }: MenuGridProps) {
+export function MenuGrid({
+  items,
+  categories,
+  isAdmin = false,
+  highlightedByCategory: initialHighlights = {},
+}: MenuGridProps) {
   const t = useTranslations("common");
   const locale = useLocale();
   const [category, setCategory] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
 
   const filtered = useMemo(() => {
     let result = items;
@@ -42,6 +49,26 @@ export function MenuGrid({ items, categories, isAdmin = false }: MenuGridProps) 
     return result;
   }, [items, category, search, locale]);
 
+  const handleSetHighlight = useCallback(async (itemId: string, itemCategories: string[]) => {
+    // Optimistic update
+    const newHighlights = { ...highlights };
+    for (const cat of itemCategories) {
+      newHighlights[cat] = itemId;
+    }
+    setHighlights(newHighlights);
+
+    // Persist each category
+    await Promise.all(
+      itemCategories.map((cat) =>
+        fetch("/api/admin/highlights", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ category: cat, itemId }),
+        })
+      )
+    );
+  }, [highlights]);
+
   return (
     <div>
       <MenuFilter
@@ -59,13 +86,19 @@ export function MenuGrid({ items, categories, isAdmin = false }: MenuGridProps) 
         </div>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((item) =>
-            isAdmin ? (
-              <EditableMenuCard key={item.id} item={item} />
+          {filtered.map((item) => {
+            const isHighlighted = item.categories.some((cat) => highlights[cat] === item.id);
+            return isAdmin ? (
+              <EditableMenuCard
+                key={item.id}
+                item={item}
+                isHighlighted={isHighlighted}
+                onSetHighlight={() => handleSetHighlight(item.id, item.categories)}
+              />
             ) : (
-              <MenuCard key={item.id} item={item} />
-            )
-          )}
+              <MenuCard key={item.id} item={item} isHighlighted={isHighlighted} />
+            );
+          })}
         </div>
       )}
     </div>

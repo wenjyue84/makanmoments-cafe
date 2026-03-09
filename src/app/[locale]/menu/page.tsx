@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { getMenuItems, getCategories } from "@/lib/menu";
+import { getHighlightsFromDB, computeEffectiveHighlights } from "@/lib/highlights";
 import { MenuGrid } from "@/components/menu/menu-grid";
 import { MenuPageJsonLd } from "@/components/seo/json-ld";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
@@ -26,10 +27,13 @@ export default async function MenuPage() {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const isAdmin = token ? await verifyAdminToken(token) : false;
 
-  const [items, categories] = await Promise.all([
+  const [items, categories, persistedHighlights] = await Promise.all([
     getMenuItems(),
     getCategories(),
+    getHighlightsFromDB(),
   ]);
+
+  const highlightedByCategory = computeEffectiveHighlights(items, persistedHighlights);
 
   return (
     <>
@@ -37,7 +41,12 @@ export default async function MenuPage() {
       <div className="mx-auto max-w-6xl px-4 py-12">
         {isAdmin && <AdminEditBanner />}
         <MenuPageHeader />
-        <MenuGrid items={items} categories={categories} isAdmin={isAdmin} />
+        <MenuGrid
+          items={items}
+          categories={categories}
+          isAdmin={isAdmin}
+          highlightedByCategory={highlightedByCategory}
+        />
       </div>
     </>
   );

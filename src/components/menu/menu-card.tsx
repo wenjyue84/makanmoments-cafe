@@ -14,9 +14,10 @@ import { getRecipeInfo } from "@/data/recipe-info";
 interface MenuCardProps {
   item: MenuItemWithRules;
   priority?: boolean;
+  isHighlighted?: boolean;
 }
 
-export function MenuCard({ item, priority = false }: MenuCardProps) {
+export function MenuCard({ item, priority = false, isHighlighted = false }: MenuCardProps) {
   const locale = useLocale();
   const tc = useTranslations("common");
   const { addItem } = useTray();
@@ -28,7 +29,7 @@ export function MenuCard({ item, priority = false }: MenuCardProps) {
 
   return (
     <>
-      <div className="group rounded-xl border border-border bg-card p-4 hover-lift">
+      <div className={`group rounded-xl border bg-card p-4 hover-lift ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-border"}`}>
         {/* Photo — clickable only when recipe data exists */}
         <div
           className={`mb-3 relative aspect-[4/3] overflow-hidden rounded-lg bg-muted ${hasRecipe ? "cursor-pointer" : ""}`}
@@ -54,7 +55,12 @@ export function MenuCard({ item, priority = false }: MenuCardProps) {
               🍽️
             </div>
           )}
-          {item.featured && (
+          {isHighlighted && (
+            <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-amber-900 shadow">
+              ★ Chef&apos;s Pick
+            </span>
+          )}
+          {!isHighlighted && item.featured && (
             <span className="absolute left-2 top-2 rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">
               ★
             </span>
