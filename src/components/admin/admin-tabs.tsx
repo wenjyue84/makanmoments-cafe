@@ -7,6 +7,7 @@ import { AdminMenuTable } from "./admin-menu-table";
 import { AdminCategoriesPanel } from "./admin-categories-panel";
 import { AdminBlogTable } from "./admin-blog-table";
 import { AdminRulesPanel } from "./admin-rules-panel";
+import { AdminTestsPanel } from "./admin-tests-panel";
 import { cn } from "@/lib/utils";
 
 interface AdminTabsProps {
@@ -15,7 +16,7 @@ interface AdminTabsProps {
   posts: BlogPost[];
 }
 
-const TABS = ["Menu", "Categories", "Rules", "Blog"] as const;
+const TABS = ["Menu", "Categories", "Rules", "Blog", "Tests"] as const;
 type Tab = (typeof TABS)[number];
 
 export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
@@ -50,6 +51,7 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
         <AdminRulesPanel categories={categories} />
       )}
       {activeTab === "Blog" && <AdminBlogTable initialPosts={posts} />}
+      {activeTab === "Tests" && <AdminTestsPanel />}
     </div>
   );
 }

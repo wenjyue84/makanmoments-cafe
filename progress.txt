@@ -470,3 +470,59 @@ Technical Brief for Claude: US-008 Contact Page Editor
 ### Gotchas
 - TypeScript check passes clean (no errors introduced)
 - gray-matter.stringify produces trailing newline — consistent with about.md
+## Iteration 8 - Tue, Mar 10, 2026  2:43:44 AM
+Completed: Admin WYSIWYG Contact Page Editor (ID: US-008) in 6m
+
+
+## Pre-analysis for US-009 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** application, not Frappe/Python. Here is the technical brief based on the JSON provided:
+
+**Objective:** Implement a "Tests" tab in the admin panel to programmatically run a test suite and display results.
+
+**Files to Modify/Create:**
+*   `src/components/admin/admin-tabs.tsx`: Add 'Tests' to the tab array.
+*   `src/components/admin/admin-tests-panel.tsx`: (New) Build the UI for listing tests, showing status, and running tests.
+*   `src/app/api/admin/tests/route.ts`: (New) API endpoint to GET test definitions and POST to trigger test runs.
+*   `src/app/api/admin/tests/generate-stories/route.ts`: (New) API endpoint to write failing test results into `prd.json`.
+*   `src/lib/tests/`: (New Directory) Create test files: `smoke.ts`, `unit.ts`, `integration.ts`, `e2e.ts`.
+
+**Implementation Approach:**
+1.  Define individual test functions within the `src/lib/tests/` directory. Each function should be async and return `{ pass: boolean, log: string }`.
+2.  Use Playwright for E2E tests in `e2e.ts`; ensure `@playwright/test` is installed.
+3.  The `/api/admin/tests` POST endpoint should import and execute the requested test function.
+4.  Use a `TransformStream` to stream test progress and results from the API route to the frontend for real-time updates.
+5.  The `generate-stories` endpoint will read `prd.json`, append new stories based on failed tests, and write the file back.
+
+**Gotchas & Edge Cases:**
+*   Running E2E tests via an API can be slow; implement robust streaming and handle potential timeouts.
+*   The API route modifying `prd.json` must have proper error handling and permissions to write to the file system.
+*   Ensure headless browser environments for Playwright are correctly configured on the server.
+*   State management on the frontend needs to handle concurrent test runs and live log updates efficiently.
+
+
+## Iteration 9 - Story: Admin Tests Tab with Programmatic Test Suite (US-009)
+
+### What was implemented
+- CREATED `src/lib/tests/types.ts` — TypeScript interfaces: TestResult, TestDefinition, TestMeta, TestCategory, StreamEvent
+- CREATED `src/lib/tests/smoke.ts` — 5 smoke tests: homepage, menu, blog, contact, about pages (HTTP 200 checks via fetch)
+- CREATED `src/lib/tests/unit.ts` — 4 unit tests: price formatting, CAFE constants structure, slug generation, cn() utility
+- CREATED `src/lib/tests/integration.ts` — 4 integration tests: env vars present, DB connection (SELECT 1), menu data fetch (getCategories()), admin API protection check
+- CREATED `src/lib/tests/e2e.ts` — 5 E2E tests: homepage contains cafe name, menu page has RM prices, contact page has address, /ms locale loads, /zh locale loads
+- CREATED `src/lib/tests/index.ts` — exports ALL_TESTS array + getTestMeta() + getTestById() helpers
+- CREATED `src/app/api/admin/tests/route.ts` — GET returns test metadata; POST runs specified tests (or all) and streams NDJSON results via ReadableStream
+- CREATED `src/app/api/admin/tests/generate-stories/route.ts` — POST takes failing test list, appends new US-FIX-* stories to prd.json
+- CREATED `src/components/admin/admin-tests-panel.tsx` — Client component with: Load Tests button, Run All button, per-test Run buttons, StatusBadge (pending/running/pass/fail), streaming result display, summary bar, Generate Stories button for failing tests
+- UPDATED `src/components/admin/admin-tabs.tsx` — Added "Tests" to TABS array; renders AdminTestsPanel
+
+### Patterns discovered
+- No Playwright installed/needed — smoke and E2E tests use fetch() for HTTP/HTML checking; unit tests use require() for dynamic imports
+- Streaming via ReadableStream + NDJSON (newline-delimited JSON) works cleanly in Next.js API routes with `runtime = "nodejs"`
+- Client reads streaming response with `res.body.getReader()` + `TextDecoder`; splits buffer on "\n"; parses each line as JSON
+- Dynamic require() inside unit tests avoids module bundling issues for testing utility functions
+- TypeScript check: `npx tsc --noEmit` passes cleanly (no new errors introduced)
+
+### Gotchas
+- EventSource doesn't support POST — use fetch + ReadableStream for POST-based streaming
+- Buffer splitting: always keep the last incomplete line in a buffer variable; process only lines that end with "\n"
+- generate-stories reads/writes prd.json via `path.join(process.cwd(), "prd.json")` — works in dev, may fail on read-only Vercel (same limitation as content/about.md writes)
+- E2E tests use NEXT_PUBLIC_SITE_URL as base URL (falls back to localhost:3030 for dev)
