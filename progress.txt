@@ -356,3 +356,71 @@ Completed: Admin WYSIWYG Blog Editor (ID: US-005) in 9m
 - gray-matter.stringify adds trailing newline — file will have consistent formatting
 - The editor component renders the full page layout (including padding/max-width container) rather than being injected into the existing page — avoids prop-drilling the content to every section
 - TypeScript: `ambianceFeatures` prop must be `readonly string[]` to accept `CAFE.ambiance` (which is inferred as readonly tuple)
+## Iteration 6 - Tue, Mar 10, 2026  2:27:02 AM
+Completed: Admin WYSIWYG About Page Editor (ID: US-006) in 6m
+
+
+## Pre-analysis for US-007 (Gemini 2.5 Pro)
+This user story describes a **Next.js/TypeScript** feature, not a Frappe/Python one. The file paths (`.tsx`, `route.ts`) and libraries (`next/navigation`) confirm a React/Node.js environment.
+
+Here is the technical brief based on the actual story content:
+
+**Project:** Next.js / TypeScript
+
+**Objective:** Implement an admin settings panel for the AI Chat Waiter.
+
+**1. Files to Modify/Create:**
+
+*   `src/components/chat/chat-widget.tsx`: Add a gear icon `(<SettingsIcon />)` conditionally rendered for admins.
+*   `src/app/admin/chat-settings/page.tsx` **(New)**: Create the settings UI page with form inputs.
+*   `src/app/api/admin/chat-settings/route.ts` **(New)**: API endpoint for GET/POSTing settings to a JSON file.
+*   `src/lib/chat/provider.ts` (or similar): Refactor to read settings from the JSON file instead of hardcoded values.
+*   `data/chat-settings.json` **(New)**: Create this file to store settings (and add to `.gitignore`).
+*   `middleware.ts`: Ensure the `/admin/*` route is protected and only accessible to authenticated admins.
+
+**2. Key Next.js/React Concepts Involved:**
+
+*   **API Routes:** The `route.ts` file will handle backend logic for settings management.
+*   **Client & Server Components:** The settings page will be a server component fetching data, containing client components for interactive form elements.
+*   **File-based Routing:** The settings panel will live at the `/admin/chat-settings` URL.
+
+**3. Implementation Approach:**
+
+1.  Build the API route (`/api/admin/chat-settings`) to read from and write to `data/chat-settings.json` using Node's `fs` module.
+2.  Create the frontend page (`/admin/chat-settings`) to fetch settings from the API and render the form.
+3.  On form submission, `POST` the updated configuration back to the API.
+4.  Modify the server-side chat logic to consume the settings from `data/chat-settings.json` on each request.
+5.  In the `ChatWidget` component, add a client-side check for admin status to show/hide the settings gear icon, which links to the new page.
+
+**4. Gotchas & Edge Cases:**
+
+*   **Authentication:** The `/admin` path and API route must be strictly protected via `middleware.ts`.
+*   **Settings Caching:** The server-side AI provider must re-read the JSON file on each request, not just at startup, to get live updates.
+*   **Error Handling:** Implement a fallback to default settings if `chat-settings.json` is missing or corrupted.
+*   **Concurrency:** Writing to a flat file is not atomic. For high-traffic systems, consider a database or a key-value store instead of a JSON file to prevent race conditions.
+
+
+## Iteration 7 - Story: AI Waiter Admin Settings Panel (US-007)
+
+### What was implemented
+- CREATED `data/chat-settings.json` — runtime settings file (gitignored): systemPromptPrefix, model ("groq"|"openrouter"), temperature
+- CREATED `src/lib/chat/settings.ts` — readChatSettings() and writeChatSettings() with defaults and validation
+- UPDATED `src/lib/chat/system-prompt.ts` — caches knowledge files separately; reads settings prefix on every getSystemPrompt() call; exports invalidateSystemPromptCache()
+- CREATED `src/app/api/admin/chat-settings/route.ts` — GET returns current settings; POST validates + writes + invalidates cache
+- CREATED `src/app/api/admin/verify/route.ts` — returns 200 if admin JWT valid (protected by middleware); used by chat widget
+- CREATED `src/components/admin/chat-settings-panel.tsx` — client form with textarea (prompt prefix), radio (model), range (temperature), Save button
+- CREATED `src/app/admin/chat-settings/page.tsx` — server page with admin auth check + breadcrumb nav
+- UPDATED `src/components/chat/chat-widget.tsx` — fetches /api/admin/verify on mount; shows amber gear icon (Settings from lucide) linking to /admin/chat-settings when isAdmin
+- UPDATED `src/app/api/chat/route.ts` — calls readChatSettings() on each request; selects primary/fallback models based on settings.model; passes settings.temperature
+
+### Patterns discovered
+- Middleware redirects API routes to /admin/login (HTML, 200) for unauthenticated requests — use `redirect: "manual"` in fetch() so the redirect returns an opaque response (status 0, r.ok=false) instead of following to the login page
+- /api/admin/verify route just returns 200 — middleware is the actual gatekeeper; the route itself needs no auth logic
+- Keep knowledge file cache separate from settings — knowledge files rarely change; settings change on every admin save. Split caches so invalidating settings doesn't force re-reading large markdown files unnecessarily
+
+### Gotchas
+- `data/chat-settings.json` is gitignored — must create the file manually on new deployments or Vercel (consider seeding it from an env var in production)
+- Chat API route now reads settings on every request (no cache) — fine for low-traffic cafe site but would need caching for high traffic
+- Gear icon position: `bottom-20 right-4` on mobile (above chat button), `bottom-4 right-20` on desktop (left of chat button)
+## Iteration 7 - Tue, Mar 10, 2026  2:35:34 AM
+Completed: AI Waiter Admin Settings Panel (ID: US-007)
