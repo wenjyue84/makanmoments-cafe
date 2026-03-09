@@ -168,3 +168,65 @@ Completed: Per-Category Highlighted Item on Menu Page (ID: US-002) in 6m
 
 ## Iteration 3 - Mon, Mar 09, 2026 05:59:43 PM
 Completed: Blog Page with Full Article Layout (ID: US-003)
+## Iteration 3 - Tue, Mar 10, 2026  2:01:05 AM
+Completed: Blog Page with Full Article Layout (ID: US-003) in 3m
+
+
+## Pre-analysis for US-004 (Gemini 2.5 Pro)
+### Technical Brief: US-004 - Import Markdown Blog Posts
+
+**Objective:** Integrate local Markdown blog posts from a new `content/blog/` directory into the existing Notion-based blog system.
+
+**Note:** The user story describes a **Next.js/TypeScript** project, not a Frappe/Python one. The following brief is tailored to the actual technical stack described in the JSON.
+
+**1. Core Files & Dependencies:**
+*   **Create:** `src/lib/blog-local.ts` to handle reading/parsing local markdown files.
+*   **Create:** `content/blog/` directory in the project root to store the `.md` files.
+*   **Modify:** `src/lib/blog.ts` to merge Notion posts with local markdown posts.
+*   **Modify:** `package.json` to add `gray-matter` (for frontmatter) and `marked` (for MD to HTML).
+*   **Modify:** `src/app/[locale]/blog/[slug]/page.tsx` to handle rendering of local markdown content.
+
+**2. Implementation Approach:**
+1.  **File Sync:** Manually copy or script the copying of posts from `C:\Users\Jyue\Documents\2-areas\makan-moments-cafe\3-resources\posts\ai-posts` into the project's `content/blog/` directory.
+2.  **Local Data Fetcher:** In `src/lib/blog-local.ts`, create a `readLocalPosts()` function that:
+    *   Uses Node's `fs.readdirSync` to list all files in `content/blog/`.
+    *   For each file, uses `gray-matter` to parse the frontmatter (`data`) and content.
+    *   Normalizes the parsed data into the existing `Post` type (defined in `src/types/blog.ts`). Slug should be derived from the filename.
+3.  **Merge Data Sources:** In `src/lib/blog.ts`, update `getBlogPosts()`:
+    *   Fetch posts from Notion (existing logic).
+    *   Call `readLocalPosts()` from `blog-local.ts`.
+    *   Combine the two arrays, and sort the merged result by date.
+4.  **Render Detail Page:** In the `[slug]` page component, create a `getPost(slug)` function that checks both sources. If the slug matches a local post, it should use `marked` to convert the markdown body to an HTML string and render it (e.g., using `dangerouslySetInnerHTML`).
+
+**3. Gotchas & Edge Cases:**
+*   **Data Consistency:** Ensure the markdown frontmatter (title, date, tags) maps perfectly to the `Post` type used by Notion posts to prevent rendering errors.
+*   **Date Handling:** The logic must robustly parse dates, whether from the filename (`YYYY-MM-DD`) or frontmatter, to ensure correct sorting.
+*   **Slug Uniqueness:** Slugs derived from filenames must not conflict with slugs from Notion posts.
+*   **Build Process:** The `content/blog/` directory must exist and be populated *before* the Next.js build command (`next build`) is run.
+
+
+## Iteration 4 - Story: Import Markdown Blog Posts (US-004)
+
+### What was implemented
+- INSTALLED `gray-matter` for frontmatter parsing
+- CREATED `content/blog/` directory with all 134 markdown posts copied from `3-resources/posts/ai-posts/`
+- CREATED `src/lib/blog-local.ts` with:
+  - `readLocalPosts()` — reads all `.md` files, parses frontmatter, extracts title/date/tags/excerpt
+  - `getLocalPost(slug)` — single post lookup
+  - `getLocalSlugs()` — all slugs for generateStaticParams
+- UPDATED `src/lib/blog.ts` to merge SQL posts + local markdown posts in `getBlogPosts()`, `getBlogPost()`, `getBlogSlugs()`, `getAllBlogPostsForAdmin()`
+
+### Patterns discovered
+- Posts have TWO frontmatter styles: (1) YAML `---`...`---` delimiters, (2) Obsidian inline `**Created:**` style
+- gray-matter handles YAML frontmatter; Obsidian-style inline metadata is parsed manually
+- `data.Date` from gray-matter is a JS Date object (not string) — must handle `.toISOString().slice(0,10)`
+- All 134 posts successfully parse with dates extracted from filename prefix
+- PostContent already uses react-markdown — no need for `marked` package
+
+### Gotchas
+- `gray-matter` parses date-like YAML values as JS Date objects, not strings
+- Title extraction must strip emoji for cleaner display (regex `[\u{1F600}-\u{1FFFF}]` with `gu` flags)
+- The SQL db.ts falls back to `[]` when DATABASE_URL is unset — local posts fill the gap in dev
+
+## Iteration 4 - Tue, Mar 10, 2026
+Completed: Import Markdown Blog Posts from 3-resources/posts (ID: US-004)

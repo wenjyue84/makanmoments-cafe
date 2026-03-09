@@ -1,5 +1,6 @@
 import sql from "./db";
 import type { BlogPost } from "@/types/blog";
+import { readLocalPosts, getLocalPost, getLocalSlugs } from "./blog-local";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowToBlogPost(row: any): BlogPost {
@@ -21,14 +22,34 @@ function rowToBlogPost(row: any): BlogPost {
   };
 }
 
+function sortByDate(posts: BlogPost[]): BlogPost[] {
+  return posts.sort((a, b) => {
+    const da = a.publishedAt ?? "";
+    const db = b.publishedAt ?? "";
+    return db.localeCompare(da); // newest first
+  });
+}
+
 export async function getBlogPosts(locale?: string): Promise<BlogPost[]> {
   const rows = locale
     ? await sql`SELECT * FROM blog_posts WHERE published = true AND language = ${locale} ORDER BY published_at DESC`
     : await sql`SELECT * FROM blog_posts WHERE published = true ORDER BY published_at DESC`;
-  return rows.map(rowToBlogPost);
+  const sqlPosts = rows.map(rowToBlogPost);
+
+  // Merge with local markdown posts
+  const localPosts = readLocalPosts();
+  const filtered = locale
+    ? localPosts.filter((p) => p.language === locale)
+    : localPosts;
+
+  return sortByDate([...sqlPosts, ...filtered]);
 }
 
 export async function getBlogPost(slug: string): Promise<BlogPost | null> {
+  // Check local markdown first (no DB round-trip for local slugs)
+  const localPost = getLocalPost(slug);
+  if (localPost) return localPost;
+
   const rows = await sql`
     SELECT * FROM blog_posts WHERE slug = ${slug} AND published = true LIMIT 1
   `;
@@ -37,11 +58,15 @@ export async function getBlogPost(slug: string): Promise<BlogPost | null> {
 
 export async function getBlogSlugs(): Promise<string[]> {
   const rows = await sql`SELECT slug FROM blog_posts WHERE published = true`;
-  return rows.map((r: Record<string, unknown>) => r.slug as string);
+  const sqlSlugs = rows.map((r: Record<string, unknown>) => r.slug as string);
+  const localSlugs = getLocalSlugs();
+  return [...sqlSlugs, ...localSlugs];
 }
 
 // Admin — all posts including drafts
 export async function getAllBlogPostsForAdmin(): Promise<BlogPost[]> {
   const rows = await sql`SELECT * FROM blog_posts ORDER BY created_at DESC`;
-  return rows.map(rowToBlogPost);
+  const sqlPosts = rows.map(rowToBlogPost);
+  const localPosts = readLocalPosts();
+  return sortByDate([...sqlPosts, ...localPosts]);
 }

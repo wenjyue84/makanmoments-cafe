@@ -16,20 +16,20 @@
       "id": "US-001",
       "title": "Floating Order Tray Panel",
       "priority": 1,
-      "description": "When guests click '+ Add' on any menu item, the item should be added to a visible floating tray/cart panel. The tray should show all selected items with quantities and total price. Guests can show this tray to the human waiter or use it as a reference when ordering at the POS. The tray must float above other content, be dismissible, and work on mobile. The TrayContext (src/lib/tray-context.tsx) already stores items \u00e2\u20ac\u201d we just need the visible UI panel. Also add a floating tray button (cart icon with badge count) near the chat widget button.",
+      "description": "When guests click '+ Add' on any menu item, the item should be added to a visible floating tray/cart panel. The tray should show all selected items with quantities and total price. Guests can show this tray to the human waiter or use it as a reference when ordering at the POS. The tray must float above other content, be dismissible, and work on mobile. The TrayContext (src/lib/tray-context.tsx) already stores items â€” we just need the visible UI panel. Also add a floating tray button (cart icon with badge count) near the chat widget button.",
       "acceptanceCriteria": [
         "Clicking '+ Add' on a menu item adds it to the tray (quantity increments if added again)",
         "A floating cart icon button appears at bottom-left (or bottom-right near chat but non-overlapping) with a badge showing total item count",
         "Clicking the cart icon opens a tray panel showing: item name, quantity (+/- controls), price, and total",
-        "The panel has a 'Clear Order' button and a title like 'Your Order \u00e2\u20ac\u201d Show to Waiter'",
+        "The panel has a 'Clear Order' button and a title like 'Your Order â€” Show to Waiter'",
         "On mobile the tray is a bottom sheet; on desktop it's a floating panel",
         "The tray is dismissible (X button or click outside)",
-        "Verify in Chrome DevTools: click Add \u00e2\u2020\u2019 badge count updates, open tray \u00e2\u2020\u2019 items visible"
+        "Verify in Chrome DevTools: click Add â†’ badge count updates, open tray â†’ items visible"
       ],
       "technicalNotes": [
         "TrayContext already in src/lib/tray-context.tsx with addItem/removeItem/clearTray/totalPrice",
-        "Create src/components/menu/tray-panel.tsx \u00e2\u20ac\u201d the floating panel UI",
-        "Create src/components/menu/tray-button.tsx \u00e2\u20ac\u201d the floating button with badge",
+        "Create src/components/menu/tray-panel.tsx â€” the floating panel UI",
+        "Create src/components/menu/tray-button.tsx â€” the floating button with badge",
         "Add TrayButton and TrayPanel to src/app/[locale]/layout.tsx alongside ChatWidget",
         "Use Tailwind for mobile bottom-sheet vs desktop floating panel",
         "Position: tray button at bottom-left, chat at bottom-right to avoid overlap",
@@ -45,13 +45,13 @@
       "priority": 2,
       "description": "On the menu page (/en/menu), each category section should have one item visually highlighted as the 'chef's pick' or 'must try'. By default, the first item in each category (by sortOrder) is highlighted. When admin is logged in, they can click any item to set it as the highlighted item for its category (WYSIWYG). The highlighted item gets a prominent badge/border treatment. The selected highlight per category is persisted in the DB (new column or separate table).",
       "acceptanceCriteria": [
-        "Each category section shows exactly one item with a prominent 'Chef's Pick' or '\u00e2\u02dc\u2026 Highlighted' visual treatment (gold border or badge)",
+        "Each category section shows exactly one item with a prominent 'Chef's Pick' or 'â˜… Highlighted' visual treatment (gold border or badge)",
         "Default highlighted item is the lowest sort_order item in the category",
         "When admin is logged in, hovering an item shows a 'Set as Highlight' button",
         "Clicking 'Set as Highlight' immediately updates the UI and persists to DB via POST /api/admin/highlights",
         "Non-admin users never see the 'Set as Highlight' button",
         "Highlighted state survives page reload",
-        "Verify in Chrome DevTools: admin clicks set \u00e2\u2020\u2019 highlight updates without full page reload"
+        "Verify in Chrome DevTools: admin clicks set â†’ highlight updates without full page reload"
       ],
       "technicalNotes": [
         "Add a new DB table `category_highlights` (category TEXT PRIMARY KEY, item_id TEXT) or a column `highlight_for_category` on menu_items",
@@ -79,10 +79,10 @@
         "Verify in browser at http://localhost:3030/en/blog: featured post visible, grid below it"
       ],
       "technicalNotes": [
-        "Redesign src/app/[locale]/blog/page.tsx \u00e2\u20ac\u201d split posts into featured (first) + rest",
+        "Redesign src/app/[locale]/blog/page.tsx â€” split posts into featured (first) + rest",
         "Update src/components/blog/post-card.tsx for the card variant",
         "Create src/components/blog/featured-post.tsx for the hero section",
-        "Blog detail page already exists at src/app/[locale]/blog/[slug]/page.tsx \u00e2\u20ac\u201d ensure it renders content",
+        "Blog detail page already exists at src/app/[locale]/blog/[slug]/page.tsx â€” ensure it renders content",
         "Use prose typography class from Tailwind for article body"
       ],
       "dependencies": [],
@@ -100,12 +100,12 @@
         "Each markdown post renders with its full content on the detail page /en/blog/[slug]",
         "Posts are sorted by date (newest first) regardless of source",
         "Markdown post frontmatter parsed for: title, date, tags, excerpt (first paragraph after ---)",
-        "Verify: http://localhost:3030/en/blog shows markdown posts; click one \u00e2\u2020\u2019 full content displayed"
+        "Verify: http://localhost:3030/en/blog shows markdown posts; click one â†’ full content displayed"
       ],
       "technicalNotes": [
         "Copy markdown files from C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\posts\\ai-posts to project root: content/blog/",
         "Install gray-matter for frontmatter parsing: npm install gray-matter",
-        "Install marked or remark for markdown \u00e2\u2020\u2019 HTML: npm install marked",
+        "Install marked or remark for markdown â†’ HTML: npm install marked",
         "Create src/lib/blog-local.ts with readLocalPosts() function using fs.readdirSync on content/blog/",
         "Update src/lib/blog.ts getBlogPosts() to merge Notion posts + local markdown posts",
         "Slug = filename without .md, date from filename prefix YYYY-MM-DD or frontmatter",
@@ -116,7 +116,7 @@
         "US-003"
       ],
       "estimatedComplexity": "medium",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-005",
@@ -130,7 +130,7 @@
         "Changes auto-save or have a 'Save' button that calls PATCH /api/admin/blog/[slug]",
         "After saving, the page refreshes/revalidates and shows the updated content",
         "Non-admin users see no editing UI",
-        "Verify: admin clicks edit on a post \u00e2\u2020\u2019 edits title \u00e2\u2020\u2019 saves \u00e2\u2020\u2019 page shows new title"
+        "Verify: admin clicks edit on a post â†’ edits title â†’ saves â†’ page shows new title"
       ],
       "technicalNotes": [
         "Add isAdmin prop to blog listing and detail pages (via cookies check in server component, same pattern as menu page)",
@@ -158,14 +158,14 @@
         "A floating 'Save Changes' button appears in edit mode",
         "Saving calls POST /api/admin/content/about and writes to content/about.md",
         "After saving, the page shows the updated content without a full reload",
-        "Non-admin users see no editing UI \u00e2\u20ac\u201d the page looks identical to current",
-        "Verify: admin edits a paragraph on about page, saves, refreshes \u00e2\u2020\u2019 new text persists"
+        "Non-admin users see no editing UI â€” the page looks identical to current",
+        "Verify: admin edits a paragraph on about page, saves, refreshes â†’ new text persists"
       ],
       "technicalNotes": [
         "Read the current src/app/[locale]/about/page.tsx to understand current content structure",
         "Create content/about.md (markdown with sections) that the about page reads for its text content",
         "Update about/page.tsx to read from content/about.md via fs (server component)",
-        "Create src/components/admin/admin-page-editor.tsx \u00e2\u20ac\u201d generic WYSIWYG editor wrapper component",
+        "Create src/components/admin/admin-page-editor.tsx â€” generic WYSIWYG editor wrapper component",
         "Create API route src/app/api/admin/content/[page]/route.ts with POST handler",
         "The page editor uses contenteditable divs for each text block, tracks changes in state",
         "Add isAdmin check via cookies in about/page.tsx (same pattern as menu page)",
@@ -181,13 +181,13 @@
       "priority": 7,
       "description": "After admin login, the chat widget (bottom-right floating button) should show a small gear/settings icon. Clicking it opens an AI waiter settings panel (modal or page at /admin/chat-settings) where admin can configure: system prompt text, AI model selection (Groq vs OpenRouter), response style, and view recent conversation logs. The interface should feel similar to an AI assistant management panel (like in the digiman project's rainbow AI assistant).",
       "acceptanceCriteria": [
-        "When admin is logged in, a small \u00e2\u0161\u2122 gear icon appears on or near the chat widget button",
+        "When admin is logged in, a small âš™ gear icon appears on or near the chat widget button",
         "Clicking the gear opens a settings panel (full-page modal or /admin/chat-settings route)",
         "Settings panel shows: current system prompt (editable textarea), model selector (Groq / OpenRouter), temperature slider",
         "A 'Save Settings' button persists changes to a settings file or DB",
         "The AI chat API reads these settings instead of hardcoded values",
         "An optional 'Recent Conversations' section shows last 10 chat sessions (if logging exists)",
-        "Verify: admin edits system prompt, saves, sends a chat message \u00e2\u2020\u2019 AI responds with updated persona"
+        "Verify: admin edits system prompt, saves, sends a chat message â†’ AI responds with updated persona"
       ],
       "technicalNotes": [
         "Check if admin is logged in by calling GET /api/admin/verify from the chat widget client component",
@@ -215,14 +215,14 @@
         "Saving calls POST /api/admin/content/contact and writes to content/contact.md",
         "After saving, the page shows updated content",
         "Non-admin users see no editing UI",
-        "Verify: admin changes opening hours, saves, refreshes \u00e2\u2020\u2019 new hours displayed"
+        "Verify: admin changes opening hours, saves, refreshes â†’ new hours displayed"
       ],
       "technicalNotes": [
         "Read the current src/app/[locale]/contact/page.tsx to understand existing contact content",
         "Create content/contact.md with structured contact fields (YAML-like frontmatter)",
         "Update contact/page.tsx to read from content/contact.md (server component)",
         "Reuse AdminPageEditor component created in US-006",
-        "Reuse API route src/app/api/admin/content/[page]/route.ts \u00e2\u20ac\u201d 'contact' as [page] param",
+        "Reuse API route src/app/api/admin/content/[page]/route.ts â€” 'contact' as [page] param",
         "Fields to make editable: address, phone, email, hours (per day), map embed URL, tagline"
       ],
       "dependencies": [
@@ -244,12 +244,12 @@
         "Individual 'Run' button runs a single test",
         "Test results show: total passed, failed, duration",
         "A 'Generate Stories' button creates new prd.json entries for failing tests",
-        "Verify: click 'Run All' \u00e2\u2020\u2019 tests run \u00e2\u2020\u2019 results display with pass/fail status"
+        "Verify: click 'Run All' â†’ tests run â†’ results display with pass/fail status"
       ],
       "technicalNotes": [
         "Add 'Tests' to TABS array in src/components/admin/admin-tabs.tsx",
         "Create src/components/admin/admin-tests-panel.tsx",
-        "Create src/app/api/admin/tests/route.ts \u00e2\u20ac\u201d GET (list tests), POST (run test by id)",
+        "Create src/app/api/admin/tests/route.ts â€” GET (list tests), POST (run test by id)",
         "Create src/lib/tests/ directory with test definitions:",
         "  - smoke.ts: check homepage 200, menu page 200, blog page 200, contact page 200, about page 200",
         "  - unit.ts: test menu data parsing, blog post slug generation, price formatting, tray context logic",
@@ -258,7 +258,7 @@
         "Each test is a function: async () => { steps, assertions, return { pass: boolean, log: string } }",
         "API POST /api/admin/tests runs the test and streams results using TransformStream",
         "Install @playwright/test if not already installed; use headless Chrome for e2e tests",
-        "Generate stories button: POST to /api/admin/tests/generate-stories \u00e2\u20ac\u201d reads failing tests and appends to prd.json"
+        "Generate stories button: POST to /api/admin/tests/generate-stories â€” reads failing tests and appends to prd.json"
       ],
       "dependencies": [],
       "estimatedComplexity": "large",
@@ -268,16 +268,16 @@
       "id": "US-010",
       "title": "Chrome DevTools Verification for All Features",
       "priority": 10,
-      "description": "After implementing each feature, use Chrome DevTools (via MCP or Playwright) to verify the implementation has no console errors, no network failures, and renders correctly on mobile (390px) and desktop (1280px). This is a quality gate story \u00e2\u20ac\u201d it does not add new features but ensures all previous stories are working in the browser.",
+      "description": "After implementing each feature, use Chrome DevTools (via MCP or Playwright) to verify the implementation has no console errors, no network failures, and renders correctly on mobile (390px) and desktop (1280px). This is a quality gate story â€” it does not add new features but ensures all previous stories are working in the browser.",
       "acceptanceCriteria": [
-        "Navigate to http://localhost:3030/en \u00e2\u20ac\u201d no console errors, hero image loads within 3s",
-        "Navigate to http://localhost:3030/en/menu \u00e2\u20ac\u201d click Add on 3 items \u00e2\u2020\u2019 tray badge shows 3 \u00e2\u2020\u2019 open tray \u00e2\u2020\u2019 items listed correctly",
-        "Navigate to http://localhost:3030/en/blog \u00e2\u20ac\u201d featured post visible, grid below it, click a markdown post \u00e2\u2020\u2019 full content renders",
-        "Navigate to http://localhost:3030/en/about \u00e2\u20ac\u201d page renders without errors",
-        "Navigate to http://localhost:3030/en/contact \u00e2\u20ac\u201d page renders without errors",
-        "Log in as admin (POST /api/admin/login) \u00e2\u20ac\u201d menu edit banner visible, blog edit buttons visible",
-        "Open chat widget \u00e2\u2020\u2019 gear icon visible (admin) \u00e2\u2020\u2019 clicking opens settings panel",
-        "Navigate to http://localhost:3030/admin \u00e2\u2020\u2019 Tests tab visible \u00e2\u2020\u2019 Run All \u00e2\u2020\u2019 at least smoke tests pass",
+        "Navigate to http://localhost:3030/en â€” no console errors, hero image loads within 3s",
+        "Navigate to http://localhost:3030/en/menu â€” click Add on 3 items â†’ tray badge shows 3 â†’ open tray â†’ items listed correctly",
+        "Navigate to http://localhost:3030/en/blog â€” featured post visible, grid below it, click a markdown post â†’ full content renders",
+        "Navigate to http://localhost:3030/en/about â€” page renders without errors",
+        "Navigate to http://localhost:3030/en/contact â€” page renders without errors",
+        "Log in as admin (POST /api/admin/login) â€” menu edit banner visible, blog edit buttons visible",
+        "Open chat widget â†’ gear icon visible (admin) â†’ clicking opens settings panel",
+        "Navigate to http://localhost:3030/admin â†’ Tests tab visible â†’ Run All â†’ at least smoke tests pass",
         "No 404 image errors, no hydration mismatches, no TypeScript build errors (rtk tsc check)",
         "Mobile (390px): tray button not overlapping chat button, no horizontal scroll"
       ],
