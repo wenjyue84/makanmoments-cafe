@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 interface MenuFilterProps {
   categories: string[];
+  displayCategories?: string[];
   selectedCategory: string | null;
   searchQuery: string;
   onCategoryChange: (category: string | null) => void;
@@ -15,6 +16,7 @@ interface MenuFilterProps {
 
 export function MenuFilter({
   categories,
+  displayCategories = [],
   selectedCategory,
   searchQuery,
   onCategoryChange,
@@ -51,7 +53,8 @@ export function MenuFilter({
       </div>
 
       {/* Category pills — horizontally scrollable on mobile, wrapping on desktop */}
-      <div className="flex flex-nowrap gap-2 overflow-x-auto md:flex-wrap md:overflow-visible">
+      <div className="flex flex-nowrap gap-2 overflow-x-auto pb-0.5 md:flex-wrap md:overflow-visible">
+        {/* All button */}
         <button
           onClick={() => onCategoryChange(null)}
           className={cn(
@@ -63,6 +66,8 @@ export function MenuFilter({
         >
           {tc("allCategories")}
         </button>
+
+        {/* POS categories */}
         {categories.map((cat) => (
           <button
             key={cat}
@@ -72,6 +77,22 @@ export function MenuFilter({
               selectedCategory === cat
                 ? "bg-primary text-primary-foreground"
                 : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+            )}
+          >
+            {cat}
+          </button>
+        ))}
+
+        {/* Display categories — visually distinct with amber styling */}
+        {displayCategories.map((cat) => (
+          <button
+            key={`dc-${cat}`}
+            onClick={() => onCategoryChange(`__dc__${cat}`)}
+            className={cn(
+              "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+              selectedCategory === `__dc__${cat}`
+                ? "bg-amber-500 text-white"
+                : "border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
             )}
           >
             {cat}

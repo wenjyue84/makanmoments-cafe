@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
-import { getMenuItems, getCategories } from "@/lib/menu";
+import { getMenuItems, getCategories, getDisplayCategories } from "@/lib/menu";
 import { getHighlightsFromDB, computeEffectiveHighlights } from "@/lib/highlights";
 import { MenuGrid } from "@/components/menu/menu-grid";
 import { MenuPageJsonLd } from "@/components/seo/json-ld";
@@ -27,13 +27,17 @@ export default async function MenuPage() {
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const isAdmin = token ? await verifyAdminToken(token) : false;
 
-  const [items, categories, persistedHighlights] = await Promise.all([
+  const [items, categories, displayCats, persistedHighlights] = await Promise.all([
     getMenuItems(),
     getCategories(),
+    getDisplayCategories(),
     getHighlightsFromDB(),
   ]);
 
   const highlightedByCategory = computeEffectiveHighlights(items, persistedHighlights);
+  const displayCategoryNames = displayCats
+    .filter((dc) => dc.active)
+    .map((dc) => dc.name);
 
   return (
     <>
@@ -44,6 +48,7 @@ export default async function MenuPage() {
         <MenuGrid
           items={items}
           categories={categories}
+          displayCategories={displayCategoryNames}
           isAdmin={isAdmin}
           highlightedByCategory={highlightedByCategory}
         />

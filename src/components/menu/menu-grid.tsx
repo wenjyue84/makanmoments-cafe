@@ -9,9 +9,13 @@ import { ChefPickCard } from "./chef-pick-card";
 import { EditableMenuCard } from "./editable-menu-card";
 import { MenuFilter } from "./menu-filter";
 
+// Display category values are prefixed with "__dc__" to distinguish from POS categories
+const DC_PREFIX = "__dc__";
+
 interface MenuGridProps {
   items: MenuItem[];
   categories: string[];
+  displayCategories?: string[];
   isAdmin?: boolean;
   highlightedByCategory?: Record<string, string>;
 }
@@ -19,6 +23,7 @@ interface MenuGridProps {
 export function MenuGrid({
   items,
   categories,
+  displayCategories = [],
   isAdmin = false,
   highlightedByCategory: initialHighlights = {},
 }: MenuGridProps) {
@@ -28,11 +33,18 @@ export function MenuGrid({
   const [search, setSearch] = useState("");
   const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
 
+  // Resolve whether selected tab is a POS category or display category
+  const isDisplayCategorySelected = category?.startsWith(DC_PREFIX) ?? false;
+  const selectedDisplayCat = isDisplayCategorySelected ? category!.slice(DC_PREFIX.length) : null;
+  const selectedPosCat = !isDisplayCategorySelected ? category : null;
+
   const filtered = useMemo(() => {
     let result = items;
 
-    if (category) {
-      result = result.filter((item) => item.categories.includes(category));
+    if (selectedDisplayCat) {
+      result = result.filter((item) => item.displayCategories.includes(selectedDisplayCat));
+    } else if (selectedPosCat) {
+      result = result.filter((item) => item.categories.includes(selectedPosCat));
     }
 
     if (search.trim()) {
@@ -48,7 +60,7 @@ export function MenuGrid({
     }
 
     return result;
-  }, [items, category, search, locale]);
+  }, [items, selectedPosCat, selectedDisplayCat, search, locale]);
 
   const handleSetHighlight = useCallback(async (itemId: string, itemCategories: string[]) => {
     // Optimistic update
@@ -72,7 +84,11 @@ export function MenuGrid({
 
   // Build category sections for grouped view (used when no search text)
   const categorySections = useMemo(() => {
-    const activeCats = category ? [category] : categories;
+    if (selectedDisplayCat) {
+      // Display category selected: flat list, no chef's pick hierarchy
+      return [];
+    }
+    const activeCats = selectedPosCat ? [selectedPosCat] : categories;
     return activeCats
       .map((cat) => {
         const catItems = filtered.filter((item) => item.categories.includes(cat));
@@ -83,14 +99,17 @@ export function MenuGrid({
         return { cat, chefPick, rest };
       })
       .filter((s): s is NonNullable<typeof s> => s !== null);
-  }, [filtered, categories, category, highlights]);
+  }, [filtered, categories, selectedPosCat, selectedDisplayCat, highlights]);
 
   const isSearching = search.trim().length > 0;
+  // When a display category is selected, show flat grid (no grouping)
+  const isFlatView = isSearching || isDisplayCategorySelected;
 
   return (
     <div className="pb-48 md:pb-0">
       <MenuFilter
         categories={categories}
+        displayCategories={displayCategories}
         selectedCategory={category}
         searchQuery={search}
         onCategoryChange={setCategory}
@@ -102,8 +121,8 @@ export function MenuGrid({
         <div className="py-20 text-center">
           <p className="text-lg text-muted-foreground">{t("noResults")}</p>
         </div>
-      ) : isSearching ? (
-        /* Search results: flat grid */
+      ) : isFlatView ? (
+        /* Search results or display category: flat grid */
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((item) => {
             const isHighlighted = item.categories.some((cat) => highlights[cat] === item.id);

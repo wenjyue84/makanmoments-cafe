@@ -8,6 +8,7 @@ export interface MenuItem {
   description: string;
   dietary: string[];
   categories: string[];  // multi-category array (was `category: string`)
+  displayCategories: string[];  // website-only display categories (not POS)
   available: boolean;
   featured: boolean;
   photo: string | null;  // derived: /images/menu/{code}.jpg
@@ -16,6 +17,13 @@ export interface MenuItem {
   timeFrom: string;
   timeUntil: string;
   specialDates: string[];
+}
+
+export interface DisplayCategory {
+  id: number;
+  name: string;
+  sort_order: number;
+  active: boolean;
 }
 
 export interface MenuFilters {

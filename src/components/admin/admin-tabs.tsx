@@ -45,7 +45,7 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
         <AdminMenuTable initialItems={items} categories={categories} />
       )}
       {activeTab === "Categories" && (
-        <AdminCategoriesPanel initialCategories={categories} />
+        <AdminCategoriesPanel initialCategories={categories} allItems={items} />
       )}
       {activeTab === "Rules" && (
         <AdminRulesPanel categories={categories} />
