@@ -12,6 +12,7 @@ interface MenuFilterProps {
   onCategoryChange: (category: string | null) => void;
   onSearchChange: (query: string) => void;
   itemCount: number;
+  servingNowCategories?: string[];
 }
 
 export function MenuFilter({
@@ -22,6 +23,7 @@ export function MenuFilter({
   onCategoryChange,
   onSearchChange,
   itemCount,
+  servingNowCategories = [],
 }: MenuFilterProps) {
   const t = useTranslations("menu");
   const tc = useTranslations("common");
@@ -68,20 +70,29 @@ export function MenuFilter({
         </button>
 
         {/* POS categories */}
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => onCategoryChange(cat)}
-            className={cn(
-              "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-              selectedCategory === cat
-                ? "bg-primary text-primary-foreground"
-                : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-            )}
-          >
-            {cat}
-          </button>
-        ))}
+        {categories.map((cat) => {
+          const isServingNow = servingNowCategories.includes(cat);
+          return (
+            <button
+              key={cat}
+              onClick={() => onCategoryChange(cat)}
+              className={cn(
+                "flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                selectedCategory === cat
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+              )}
+            >
+              {isServingNow && (
+                <span
+                  className="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-green-500"
+                  title="Serving now"
+                />
+              )}
+              {cat}
+            </button>
+          );
+        })}
 
         {/* Display categories — visually distinct with amber styling */}
         {displayCategories.map((cat) => (

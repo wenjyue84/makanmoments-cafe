@@ -2434,3 +2434,104 @@ Modify the admin menu interface to allow a single `MenuItem` to be assigned to m
 ## Iteration 16 - Tue, Mar 10, 2026 12:31:03 PM
 Completed: Admin: Drag and Drop Items Between Categories (ID: US-033) in 14m
 
+## Iteration 18 - Tue, Mar 10, 2026 12:31:54 PM
+Completed: Admin: Duplicate Item to Multiple Categories (ID: US-034) in 4m
+
+
+## Pre-analysis for US-035 (Gemini 2.5 Pro)
+### Technical Brief: US-035 Menu Page Time-Based Display
+
+This brief outlines the implementation plan for the provided Next.js user story, not a Frappe/Python environment as suggested in the prompt, to align with the project's actual file structure and technical notes.
+
+**1. Files to Modify:**
+
+*   **`src/app/[locale]/menu/page.tsx`**: Main server component to implement the core time-based logic.
+*   **`src/components/menu/MenuFilter.tsx`** (or similar): The client component that manages category tabs; will receive the initial category.
+*   **`src/lib/availability.ts`**: New or existing file to define time slot configurations and helper functions.
+*   **`data/time-slots.json`**: New file to store admin-configurable time slot settings.
+*   **`src/app/api/admin/time-slots/route.ts`**: New API route to manage the `time-slots.json` configuration.
+*   **`src/components/admin/TimeSettings.tsx`**: New component for the admin interface.
+
+**2. Involved Next.js/App Router Concepts:**
+
+*   **React Server Component**: `menu/page.tsx` will fetch data and determine the default category on the server.
+*   **Client Component**: `MenuFilter.tsx` will use `useState` to manage the active filter, initialized by a prop from the server component.
+*   **Route Handler**: The `/api/admin/time-slots` route will handle `GET` and `POST` requests for configuration changes.
+
+**3. Recommended Implementation Approach:**
+
+1.  In `src/lib/availability.ts`, create a function `getActiveCategorySlug()` that reads `data/time-slots.json` and determines the default category slug based on the current time in `'Asia/Kuala_Lumpur'`.
+2.  From the `menu/page.tsx` server component, call this function and pass the resulting slug as an `initialCategory` prop to the client-side menu grid/filter component.
+3.  Modify the `MenuFilter.tsx` component to accept the `initialCategory` prop and use it to set the initial state of the active filter.
+4.  For the "Serving now" indicator, expand the availability logic to check if *any* item within a category is currently available and pass this boolean down to the `MenuFilter` component to render a visual cue on the tab.
+5.  Implement the admin API and UI to allow for dynamic updates to the `data/time-slots.json` file, ensuring the endpoint is protected by existing authentication logic.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Time Zones:** Ensure all date/time comparisons explicitly use the Malaysia (`Asia/Kuala_Lumpur`) time zone to avoid server location bias.
+*   **Fallback State:** If the current time falls outside all defined slots (e.g., 5 AM), the logic should gracefully fall back to a sensible default, like the first category in the list.
+*   **Data Mismatch:** Category slugs in `time-slots.json` must exactly match the slugs in the database to prevent errors. The admin UI should use a dropdown of existing categories.
+
+
+## Pre-analysis for US-035 (Gemini 2.5 Pro)
+This user story describes a feature for a Next.js/TypeScript application, not a Frappe/Python one. The file paths (`src/lib/...`, `/en/menu`, `.ts` files) and technologies mentioned (React Server Components, Next.js) are from a JavaScript ecosystem.
+
+Therefore, I will provide a technical brief for the actual **Next.js/TypeScript** context.
+
+***
+
+### **Technical Brief: US-035 - Menu Page Dynamic Display**
+
+This brief outlines the implementation plan for dynamically setting the default menu category based on the time of day.
+
+**1. Key Files for Modification:**
+
+*   **`src/app/[locale]/menu/page.tsx`**: The main server component for the menu page. Logic to determine the current time slot and corresponding default category will be added here.
+*   **`src/components/menu/MenuGrid.tsx`**: Will need to accept the `initialCategory` prop from the server component and pass it down.
+*   **`src/components/menu/MenuFilter.tsx`**: The component controlling the category tabs. It needs to use the `initialCategory` prop to set its initial state.
+*   **`src/app/admin/page.tsx` (or similar)**: A new UI section for managing time-based category priorities needs to be created here.
+*   **`src/app/api/admin/time-slots/route.ts` (New File)**: An API route to handle reading and writing the time slot configuration from the admin panel.
+
+**2. Involved Components & Data Structures:**
+
+*   **DocTypes/Data:** A new data store, likely a JSON file (`data/time-slots.json`) or a new database table, is required to store the time slot configurations (e.g., `breakfast`, `lunch`, `dinner`) and their associated default category slugs.
+*   **Hooks/Server Logic:** The primary logic will reside in the menu page's main React Server Component (`page.tsx`) to fetch data and determine the time-based category *before* rendering.
+
+**3. Recommended Implementation Approach:**
+
+1.  **Time Slot Configuration:** Create a `data/time-slots.json` file to store the time configurations and default category mappings.
+2.  **Server-Side Time Logic:** In `src/app/[locale]/menu/page.tsx`, get the current time (ensuring it's in `Asia/Kuala_Lumpur` timezone). Compare it against the time slots from the configuration file to determine the active slot and its `defaultCategory`.
+3.  **Prop Drilling:** Pass the determined `defaultCategory` string as a prop down through `MenuGrid` to `MenuFilter`.
+4.  **Client-Side State:** In `MenuFilter.tsx`, use `useState` to manage the active category, initializing it with the `defaultCategory` prop received from the server.
+5.  **Admin UI:** Develop a new form/section in the admin page that fetches from and posts to the `/api/admin/time-slots` API endpoint to allow administrators to update the `data/time-slots.json` file.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Timezone Management:** Ensure all time comparisons are consistently handled in the target timezone (Malaysia, UTC+8) and are not susceptible to client/server time mismatches.
+*   **Configuration Fallback:** If the time slot configuration cannot be read or is invalid, the menu should gracefully fall back to a default, non-time-based category.
+*   **No Overlapping Items:** The logic should only influence the *default view*. It must not filter out or hide items that are outside the current time slot, as per the acceptance criteria.
+*   **Admin Permissions:** The new API endpoint (`/api/admin/time-slots`) must be protected and accessible only to authorized administrators.
+
+
+## Iteration 19 - Tue, Mar 10, 2026
+Completed: Menu Page: Dynamic Display Based on Time of Day (ID: US-035)
+
+### What was implemented
+- Created `data/time-slots.json` with 3 default slots: breakfast (07:00-11:00 → Break-Lunch), lunch (11:00-15:00 → 7 Lunch Lovers), dinner (15:00-22:30 → Must-Try)
+- Created `src/lib/time-slots.ts` with `readTimeSlots()`, `writeTimeSlots()`, `getActiveSlot()`, `getDefaultCategoryForTime()`, `getServingNowCategories()` — uses `Intl.DateTimeFormat` with Asia/Kuala_Lumpur timezone
+- Created `src/app/api/admin/time-slots/route.ts` GET/POST for admin config
+- Updated `src/app/[locale]/menu/page.tsx` — calls `getDefaultCategoryForTime()` + `getServingNowCategories()`, passes as props; reduced `revalidate` from 1800 → 300 for better time accuracy
+- Updated `src/components/menu/menu-grid.tsx` — accepts `initialCategory` (sets useState initial value) and `servingNowCategories` props
+- Updated `src/components/menu/menu-filter.tsx` — accepts `servingNowCategories`, shows green dot on serving-now category pills
+- Created `src/components/admin/admin-time-settings.tsx` — admin UI to configure slots (label, start/end time, default category dropdown)
+- Updated `src/components/admin/admin-tabs.tsx` — added "Time Settings" tab
+
+### Patterns discovered
+- `data/` dir follows same pattern as `chat-settings.json` for file-based config
+- `Intl.DateTimeFormat` with `formatToParts` is the correct server-side Malaysia time approach (no external deps)
+- Admin panels follow: client component + fetch API pattern (no server props needed)
+
+### Gotchas
+- ISR revalidation (was 1800s) means time-based category could be stale; reduced to 300s (5 min) as compromise
+- `useState(initialCategory)` on client: initial value is from server render; changes don't re-init state (correct behavior)
+- TypeScript check: `npx tsc --noEmit` passes clean

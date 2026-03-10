@@ -18,6 +18,8 @@ interface MenuGridProps {
   displayCategories?: string[];
   isAdmin?: boolean;
   highlightedByCategory?: Record<string, string>;
+  initialCategory?: string | null;
+  servingNowCategories?: string[];
 }
 
 export function MenuGrid({
@@ -26,10 +28,12 @@ export function MenuGrid({
   displayCategories = [],
   isAdmin = false,
   highlightedByCategory: initialHighlights = {},
+  initialCategory = null,
+  servingNowCategories = [],
 }: MenuGridProps) {
   const t = useTranslations("common");
   const locale = useLocale();
-  const [category, setCategory] = useState<string | null>(null);
+  const [category, setCategory] = useState<string | null>(initialCategory);
   const [search, setSearch] = useState("");
   const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
 
@@ -115,6 +119,7 @@ export function MenuGrid({
         onCategoryChange={setCategory}
         onSearchChange={setSearch}
         itemCount={filtered.length}
+        servingNowCategories={servingNowCategories}
       />
 
       {filtered.length === 0 ? (

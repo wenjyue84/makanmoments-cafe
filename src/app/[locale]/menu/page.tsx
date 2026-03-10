@@ -6,8 +6,9 @@ import { getHighlightsFromDB, computeEffectiveHighlights } from "@/lib/highlight
 import { MenuGrid } from "@/components/menu/menu-grid";
 import { MenuPageJsonLd } from "@/components/seo/json-ld";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
+import { getDefaultCategoryForTime, getServingNowCategories } from "@/lib/time-slots";
 
-export const revalidate = 1800;
+export const revalidate = 300;
 
 export async function generateMetadata({
   params,
@@ -39,6 +40,9 @@ export default async function MenuPage() {
     .filter((dc) => dc.active)
     .map((dc) => dc.name);
 
+  const initialCategory = getDefaultCategoryForTime();
+  const servingNowCategories = getServingNowCategories();
+
   return (
     <>
       <MenuPageJsonLd />
@@ -51,6 +55,8 @@ export default async function MenuPage() {
           displayCategories={displayCategoryNames}
           isAdmin={isAdmin}
           highlightedByCategory={highlightedByCategory}
+          initialCategory={initialCategory}
+          servingNowCategories={servingNowCategories}
         />
       </div>
     </>
