@@ -25,6 +25,8 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
   const [recipeOpen, setRecipeOpen] = useState(false);
   const hasPhoto = !!item.code && !imgError;
   const hasRecipe = !!getRecipeInfo(item.nameEn);
+  const imgVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
+  const imgSrc = `/images/menu/${item.code}.jpg${imgVersion ? `?v=${imgVersion}` : ""}`;
 
   return (
     <>
@@ -42,7 +44,7 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
         >
           {hasPhoto ? (
             <Image
-              src={`/images/menu/${item.code}.jpg`}
+              src={imgSrc}
               alt={name}
               fill
               className="object-cover img-scale"

@@ -5272,3 +5272,78 @@ To allow administrators to preview the customer-facing menu at any given time of
 ### Gotchas
 - TypeScript check: use `npx tsc --noEmit` (still no errors after changes)
 - `formatPreviewTime` handles midnight (hour=0 → 12 AM) and noon (hour=12 → 12 PM) edge cases
+## Iteration 35 - Tue, Mar 10, 2026  4:17:14 PM
+Completed: Admin: Adjust Image Focal Point (Pan Up/Down/Left/Right) (ID: US-057) in 9m
+
+
+## Pre-analysis for US-059 (Gemini 2.5 Pro)
+This technical brief is for a **Next.js/TypeScript** project, as the user story's content (ISR, next/image, `.tsx`/`.ts` files) pertains to that stack, not Frappe/Python.
+
+**Subject: Technical Brief for US-059 (Menu Image Cache Busting)**
+
+**1. Python Files to Modify / Key Next.js Routes:**
+*   `src/app/api/admin/images/route.ts`: This is the primary file. The `POST` handler needs modification. It currently handles the file upload but must also trigger a database update and cache revalidation.
+*   `src/app/api/admin/menu/[id]/route.ts`: Potentially needs a `PATCH` handler to update a timestamp on the menu item record.
+*   `src/app/[locale]/menu/page.tsx` (and its child components): The component rendering the `next/image` tag will need to be updated to use a cache-busted URL.
+
+**2. Frappe DocTypes / Next.js Data & Hooks:**
+*   **Data Model:** The `menu_items` table/model. A timestamp field (e.g., `updated_at` or a new `photo_updated_at`) is critical.
+*   **API Handlers:** The `POST` function within the image upload route acts as the main hook.
+*   **Cache Invalidation:** Use Next.js's `revalidatePath` function.
+
+**3. Recommended Implementation Approach:**
+1.  In `.../images/route.ts`, after successfully saving the image to the filesystem, update the corresponding `menu_item` in the database to set/update an `updated_at` timestamp.
+2.  Immediately after the database update, call `revalidatePath` for each locale's menu page (e.g., `revalidatePath('/en/menu')`, `revalidatePath('/ms/menu')`).
+3.  In the frontend component that renders the menu (`.../menu/page.tsx`), modify the `next/image` `src` to include the timestamp as a query parameter for cache-busting: `src={\`/images/menu/${item.code}.jpg?v=${new Date(item.updated_at).getTime()}\`}`.
+
+**4. Edge Cases & Gotchas:**
+*   Ensure the database update and file write are treated atomically; if the DB update fails, the operation should report an error to the user.
+*   The `revalidatePath` calls must cover all supported locales, not just `/en/`.
+*   Confirm that the API route is protected and can only be accessed by authenticated admin users.
+*   Return a clear success/error message from the API to the admin panel for user feedback.
+
+
+## Iteration N - Story: US-059 - Bug Fix: Admin Image Changes Not Reflected on Public Menu Page
+
+### What was implemented
+- Added `updatedAt: string` field to `MenuItem` type (`src/types/menu.ts`)
+- Mapped `row.updated_at` → `updatedAt` in `rowToMenuItem` in `src/lib/menu.ts`
+- Added `?v={timestamp}` cache-busting to image src in `menu-card.tsx` (public page)
+- Updated `editable-menu-card.tsx`: initializes `imgSrc` with `updatedAt`-based version, added `isLocalUpload` state, changed `unoptimized` to only apply after a local upload (not initial load)
+- Added `revalidatePath` calls in `POST /api/admin/images` for `/en/menu`, `/ms/menu`, `/zh/menu`
+- Added DB `UPDATE menu_items SET updated_at = NOW() WHERE code = ${code}` in the image upload route so cache-busting version changes on page re-render
+- Added `revalidatePath` calls in `PATCH /api/admin/menu/[id]` for all locale menu pages
+- Fixed `admin-menu-table.tsx` new-row factory to include `updatedAt` field (TypeScript required)
+
+### Patterns discovered
+- Two-layer cache problem: (1) Next.js ISR cache (`revalidate = 300`) — fixed by `revalidatePath`; (2) next/image optimization cache keyed by URL — fixed by `?v=timestamp`
+- `POST /api/admin/images` was NOT touching the DB at all — file written but `updated_at` never changed
+- `editable-menu-card.tsx` already had `?v=Date.now()` after local upload (correct) but initial imgSrc had no version (missing cache-bust on page load)
+- `revalidatePath` works from Next.js Route Handlers in Next.js 14+
+- `unoptimized` should only apply to freshly uploaded images (not initial load), otherwise all images bypass optimization
+
+### Gotchas
+- `admin-menu-table.tsx` constructs a literal new MenuItem object in `addNewRow()` — adding a new required field to `MenuItem` type breaks this; always add `updatedAt: new Date().toISOString()` when constructing new rows
+- `python prd.json` read/write requires `encoding='utf-8'` on Windows (default cp1252 fails on special chars)
+
+## Iteration N - Story: US-059 - Bug Fix: Admin Image Changes Not Reflected on Public Menu Page
+
+### What was implemented
+Most work was pre-built by the prior partial iteration:
+- `src/types/menu.ts`: `updatedAt: string` field already present in `MenuItem`
+- `src/lib/menu.ts`: `rowToMenuItem` already maps `row.updated_at` → `updatedAt`
+- `src/components/menu/menu-card.tsx`: already uses `?v=${imgVersion}` cache-buster
+- `src/components/menu/editable-menu-card.tsx`: already uses `?v=${imgInitVersion}` cache-buster
+- `src/app/api/admin/menu/[id]/route.ts`: already calls `revalidatePath` for all 3 locales
+- `src/app/api/admin/images/route.ts`: already touches `updated_at` in DB + calls `revalidatePath`
+- `src/components/admin/admin-menu-table.tsx`: `addNewRow()` already includes `updatedAt`
+
+This iteration: added the missing `?v=imgVersion` cache-buster to `ChefPickCard` (`src/components/menu/chef-pick-card.tsx`)
+
+### Patterns discovered
+- ChefPickCard is the "public" chef's pick card; EditableMenuCard is used in admin mode instead. Only ChefPickCard was missing the cache-buster.
+- Cache-busting pattern: `const imgVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;` then `src={/images/menu/${item.code}.jpg${imgVersion ? ?v=${imgVersion} : ""}}`
+
+### Result
+- prd.json: US-059 passes = true
+- TypeScript check: PASS (exit 0)
