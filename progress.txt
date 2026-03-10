@@ -3801,3 +3801,72 @@ Based on the user story `US-048`, here is the technical brief for implementation
 *   **Polling Cleanup:** The polling interval in `order-history.tsx` must be cleared in a `useEffect` cleanup function to prevent memory leaks when the component unmounts.
 *   **Data Integrity:** Wrap `localStorage.getItem()` and `JSON.parse()` in a `try...catch` block to handle potential malformed data.
 
+## Iteration 1 - Tue, Mar 10, 2026  2:28:54 PM
+Completed: Tests for US-041 to US-045 in Admin Tests Tab (ID: US-046) in 5m
+
+
+## Pre-analysis for US-048 (Gemini 2.5 Pro)
+This user story is for a Next.js/TypeScript application, not Frappe/Python. The technical brief below is based on the technologies and file paths described in the JSON.
+
+***
+
+### **US-048: Technical Implementation Brief**
+
+**Objective:** Implement a client-side order history feature allowing customers to view previously submitted orders within the same browser session.
+
+**1. Primary Files to Modify:**
+*   `src/components/menu/tray-widget.tsx`: This is the core component. It will handle saving the order to `localStorage` after a successful submission and rendering the new "Order History" UI section.
+*   `src/app/api/orders/[id]/route.ts`: A new file to be created. This will define a public Next.js API route to allow the client to fetch the status of a specific order by its ID.
+
+**2. Frappe DocTypes / Hooks Involved:**
+*   Not applicable. This is a Next.js application. The key integrations are with `localStorage` for client-side storage and a new Next.js API route for status polling.
+
+**3. Recommended Implementation Approach:**
+*   **In `tray-widget.tsx` (on Order Success):**
+    *   After the `POST /api/orders` request succeeds, retrieve the current history array from `localStorage` (`'mm_order_history'`).
+    *   If no history exists, initialize an empty array.
+    *   Prepend the new order object (`{ id, items, total, timestamp, status: 'Pending' }`) to the array.
+    *   Limit the array to a max of 5 items.
+    *   Save the updated array back to `localStorage`.
+*   **In `tray-widget.tsx` (UI):**
+    *   Create a new collapsible "Order History" section below the main tray items.
+    *   Use a `useState` and `useEffect` hook to read the order history from `localStorage` on component mount.
+    *   Render the list of historical orders, displaying items, total, and status with styled badges (e.g., Pending, Approved, Ready).
+*   **Status Polling:**
+    *   Within a `useEffect` hook in `tray-widget.tsx`, set up an interval (`setInterval`) to poll `GET /api/orders/[id]` every 30 seconds for any orders with a non-final status.
+    *   Update the component's state with the new status, which will trigger a re-render of the badge.
+*   **New API Route (`/api/orders/[id]/route.ts`):**
+    *   Implement a `GET` handler that takes the `id` from the URL.
+    *   This handler should query the database (e.g., Neon/Postgres) for the order matching the ID and return its current status. This endpoint should not require authentication.
+
+**4. Edge Cases & Gotchas:**
+*   **`localStorage` Access:** Wrap all `localStorage` calls in a `try...catch` block to handle cases where it's disabled (e.g., private browsing) or full.
+*   **Polling Cleanup:** The `setInterval` for status polling must be cleared in the `useEffect` cleanup function to prevent memory leaks.
+*   **API Security:** The order ID should be a non-guessable UUID to prevent unauthorized users from randomly checking order statuses.
+*   **Data Integrity:** The code should gracefully handle potentially malformed JSON when parsing the data from `localStorage`.
+
+
+## Iteration 29 - Story: Tests for US-041 to US-045 in Admin Tests Tab (ID: US-046)
+
+### What was implemented
+- `src/lib/tests/new-features.ts` — 5 test cases under "new-features" category
+  - nf-041-menu-card-layout: Reads menu-card.tsx source, verifies name in h3 and price in separate span
+  - nf-042-admin-translation-fields: Checks admin-menu-table.tsx for nameMs/nameZh inputs + translate route
+  - nf-043-multilang-search: Fetches DB items, applies filter logic, tests EN/ZH/MS search
+  - nf-044-order-notification: POSTs to /api/orders, verifies DB record with status=pending, marks seen
+  - nf-045-pwa-manifest: Reads public/manifest.json and public/sw.js from filesystem
+- Other files (types.ts, index.ts, admin-tests-panel.tsx) were already updated in a prior iteration
+
+### Patterns discovered
+- `getAllMenuItemsForAdmin()` is the correct export from menu.ts (not getAllMenuItems)
+- `sql` in db.ts is typed as `any` — do NOT use generic type args `sql<T>`, instead cast result with `any[]`
+- When creating a new .ts file, Write tool requires the file to exist first (create via node/bash first)
+- The test infrastructure (types, index, panel) for "new-features" category was already partially wired
+
+### Gotchas
+- TypeScript strict mode: filter callbacks need explicit type annotations (item: MenuItem) not inferred
+- sql template literal returns any — type assertions needed for row access
+
+### Result
+- prd.json: US-046 passes = true
+- TypeScript check: PASS (0 errors)

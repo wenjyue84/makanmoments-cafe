@@ -1,4 +1,5 @@
 import type { TestDefinition, TestResult } from "./types";
+import type { MenuItem } from "@/types/menu";
 
 function getBaseUrl(): string {
   if (process.env.NODE_ENV !== "production") {
@@ -145,8 +146,8 @@ const testMultiLanguageSearch: TestDefinition = {
   run: async (): Promise<TestResult> => {
     const start = Date.now();
     try {
-      const { getAllMenuItems } = await import("../menu");
-      const items = await getAllMenuItems();
+      const { getAllMenuItemsForAdmin } = await import("../menu");
+      const items: MenuItem[] = await getAllMenuItemsForAdmin();
       const duration = Date.now() - start;
 
       if (items.length === 0) {
@@ -161,10 +162,10 @@ const testMultiLanguageSearch: TestDefinition = {
       let allPassed = true;
 
       // Replicate the filter logic from menu-grid.tsx
-      function filterItems(query: string) {
+      function filterItems(query: string): MenuItem[] {
         const q = query.toLowerCase();
         return items.filter(
-          (item) =>
+          (item: MenuItem) =>
             item.nameEn.toLowerCase().includes(q) ||
             item.nameMs.toLowerCase().includes(q) ||
             item.nameZh.toLowerCase().includes(q) ||
@@ -194,7 +195,7 @@ const testMultiLanguageSearch: TestDefinition = {
       }
 
       // Test 2: Chinese search — use first 2 chars of first Chinese name
-      const zhItems = items.filter((i) => i.nameZh && i.nameZh.trim() !== "");
+      const zhItems = items.filter((i: MenuItem) => i.nameZh && i.nameZh.trim() !== "");
       if (zhItems.length > 0) {
         const zhQuery = zhItems[0].nameZh.substring(0, 2);
         const zhResults = filterItems(zhQuery);
@@ -211,7 +212,7 @@ const testMultiLanguageSearch: TestDefinition = {
       }
 
       // Test 3: Malay search — use first word of first Malay name
-      const msItems = items.filter((i) => i.nameMs && i.nameMs.trim() !== "");
+      const msItems = items.filter((i: MenuItem) => i.nameMs && i.nameMs.trim() !== "");
       if (msItems.length > 0) {
         const msQuery = msItems[0].nameMs.split(" ")[0].toLowerCase();
         const msResults = filterItems(msQuery);
@@ -285,7 +286,8 @@ const testOrderNotificationBell: TestDefinition = {
 
       // Step 2: Verify via direct DB query — order has status=pending
       const sql = (await import("@/lib/db")).default;
-      const rows = await sql<{ id: number; status: string }[]>`
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rows: any[] = await sql`
         SELECT id, status FROM tray_orders WHERE id = ${insertedId}
       `;
 
@@ -299,7 +301,7 @@ const testOrderNotificationBell: TestDefinition = {
       }
       if (rows[0].status !== "pending") {
         logs.push(
-          `FAIL: order status=${rows[0].status} (expected pending)`
+          `FAIL: order status=${rows[0].status as string} (expected pending)`
         );
         return {
           pass: false,
@@ -310,7 +312,8 @@ const testOrderNotificationBell: TestDefinition = {
       logs.push("PASS: Order found in DB with status=pending");
 
       // Step 3: Mark as seen via direct DB (admin API requires auth cookie)
-      const updateRows = await sql<{ id: number; status: string }[]>`
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updateRows: any[] = await sql`
         UPDATE tray_orders SET status = 'seen'
         WHERE id = ${insertedId}
         RETURNING id, status
@@ -451,7 +454,7 @@ const testPWAManifest: TestDefinition = {
   },
 };
 
-export const newFeatureTests: TestDefinition[] = [
+export const newFeaturesTests: TestDefinition[] = [
   testMenuCardLayout,
   testAdminTranslationFields,
   testMultiLanguageSearch,
