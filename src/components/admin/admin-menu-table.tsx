@@ -17,7 +17,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
-import { GripVertical } from "lucide-react";
+import { GripVertical, ChevronDown, ChevronUp } from "lucide-react";
 
 const MISSING_PHOTOS_DISMISSED_KEY = "admin_missing_photos_dismissed";
 
@@ -139,6 +139,7 @@ export function AdminMenuTable({
   const [imgVersion, setImgVersion] = useState(0);
   const [missingPhotos, setMissingPhotos] = useState<{ id: string; code: string; nameEn: string }[]>([]);
   const [photoAlertDismissed, setPhotoAlertDismissed] = useState(false);
+  const [isAlertExpanded, setIsAlertExpanded] = useState(false);
   const [highlightedCode, setHighlightedCode] = useState<string | null>(null);
   const [activeDrag, setActiveDrag] = useState<{ itemId: string; nameEn: string } | null>(null);
   const [suggesting, setSuggesting] = useState<Record<string, boolean>>({});
@@ -403,30 +404,43 @@ export function AdminMenuTable({
     <div className="space-y-4">
       {!photoAlertDismissed && missingPhotos.length > 0 && (
         <div className="rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-800">
-          <div className="flex items-start justify-between gap-2">
-            <div>
-              <p className="font-medium">
-                ⚠️ {missingPhotos.length} item{missingPhotos.length !== 1 ? "s" : ""} have no photo. Consider adding photos to improve the menu page.
-              </p>
-              <p className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
-                {missingPhotos.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => scrollToItem(item.code)}
-                    className="underline hover:text-amber-900"
-                  >
-                    {item.nameEn}
-                  </button>
-                ))}
-              </p>
+          <div className="flex items-center justify-between gap-2">
+            <p className="font-medium">
+              ⚠️ {missingPhotos.length} item{missingPhotos.length !== 1 ? "s" : ""} have no photo. Consider adding photos to improve the menu page.
+            </p>
+            <div className="flex shrink-0 items-center gap-1">
+              <button
+                onClick={() => setIsAlertExpanded((v) => !v)}
+                className="rounded p-0.5 hover:bg-amber-100"
+                aria-label={isAlertExpanded ? "Collapse item list" : "Expand item list"}
+              >
+                {isAlertExpanded ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </button>
+              <button
+                onClick={dismissPhotoAlert}
+                className="rounded px-2 py-0.5 text-xs font-medium hover:bg-amber-100"
+              >
+                Dismiss
+              </button>
             </div>
-            <button
-              onClick={dismissPhotoAlert}
-              className="shrink-0 rounded px-2 py-0.5 text-xs font-medium hover:bg-amber-100"
-            >
-              Dismiss
-            </button>
           </div>
+          {isAlertExpanded && (
+            <p className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
+              {missingPhotos.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => scrollToItem(item.code)}
+                  className="underline hover:text-amber-900"
+                >
+                  {item.nameEn}
+                </button>
+              ))}
+            </p>
+          )}
         </div>
       )}
       {error && (

@@ -10119,3 +10119,47 @@ Here is the technical brief based on the provided JSON for the correct technolog
 
 ### Gotchas
 - `npx tsc --noEmit` passes clean with no changes needed (pure JSX conditional removal)
+## Iteration 1 - Tue, Mar 10, 2026 11:06:48 PM
+Completed: Admin Menu — Show Translation Fields for All Items (Always Visible) (ID: US-109) in 5m
+
+
+## Pre-analysis for US-110 (Gemini 2.5 Pro)
+### Frappe Technical Brief: US-110
+
+**Objective:** Translate the intent of a React-based UI story into a Frappe/Python implementation for a collapsible alert on an admin page.
+
+**1. Files to Modify:**
+*   **Python:** A new or existing Python file for a custom `Page` DocType. E.g., `lhdn_payroll_integration/lhdn_payroll_integration/page/admin_payroll_dashboard/admin_payroll_dashboard.py`.
+*   **JavaScript:** The corresponding client-side script for that page. E.g., `admin_payroll_dashboard.js`.
+
+**2. Frappe DocTypes & Hooks:**
+*   **`Page` DocType:** The alert will live on a custom admin page, likely a new `Page` DocType (e.g., "Admin Payroll Dashboard").
+*   **`Item` DocType (or similar):** The Python script will query a DocType that holds inventory/products to find items where the `image` field is not set.
+
+**3. Implementation Approach:**
+1.  In the `admin_payroll_dashboard.py`, create a `@frappe.whitelist` function that queries the relevant DocType for records missing an image and returns the list of their names.
+2.  In `admin_payroll_dashboard.js`, use `frappe.call` within the `on_page_load` event to fetch this list.
+3.  If the list is not empty, use JavaScript (jQuery) to render an HTML alert into the page wrapper.
+4.  The alert HTML will include a summary line, a chevron icon (`<i class="fa fa-chevron-down"></i>`), and a `<div>` containing the item names, which is hidden by default (`style="display: none;"`).
+5.  Create a click handler on the chevron icon that uses `$.toggle()` on the names `<div>` and toggles the icon's class between `fa-chevron-down` and `fa-chevron-up`.
+
+**4. Gotchas & Edge Cases:**
+*   **Performance:** If the list of items is very large, the `frappe.call` could be slow. Consider limiting the query in Python (e.g., `limit=100`).
+*   **No Results:** The JS code must handle the case where the whitelisted function returns an empty list, in which case the alert should not be rendered at all.
+*   **State:** The expanded/collapsed state is client-side and will reset on page reload. This is acceptable for this user story.
+
+
+## Iteration N - Story: US-110 Admin Menu — Collapsible No-Photo Alert with Chevron Button
+
+### What was implemented
+- Added `ChevronDown` and `ChevronUp` imports from `lucide-react` in `admin-menu-table.tsx`
+- Added `isAlertExpanded` state (default: `false`) alongside existing `photoAlertDismissed`
+- Refactored no-photo alert: summary line always visible, item list only shows when `isAlertExpanded === true`
+- Chevron button toggles `isAlertExpanded`; Dismiss button remains visible in both states
+
+### Patterns discovered
+- Alert section is around lines 404-445 in `admin-menu-table.tsx`
+- `GripVertical` was the only lucide icon imported before — added chevrons alongside it
+
+### Gotchas
+- `prd.json` uses UTF-8 encoding — must open with `encoding='utf-8'` in Python or it fails on Windows
