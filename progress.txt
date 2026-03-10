@@ -7876,3 +7876,16 @@ Here is the technical brief based on the actual story content:
 ### Gotchas
 - DnD grouped view uses `groupedItems` (not `filteredItems`), so both must be updated to use `searchedItems`
 - TypeScript check passes clean (0 errors)
+
+## Iteration N - Story: Admin Menu: Search Items by Code or Name (US-085)
+
+### What was implemented
+- No changes needed — US-085 was already fully implemented in admin-menu-table.tsx
+
+### Patterns discovered
+- search state (line 130), searchedItems filter (line 372), input at line 420, empty state at line 459
+- search filters before category filter: searchedItems → filteredItems
+- groupedItems (DnD view) also uses searchedItems so search works in all views
+
+### Gotchas
+- Story was already complete before this iteration — just needed passing marked
