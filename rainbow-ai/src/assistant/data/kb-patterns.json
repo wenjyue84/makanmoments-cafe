@@ -1,122 +1,47 @@
 {
-  "description": "Knowledge base topic file mappings. Patterns are regex alternations tested case-insensitively against user messages.",
-  "coreFiles": ["AGENTS.md", "soul.md"],
+  "description": "Knowledge base topic file mappings for Makan Moments Cafe. Patterns are regex alternations tested case-insensitively against user messages.",
+  "coreFiles": ["cafe-facts.md"],
   "defaultFallback": "faq.md",
   "patterns": [
     {
-      "comment": "Availability & Booking",
-      "regex": "availab|vacancy|room|capsule|space|bed|book|reserve|reservation|tempah|kosong|空房|预订",
-      "files": ["availability.md"]
+      "comment": "Menu & food items",
+      "regex": "menu|food|dish|eat|makan|makanan|order|ada apa|apa ada|what.*food|tomyam|tom yum|nasi|mee|noodle|rice|chicken|ayam|ikan|fish|vege|sayur|dessert|ice cream|drink|minum|minuman|饮料|菜单|吃什么",
+      "files": ["menu.md"]
     },
     {
-      "comment": "Pricing & rates",
-      "regex": "price|cost|rate|how much|berapa|多少|rm\\d|ringgit",
-      "files": ["pricing.md"]
+      "comment": "Pricing & cost",
+      "regex": "price|cost|rate|how much|berapa|harga|murah|mahal|多少|rm\\d|ringgit",
+      "files": ["menu.md"]
     },
     {
-      "comment": "Payment methods & procedure",
-      "regex": "pay|bayar|duitnow|bank|transfer|cash|maybank|boost|grabpay|shopeepay|touch.?n.?go",
-      "files": ["payment-methods.md"]
+      "comment": "Pre-order & ordering process",
+      "regex": "pre.?order|preorder|order online|tempah|how.?to.?order|submit.?order|place.?order|order.?status|my.?order|cancel.?order|t&g|touch.?n.?go|tng|deposit|payment|bayar|pay",
+      "files": ["ordering.md"]
     },
     {
-      "comment": "Deposits & refunds",
-      "regex": "deposit|refund|cancel|return|pulang|退款",
-      "files": ["refunds.md"]
+      "comment": "Dietary & halal",
+      "regex": "halal|pork|babi|lard|vegetarian|vege|vegan|allerg|dietary|no.*pork|清真|素食",
+      "files": ["cafe-facts.md"]
     },
     {
-      "comment": "Check-in times",
-      "regex": "check.?in.?time|check.?out.?time|what.?time|早到|晚退",
-      "files": ["checkin-times.md"]
-    },
-    {
-      "comment": "Door access & password",
-      "regex": "door|password|code|access|entry|entrance|masuk|pintu|密码|入口",
-      "files": ["checkin-access.md"]
-    },
-    {
-      "comment": "Check-in procedure",
-      "regex": "check.?in|self.?check|how.?to.?check|procedure|步骤",
-      "files": ["checkin-procedure.md"]
+      "comment": "Cafe info — location & hours",
+      "regex": "where|location|address|direction|how.?to.?get|map|open|close|hour|operating|masa|buka|tutup|alamat|地址|营业|几点",
+      "files": ["cafe-facts.md"]
     },
     {
       "comment": "WiFi",
       "regex": "wifi|internet|password|网络|密码",
-      "files": ["checkin-wifi.md"]
+      "files": ["cafe-facts.md"]
     },
     {
-      "comment": "Capsule facilities & features",
-      "regex": "capsule|pod|bed|sleep|mattress|curtain|privacy|reading.?light|outlet|usb|charging",
-      "files": ["facilities-capsules.md"]
+      "comment": "Reservations & table booking",
+      "regex": "reserv|book.*table|table.*book|sit|seating|meja|tempah.*meja|预订|座位",
+      "files": ["ordering.md"]
     },
     {
-      "comment": "Capsule layout, deck, bunk assignment",
-      "regex": "lower.?deck|upper.?deck|bottom.?bunk|top.?bunk|deck|bunk|even.?number|odd.?number|which.?capsule|capsule.?layout|assign",
-      "files": ["unit-layout.md"]
-    },
-    {
-      "comment": "Bathrooms & showers",
-      "regex": "bathroom|shower|hot.?water|toiletries|shampoo|soap|hair.?dryer|toilet",
-      "files": ["facilities-bathrooms.md"]
-    },
-    {
-      "comment": "Kitchen & dining",
-      "regex": "kitchen|cook|fridge|microwave|kettle|coffee|utensil|plate|dapur|厨房",
-      "files": ["facilities-kitchen.md"]
-    },
-    {
-      "comment": "Common areas, laundry, storage",
-      "regex": "lounge|common.?area|work|desk|outdoor|laundry|wash|locker|luggage|storage",
-      "files": ["facilities-common.md"]
-    },
-    {
-      "comment": "General facilities (fallback)",
-      "regex": "facilit|amenities|air.?con|park",
-      "files": ["facilities.md"]
-    },
-    {
-      "comment": "Quiet hours & smoking",
-      "regex": "quiet|noise|loud|smoke|smoking|vape|rokok|merokok|安静|吸烟",
-      "files": ["rules-quiet-smoking.md"]
-    },
-    {
-      "comment": "Guest conduct & visitors",
-      "regex": "visitor|guest|friend|conduct|behav|alcohol|drink|drug|pelawat|规则",
-      "files": ["rules-guests-conduct.md"]
-    },
-    {
-      "comment": "Shared spaces & kitchen rules",
-      "regex": "clean|kitchen|shoe|damage|locker|security|key.?card|bersih|厨房|钥匙",
-      "files": ["rules-shared-spaces.md"]
-    },
-    {
-      "comment": "General rules (loads quick reference)",
-      "regex": "rule|allow|prohibit|peraturan",
-      "files": ["houserules.md"]
-    },
-    {
-      "comment": "Pets policy",
-      "regex": "pet|pets|animal|allowed.*pet",
-      "files": ["rules-pets.md"]
-    },
-    {
-      "comment": "Extra amenities (towel, pillow, Maya)",
-      "regex": "towel|pillow|extra.*(towel|pillow)|maya",
-      "files": ["amenities-extra.md"]
-    },
-    {
-      "comment": "Tourist attractions & sightseeing",
-      "regex": "tourist|attract|sightseeing|sight.?see|visit.*place|place.*visit|spot|legoland|desaru|theme.?park|tempat menarik|jalan.jalan|景点|旅游",
-      "files": ["tourist-attractions.md"]
-    },
-    {
-      "comment": "Location & directions",
-      "regex": "where|direction|map|location|address|nearby|food|restaurant|transport|grab|alamat|dimana|地址|怎么走|airport|get.*(from|to)|how.*(get|reach|find)|way.*(here|there)",
-      "files": ["location.md"]
-    },
-    {
-      "comment": "Theft / security incident (report, security, police, incident)",
-      "regex": "stol[ea]n|theft|rob(?:bed|bery)|dicuri|kecurian|被偷|被抢|失窃|someone stole",
-      "files": ["theft-incident.md"]
+      "comment": "General FAQ",
+      "regex": "faq|question|info|about|contact|whatsapp|phone|social|instagram|facebook|tiktok",
+      "files": ["faq.md"]
     }
   ]
 }

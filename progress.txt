@@ -10781,3 +10781,24 @@ Completed: Limit Chef's Pick Hero Display to 2 Per Category; Show Extra as Regul
 ### Gotchas
 - `.rainbow-kb/` path is relative to the CWD when running `npm run dev` inside `rainbow-ai/`
 - The KnowledgeBase will auto-load these files on startup (seen in startup log: "[KnowledgeBase] .rainbow-kb/ not found at .rainbow-kb")
+
+## Iteration N+2 - Story: US-127 Update Rainbow AI System Prompt for Cafe Context
+
+### What was implemented
+- Updated `rainbow-ai/src/assistant/data/settings.json` system_prompt from Pelangi Capsule Hostel to Makan Moments Cafe
+- New prompt: "AI Waiter for Makan Moments Cafe (食光记忆 / Kafe Kenangan Makan), Thai-Malaysian fusion cafe..."
+- Added: NO PORK, NO LARD, Halal-friendly, prices in RM, trilingual support, ordering KB reference
+- Updated `staffName` from "Rachel" to "Jay"
+- Updated `kb-patterns.json` from hostel-specific patterns to cafe-specific patterns (menu.md, ordering.md, cafe-facts.md, faq.md)
+- KB successfully loads 4 files on startup: "[KnowledgeBase] Loaded 4 KB files from .rainbow-kb/"
+
+### Patterns discovered
+- System prompt lives in `src/assistant/data/settings.json` → `system_prompt` field (not a separate soul.md/AGENTS.md)
+- `kb-patterns.json` controls which KB files are loaded per topic/message — maps regex to file names
+- `coreFiles` in kb-patterns.json are loaded for every message (set to ["cafe-facts.md"])
+- `defaultFallback` is used when no pattern matches (set to "faq.md")
+
+### Gotchas
+- Background node processes on port 3002 can linger from previous test runs (taskkill doesn't reliably kill them in bash)
+- The service name in /health response ("pelangi-mcp-server") comes from package.json `name` field, not from settings — cosmetic only, does not affect AI behavior
+- Chat simulator test (manual criterion 5) requires the Rainbow AI dashboard at http://localhost:3002/
