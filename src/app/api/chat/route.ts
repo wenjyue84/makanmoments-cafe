@@ -1,7 +1,8 @@
 import { streamText, type UIMessage, tool } from "ai";
 import { z } from "zod";
-import { PRIMARY_MODEL, FALLBACK_MODEL } from "@/lib/chat/provider";
+import { groq, openrouter } from "@/lib/chat/provider";
 import { getSystemPrompt } from "@/lib/chat/system-prompt";
+import { readChatSettings } from "@/lib/chat/settings";
 import { checkRateLimit } from "@/lib/chat/rate-limit";
 import { headers } from "next/headers";
 
@@ -41,6 +42,17 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify({ error: "No messages" }), { status: 400 });
   }
 
+  // Load admin-configurable settings on each request so changes apply immediately
+  const settings = readChatSettings();
+  const primaryModel =
+    settings.model === "openrouter"
+      ? openrouter.chat("meta-llama/llama-3.3-70b-instruct")
+      : groq.chat("llama-3.3-70b-versatile");
+  const fallbackModel =
+    settings.model === "openrouter"
+      ? groq.chat("llama-3.3-70b-versatile")
+      : openrouter.chat("meta-llama/llama-3.3-70b-instruct");
+
   // Truncate to last 20 messages to keep context manageable
   const truncated = messages.slice(-20);
   const systemPrompt = getSystemPrompt();
@@ -59,55 +71,44 @@ export async function POST(req: Request) {
 
   console.log("[chat] modelMessages:", JSON.stringify(modelMessages));
 
+  const addToTrayTool = tool({
+    description:
+      "Adds an item to the customer's tray/order builder. Call this whenever a customer says they want to order or add an item. You MUST provide the exact item ID, name, and price from the menu.",
+    // @ts-expect-error - AI SDK type mismatch with zod
+    parameters: z.object({
+      id: z.string().describe("The item ID from the menu, e.g. BF01"),
+      name: z.string().describe("The name of the item"),
+      price: z.number().describe("The exact numeric price of the item in RM"),
+    }),
+  });
+
   try {
-    // Try primary model (Groq)
+    // Try primary model
     const result = streamText({
-      model: PRIMARY_MODEL,
+      model: primaryModel,
       system: systemPrompt,
       messages: modelMessages,
-      temperature: 0.7,
-      tools: {
-        addToTray: tool({
-          description:
-            "Adds an item to the customer's tray/order builder. Call this whenever a customer says they want to order or add an item. You MUST provide the exact item ID, name, and price from the menu.",
-          // @ts-expect-error - AI SDK type mismatch with zod
-          parameters: z.object({
-            id: z.string().describe("The item ID from the menu, e.g. BF01"),
-            name: z.string().describe("The name of the item"),
-            price: z.number().describe("The exact numeric price of the item in RM"),
-          }),
-        }),
-      },
+      temperature: settings.temperature,
+      tools: { addToTray: addToTrayTool },
     });
 
     return result.toUIMessageStreamResponse();
   } catch (primaryError) {
-    console.error("Primary model (Groq) failed:", primaryError);
+    console.error("Primary model failed:", primaryError);
 
     try {
-      // Fallback to OpenRouter
+      // Fallback to other provider
       const result = streamText({
-        model: FALLBACK_MODEL,
+        model: fallbackModel,
         system: systemPrompt,
         messages: modelMessages,
-        temperature: 0.7,
-        tools: {
-          addToTray: tool({
-            description:
-              "Adds an item to the customer's tray/order builder. Call this whenever a customer says they want to order or add an item. You MUST provide the exact item ID, name, and price from the menu.",
-            // @ts-expect-error - AI SDK type mismatch with zod
-            parameters: z.object({
-              id: z.string().describe("The item ID from the menu, e.g. BF01"),
-              name: z.string().describe("The name of the item"),
-              price: z.number().describe("The exact numeric price of the item in RM"),
-            }),
-          }),
-        },
+        temperature: settings.temperature,
+        tools: { addToTray: addToTrayTool },
       });
 
       return result.toUIMessageStreamResponse();
     } catch (fallbackError) {
-      console.error("Fallback model (OpenRouter) also failed:", fallbackError);
+      console.error("Fallback model also failed:", fallbackError);
       return new Response(
         JSON.stringify({ error: "AI service temporarily unavailable" }),
         { status: 503, headers: { "Content-Type": "application/json" } }

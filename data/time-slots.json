@@ -1,0 +1,31 @@
+{
+  "slots": [
+    {
+      "id": "breakfast",
+      "label": "Breakfast",
+      "startHour": 7,
+      "startMinute": 0,
+      "endHour": 11,
+      "endMinute": 0,
+      "defaultCategory": "Breakfast"
+    },
+    {
+      "id": "lunch",
+      "label": "Lunch",
+      "startHour": 11,
+      "startMinute": 0,
+      "endHour": 15,
+      "endMinute": 0,
+      "defaultCategory": "Rice"
+    },
+    {
+      "id": "dinner",
+      "label": "Dinner",
+      "startHour": 15,
+      "startMinute": 0,
+      "endHour": 22,
+      "endMinute": 30,
+      "defaultCategory": "Mains"
+    }
+  ]
+}

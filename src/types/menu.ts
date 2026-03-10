@@ -8,6 +8,7 @@ export interface MenuItem {
   description: string;
   dietary: string[];
   categories: string[];  // multi-category array (was `category: string`)
+  displayCategories: string[];  // website-only display categories (not POS)
   available: boolean;
   featured: boolean;
   photo: string | null;  // derived: /images/menu/{code}.jpg
@@ -18,8 +19,54 @@ export interface MenuItem {
   specialDates: string[];
 }
 
+export interface DisplayCategory {
+  id: number;
+  name: string;
+  sort_order: number;
+  active: boolean;
+}
+
 export interface MenuFilters {
   category: string | null;
   search: string;
   dietaryOnly: boolean;
+}
+
+// ── Rules (bulk operations) ─────────────────────────────────────────────────
+
+export type RuleType = "disable" | "discount" | "featured";
+export type TargetType = "category" | "items";
+
+export interface Rule {
+  id: string;
+  name: string;
+  ruleType: RuleType;
+  targetType: TargetType;
+  targetCategories: string[];
+  targetItemIds: string[];
+  excludeItemIds: string[];
+  value: number;
+  active: boolean;
+  startsAt: string | null;
+  endsAt: string | null;
+  timeFrom: string;       // daily recurring start "HH:MM" (empty = no constraint)
+  timeUntil: string;      // daily recurring end "HH:MM" (empty = no constraint)
+  priority: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AppliedRule {
+  ruleId: string;
+  ruleName: string;
+  ruleType: RuleType;
+  value?: number;
+}
+
+export interface MenuItemWithRules extends MenuItem {
+  originalPrice?: number;
+  discountPercent?: number;
+  featuredByRule?: boolean;
+  disabledByRule?: boolean;
+  appliedRules?: AppliedRule[];
 }

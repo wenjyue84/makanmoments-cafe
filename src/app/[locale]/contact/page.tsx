@@ -1,7 +1,46 @@
 import type { Metadata } from "next";
+import fs from "fs";
+import path from "path";
+import matter from "gray-matter";
+import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { CAFE } from "@/lib/constants";
 import { MapPin, Clock, Phone, Wifi, Facebook, Instagram } from "lucide-react";
+import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
+import { ContactInlineEditor, type ContactContent } from "@/components/admin/contact-inline-editor";
+
+export const runtime = "nodejs";
+
+const CONTACT_FILE = path.join(process.cwd(), "content", "contact.md");
+
+function readContactContent(fallback: Record<string, string>): ContactContent {
+  if (!fs.existsSync(CONTACT_FILE)) {
+    return {
+      title: fallback.title ?? "",
+      subtitle: fallback.subtitle ?? "",
+      address: fallback.address ?? "",
+      neighborhood: fallback.neighborhood ?? "",
+      phone: fallback.phone ?? "",
+      hoursDaily: fallback.hoursDaily ?? "",
+      hoursLastOrder: fallback.hoursLastOrder ?? "",
+      googleMapsEmbed: fallback.googleMapsEmbed ?? "",
+    };
+  }
+
+  const raw = fs.readFileSync(CONTACT_FILE, "utf-8");
+  const { data } = matter(raw);
+
+  return {
+    title: String(data.title ?? fallback.title ?? ""),
+    subtitle: String(data.subtitle ?? fallback.subtitle ?? ""),
+    address: String(data.address ?? fallback.address ?? ""),
+    neighborhood: String(data.neighborhood ?? fallback.neighborhood ?? ""),
+    phone: String(data.phone ?? fallback.phone ?? ""),
+    hoursDaily: String(data.hoursDaily ?? fallback.hoursDaily ?? ""),
+    hoursLastOrder: String(data.hoursLastOrder ?? fallback.hoursLastOrder ?? ""),
+    googleMapsEmbed: String(data.googleMapsEmbed ?? fallback.googleMapsEmbed ?? ""),
+  };
+}
 
 export async function generateMetadata({
   params,
@@ -24,11 +63,38 @@ export default async function ContactPage({
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: "contact" });
 
+  const fallback: Record<string, string> = {
+    title: t("title"),
+    subtitle: t("subtitle"),
+    address: CAFE.address,
+    neighborhood: CAFE.neighborhood,
+    phone: CAFE.phone,
+    hoursDaily: CAFE.hours.daily,
+    hoursLastOrder: CAFE.hours.lastOrder,
+    googleMapsEmbed: CAFE.googleMapsEmbed,
+  };
+
+  const content = readContactContent(fallback);
+
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const isAdmin = token ? await verifyAdminToken(token) : false;
+
+  if (isAdmin) {
+    return (
+      <ContactInlineEditor
+        content={content}
+        social={CAFE.social}
+        wifiPassword={t("wifiPassword")}
+      />
+    );
+  }
+
   return (
     <div className="mx-auto max-w-4xl px-4 py-12">
       <div className="mb-12">
-        <h1 className="text-3xl font-bold lg:text-4xl">{t("title")}</h1>
-        <p className="mt-2 text-lg text-muted-foreground">{t("subtitle")}</p>
+        <h1 className="font-display text-3xl font-bold lg:text-4xl">{content.title}</h1>
+        <p className="mt-2 text-lg text-muted-foreground">{content.subtitle}</p>
       </div>
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -40,10 +106,8 @@ export default async function ContactPage({
               <MapPin className="h-5 w-5 text-primary" />
               <h2 className="font-semibold">{t("addressTitle")}</h2>
             </div>
-            <p className="text-sm text-muted-foreground">{CAFE.address}</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {CAFE.neighborhood}
-            </p>
+            <p className="text-sm text-muted-foreground">{content.address}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{content.neighborhood}</p>
           </div>
 
           {/* Hours */}
@@ -52,10 +116,8 @@ export default async function ContactPage({
               <Clock className="h-5 w-5 text-primary" />
               <h2 className="font-semibold">{t("hoursTitle")}</h2>
             </div>
-            <p className="text-sm">Daily: {CAFE.hours.daily}</p>
-            <p className="text-sm text-muted-foreground">
-              Last order: {CAFE.hours.lastOrder}
-            </p>
+            <p className="text-sm">Daily: {content.hoursDaily}</p>
+            <p className="text-sm text-muted-foreground">Last order: {content.hoursLastOrder}</p>
           </div>
 
           {/* Phone */}
@@ -65,10 +127,10 @@ export default async function ContactPage({
               <h2 className="font-semibold">{t("phoneTitle")}</h2>
             </div>
             <a
-              href={`tel:${CAFE.phone.replace(/[- ]/g, "")}`}
+              href={`tel:${content.phone.replace(/[- ]/g, "")}`}
               className="text-sm text-primary hover:underline"
             >
-              {CAFE.phone}
+              {content.phone}
             </a>
           </div>
 
@@ -78,9 +140,7 @@ export default async function ContactPage({
               <Wifi className="h-5 w-5 text-primary" />
               <h2 className="font-semibold">{t("wifiTitle")}</h2>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {t("wifiPassword")}
-            </p>
+            <p className="text-sm text-muted-foreground">{t("wifiPassword")}</p>
           </div>
 
           {/* Social */}
@@ -110,7 +170,7 @@ export default async function ContactPage({
         {/* Map */}
         <div className="overflow-hidden rounded-xl border border-border">
           <iframe
-            src={CAFE.googleMapsEmbed}
+            src={content.googleMapsEmbed}
             width="100%"
             height="100%"
             style={{ minHeight: "400px", border: 0 }}

@@ -19,13 +19,15 @@
     "backToBlog": "Back to Blog",
     "featured": "Featured",
     "new": "New",
-    "popular": "Popular"
+    "popular": "Popular",
+    "add": "Add",
+    "added": "Added"
   },
   "home": {
     "heroTitle": "Thai-Malaysian Fusion",
-    "heroSubtitle": "Authentic Thai flavors with a Malaysian twist, served in the heart of Skudai",
-    "highlightsTitle": "Our Highlights",
-    "highlightsSubtitle": "Chef's picks and customer favorites",
+    "heroSubtitle": "Bold Thai flavours, Johor soul. A neighbourhood corner shop where every meal becomes a memory.",
+    "highlightsTitle": "Crowd Favourites",
+    "highlightsSubtitle": "The dishes our regulars keep coming back for",
     "infoHours": "Open Daily 11AM – 11PM",
     "infoLocation": "Taman Impian Emas, Skudai",
     "infoDietary": "No Pork · No Lard · Halal-Friendly",
@@ -84,6 +86,8 @@
     "empty": "Your tray is empty",
     "total": "Total",
     "checkout": "Show Order to Waiter",
+    "sendOrder": "Send Order",
+    "sendOrderToWaiter": "Send Order to Waiter",
     "checkoutInstructions": "Show this screen to the waiter to place your order."
   },
   "recipe": {

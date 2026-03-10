@@ -1,17 +1,29 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
-import { Noto_Sans, Noto_Sans_SC } from "next/font/google";
+import { Playfair_Display, Noto_Sans, Noto_Sans_SC } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 import { routing } from "@/i18n/routing";
 import { CAFE } from "@/lib/constants";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
 import { ChatWidget } from "@/components/chat/chat-widget";
+import { TrayWidget } from "@/components/menu/tray-widget";
 import { RestaurantJsonLd } from "@/components/seo/json-ld";
+import { OperatingHoursAlert } from "@/components/menu/operating-hours-alert";
+import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
+import { getOperatingStatus } from "@/lib/availability";
 import "../globals.css";
 import { TrayProvider } from "@/lib/tray-context";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { PwaInit } from "@/components/pwa/pwa-init";
+
+const playfairDisplay = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-display",
+  display: "swap",
+});
 
 const notoSans = Noto_Sans({
   subsets: ["latin"],
@@ -26,6 +38,13 @@ const notoSansSC = Noto_Sans_SC({
   display: "swap",
   preload: false, // only activated when zh locale is active; avoids loading large CJK font for EN/MS
 });
+
+// /adapt: viewport-fit=cover handles notches and home indicator on iOS/Android
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export function generateMetadata({
   params,
@@ -63,6 +82,7 @@ export function generateMetadata({
         images: [{ url: "/images/og-image.jpg", width: 1200, height: 630 }],
       },
       robots: { index: true, follow: true },
+      manifest: "/manifest.json",
     };
   });
 }
@@ -79,6 +99,11 @@ export default async function LocaleLayout({
     notFound();
   }
 
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const isAdmin = token ? await verifyAdminToken(token) : false;
+  const opStatus = isAdmin ? "open" : getOperatingStatus();
+
   const messages = (await import(`../../../messages/${locale}.json`)).default;
 
   return (
@@ -87,16 +112,19 @@ export default async function LocaleLayout({
         <RestaurantJsonLd />
       </head>
       <body
-        className={`${notoSans.variable} ${locale === "zh" ? notoSansSC.variable : ""} font-sans antialiased`}
+        className={`${playfairDisplay.variable} ${notoSans.variable} ${locale === "zh" ? notoSansSC.variable : ""} font-sans antialiased`}
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <TrayProvider>
             <div className="flex min-h-screen flex-col">
               <Header />
+              <OperatingHoursAlert status={opStatus} />
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
             <ErrorBoundary fallback={null}><ChatWidget /></ErrorBoundary>
+            <ErrorBoundary fallback={null}><TrayWidget /></ErrorBoundary>
+            <PwaInit />
           </TrayProvider>
         </NextIntlClientProvider>
       </body>

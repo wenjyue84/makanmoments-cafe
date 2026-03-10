@@ -19,13 +19,15 @@
     "backToBlog": "返回博客",
     "featured": "推荐",
     "new": "新品",
-    "popular": "热门"
+    "popular": "热门",
+    "add": "加入",
+    "added": "已加入"
   },
   "home": {
     "heroTitle": "泰马融合料理",
-    "heroSubtitle": "正宗泰式风味融合马来西亚特色，在士古来心脏地带为您呈献",
-    "highlightsTitle": "精选推荐",
-    "highlightsSubtitle": "主厨推荐与顾客最爱",
+    "heroSubtitle": "浓郁泰式风味，柔佛在地灵魂。一家让每一顿饭都成为记忆的转角小店。",
+    "highlightsTitle": "顾客最爱",
+    "highlightsSubtitle": "那些让常客一再回来的招牌菜",
     "infoHours": "每天营业 上午11时 – 晚上11时",
     "infoLocation": "金山园, 士古来",
     "infoDietary": "无猪肉 · 无猪油 · 清真友好",
@@ -84,6 +86,8 @@
     "empty": "您的托盘是空的",
     "total": "总计",
     "checkout": "向服务员展示订单",
+    "sendOrder": "发送订单",
+    "sendOrderToWaiter": "发送订单给服务员",
     "checkoutInstructions": "请向服务员展示此屏幕以完成下单。"
   },
   "recipe": {

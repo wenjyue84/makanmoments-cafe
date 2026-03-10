@@ -1,6 +1,6 @@
 # CLAUDE.md — Makan Moments Cafe Website
 
-> **Project:** makanmoments.cafe — Thai-Malaysian fusion cafe website with multilingual support, Notion CMS, and AI waiter chatbot.
+> **Project:** makanmoments.cafe — Thai-Malaysian fusion cafe website with multilingual support, Neon Postgres, and AI waiter chatbot.
 
 ## Project Overview
 
@@ -8,6 +8,17 @@ Public-facing website for **Makan Moments Cafe** (食光记忆 / Kafe Kenangan M
 
 **Live site:** https://makanmoments.cafe
 **Deploy:** Vercel (`.vercel/` config present)
+
+### Pre-Order System
+
+Customers can pre-order food online before arriving at the cafe. **FeedMe POS has no API** — there is intentionally no direct integration. The workflow is:
+
+1. **Customer** browses menu → adds items → submits pre-order with name, phone, arrival time, pax count, and notes
+2. **System** saves order to Neon Postgres (`orders` table) and sends WhatsApp notification to the waiter's phone
+3. **Waiter** receives WhatsApp message with full order details → manually types the order into FeedMe POS before the customer arrives
+4. **Customer** arrives to find their meal being prepared or ready
+
+This human-in-the-loop design is deliberate: FeedMe handles payments and receipts; the website handles intake and routing.
 
 ## Tech Stack
 
@@ -17,7 +28,7 @@ Public-facing website for **Makan Moments Cafe** (食光记忆 / Kafe Kenangan M
 | UI | React 19, Tailwind CSS v4, shadcn/ui |
 | Language | TypeScript 5 |
 | i18n | next-intl (EN / MS / ZH, always-prefixed) |
-| CMS | Notion API (`@notionhq/client`) |
+| Database | Neon Serverless Postgres (`src/lib/db.ts`) |
 | AI Chat | Vercel AI SDK + Groq / OpenRouter |
 | Icons | Lucide React |
 | Sitemap | next-sitemap |
@@ -31,10 +42,16 @@ makanmoments.cafe/
 │   │   ├── [locale]/           # All public pages (locale-prefixed)
 │   │   │   ├── page.tsx        # Home
 │   │   │   ├── menu/page.tsx   # Menu listing
+│   │   │   ├── order/          # Pre-order flow
+│   │   │   │   ├── page.tsx    # Order form (browse menu + cart + submit)
+│   │   │   │   └── confirm/page.tsx  # Order confirmation page
 │   │   │   ├── blog/           # Blog listing + slug pages
 │   │   │   ├── about/page.tsx
 │   │   │   └── contact/page.tsx
-│   │   ├── api/chat/route.ts   # AI waiter chat endpoint
+│   │   ├── api/
+│   │   │   ├── chat/route.ts   # AI waiter chat endpoint
+│   │   │   └── orders/
+│   │   │       └── route.ts    # POST /api/orders — save to Neon + notify waiter via WhatsApp
 │   │   ├── layout.tsx          # Root layout
 │   │   └── globals.css         # Global styles (Tailwind)
 │   ├── components/
@@ -43,6 +60,7 @@ makanmoments.cafe/
 │   │   ├── home/               # hero-section, highlights, info-strip
 │   │   ├── layout/             # header, footer
 │   │   ├── menu/               # menu-card, menu-filter, menu-grid, dietary-badge
+│   │   ├── order/              # order-cart, order-form, order-item, order-summary
 │   │   ├── seo/                # json-ld
 │   │   └── ui/                 # shadcn/ui primitives (button, etc.)
 │   ├── i18n/
@@ -51,9 +69,11 @@ makanmoments.cafe/
 │   │   └── request.ts          # next-intl config entrypoint
 │   ├── lib/
 │   │   ├── constants.ts        # CAFE info, MENU_CATEGORIES
-│   │   ├── menu.ts             # Notion menu data fetching
-│   │   ├── blog.ts             # Notion blog data fetching
-│   │   ├── notion.ts           # Notion client singleton
+│   │   ├── db.ts               # Neon Serverless Postgres client singleton
+│   │   ├── menu.ts             # Menu data fetching from Neon Postgres
+│   │   ├── blog.ts             # Blog data fetching from Neon Postgres
+│   │   ├── orders.ts           # Save pre-order to Neon Postgres `orders` table
+│   │   ├── whatsapp.ts         # Send WhatsApp notification to waiter
 │   │   ├── utils.ts            # cn() and helpers
 │   │   └── chat/
 │   │       ├── provider.ts     # AI SDK model config (Groq/OpenRouter)
@@ -61,7 +81,8 @@ makanmoments.cafe/
 │   │       └── system-prompt.ts # Loads knowledge/ files into AI system prompt
 │   └── types/
 │       ├── menu.ts             # MenuItem, MenuCategory types
-│       └── blog.ts             # BlogPost types
+│       ├── blog.ts             # BlogPost types
+│       └── order.ts            # PreOrder, OrderItem, OrderStatus types
 ├── knowledge/                  # AI waiter knowledge base (markdown)
 │   ├── cafe-facts.md           # Hours, address, WiFi, ambiance
 │   ├── menu-knowledge.md       # Full menu with prices for AI context
@@ -98,12 +119,17 @@ See `.env.example` for all required vars:
 
 | Variable | Purpose |
 |----------|---------|
-| `NOTION_API_KEY` | Notion integration token |
-| `NOTION_MENU_DB_ID` | Notion database ID for menu items |
-| `NOTION_BLOG_DB_ID` | Notion database ID for blog posts |
+| `DATABASE_URL` | Neon Serverless Postgres connection string |
+| `ADMIN_USERNAME` | Admin panel login username |
+| `ADMIN_PASSWORD` | Admin panel login password |
+| `ADMIN_JWT_SECRET` | JWT signing secret (≥ 32 chars) |
 | `GROQ_API_KEY` | Groq API key for AI waiter |
 | `OPENROUTER_API_KEY` | OpenRouter fallback for AI waiter |
 | `NEXT_PUBLIC_SITE_URL` | Production URL (https://makanmoments.cafe) |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Cafe's public WhatsApp CTA number |
+| `WAITER_WHATSAPP_NUMBER` | Waiter's number to receive pre-order notifications (e.g. `601XXXXXXXX`) |
+| `WHATSAPP_API_URL` | WhatsApp send endpoint (Periskope or Baileys) |
+| `WHATSAPP_API_KEY` | API key / token for WhatsApp sender |
 
 ## Key Conventions
 
@@ -114,9 +140,72 @@ See `.env.example` for all required vars:
 - Use `useTranslations()` in client components, `getTranslations()` in server components
 
 ### Data Fetching
-- Menu and blog data fetched from Notion via `src/lib/notion.ts`
-- `src/lib/menu.ts` and `src/lib/blog.ts` wrap Notion queries with typed results
-- All Notion fetches are server-side (RSC or route handlers)
+- Menu and blog data fetched from **Neon Postgres** via `src/lib/db.ts`
+- `src/lib/menu.ts` and `src/lib/blog.ts` wrap SQL queries with typed results
+- All DB fetches are server-side (RSC or route handlers)
+
+### Pre-Order System
+
+**Flow overview:**
+
+```
+Customer → /order page → selects items + fills form → POST /api/orders
+  → Neon Postgres `orders` table (stores order) + WhatsApp (notifies waiter)
+  → Customer sees /order/confirm page with order summary
+  → Waiter reads WhatsApp → manually enters into FeedMe POS
+  → Customer arrives → food is ready / being prepared
+```
+
+**Order form fields (customer-facing):**
+- Name (required)
+- Phone number (required — for waiter to call if needed)
+- Arrival date + time (required)
+- Number of pax (required)
+- Items with quantity (required — from menu)
+- Special requests / notes (optional — e.g. "no spicy", "extra rice")
+
+**`orders` table schema (Neon Postgres):**
+```sql
+CREATE TABLE orders (
+  id          SERIAL PRIMARY KEY,
+  name        TEXT NOT NULL,
+  phone       TEXT NOT NULL,
+  arrival_at  TIMESTAMPTZ NOT NULL,
+  pax         INTEGER NOT NULL,
+  items       JSONB NOT NULL,   -- [{name, qty, price_rm}]
+  total_rm    NUMERIC(8,2) NOT NULL,
+  notes       TEXT,
+  status      TEXT NOT NULL DEFAULT 'pending', -- pending | confirmed | cancelled
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+**WhatsApp notification format (sent to waiter):**
+```
+🍽 New Pre-Order!
+👤 Name: [name] | 📞 [phone]
+🕐 Arriving: [date] [time] | 👥 [pax] pax
+
+Order:
+• [Item] x[qty] — RM[price]
+• [Item] x[qty] — RM[price]
+
+Total: RM[total]
+📝 Notes: [notes]
+
+Please enter into FeedMe POS before arrival.
+```
+
+**FeedMe POS — Manual Entry Protocol:**
+- FeedMe has **no API** — never attempt programmatic integration
+- Waiter enters order manually after receiving WhatsApp notification
+- Lead time target: customer should arrive to food already in queue
+- If customer calls to modify: waiter updates FeedMe directly; admin can update `status` in Neon via admin panel
+- Order status in Neon updated by staff via admin panel (pending → confirmed / cancelled)
+
+**Cart state:** Held in `localStorage` (client-side only). No server session needed. Cart is cleared on successful order submission.
+
+**Rate limiting:** Apply same per-IP limits as chat (`src/lib/chat/rate-limit.ts`) to `POST /api/orders` — max 3 orders per IP per hour.
 
 ### AI Waiter Chat
 - Chat widget floats on every page (injected via `[locale]/layout.tsx`)
@@ -157,11 +246,40 @@ See `.env.example` for all required vars:
 - **Decorative elements:** hide on mobile (`hidden lg:block`) to reduce paint cost
 - **Info-strip and similar static display components:** use RSC (`getTranslations`) not client hooks
 
+## Design Context
+
+### Users
+Local Johor Bahru residents (families, young professionals, students), plus occasional tourists passing through Skudai. They're on mobile phones, browsing during lunch breaks or while deciding where to eat. The job to be done: quickly feel the vibe, find the menu and prices, and get directions. They want to feel like they've already discovered a gem before they walk in.
+
+### Brand Personality
+**Authentic · Cultural · Soulful** — Makan Moments is not just food; it's the story of Thai-Malaysian fusion told through a neighbourhood corner shop. The brand feels like a well-loved place, not a chain. Multilingual identity (English / Bahasa / Chinese) is a feature, not an afterthought. Warmth is the core emotion.
+
+### Aesthetic Direction
+**Organic / Earthy** — Warm linen backgrounds, terracotta and amber tones (already defined in OKLCH palette), botanical touches, handcrafted texture. Inspired by editorial food publications from Southeast Asia. References: natural materials, indoor plants (matches real café ambiance), hand-drawn wall art. Anti-references: generic tech startup aesthetics, cyan/purple gradients, glassmorphism, neon-on-dark. Cuisine should be the visual hero — food photography front and centre always.
+
+### Theme
+Light mode as default (warm cream background, not pure white — already defined). Dark mode toggle available. Both modes should feel earthy and warm, never cold or blue-tinted.
+
+### Logo
+User has a logo image file (PNG/SVG). Place at `public/images/logo.png` (or `.svg`) and update header + footer to use it. Until provided, use bold text wordmark.
+
+### Design Principles
+1. **Food first** — every page should make the viewer hungry within 3 seconds
+2. **Handcrafted over polished** — slight imperfection, texture, and warmth beats clinical perfection
+3. **Mobile = primary** — design at 390px first; desktop is enhancement
+4. **Multilingual by default** — typography must work across Latin, Malay, and CJK scripts
+5. **Moments, not transactions** — tone is storytelling, not sales; the word "Makan" (eat) and "Moments" imply memory and gathering, lean into that
+
+---
+
 ## Critical Rules
 
 1. **Read before editing** — always read a file before modifying it
-2. **Notion is the CMS** — menu/blog content lives in Notion, not in code
+2. **Neon Postgres is the database** — all persistent data (menu, blog, orders) lives in Neon; Notion is NOT used
 3. **`knowledge/` drives the AI** — updating these files updates what the AI waiter knows
 4. **No pork, no lard, Halal-friendly** — always preserve this dietary info accurately
 5. **3 languages always** — any new user-facing text needs translations in all 3 `messages/` files
 6. **Prices in RM** — all price references use Malaysian Ringgit (RM)
+7. **FeedMe has NO API** — never attempt direct POS integration; all order routing goes through WhatsApp → manual waiter entry
+8. **Pre-orders are intent, not payment** — no payment is collected online; customer pays at the cafe via FeedMe POS as normal
+9. **Orders go into Neon** — use the `orders` table in the existing `DATABASE_URL` connection; no separate service needed

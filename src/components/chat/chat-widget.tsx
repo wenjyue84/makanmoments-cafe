@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { MessageCircle, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { MessageCircle, X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 
 const ChatPanel = dynamic(() => import("./chat-panel").then((mod) => mod.ChatPanel), {
   ssr: false,
@@ -12,6 +13,13 @@ const ChatPanel = dynamic(() => import("./chat-panel").then((mod) => mod.ChatPan
 export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/admin/verify", { credentials: "include", redirect: "manual" })
+      .then((r) => setIsAdmin(r.ok))
+      .catch(() => setIsAdmin(false));
+  }, []);
 
   function handleOpen() {
     setOpen(true);
@@ -35,12 +43,23 @@ export function ChatWidget() {
         </>
       )}
 
+      {/* Admin gear icon */}
+      {isAdmin && (
+        <Link
+          href="/admin/chat-settings"
+          className="fixed bottom-20 right-4 z-50 flex h-8 w-8 items-center justify-center rounded-full bg-amber-100 text-amber-700 shadow-sm transition-colors hover:bg-amber-200 md:bottom-4 md:right-20"
+          aria-label="AI Waiter Settings"
+          title="AI Waiter Settings"
+        >
+          <Settings className="h-4 w-4" />
+        </Link>
+      )}
+
       {/* Floating button */}
       <button
         onClick={() => (open ? setOpen(false) : handleOpen())}
         className={cn(
-          "fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110",
-          !open && "animate-breathe",
+          "fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110 active:scale-95",
           open && "md:flex hidden"
         )}
         aria-label="Open AI Waiter chat"
@@ -53,12 +72,9 @@ export function ChatWidget() {
 
         {/* Unread badge */}
         {!open && hasUnread && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white ring-2 ring-background">
-            1
-          </span>
+          <span className="absolute -right-0.5 -top-0.5 h-3 w-3 rounded-full bg-red-500 ring-2 ring-background" aria-label="New message" />
         )}
       </button>
     </>
   );
 }
-

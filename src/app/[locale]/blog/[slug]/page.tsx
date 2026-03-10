@@ -1,11 +1,14 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { getTranslations } from "next-intl/server";
 import { getBlogPost, getBlogSlugs } from "@/lib/blog";
 import { PostContent } from "@/components/blog/post-content";
+import { BlogInlineEditor } from "@/components/admin/blog-inline-editor";
 import { Link } from "@/i18n/navigation";
 import { BlogPostJsonLd } from "@/components/seo/json-ld";
+import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 
 export const revalidate = 3600;
 
@@ -47,6 +50,10 @@ export default async function BlogPostPage({
 
   if (!post) notFound();
 
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const isAdmin = token ? await verifyAdminToken(token) : false;
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://makanmoments.cafe";
 
   return (
@@ -66,7 +73,9 @@ export default async function BlogPostPage({
       </Link>
 
       <header className="mb-8">
-        <h1 className="text-3xl font-bold lg:text-4xl">{post.title}</h1>
+        {!isAdmin && (
+          <h1 className="text-3xl font-bold lg:text-4xl">{post.title}</h1>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
           {post.publishedAt && (
             <time dateTime={post.publishedAt}>
@@ -101,7 +110,11 @@ export default async function BlogPostPage({
         </div>
       )}
 
-      <PostContent content={post.content} />
+      {isAdmin ? (
+        <BlogInlineEditor post={post} />
+      ) : (
+        <PostContent content={post.content} />
+      )}
     </article>
   );
 }

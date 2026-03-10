@@ -1,20 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import type { MenuItem } from "@/types/menu";
+import type { MenuItemWithRules } from "@/types/menu";
 import type { BlogPost } from "@/types/blog";
 import { AdminMenuTable } from "./admin-menu-table";
 import { AdminCategoriesPanel } from "./admin-categories-panel";
 import { AdminBlogTable } from "./admin-blog-table";
+import { AdminRulesPanel } from "./admin-rules-panel";
+import { AdminTestsPanel } from "./admin-tests-panel";
+import { AdminTimeSettings } from "./admin-time-settings";
+import { AdminOperatingHours } from "./admin-operating-hours";
+import { AdminPushSettings } from "./admin-push-settings";
 import { cn } from "@/lib/utils";
 
 interface AdminTabsProps {
-  items: MenuItem[];
+  items: MenuItemWithRules[];
   categories: string[];
   posts: BlogPost[];
 }
 
-const TABS = ["Menu", "Categories", "Blog"] as const;
+const TABS = ["Menu", "Categories", "Rules", "Blog", "Tests", "Time Settings", "Operating Hours", "Push Notifications"] as const;
 type Tab = (typeof TABS)[number];
 
 export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
@@ -22,13 +27,13 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
 
   return (
     <div>
-      <div className="mb-6 flex gap-1 border-b">
+      <div className="mb-6 flex overflow-x-auto border-b">
         {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              "px-4 py-2.5 text-sm font-medium transition-colors",
+              "min-h-[44px] shrink-0 px-4 py-2.5 text-sm font-medium transition-colors",
               activeTab === tab
                 ? "border-b-2 border-orange-500 text-orange-600"
                 : "text-gray-600 hover:text-gray-900"
@@ -43,9 +48,16 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
         <AdminMenuTable initialItems={items} categories={categories} />
       )}
       {activeTab === "Categories" && (
-        <AdminCategoriesPanel initialCategories={categories} />
+        <AdminCategoriesPanel initialCategories={categories} allItems={items} />
+      )}
+      {activeTab === "Rules" && (
+        <AdminRulesPanel categories={categories} />
       )}
       {activeTab === "Blog" && <AdminBlogTable initialPosts={posts} />}
+      {activeTab === "Tests" && <AdminTestsPanel />}
+      {activeTab === "Time Settings" && <AdminTimeSettings categories={categories} />}
+      {activeTab === "Operating Hours" && <AdminOperatingHours />}
+      {activeTab === "Push Notifications" && <AdminPushSettings />}
     </div>
   );
 }

@@ -13,7 +13,7 @@ export function AdminBlogTable({ initialPosts }: AdminBlogTableProps) {
   const [editingPost, setEditingPost] = useState<BlogPost | "new" | null>(null);
 
   async function togglePublished(post: BlogPost) {
-    const res = await fetch(`/api/admin/blog/${post.id}`, {
+    const res = await fetch(`/api/admin/blog/by-id/${post.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ published: !post.published }),
@@ -29,7 +29,7 @@ export function AdminBlogTable({ initialPosts }: AdminBlogTableProps) {
 
   async function deletePost(id: string) {
     if (!confirm("Delete this blog post?")) return;
-    await fetch(`/api/admin/blog/${id}`, { method: "DELETE" });
+    await fetch(`/api/admin/blog/by-id/${id}`, { method: "DELETE" });
     setPosts((prev) => prev.filter((p) => p.id !== id));
   }
 
@@ -66,7 +66,59 @@ export function AdminBlogTable({ initialPosts }: AdminBlogTableProps) {
         </button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border bg-white">
+      {/* Mobile card list */}
+      <div className="md:hidden space-y-3">
+        {posts.length === 0 && (
+          <p className="py-8 text-center text-sm text-gray-400">
+            No posts yet. Create your first post.
+          </p>
+        )}
+        {posts.map((post) => (
+          <div key={post.id} className="rounded-xl border bg-white p-4">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-gray-900">{post.title}</p>
+                <p className="truncate text-xs text-gray-400">{post.slug}</p>
+                <p className="mt-1 text-xs text-gray-500">{post.publishedAt || "No date"}</p>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-2">
+                <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-medium uppercase">
+                  {post.language}
+                </span>
+                <button
+                  onClick={() => togglePublished(post)}
+                  className={`h-6 w-10 rounded-full transition-colors ${
+                    post.published ? "bg-green-500" : "bg-gray-300"
+                  }`}
+                >
+                  <span
+                    className={`block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform ${
+                      post.published && "translate-x-4"
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => setEditingPost(post)}
+                className="min-h-[44px] flex-1 rounded-lg bg-gray-100 text-sm hover:bg-gray-200"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => deletePost(post.id)}
+                className="min-h-[44px] flex-1 rounded-lg bg-red-50 text-sm text-red-600 hover:bg-red-100"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden overflow-hidden rounded-xl border bg-white md:block">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">

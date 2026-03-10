@@ -1,0 +1,2017 @@
+{
+  "productName": "Makan Moments Cafe Website",
+  "branchName": "feature/ux-improvements",
+  "overview": "A series of UX improvements, WYSIWYG admin editing, full blog content support (markdown-sourced from 3-resources/posts), a functional order tray panel, AI waiter admin settings, and a comprehensive test suite. Dev server: http://localhost:3030. Each iteration must verify changes with Chrome DevTools or Playwright before marking passes: true.",
+  "goals": [
+    "Make the order tray functional so guests can show their order to the human waiter",
+    "Add per-category highlighted item that admin can change via WYSIWYG on the menu page",
+    "Display blog posts with full content, sourced from markdown files in 3-resources/posts/ai-posts",
+    "Enable WYSIWYG editing for blog, about, and contact pages when admin is logged in",
+    "Add AI waiter admin settings panel linked from the chat widget",
+    "Add a Tests tab in /admin with runnable smoke/unit/integration/e2e tests",
+    "All implementations verified visually with Chrome DevTools or Playwright"
+  ],
+  "userStories": [
+    {
+      "id": "US-001",
+      "title": "Floating Order Tray Panel",
+      "priority": 1,
+      "description": "When guests click '+ Add' on any menu item, the item should be added to a visible floating tray/cart panel. The tray should show all selected items with quantities and total price. Guests can show this tray to the human waiter or use it as a reference when ordering at the POS. The tray must float above other content, be dismissible, and work on mobile. The TrayContext (src/lib/tray-context.tsx) already stores items ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� we just need the visible UI panel. Also add a floating tray button (cart icon with badge count) near the chat widget button.",
+      "acceptanceCriteria": [
+        "Clicking '+ Add' on a menu item adds it to the tray (quantity increments if added again)",
+        "A floating cart icon button appears at bottom-left (or bottom-right near chat but non-overlapping) with a badge showing total item count",
+        "Clicking the cart icon opens a tray panel showing: item name, quantity (+/- controls), price, and total",
+        "The panel has a 'Clear Order' button and a title like 'Your Order ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� Show to Waiter'",
+        "On mobile the tray is a bottom sheet; on desktop it's a floating panel",
+        "The tray is dismissible (X button or click outside)",
+        "Verify in Chrome DevTools: click Add ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ badge count updates, open tray ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ items visible"
+      ],
+      "technicalNotes": [
+        "TrayContext already in src/lib/tray-context.tsx with addItem/removeItem/clearTray/totalPrice",
+        "Create src/components/menu/tray-panel.tsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� the floating panel UI",
+        "Create src/components/menu/tray-button.tsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� the floating button with badge",
+        "Add TrayButton and TrayPanel to src/app/[locale]/layout.tsx alongside ChatWidget",
+        "Use Tailwind for mobile bottom-sheet vs desktop floating panel",
+        "Position: tray button at bottom-left, chat at bottom-right to avoid overlap",
+        "Use TrayContext items.reduce to calculate total count for badge"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Per-Category Highlighted Item on Menu Page",
+      "priority": 2,
+      "description": "On the menu page (/en/menu), each category section should have one item visually highlighted as the 'chef's pick' or 'must try'. By default, the first item in each category (by sortOrder) is highlighted. When admin is logged in, they can click any item to set it as the highlighted item for its category (WYSIWYG). The highlighted item gets a prominent badge/border treatment. The selected highlight per category is persisted in the DB (new column or separate table).",
+      "acceptanceCriteria": [
+        "Each category section shows exactly one item with a prominent 'Chef's Pick' or 'ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦ Highlighted' visual treatment (gold border or badge)",
+        "Default highlighted item is the lowest sort_order item in the category",
+        "When admin is logged in, hovering an item shows a 'Set as Highlight' button",
+        "Clicking 'Set as Highlight' immediately updates the UI and persists to DB via POST /api/admin/highlights",
+        "Non-admin users never see the 'Set as Highlight' button",
+        "Highlighted state survives page reload",
+        "Verify in Chrome DevTools: admin clicks set ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ highlight updates without full page reload"
+      ],
+      "technicalNotes": [
+        "Add a new DB table `category_highlights` (category TEXT PRIMARY KEY, item_id TEXT) or a column `highlight_for_category` on menu_items",
+        "Create API route src/app/api/admin/highlights/route.ts (GET + POST, admin-auth required)",
+        "Update MenuGrid or MenuCard to accept isHighlighted prop and render visual treatment",
+        "Add admin click handler in editable-menu-card.tsx or MenuCard when isAdmin=true",
+        "Pass highlightedByCategory map from menu page server component to MenuGrid",
+        "Use a gold ring or amber badge: className='ring-2 ring-amber-400' on the card wrapper"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Blog Page with Full Article Layout",
+      "priority": 3,
+      "description": "The blog page (/en/blog) currently shows only a card grid with title and excerpt. Redesign it to look like a proper blog listing: a featured/hero post at the top (full-width with large image and excerpt), then a grid of smaller cards below. Each card should show cover image, title, excerpt (2-3 lines), tags, and publish date. Clicking a post goes to a full article page at /en/blog/[slug].",
+      "acceptanceCriteria": [
+        "Blog listing page has a featured post section at the top (full-width) with large image, title, and first 3 lines of excerpt",
+        "Below the featured post, remaining posts appear in a 2-column card grid",
+        "Each card shows: cover image (aspect-video), tags (pill badges), title, 2-line excerpt, and date",
+        "Cards have hover effects (shadow lift, slight scale on image)",
+        "Blog detail page (/en/blog/[slug]) shows full article content with proper typography",
+        "Verify in browser at http://localhost:3030/en/blog: featured post visible, grid below it"
+      ],
+      "technicalNotes": [
+        "Redesign src/app/[locale]/blog/page.tsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� split posts into featured (first) + rest",
+        "Update src/components/blog/post-card.tsx for the card variant",
+        "Create src/components/blog/featured-post.tsx for the hero section",
+        "Blog detail page already exists at src/app/[locale]/blog/[slug]/page.tsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� ensure it renders content",
+        "Use prose typography class from Tailwind for article body"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-004",
+      "title": "Import Markdown Blog Posts from 3-resources/posts",
+      "priority": 4,
+      "description": "Blog posts currently only come from Notion. The ai-posts folder at C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\posts\\ai-posts contains rich markdown blog posts. Import these into the website's blog system by: (1) copying them to a content/blog/ folder inside the project, and (2) updating src/lib/blog.ts to read from both Notion AND local markdown files (merging the two sources). The markdown posts contain full content, tags, and dates in their frontmatter/filename.",
+      "acceptanceCriteria": [
+        "A content/blog/ directory exists in the project root with markdown post files copied from 3-resources/posts/ai-posts",
+        "The blog listing page shows posts from both Notion and markdown files",
+        "Each markdown post renders with its full content on the detail page /en/blog/[slug]",
+        "Posts are sorted by date (newest first) regardless of source",
+        "Markdown post frontmatter parsed for: title, date, tags, excerpt (first paragraph after ---)",
+        "Verify: http://localhost:3030/en/blog shows markdown posts; click one ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ full content displayed"
+      ],
+      "technicalNotes": [
+        "Copy markdown files from C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\posts\\ai-posts to project root: content/blog/",
+        "Install gray-matter for frontmatter parsing: npm install gray-matter",
+        "Install marked or remark for markdown ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ HTML: npm install marked",
+        "Create src/lib/blog-local.ts with readLocalPosts() function using fs.readdirSync on content/blog/",
+        "Update src/lib/blog.ts getBlogPosts() to merge Notion posts + local markdown posts",
+        "Slug = filename without .md, date from filename prefix YYYY-MM-DD or frontmatter",
+        "For the detail page, parse full markdown body to HTML and render with dangerouslySetInnerHTML (safe, admin-controlled content)",
+        "Add content/blog/ to .gitignore if posts are too large, otherwise commit them"
+      ],
+      "dependencies": [
+        "US-003"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-005",
+      "title": "Admin WYSIWYG Blog Editor",
+      "priority": 5,
+      "description": "After admin login, the blog listing page (/en/blog) should show an edit banner and allow admin to click 'Edit' on any post to edit it inline. The blog detail page (/en/blog/[slug]) should allow direct inline editing of the title and body content. Use a simple rich-text approach: show a textarea or contenteditable with markdown, and save via API. This is WYSIWYG in the sense that edits are saved and immediately reflect on the page.",
+      "acceptanceCriteria": [
+        "Admin edit banner appears on /en/blog when logged in (same pattern as menu page)",
+        "Each post card shows an 'Edit' button when admin is logged in",
+        "Blog detail page shows an edit mode button for admin: clicking it makes title and content editable",
+        "Changes auto-save or have a 'Save' button that calls PATCH /api/admin/blog/[slug]",
+        "After saving, the page refreshes/revalidates and shows the updated content",
+        "Non-admin users see no editing UI",
+        "Verify: admin clicks edit on a post ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ edits title ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ saves ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ page shows new title"
+      ],
+      "technicalNotes": [
+        "Add isAdmin prop to blog listing and detail pages (via cookies check in server component, same pattern as menu page)",
+        "Create API route src/app/api/admin/blog/[slug]/route.ts with PATCH handler (admin-auth required)",
+        "For local markdown posts: PATCH handler writes updated frontmatter + body back to content/blog/{slug}.md",
+        "For Notion posts: PATCH handler calls Notion API to update page content",
+        "In blog detail page: add AdminBlogEditor client component that wraps title/content with contenteditable when isAdmin",
+        "Use revalidatePath('/[locale]/blog') after save to refresh the cached pages"
+      ],
+      "dependencies": [
+        "US-003",
+        "US-004"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-006",
+      "title": "Admin WYSIWYG About Page Editor",
+      "priority": 6,
+      "description": "After admin login, the about page (/en/about) should show an edit banner and allow inline editing of the page content (story text, team info, values, etc.). Text blocks should become contenteditable when admin clicks 'Edit'. Changes persist to a local JSON or markdown file (content/about.md). The page re-renders with updated content after save.",
+      "acceptanceCriteria": [
+        "Admin edit banner appears at top of /en/about when admin is logged in",
+        "Clicking 'Edit Mode' makes text sections contenteditable (title, paragraphs, sections)",
+        "A floating 'Save Changes' button appears in edit mode",
+        "Saving calls POST /api/admin/content/about and writes to content/about.md",
+        "After saving, the page shows the updated content without a full reload",
+        "Non-admin users see no editing UI ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� the page looks identical to current",
+        "Verify: admin edits a paragraph on about page, saves, refreshes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ new text persists"
+      ],
+      "technicalNotes": [
+        "Read the current src/app/[locale]/about/page.tsx to understand current content structure",
+        "Create content/about.md (markdown with sections) that the about page reads for its text content",
+        "Update about/page.tsx to read from content/about.md via fs (server component)",
+        "Create src/components/admin/admin-page-editor.tsx ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� generic WYSIWYG editor wrapper component",
+        "Create API route src/app/api/admin/content/[page]/route.ts with POST handler",
+        "The page editor uses contenteditable divs for each text block, tracks changes in state",
+        "Add isAdmin check via cookies in about/page.tsx (same pattern as menu page)",
+        "Inject AdminPageEditor only when isAdmin=true"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-007",
+      "title": "AI Waiter Admin Settings Panel",
+      "priority": 7,
+      "description": "After admin login, the chat widget (bottom-right floating button) should show a small gear/settings icon. Clicking it opens an AI waiter settings panel (modal or page at /admin/chat-settings) where admin can configure: system prompt text, AI model selection (Groq vs OpenRouter), response style, and view recent conversation logs. The interface should feel similar to an AI assistant management panel (like in the digiman project's rainbow AI assistant).",
+      "acceptanceCriteria": [
+        "When admin is logged in, a small ÃƒÂ¢Ã…Â¡Ã¢â€žÂ¢ gear icon appears on or near the chat widget button",
+        "Clicking the gear opens a settings panel (full-page modal or /admin/chat-settings route)",
+        "Settings panel shows: current system prompt (editable textarea), model selector (Groq / OpenRouter), temperature slider",
+        "A 'Save Settings' button persists changes to a settings file or DB",
+        "The AI chat API reads these settings instead of hardcoded values",
+        "An optional 'Recent Conversations' section shows last 10 chat sessions (if logging exists)",
+        "Verify: admin edits system prompt, saves, sends a chat message ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ AI responds with updated persona"
+      ],
+      "technicalNotes": [
+        "Check if admin is logged in by calling GET /api/admin/verify from the chat widget client component",
+        "Add conditional gear icon render in src/components/chat/chat-widget.tsx when isAdmin",
+        "Create src/app/admin/chat-settings/page.tsx for the settings page (admin-protected)",
+        "Create src/app/api/admin/chat-settings/route.ts (GET + POST) for reading/writing settings",
+        "Store settings in a local JSON file: data/chat-settings.json (gitignored)",
+        "Update src/lib/chat/provider.ts to read from chat-settings.json at startup",
+        "Update src/lib/chat/system-prompt.ts to accept a configurable prompt prefix",
+        "Link gear icon to /admin/chat-settings using next/navigation router.push"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-008",
+      "title": "Admin WYSIWYG Contact Page Editor",
+      "priority": 8,
+      "description": "After admin login, the contact page (/en/contact) should show an edit banner and allow inline editing of the contact information: address, phone, hours, Google Maps embed URL, and any other text content. Changes persist to content/contact.md or a DB entry. Pattern is identical to the About page editor (US-006).",
+      "acceptanceCriteria": [
+        "Admin edit banner appears at top of /en/contact when admin is logged in",
+        "Clicking 'Edit Mode' makes contact fields editable (address, phone, hours, map URL, description)",
+        "A floating 'Save Changes' button appears in edit mode",
+        "Saving calls POST /api/admin/content/contact and writes to content/contact.md",
+        "After saving, the page shows updated content",
+        "Non-admin users see no editing UI",
+        "Verify: admin changes opening hours, saves, refreshes ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ new hours displayed"
+      ],
+      "technicalNotes": [
+        "Read the current src/app/[locale]/contact/page.tsx to understand existing contact content",
+        "Create content/contact.md with structured contact fields (YAML-like frontmatter)",
+        "Update contact/page.tsx to read from content/contact.md (server component)",
+        "Reuse AdminPageEditor component created in US-006",
+        "Reuse API route src/app/api/admin/content/[page]/route.ts ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� 'contact' as [page] param",
+        "Fields to make editable: address, phone, email, hours (per day), map embed URL, tagline"
+      ],
+      "dependencies": [
+        "US-006"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-009",
+      "title": "Admin Tests Tab with Programmatic Test Suite",
+      "priority": 9,
+      "description": "Add a 'Tests' tab to the /admin panel (alongside Menu, Categories, Rules, Blog). This tab shows a list of tests (smoke, unit, integration, e2e) with a 'Run All' button and individual 'Run' buttons per test. Tests run programmatically via API calls and return pass/fail status with output logs. Test results are displayed in real-time. Passing tests can auto-generate new user stories to insert into prd.json.",
+      "acceptanceCriteria": [
+        "A 'Tests' tab appears in /admin alongside the existing Menu/Categories/Rules/Blog tabs",
+        "The Tests tab shows a categorized list: Smoke Tests, Unit Tests, Integration Tests, E2E Tests",
+        "Each test has a name, description, status (pending/running/pass/fail), and output log",
+        "'Run All' button runs all tests sequentially and shows live status updates",
+        "Individual 'Run' button runs a single test",
+        "Test results show: total passed, failed, duration",
+        "A 'Generate Stories' button creates new prd.json entries for failing tests",
+        "Verify: click 'Run All' ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ tests run ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ results display with pass/fail status"
+      ],
+      "technicalNotes": [
+        "Add 'Tests' to TABS array in src/components/admin/admin-tabs.tsx",
+        "Create src/components/admin/admin-tests-panel.tsx",
+        "Create src/app/api/admin/tests/route.ts ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� GET (list tests), POST (run test by id)",
+        "Create src/lib/tests/ directory with test definitions:",
+        "  - smoke.ts: check homepage 200, menu page 200, blog page 200, contact page 200, about page 200",
+        "  - unit.ts: test menu data parsing, blog post slug generation, price formatting, tray context logic",
+        "  - integration.ts: test API routes (GET /api/admin/menu, GET /api/admin/blog), DB connection, auth flow",
+        "  - e2e.ts: use Playwright to test add-to-tray flow, admin login, menu filter, chat widget open",
+        "Each test is a function: async () => { steps, assertions, return { pass: boolean, log: string } }",
+        "API POST /api/admin/tests runs the test and streams results using TransformStream",
+        "Install @playwright/test if not already installed; use headless Chrome for e2e tests",
+        "Generate stories button: POST to /api/admin/tests/generate-stories ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� reads failing tests and appends to prd.json"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "large",
+      "passes": true
+    },
+    {
+      "id": "US-010",
+      "title": "Chrome DevTools Verification for All Features",
+      "priority": 10,
+      "description": "After implementing each feature, use Chrome DevTools (via MCP or Playwright) to verify the implementation has no console errors, no network failures, and renders correctly on mobile (390px) and desktop (1280px). This is a quality gate story ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� it does not add new features but ensures all previous stories are working in the browser.",
+      "acceptanceCriteria": [
+        "Navigate to http://localhost:3030/en ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� no console errors, hero image loads within 3s",
+        "Navigate to http://localhost:3030/en/menu ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� click Add on 3 items ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ tray badge shows 3 ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ open tray ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ items listed correctly",
+        "Navigate to http://localhost:3030/en/blog ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� featured post visible, grid below it, click a markdown post ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ full content renders",
+        "Navigate to http://localhost:3030/en/about ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� page renders without errors",
+        "Navigate to http://localhost:3030/en/contact ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� page renders without errors",
+        "Log in as admin (POST /api/admin/login) ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬� menu edit banner visible, blog edit buttons visible",
+        "Open chat widget ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ gear icon visible (admin) ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ clicking opens settings panel",
+        "Navigate to http://localhost:3030/admin ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Tests tab visible ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Run All ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ at least smoke tests pass",
+        "No 404 image errors, no hydration mismatches, no TypeScript build errors (rtk tsc check)",
+        "Mobile (390px): tray button not overlapping chat button, no horizontal scroll"
+      ],
+      "technicalNotes": [
+        "Use Chrome DevTools MCP tools: mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__list_console_messages",
+        "Or use agent-browser skill / webapp-testing skill for Playwright automation",
+        "Run rtk tsc to check for TypeScript errors before marking passes: true",
+        "Run rtk next build to ensure no build errors",
+        "For each prior story (US-001 through US-009), re-verify the acceptance criteria using browser tools",
+        "If any test fails, create a bug fix sub-story or fix inline before marking this story done"
+      ],
+      "dependencies": [
+        "US-001",
+        "US-002",
+        "US-003",
+        "US-004",
+        "US-005",
+        "US-006",
+        "US-007",
+        "US-008",
+        "US-009"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-011",
+      "title": "Chef's Pick Item Displayed Bigger at Top of Each Category",
+      "priority": 11,
+      "description": "On the menu page, the highlighted/Chef's Pick item for each category should appear as a prominent hero card at the top of its category section Ã¢â‚¬â€� larger than regular cards, with a full-width or wider layout. Regular items follow below in the standard grid. This makes the featured dish immediately obvious and visually striking.",
+      "acceptanceCriteria": [
+        "Each category section starts with the Chef's Pick item displayed as a wide/tall hero card (full-width on mobile, 2-column span on desktop)",
+        "The Chef's Pick card is visually larger: bigger image (aspect-[16/9] or [4/3] full-width), larger text, and a gold 'Ã¢Ëœâ€¦ Chef's Pick' badge",
+        "Regular items appear in the standard 2-3 column grid below the hero card",
+        "If no Chef's Pick is set for a category, the first item is used as default hero",
+        "Admin can still click 'Set as Highlight' on any card to change the Chef's Pick",
+        "Verify on mobile (390px): hero card full-width, no overflow"
+      ],
+      "technicalNotes": [
+        "Modify src/components/menu/menu-grid.tsx Ã¢â‚¬â€� for each category, separate first highlighted item from rest",
+        "Create src/components/menu/chef-pick-card.tsx Ã¢â‚¬â€� a larger variant of MenuCard",
+        "Chef pick card: full-width image (w-full aspect-video), larger font, gold ring + badge",
+        "Regular items below: standard grid (grid-cols-2 sm:grid-cols-3)",
+        "Pass isChefPick prop to card component for visual differentiation"
+      ],
+      "dependencies": [
+        "US-002"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-012",
+      "title": "Mobile-First Bottom Navigation: Category Filter and Search at Bottom",
+      "priority": 12,
+      "description": "On mobile, the category filter tabs and search bar on the menu page should be docked to the bottom of the screen (thumb-friendly zone) instead of the top. This follows mobile-first best practices where primary interactive controls are within thumb reach. On desktop (md+), keep the current top layout.",
+      "acceptanceCriteria": [
+        "On mobile (< 768px): category tabs and search bar appear as a sticky bottom bar",
+        "The bottom bar is above the tray widget button (z-index layered correctly)",
+        "On desktop (md+): category tabs and search remain at top as currently",
+        "Bottom bar has a subtle background blur (backdrop-blur) for readability over content",
+        "Category filter chips in the bottom bar are horizontally scrollable",
+        "No content is hidden behind the bottom bar (body has padding-bottom equal to bar height)",
+        "Verify at 390px: categories visible at bottom, scrollable, content not hidden"
+      ],
+      "technicalNotes": [
+        "Modify src/components/menu/menu-filter.tsx Ã¢â‚¬â€� add 'fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0' on mobile, remove on md+",
+        "Wrap with 'md:relative md:bottom-auto md:sticky md:top-0' for desktop fallback",
+        "Add 'pb-32 md:pb-0' to the menu page container to prevent content hidden behind sticky bar",
+        "Use 'overflow-x-auto' on the category chips row for horizontal scrolling",
+        "Ensure z-index: 40 (below tray button z-50 and chat z-50)"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-013",
+      "title": "Mobile Header: Language Selector Beside Hamburger, Replace Dark/Light Toggle",
+      "priority": 13,
+      "description": "On mobile, the header currently shows a dark/light toggle. Replace it with the language selector (EN/MS/ZH) positioned beside the hamburger menu icon. The dark/light toggle can still be accessible via the mobile menu drawer or a secondary location, but language selection takes priority since some customers cannot read the page without switching language first.",
+      "acceptanceCriteria": [
+        "On mobile (< 768px): header shows [Logo] [spacer] [Language Selector] [Hamburger]",
+        "The dark/light mode toggle is moved inside the mobile drawer menu or removed from mobile header",
+        "Language selector in mobile header is compact (shows current locale code or flag icon)",
+        "Tapping language selector opens a dropdown/sheet with EN/MS/ZH options",
+        "On desktop (md+): header layout unchanged Ã¢â‚¬â€� all items in nav bar",
+        "Verify at 390px: language selector visible beside hamburger, not dark/light toggle"
+      ],
+      "technicalNotes": [
+        "Read src/components/layout/header.tsx to understand current mobile header structure",
+        "Move ThemeToggle from mobile header to inside the mobile nav drawer",
+        "Add compact LocaleSwitcher in mobile header (before hamburger button)",
+        "Use short locale labels: 'EN', 'MY', 'ZH' or flag emoji: Ã°Å¸â€¡Â¬Ã°Å¸â€¡Â§/Ã°Å¸â€¡Â²Ã°Å¸â€¡Â¾/Ã°Å¸â€¡Â¨Ã°Å¸â€¡Â³",
+        "Ensure it does not overlap with Logo or push content off-screen"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-014",
+      "title": "Language Selector Icons for Each Language",
+      "priority": 14,
+      "description": "Replace text-only language labels (EN/MS/ZH) with icon-based selectors. Use flag emojis or SVG flag icons: Ã°Å¸â€¡Â¬Ã°Å¸â€¡Â§ for English, Ã°Å¸â€¡Â²Ã°Å¸â€¡Â¾ for Bahasa Malaysia, Ã°Å¸â€¡Â¨Ã°Å¸â€¡Â³ for Chinese. Show the flag icon alongside or instead of the text label. Works in both mobile header (US-013) and desktop nav.",
+      "acceptanceCriteria": [
+        "Language switcher shows flag icons: Ã°Å¸â€¡Â¬Ã°Å¸â€¡Â§ EN, Ã°Å¸â€¡Â²Ã°Å¸â€¡Â¾ MY, Ã°Å¸â€¡Â¨Ã°Å¸â€¡Â³ ZH (or equivalent SVG flags)",
+        "Current active language is visually indicated (bold, underline, or highlighted)",
+        "Flag icons are accessible (aria-label on each option)",
+        "Works in mobile header compact mode AND desktop nav dropdown",
+        "Consistent styling across light/dark themes",
+        "Verify: flag icons visible and correctly mapped to each language"
+      ],
+      "technicalNotes": [
+        "Use flag emojis (Ã°Å¸â€¡Â¬Ã°Å¸â€¡Â§ Ã°Å¸â€¡Â²Ã°Å¸â€¡Â¾ Ã°Å¸â€¡Â¨Ã°Å¸â€¡Â³) Ã¢â‚¬â€� works cross-platform without external deps",
+        "Or use country-flag-icons npm package for SVG flags",
+        "Update locale switcher component (find in src/components/layout/header.tsx or a dedicated locale-switcher.tsx)",
+        "Add aria-label='Switch to English' etc. for accessibility"
+      ],
+      "dependencies": [
+        "US-013"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-015",
+      "title": "Blog Content: Use Only Operator-Perspective Posts, Remove Metadata",
+      "priority": 15,
+      "description": "The blog currently imports from content/blog/ (ai-posts folder). Replace with posts from the 'operator perspective' folders: C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\posts\\operations, stories, and promotions. Remove customer-perspective posts (engagement/, stories written as 'I was a customer'). Also strip post metadata sections (Post Type, Expected Engagement, Perspective, Response Strategy, References, Best Posting Time) Ã¢â‚¬â€� show only the main content. Copy chosen posts to content/blog/.",
+      "acceptanceCriteria": [
+        "content/blog/ contains only operator-perspective posts from: operations/, stories/, promotions/",
+        "Customer-perspective posts (engagement/, ai-posts written from customer viewpoint) are excluded",
+        "Each blog post body shows ONLY the main content Ã¢â‚¬â€� no '## Post Type', '## Response Strategy', '## Best Posting Time', '## References' sections",
+        "Post excerpt on listing page is clean content (no metadata leaking)",
+        "Blog detail page renders clean article without metadata headers",
+        "Verify: /en/blog shows only operator posts; click one Ã¢â‚¬â€� no metadata visible in body"
+      ],
+      "technicalNotes": [
+        "Copy posts from: C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\posts\\operations\\, stories\\, promotions\\ to project content/blog/",
+        "Exclude: engagement/ folder entirely, any ai-posts written from 'customer/visitor' perspective",
+        "In src/lib/blog-local.ts readLocalPosts(): after parsing markdown, strip sections matching: /^##\\s+(Post Type|Expected Engagement|Perspective|Response Strategy|Best Posting Time|References|Source)/im",
+        "Use regex replace or gray-matter remark plugin to remove those heading sections and their content",
+        "Clear old content/blog/ files first, then copy new operator posts",
+        "Total blog posts target: 15-30 curated posts"
+      ],
+      "dependencies": [
+        "US-004"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-016",
+      "title": "Fix Recipe Modal Close Button Visibility on Mobile",
+      "priority": 16,
+      "description": "When a user taps a menu item image to view key ingredients (recipe modal), the close button (X) is positioned at the top-right but is not visible on mobile without scrolling/shrinking the page (see Image #1). Fix this by ensuring the X button is always visible Ã¢â‚¬â€� either sticky at the top of the modal or positioned absolutely within the visible viewport area.",
+      "acceptanceCriteria": [
+        "The close (X) button is always visible without any scrolling when the recipe modal opens on mobile",
+        "The X button is sticky or fixed within the modal (not scrolled away)",
+        "Tapping X or tapping outside the modal closes it",
+        "Modal content (ingredients list) is scrollable if too long, but X stays visible",
+        "Works on both mobile (390px) and desktop",
+        "Verify on mobile: open recipe modal Ã¢â€ â€™ X button immediately visible Ã¢â€ â€™ tap X Ã¢â€ â€™ modal closes"
+      ],
+      "technicalNotes": [
+        "Find src/components/menu/recipe-modal.tsx (or wherever RecipeModal is defined)",
+        "Make the close button sticky: use 'sticky top-0' or 'fixed' within the modal header",
+        "Ensure the modal container has 'overflow-y-auto' and a max-height, with the header outside the scrollable area",
+        "Pattern: <div class='flex flex-col h-full'><header class='flex justify-end p-2 sticky top-0 bg-background z-10'><X button/></header><div class='overflow-y-auto flex-1 p-4'>content</div></div>",
+        "Test on 390px viewport height to confirm button is above the fold"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-017",
+      "title": "Admin WYSIWYG Editing on Landing Page /en",
+      "priority": 17,
+      "description": "The landing page (http://localhost:3030/en) currently has no admin editing mode. When admin is logged in, show an edit banner and allow inline editing of: hero headline, tagline, hero description text, and the 'highlights' section items. The editing pattern should match the menu page's admin edit banner approach.",
+      "acceptanceCriteria": [
+        "Admin edit banner appears at top of /en when admin is logged in",
+        "Hero headline, tagline, and description text are contenteditable in admin mode",
+        "Clicking on the highlights section allows admin to reorder or change highlighted items",
+        "A floating 'Save Changes' button appears in edit mode",
+        "Changes persist and survive page reload",
+        "Non-admin users see no editing UI",
+        "Verify: admin edits hero tagline, saves, refreshes Ã¢â€ â€™ updated text appears"
+      ],
+      "technicalNotes": [
+        "Read src/app/[locale]/page.tsx (home page) to understand current structure",
+        "Add isAdmin check via cookies in the home server component (same pattern as menu page)",
+        "Create src/components/admin/admin-home-editor.tsx Ã¢â‚¬â€� client component for inline editing",
+        "Create content/home.md with editable fields: hero_title, hero_tagline, hero_description",
+        "Add API route src/app/api/admin/content/home/route.ts",
+        "Inject AdminHomeEditor only when isAdmin=true"
+      ],
+      "dependencies": [
+        "US-006"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-018",
+      "title": "Hero Image Improvements: Better Food Photos + Sharp Compression",
+      "priority": 18,
+      "description": "The landing page hero section shows food images on the right side (see Image #2). The current images include a building shot showing other businesses (EasyAds, BaiLee above our cafe), which looks unprofessional. Replace with high-quality food photos: use the named menu photos from 3-resources/photos/Frequently used (pineapple fried rice, seafood tomyum, etc.). Compress all hero images with Sharp for fast loading. Remove repetition Ã¢â‚¬â€� each hero slot should show a unique dish.",
+      "acceptanceCriteria": [
+        "Hero section right side shows 2-3 unique, professional food photos (no building shots showing other businesses)",
+        "Photos used: mt01 pineapple fried rice, mt04 seafood tomyum, and one more appetising dish",
+        "All images are Sharp-compressed WebP at Ã¢â€°Â¤ 100KB each for fast mobile loading",
+        "The 'Our Corner Shop' building image is replaced with an interior/ambiance shot or a food close-up",
+        "Hero images are unique (no duplicate dishes shown)",
+        "LCP (Largest Contentful Paint) image has priority={true} prop",
+        "Verify: hero section shows 3 distinct food photos, no building shot, images load fast"
+      ],
+      "technicalNotes": [
+        "Copy from C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used: mt01 pineapple fried rice a5.jpg, mt04 seafood tomyum soup with rice a5.jpg",
+        "Run Sharp compression script: create scripts/compress-hero.mjs using sharp npm package to convert to WebP at quality 80, max 1200px wide",
+        "Install sharp: npm install sharp",
+        "Output compressed images to public/images/hero/ replacing existing ones",
+        "Update src/components/home/hero-section.tsx to reference new image filenames",
+        "Use next/image with sizes prop for responsive loading"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-019",
+      "title": "Add Cafe Logo to Header and Footer",
+      "priority": 19,
+      "description": "Use the cafe logo at C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used\\logo.jpg in the website header and footer. Process the logo to remove the white background (make it transparent) using Sharp or a script, then save as logo.png or logo.webp. Place in public/images/logo.png. Update header to use the image logo instead of text wordmark.",
+      "acceptanceCriteria": [
+        "logo.jpg is copied to public/images/logo.png (or .webp) with white background removed/made transparent",
+        "Header shows the logo image instead of just text wordmark 'Makan Moments'",
+        "Footer also shows the logo",
+        "Logo is appropriately sized: 40-48px height in header, max 80px in footer",
+        "Logo has proper alt text: 'Makan Moments Cafe logo'",
+        "Logo renders well on both light and dark themes",
+        "Verify: header shows logo image on http://localhost:3030/en"
+      ],
+      "technicalNotes": [
+        "Copy logo.jpg from C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used\\logo.jpg to project",
+        "Create scripts/process-logo.mjs: use sharp to remove white background via threshold or use jimp",
+        "Alternative: use sharp to convert to PNG with transparency: .png().toFile('public/images/logo.png')",
+        "For white background removal: use sharp with flatten(false) then threshold the white pixels, or just save as PNG and rely on CSS mix-blend-mode: multiply for light bg, or use CSS filter: invert for dark mode",
+        "Update src/components/layout/header.tsx Ã¢â‚¬â€� replace text logo with <Image> component",
+        "Update src/components/layout/footer.tsx similarly"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-020",
+      "title": "Replace Menu Item Images with High-Quality Food Photos",
+      "priority": 20,
+      "description": "Copy specific high-quality food photos from 3-resources/photos to public/images/menu/ with the correct item code filenames so they display on the menu cards. Photos to use: tm03 gyudon a5.jpg, mt04 seafood tomyum soup with rice a5.jpg, mt01 pineapple fried rice a5.jpg, dd02 bubur cha cha a5.jpg, bf22 thai styled green curry rice.jpg, ap01 nasi ayam penyet a5.jpg, sf11 A4 CHICKEN.png, bf02 fish slices noodles.jpg, and a5 kl curry mee.png. Map each to its menu item code in the DB.",
+      "acceptanceCriteria": [
+        "Each of the 9 named photos is copied to public/images/menu/ with the correct item code as filename (e.g., TM03.jpg, MT04.jpg etc.)",
+        "Menu cards for those items now show the high-quality photos",
+        "Images are Sharp-compressed (WebP, Ã¢â€°Â¤ 150KB) for fast loading",
+        "Fallback emoji (Ã°Å¸�Â½Ã¯Â¸�) no longer shows for those items",
+        "Verify: /en/menu shows food photos for gyudon, tom yum, pineapple rice, etc."
+      ],
+      "technicalNotes": [
+        "Source photos in: C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used\\ and C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\menu-pages\\ver-4.5\\",
+        "Map filenames to item codes by querying DB: rtk SELECT code, name_en FROM menu_items WHERE name_en ILIKE '%gyudon%' etc.",
+        "Run: npm run dev then check DB to find item codes for: gyudon, seafood tomyum, pineapple fried rice, bubur cha cha, thai green curry rice, nasi ayam penyet, chicken (sf11), fish slices noodles, kl curry mee",
+        "Create scripts/copy-menu-photos.mjs Ã¢â‚¬â€� reads mapping, uses sharp to compress & save to public/images/menu/{CODE}.jpg",
+        "Run the script after confirming the item code Ã¢â€ â€™ filename mapping is correct"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-021",
+      "title": "Green Theme Using Logo Colors + Impeccable Tool",
+      "priority": 21,
+      "description": "The current website uses a warm terracotta/red color scheme. Update the primary theme color to use green (inspired by the logo.jpg colors). Use the /impeccable skill to gather design context, then update the Tailwind CSS variables in globals.css. The green should be earthy/natural (not neon), matching the cafe's botanical/organic aesthetic. Apply consistently across buttons, active states, borders, and accents.",
+      "acceptanceCriteria": [
+        "Primary color is changed from red/terracotta to a natural green (e.g., OKLCH equivalent of #2d6a4f or similar forest green)",
+        "All primary buttons, active nav links, and accent elements use the new green",
+        "The change is in src/app/globals.css CSS variables (--primary, --primary-foreground etc.)",
+        "Both light and dark mode green variants are defined",
+        "The green complements the earthy/linen background Ã¢â‚¬â€� not clashing",
+        "Verify: /en homepage Ã¢â‚¬â€� View Menu button is green, active nav item is green"
+      ],
+      "technicalNotes": [
+        "Run /teach-impeccable skill first to gather design context for this project (saves to .ai/impeccable.md or similar)",
+        "Read src/app/globals.css to understand current OKLCH color variables",
+        "Change --primary in :root from current red OKLCH to green OKLCH: e.g., oklch(0.42 0.14 145) (dark forest green)",
+        "Change --primary-foreground to near-white: oklch(0.98 0.01 145)",
+        "For dark mode .dark: adjust to a slightly lighter green: oklch(0.55 0.16 145)",
+        "Test on both light and dark modes in Chrome DevTools",
+        "Also check logo.jpg colors with sharp to extract dominant color if needed"
+      ],
+      "dependencies": [
+        "US-019"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-022",
+      "title": "Add Cover Page Image to About Page",
+      "priority": 22,
+      "description": "Add the menu cover page image (C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\menu-pages\\ver-4.4\\COVER PAGE.png) as a visual element on the about page (/en/about). It should be displayed prominently Ã¢â‚¬â€� either as a hero/banner at the top or as a featured image within the page content.",
+      "acceptanceCriteria": [
+        "COVER PAGE.png is copied to public/images/about/cover-page.png (Sharp-compressed WebP)",
+        "The about page shows this image Ã¢â‚¬â€� full-width banner at top or prominent section within page",
+        "Image has proper alt text describing the cafe menu cover",
+        "Image is responsive and looks good on both mobile and desktop",
+        "Verify: /en/about shows the cover page image"
+      ],
+      "technicalNotes": [
+        "Source: C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\menu-pages\\ver-4.4\\COVER PAGE.png",
+        "Compress with Sharp: convert to WebP, max 1400px wide, quality 85",
+        "Copy to public/images/about/cover-page.webp",
+        "Read src/app/[locale]/about/page.tsx and add <Image> component for the cover",
+        "Place as a full-width rounded image with shadow: className='w-full rounded-2xl shadow-lg'"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-023",
+      "title": "Add Paintings Photo to About Page",
+      "priority": 23,
+      "description": "Add the wall paintings photo (C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used\\paintings.jpg) to the about page. This photo shows the hand-drawn wall art in the cafe, which reinforces the brand's artistic/soulful personality.",
+      "acceptanceCriteria": [
+        "paintings.jpg is compressed and copied to public/images/about/paintings.webp",
+        "The about page shows the paintings image in an appropriate section (e.g., 'Our Space' or 'Ambiance' section)",
+        "Image has caption/alt text about the hand-drawn wall art",
+        "Responsive and visually well-placed (not just dumped on the page)",
+        "Verify: /en/about shows the paintings image with good presentation"
+      ],
+      "technicalNotes": [
+        "Source: C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used\\paintings.jpg",
+        "Compress with Sharp: WebP, max 1200px, quality 82",
+        "Copy to public/images/about/paintings.webp",
+        "Add to about page Ã¢â‚¬â€� create an 'Our Ambiance' section if not present, or insert after the cover image (US-022)",
+        "Use a 2-column layout on desktop: text on left, paintings image on right"
+      ],
+      "dependencies": [
+        "US-022"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-024",
+      "title": "Menu Add Button: 'Added' State with Background Color Change",
+      "priority": 24,
+      "description": "When a user clicks '+ Add' on a menu item, the button text should change to 'Ã¢Å“â€œ Added' and the menu card's background should subtly change color (e.g., a light green tint) to indicate the item is in the tray. If the user adds again (quantity increase), the button briefly flashes. Removing the item from the tray reverts the card to normal.",
+      "acceptanceCriteria": [
+        "Clicking '+ Add' immediately changes the button to 'Ã¢Å“â€œ Added' (or with a checkmark icon)",
+        "The button background changes from primary/10 to a green/teal to indicate 'in tray' state",
+        "The menu card background gets a subtle tint (e.g., bg-green-50/50 or ring-2 ring-green-400/30)",
+        "Adding again (tapping Added again) increments quantity and briefly pulses the button",
+        "Removing the item from the tray panel reverts the card to normal '+ Add' state",
+        "This uses the TrayContext to determine if an item is in the tray",
+        "Verify: add item Ã¢â€ â€™ card turns tinted, button shows 'Added'; remove from tray Ã¢â€ â€™ card reverts"
+      ],
+      "technicalNotes": [
+        "In src/components/menu/menu-card.tsx: use useTray() to get items, check if item.code is in items array",
+        "const isInTray = items.some(i => i.id === item.code)",
+        "Conditionally apply classes: card wrapper gets 'ring-2 ring-green-400/40 bg-green-50/30' when isInTray",
+        "Button gets 'bg-green-500 text-white' state when isInTray, shows checkmark + 'Added'",
+        "Add a pulse animation on quantity increment: useEffect to add/remove animate-pulse class",
+        "Add i18n keys: common.added = 'Added' / 'Ditambah' / 'Ã¥Â·Â²Ã¥Å Â Ã¥â€¦Â¥'"
+      ],
+      "dependencies": [
+        "US-001"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-025",
+      "title": "Chat Widget Settings Button: Admin Only",
+      "priority": 25,
+      "description": "The gear/settings button on the chat widget (added in US-007) is currently visible to all users. It should only be visible when an admin is logged in. Non-admin customers should never see the settings button Ã¢â‚¬â€� it creates confusion and is an internal tool only.",
+      "acceptanceCriteria": [
+        "Settings gear icon on chat widget is NOT visible to non-admin users",
+        "Settings gear icon IS visible when admin is logged in",
+        "The admin check is done on the client side by calling GET /api/admin/verify",
+        "No flash of the settings icon for non-admin users on page load",
+        "Verify: logged-out user Ã¢â€ â€™ no gear icon; admin logged in Ã¢â€ â€™ gear icon visible"
+      ],
+      "technicalNotes": [
+        "Read src/components/chat/chat-widget.tsx Ã¢â‚¬â€� find the gear icon render",
+        "Add a useEffect that calls fetch('/api/admin/verify') on mount, sets isAdmin state",
+        "Only render the gear icon when isAdmin === true",
+        "src/app/api/admin/verify/route.ts should already exist (created in US-007); if not, create it",
+        "Use a loading state to avoid flash: don't render gear icon until verify response received"
+      ],
+      "dependencies": [
+        "US-007"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-026",
+      "title": "Set Appropriate AI Waiter System Prompt",
+      "priority": 26,
+      "description": "Configure a proper system prompt for the AI waiter in /admin/chat-settings. The prompt should make the AI act as a friendly, knowledgeable waiter at Makan Moments Cafe Ã¢â‚¬â€� able to recommend dishes, explain the menu, answer questions about halal/dietary status, give directions, and handle small talk in English, Malay, and Chinese. The prompt should reflect the cafe's warm, soulful brand personality.",
+      "acceptanceCriteria": [
+        "Navigate to /admin/chat-settings Ã¢â‚¬â€� system prompt textarea contains a well-crafted prompt",
+        "The prompt instructs the AI to: introduce itself as the Makan Moments AI waiter, recommend dishes, explain dietary info, give operating hours, and respond in customer's language",
+        "The AI should NOT make up prices Ã¢â‚¬â€� it should refer to the knowledge/ files",
+        "The prompt sets a warm, friendly, local Malaysian tone (not overly formal)",
+        "Save the prompt Ã¢â€ â€™ chat widget responds with the updated persona",
+        "Test: open chat widget, ask 'What do you recommend?' Ã¢â‚¬â€� AI gives a relevant, warm recommendation"
+      ],
+      "technicalNotes": [
+        "Write the system prompt and save it to data/chat-settings.json via POST /api/admin/chat-settings",
+        "The prompt should include: role (AI waiter at Makan Moments Cafe), personality (friendly, warm, multilingual), capabilities (menu recommendations, dietary info, directions, operating hours), and limitations (no POS integration, no reservations)",
+        "Include cafe facts: Taman Impian Emas, Skudai, Johor | 11AM-11PM | No pork, No lard, Halal-friendly | Tel: 012-7088789",
+        "Language instruction: 'Reply in the same language the customer uses. Support English, Bahasa Malaysia, and Chinese (Simplified).'",
+        "Read knowledge/cafe-facts.md and knowledge/menu-knowledge.md to align with existing knowledge base"
+      ],
+      "dependencies": [
+        "US-007"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-027",
+      "title": "Admin Panel Mobile-First Redesign: No Horizontal Scroll",
+      "priority": 27,
+      "description": "The /admin panel currently requires horizontal scrolling on mobile (see context). All admin tabs (Menu, Categories, Rules, Blog, Tests) must be redesigned to be mobile-first: no horizontal scroll, stacked layouts, and touch-friendly controls. Tables should become card lists on mobile.",
+      "acceptanceCriteria": [
+        "At 390px viewport: no horizontal scrollbar on any admin tab",
+        "Menu tab: items shown as stacked cards (not a wide table) on mobile",
+        "Tables collapse to card/list layout on mobile using responsive Tailwind classes",
+        "All buttons are Ã¢â€°Â¥ 44px touch targets",
+        "Admin header (title + sign out) is single row, no overflow",
+        "Tab navigation does not require horizontal scrolling (tabs wrap or use a scrollable row with scroll-snap)",
+        "Verify at 390px: all tabs navigable, content readable, no horizontal scroll"
+      ],
+      "technicalNotes": [
+        "Read src/components/admin/admin-menu-table.tsx and admin-rules-panel.tsx",
+        "Replace <table> layouts with responsive card list: 'hidden md:table' for table, 'md:hidden' for mobile card list",
+        "For menu items on mobile: each row becomes a card with name + price + actions stacked",
+        "Admin header: use 'flex items-center justify-between gap-2' with text truncation",
+        "Tab bar: use 'flex overflow-x-auto scroll-snap-x' with 'scroll-snap-align-start' on each tab",
+        "All action buttons: 'min-h-[44px] min-w-[44px]'"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-028",
+      "title": "Admin Rules Mobile View Fix: Horizontal Rule Name + Buttons",
+      "priority": 28,
+      "description": "In the Rules tab on mobile (see Image #3), the rule name 'Close Coffee & Tea after 7pm (except Lemon Tea)' is stacking vertically word-by-word because it's in a narrow column beside the status badges. The layout cuts off the Active/Edit/Delete buttons on the right. Fix: show the full rule name on one line (or wrap cleanly), then show the status + action buttons on a separate line below, all within the card width.",
+      "acceptanceCriteria": [
+        "Rule name displays horizontally (wrapping only when necessary, not stacking word-by-word)",
+        "Active/Disable badges and Edit/Delete buttons appear below the rule name, not beside it in a cramped column",
+        "No content is cut off at the right edge",
+        "Each rule card fits within 390px with comfortable padding",
+        "Actions (Active, Edit, Delete) are full-width or at least 44px touch target",
+        "Verify at 390px: rule name readable, buttons visible and tappable"
+      ],
+      "technicalNotes": [
+        "Read src/components/admin/admin-rules-panel.tsx",
+        "Current layout likely uses flex-row with name on left, badges on right Ã¢â‚¬â€� causing name to get too little space",
+        "Change to: rule card with 'flex flex-col gap-2'",
+        "Top row: rule name (font-medium, full width, allow wrap)",
+        "Bottom row: flex-row gap-2 with status badge + action buttons",
+        "Remove any fixed widths on rule name column that might cause word-stacking",
+        "Action buttons: 'flex gap-2 flex-wrap' to handle wrap if needed"
+      ],
+      "dependencies": [
+        "US-027"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-029",
+      "title": "Admin: Set 6 Homepage Highlights",
+      "priority": 29,
+      "description": "The homepage highlights section shows featured menu items. Set exactly 6 items as homepage highlights in the admin panel. These should be the best-looking, most photogenic items that represent the cafe's signature dishes. Mark them as featured=true in the DB with the correct sort_order.",
+      "acceptanceCriteria": [
+        "Exactly 6 menu items are marked as featured=true in the database",
+        "The homepage at /en shows exactly 6 highlighted items",
+        "The 6 items are a representative selection: e.g., seafood tomyum, pineapple fried rice, gyudon, green curry rice, nasi ayam penyet, and one dessert/drink",
+        "Admin can change which 6 items are highlighted via the Menu tab (toggle featured flag)",
+        "The highlights section on the homepage renders correctly with 6 items",
+        "Verify: /en homepage shows exactly 6 highlight cards"
+      ],
+      "technicalNotes": [
+        "Query DB to find item codes for the 6 chosen signature dishes",
+        "Run SQL: UPDATE menu_items SET featured = true WHERE code IN ('MT04', 'MT01', 'TM03', 'BF22', 'AP01', 'DD02') -- adjust codes to match actual codes",
+        "Run SQL: UPDATE menu_items SET featured = false WHERE code NOT IN (above list)",
+        "Verify with: SELECT code, name_en, featured FROM menu_items WHERE featured = true",
+        "Check that getFeaturedItems() in src/lib/menu.ts returns exactly these 6",
+        "Min highlights constant is MIN_HIGHLIGHTS = 6 in menu.ts Ã¢â‚¬â€� confirm this is set"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-030",
+      "title": "Admin Alerts: Notify About Items Without Photos",
+      "priority": 30,
+      "description": "In the admin panel, show a prominent alert/banner listing all menu items that have no photo (no image file in public/images/menu/{code}.jpg). This reminds the admin to upload photos. The alert should be dismissible per session but always re-appear on next visit.",
+      "acceptanceCriteria": [
+        "A yellow/amber alert banner appears at the top of the admin Menu tab",
+        "The alert lists item names (or count) that have no corresponding photo file",
+        "The alert has a 'Dismiss' button that hides it for the current session",
+        "Alert text: 'X items have no photo. Consider adding photos to improve the menu page.'",
+        "Clicking an item name in the alert scrolls to or highlights that item in the list",
+        "Verify: navigate to /admin Ã¢â€ â€™ alert shows items without photos"
+      ],
+      "technicalNotes": [
+        "Create API route src/app/api/admin/menu/missing-photos/route.ts Ã¢â‚¬â€� reads menu items from DB, checks if public/images/menu/{code}.jpg or .webp or .png exists using fs.existsSync",
+        "Return list of items with missing photos",
+        "In AdminMenuTable component, fetch missing photos list on mount, show alert if list not empty",
+        "Use sessionStorage to persist 'dismissed' state so it reappears on next page visit",
+        "Alert style: bg-amber-50 border-amber-400 text-amber-800 with a warning icon"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-031",
+      "title": "Admin: Non-POS Display Categories (New Items, Vegetarian, etc.)",
+      "priority": 31,
+      "passes": true,
+      "description": "Current categories are synced from the POS system (e.g., Rice, Noodles, Drinks). Add a separate set of 'display categories' that are website-only (not tied to POS): 'New Items', 'Vegetarian', 'Chef's Picks', 'Under RM15'. These display categories allow flexible menu curation without breaking the POS sync. Admin can assign menu items to display categories in addition to their POS categories.",
+      "acceptanceCriteria": [
+        "A new 'Display Categories' section exists in the admin Categories tab",
+        "Default display categories: 'New Items', 'Vegetarian', 'Chef's Picks', 'Under RM15'",
+        "Admin can add/remove display categories",
+        "Admin can assign any menu item to one or more display categories",
+        "The menu page /en/menu shows display categories as filter tabs alongside POS categories",
+        "Items can belong to both a POS category AND display categories simultaneously",
+        "Verify: admin adds 'New Items' display category, assigns 3 items Ã¢â€ â€™ /en/menu shows 'New Items' filter tab"
+      ],
+      "technicalNotes": [
+        "Add a new DB table `display_categories` (id, name, sort_order, active)",
+        "Add a junction table `item_display_categories` (item_id, display_category_id)",
+        "Create API routes: GET/POST/DELETE /api/admin/display-categories, POST /api/admin/display-categories/[id]/items",
+        "Update src/components/admin/admin-categories-panel.tsx to show both POS categories (read-only) and Display Categories (editable)",
+        "Update menu filter component to include display categories as filter tabs",
+        "Update getMenuItems() to accept optional display_category filter param"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "large"
+    },
+    {
+      "id": "US-032",
+      "title": "Admin: List All Items for a Particular Category",
+      "priority": 32,
+      "description": "In the admin Menu tab, when filtering by a category, show all items belonging to that category clearly. Currently all items are shown in a flat list. Add a category filter/selector in the admin Menu tab that shows only items from the selected category, making it easier to manage items per category.",
+      "acceptanceCriteria": [
+        "Admin Menu tab has a category dropdown/filter at the top",
+        "Selecting a category shows only items belonging to that category",
+        "The item count per category is shown in the dropdown (e.g., 'Rice (8 items)')",
+        "An 'All Categories' option shows all items (default)",
+        "The filter is responsive and works on mobile",
+        "Verify: admin selects 'Noodles' category Ã¢â€ â€™ only noodle items shown in the list"
+      ],
+      "technicalNotes": [
+        "Read src/components/admin/admin-menu-table.tsx Ã¢â‚¬â€� add category filter state",
+        "Add a <select> or tab filter component above the items list",
+        "Filter items client-side: filteredItems = activeCategory ? items.filter(i => i.categories.includes(activeCategory)) : items",
+        "Show item count: categories.map(c => ({ name: c, count: items.filter(i => i.categories.includes(c)).length }))",
+        "Pass categories prop (already available) to the component"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-033",
+      "title": "Admin: Drag and Drop Items Between Categories",
+      "priority": 33,
+      "description": "In the admin Menu tab (with category filter from US-032), allow drag-and-drop to move items from one category to another. Dragging an item and dropping it onto a different category reassigns it. This makes category management visual and intuitive.",
+      "acceptanceCriteria": [
+        "Items in the admin menu list are draggable",
+        "Category sections (when showing all) have drop zones",
+        "Dragging an item to a category section moves it to that category",
+        "The move persists via PATCH /api/admin/menu/[id] to update the item's categories array",
+        "Works on both mouse (desktop) and touch (mobile)",
+        "Visual feedback: item shows drag ghost, drop zone highlights on hover",
+        "Verify: drag 'Tom Yum Soup' from 'Soups' to 'Chef's Picks' Ã¢â€ â€™ item appears in new category"
+      ],
+      "technicalNotes": [
+        "Use @dnd-kit/core and @dnd-kit/sortable: npm install @dnd-kit/core @dnd-kit/sortable",
+        "Wrap admin menu table items in DraggableItem components",
+        "Create DroppableCategory containers for each category section",
+        "On drop: call PATCH /api/admin/menu/[id] with updated categories array",
+        "Touch support is built into @dnd-kit Ã¢â‚¬â€� use TouchSensor alongside PointerSensor"
+      ],
+      "dependencies": [
+        "US-032"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-034",
+      "title": "Admin: Duplicate Item to Multiple Categories",
+      "priority": 34,
+      "description": "In the admin Menu tab, allow an item to be duplicated (added) to one or more additional categories. This is different from moving Ã¢â‚¬â€� the item appears in all assigned categories simultaneously. Useful for items like 'Iced Lemon Tea' that belong to both 'Drinks' and 'Lunch Sets' categories.",
+      "acceptanceCriteria": [
+        "Each item in the admin list has a 'Copy to Category' button (or a multi-select categories dropdown on edit)",
+        "Admin can select multiple categories for an item",
+        "The item appears in all selected categories on the public menu page",
+        "Changes persist to DB (categories is already a text[] array column)",
+        "The edit modal/form shows all currently assigned categories as a checklist",
+        "Verify: item assigned to ['Drinks', 'Lunch Sets'] Ã¢â€ â€™ appears under both filter tabs on /en/menu"
+      ],
+      "technicalNotes": [
+        "Menu items already support multi-category: MenuItem.categories is string[]",
+        "In the admin item edit form/modal: show a multi-select checklist of all categories",
+        "Use a checkboxes list: categories.map(c => <Checkbox checked={item.categories.includes(c)} onChange=...>)",
+        "On save: PATCH /api/admin/menu/[id] with updated categories array",
+        "Update admin-menu-table.tsx edit modal to show the multi-category selector"
+      ],
+      "dependencies": [
+        "US-032"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-035",
+      "title": "Menu Page: Dynamic Display Based on Time of Day",
+      "priority": 35,
+      "description": "On the menu page, the default active category/filter should change based on the current time. Breakfast items (if available) are prioritized before 11AM, lunch items from 11AM-3PM, dinner items from 3PM-close. This is determined by the item's existing timeFrom/timeUntil fields. The admin can configure the time-based category priorities in /admin. Items outside their time window are still visible but shown lower in the list.",
+      "acceptanceCriteria": [
+        "The default active category tab on /en/menu changes based on Malaysia time",
+        "If current time is lunch hours (11AM-3PM): 'Lunch Sets' or 'Rice' category is selected by default",
+        "If current time is dinner (3PM-10:30PM): 'Mains' or similar is default",
+        "A subtle 'Serving now' indicator shows which categories are currently available",
+        "Admin can configure time-based category priorities in a new 'Time Display' section in /admin",
+        "This does NOT hide any items Ã¢â‚¬â€� just changes the default selected filter",
+        "Verify: at lunch time, menu page loads with lunch category pre-selected"
+      ],
+      "technicalNotes": [
+        "In menu page server component: get current Malaysia time (UTC+8), determine which time-slot is active",
+        "Create a simple time-slot config in src/lib/time-slots.ts: { breakfast: { start: '07:00', end: '11:00', defaultCategory: 'Breakfast' }, lunch: ..., dinner: ... }",
+        "Pass defaultCategory to MenuGrid which passes to MenuFilter as initialCategory",
+        "Store time-slot config in DB or a JSON config file (data/time-slots.json) so admin can edit it",
+        "Add API route GET/POST /api/admin/time-slots for admin to configure",
+        "Add a new 'Time Settings' section in admin Categories tab"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-036",
+      "title": "Operating Hours Alert for Non-Admin Users Outside Ordering Time",
+      "priority": 36,
+      "description": "If a non-admin user views the menu page (or any page) outside operating hours (11AM-11PM, last order 10:30PM), show a friendly banner/alert informing them the cafe is currently closed. The operating hours are based on Malaysia time (UTC+8). This should be configured in the Rules system so admin can update the hours without code changes.",
+      "acceptanceCriteria": [
+        "Outside 11AM-11PM Malaysia time: a non-dismissible banner appears at top of /en/menu: 'We're currently closed. Open daily 11AM-11PM. Last order 10:30PM.'",
+        "Inside 11AM-10:30PM: no alert, menu shows normally",
+        "Between 10:30PM-11PM: show 'Last order has passed for today. Come back tomorrow!'",
+        "Non-admin users see the alert; admin users do not (to allow editing anytime)",
+        "Operating hours are stored as a Rule in the Rules system so admin can change them",
+        "Verify: manually change system time or mock time Ã¢â€ â€™ alert appears outside hours"
+      ],
+      "technicalNotes": [
+        "Create a new Rule type 'operating_hours' or use a config in data/operating-hours.json",
+        "In menu page server component: get Malaysia time, check against operating hours, pass closedStatus to page",
+        "Add OperatingHoursAlert component: shown only when !isAdmin && closedStatus !== 'open'",
+        "Closed statuses: 'before_open' (before 11AM), 'after_last_order' (10:30PM-11PM), 'closed' (after 11PM)",
+        "Create admin UI in Rules tab to configure operating hours (start, last_order, close times)"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-037",
+      "title": "AI Helper in Admin Rules Tab for Complex Rule Configuration",
+      "priority": 37,
+      "description": "Rules can be complex (time-based, category-based, discount cascades). Add an AI helper in the Rules tab that admin can describe in natural language what they want ('disable all drinks after 7PM except lemon tea') and the AI suggests a rule configuration. The AI uses the existing rule schema to generate a pre-filled rule form.",
+      "acceptanceCriteria": [
+        "The Rules tab has an 'AI Helper' button or collapsible panel at the top",
+        "Admin types a natural language rule description and clicks 'Generate Rule'",
+        "The AI returns a structured rule suggestion (ruleType, targetType, targetCategories, timeFrom, timeUntil, etc.)",
+        "The suggested rule is pre-filled into the 'Add Rule' form for admin to review and save",
+        "The AI understands the cafe context: knows category names, operating hours, item types",
+        "Verify: type 'Give 10% discount on all rice dishes at lunch time' Ã¢â€ â€™ AI generates a discount rule pre-filled"
+      ],
+      "technicalNotes": [
+        "Create src/components/admin/admin-rules-ai-helper.tsx Ã¢â‚¬â€� chat input + suggested rule display",
+        "Create API route src/app/api/admin/rules/ai-suggest/route.ts",
+        "Use existing AI SDK (Groq/OpenRouter via src/lib/chat/provider.ts) with a rules-specific system prompt",
+        "System prompt: explain the Rule schema (RuleType: disable/discount/featured, TargetType: category/items, fields) and tell AI to return JSON",
+        "Parse AI JSON response and populate the rule form state",
+        "Include current categories in the AI context so it knows valid category names"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-038",
+      "title": "Blog Post Content Cleanup: Remove Metadata Sections",
+      "priority": 38,
+      "description": "The imported blog posts contain metadata sections like '## Post Type', '## Expected Engagement', '## Perspective', '## Response Strategy', '## Best Posting Time', '## References', '## Source'. These are internal content planning notes and should not be shown to cafe customers. Strip these sections from the rendered blog post content, showing only the main article body.",
+      "acceptanceCriteria": [
+        "Blog detail pages do NOT show any of: Post Type, Expected Engagement, Perspective, Response Strategy, Best Posting Time, References, Source sections",
+        "The post intro metadata block (Type/Created/Tags frontmatter text) is also stripped",
+        "The main content (the actual post copy, story, or announcement) renders cleanly",
+        "Blog listing excerpts also show clean content (first paragraph of actual content)",
+        "Verify: click any blog post Ã¢â€ â€™ no metadata headers visible, only the actual content"
+      ],
+      "technicalNotes": [
+        "In src/lib/blog-local.ts Ã¢â‚¬â€� after parsing markdown, apply a cleanContent() function",
+        "Strip sections by regex: remove everything from a ## heading that matches the metadata list through to the next ## or end of string",
+        "Regex pattern: /\\n##\\s+(Post Type|Expected Engagement|Perspective|Response Strategy|Best Posting Time|References|Source|Content)[\\s\\S]*?(?=\\n##|$)/gi",
+        "Also strip YAML-like lines: /^\\*\\*(Type|Created|Tags|Status|Notion):\\*\\*.*$/gm",
+        "Also strip the first frontmatter section (the --- ... --- block at top) before the actual content",
+        "Test with 2-3 post files to confirm clean output before committing"
+      ],
+      "dependencies": [
+        "US-015"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-039",
+      "title": "Add Tests for All New Features (US-011 to US-038) + Fix Errors",
+      "priority": 39,
+      "description": "Extend the admin Tests tab (US-009) with new tests covering all features added in US-011 through US-038. Run the tests programmatically. For any failing tests, write the error as a new user story in prd.json and continue fixing. This creates a self-healing development loop.",
+      "acceptanceCriteria": [
+        "New test cases added in src/lib/tests/ for each new feature: chef pick card, bottom nav, language icons, blog cleanup, recipe modal close, admin mobile, etc.",
+        "All smoke tests pass (all pages return 200)",
+        "All unit tests pass (blog content cleanup, time-slot logic, operating hours check)",
+        "At least 80% of integration tests pass",
+        "Any failing tests have their root cause identified and a new user story added to prd.json",
+        "Test results visible in /admin > Tests tab",
+        "Verify: 'Run All' in Tests tab shows green for most tests"
+      ],
+      "technicalNotes": [
+        "Add new test cases to src/lib/tests/smoke.ts: test /en/menu filter, /en/blog detail page, /admin/chat-settings, /en/about",
+        "Add to src/lib/tests/unit.ts: test cleanContent() strips metadata, test getMalaysiaTime() returns UTC+8, test operating hours check function",
+        "Add to src/lib/tests/integration.ts: test GET /api/admin/highlights, GET /api/admin/display-categories, GET /api/admin/time-slots",
+        "Add to src/lib/tests/e2e.ts: test recipe modal close button visible on mobile, test language switcher in mobile header, test 'Added' button state",
+        "If any test fails: append a new US-040+ story to prd.json with error details and fix steps",
+        "Use the 'Generate Stories' button in Tests tab to auto-create stories for failures"
+      ],
+      "dependencies": [
+        "US-009"
+      ],
+      "estimatedComplexity": "large",
+      "passes": true
+    },
+    {
+      "id": "US-040",
+      "title": "Chrome DevTools + Agent Browser Verification for All New Features",
+      "priority": 40,
+      "description": "Use Chrome DevTools MCP tools and/or the agent-browser skill to visually verify all features from US-011 to US-038 are working correctly in the browser. Capture screenshots for key views. Fix any visual regressions or console errors found.",
+      "acceptanceCriteria": [
+        "Take screenshot of /en/menu on mobile (390px) Ã¢â‚¬â€� chef pick visible at top, bottom nav visible, no horizontal scroll",
+        "Take screenshot of /en/blog Ã¢â‚¬â€� clean posts, no metadata, featured post at top",
+        "Take screenshot of /en/about Ã¢â‚¬â€� cover page image visible, paintings image visible",
+        "Take screenshot of /en header on mobile Ã¢â‚¬â€� language flag beside hamburger",
+        "Take screenshot of /admin/rules on mobile (390px) Ã¢â‚¬â€� rule names horizontal, no clipping",
+        "No console errors on any page",
+        "No 404 image errors",
+        "Verify 'Added' button state on menu items",
+        "Verify recipe modal has accessible close button on mobile"
+      ],
+      "technicalNotes": [
+        "Use mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__list_console_messages",
+        "Use mcp__chrome-devtools__emulate to set mobile viewport (width: 390, height: 844)",
+        "Use mcp__chrome-devtools__resize_page for desktop view (1280x800)",
+        "Run rtk next build first to ensure no build errors",
+        "For any visual issues found: create targeted fix commits",
+        "Document all screenshots in progress.txt with descriptions"
+      ],
+      "dependencies": [
+        "US-011",
+        "US-012",
+        "US-013",
+        "US-014",
+        "US-015",
+        "US-016",
+        "US-017",
+        "US-018",
+        "US-019",
+        "US-020",
+        "US-021",
+        "US-022",
+        "US-023",
+        "US-024",
+        "US-025",
+        "US-026",
+        "US-027",
+        "US-028",
+        "US-029",
+        "US-030",
+        "US-031",
+        "US-032",
+        "US-033",
+        "US-034",
+        "US-035",
+        "US-036",
+        "US-037",
+        "US-038",
+        "US-039"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-041",
+      "title": "Menu Card Layout Fix: Name Horizontal, Price Below",
+      "priority": 41,
+      "description": "In the menu card (both public and admin view), the item name and price are currently displayed side-by-side in a narrow space, causing long names like 'BIG Hot Cham-C' to stack vertically word-by-word (see Image #4). Fix the layout: the item name should display on one line (or wrap cleanly as a full sentence), and the price should be on a separate line below the name Ã¢â‚¬â€� not beside it competing for horizontal space.",
+      "acceptanceCriteria": [
+        "Item name is on its own line(s), never forced to stack word-by-word",
+        "Price (RM X.XX) appears below the name, not inline beside it",
+        "The name uses the full card width with font-semibold",
+        "Price is visually distinct: slightly smaller, bold, primary color",
+        "Layout works for both short names ('Tom Yum') and long names ('BIG Hot Cham-C')",
+        "Admin editable card (with pencil icons) also has the same fixed layout",
+        "Verify at 390px: 'BIG Hot Cham-C' name displays as 'BIG Hot Cham-C' on one/two clean lines, price on line below"
+      ],
+      "technicalNotes": [
+        "Read src/components/menu/menu-card.tsx Ã¢â‚¬â€� find the name+price row",
+        "Current: <div class='flex items-start justify-between gap-2'><h3>{name}</h3><span>{price}</span></div>",
+        "Change to: <div class='space-y-0.5'><h3 class='font-semibold leading-snug'>{name}</h3><span class='text-sm font-bold text-primary'>{price}</span></div>",
+        "Remove the flex justify-between that forces name and price side-by-side",
+        "Also fix src/components/menu/editable-menu-card.tsx if it exists Ã¢â‚¬â€� same pattern",
+        "Also fix src/components/menu/chef-pick-card.tsx if created in US-011"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-042",
+      "title": "Admin: Add Chinese and Malay Translations for All Food Items",
+      "priority": 42,
+      "description": "In the admin Menu tab, each food item edit form should allow the admin to enter/edit the Chinese (nameZh) and Malay (nameMs) translations. Currently items may have empty nameZh and nameMs fields. Add translation input fields to the edit modal and pre-populate any missing translations using the AI (via the AI waiter API) as a suggestion Ã¢â‚¬â€� admin can accept or override.",
+      "acceptanceCriteria": [
+        "Admin item edit form has 3 name fields: Name (EN), Name (Malay), Name (Chinese)",
+        "Current nameMs and nameZh values are shown in their respective fields",
+        "Admin can type and save translations Ã¢â‚¬â€� saved via PATCH /api/admin/menu/[id]",
+        "A 'Suggest Translations' button calls the AI to generate MS/ZH translations for the EN name",
+        "AI suggestions are pre-filled but editable before saving",
+        "Items with missing translations show a warning indicator (Ã°Å¸Å’� icon) in the menu list",
+        "Verify: edit 'Tom Yum Soup' Ã¢â€ â€™ add Malay and Chinese names Ã¢â€ â€™ save Ã¢â€ â€™ menu page shows names in correct locale"
+      ],
+      "technicalNotes": [
+        "Read src/components/admin/admin-menu-table.tsx Ã¢â‚¬â€� find the item edit modal/form",
+        "Add nameMs and nameZh input fields to the edit form alongside existing nameEn",
+        "Add a 'Suggest' button per translation field that calls POST /api/admin/menu/translate",
+        "Create src/app/api/admin/menu/translate/route.ts: takes {nameEn, targetLanguage}, uses AI SDK to return translation",
+        "System prompt: 'You are a food translator. Translate the dish name accurately and naturally. Return only the translated name.'",
+        "In the menu items list, add a Ã°Å¸Å’� badge on items where nameMs or nameZh is empty",
+        "PATCH /api/admin/menu/[id] should already handle nameMs/nameZh updates"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-043",
+      "title": "Multi-Language Search: Search Dishes in Any Language",
+      "priority": 43,
+      "description": "The 'Search dishes' input on the menu page currently only searches in the active locale's name field. Enhance it to search across all three language fields (nameEn, nameMs, nameZh) simultaneously Ã¢â‚¬â€� regardless of the selected language. For example, in English mode a user can type 'Ã¥â€™â€“Ã¥â€“Â±' (curry in Chinese) or 'kari' (Malay) and still find curry dishes.",
+      "acceptanceCriteria": [
+        "Searching 'Ã¥â€™â€“Ã¥â€“Â±' in English mode returns curry dishes",
+        "Searching 'kari' in Chinese mode returns curry dishes",
+        "Searching 'tom yum' or 'tomyam' in any language returns Tom Yum dishes",
+        "Search is case-insensitive and matches partial strings",
+        "Search works across nameEn, nameMs, and nameZh for every item",
+        "Search performance is not noticeably slower",
+        "Verify: switch to English, type 'Ã§â€šâ€™Ã©Â¥Â­' in search Ã¢â€ â€™ fried rice items appear"
+      ],
+      "technicalNotes": [
+        "Find the search/filter logic in src/components/menu/menu-grid.tsx or menu-filter.tsx",
+        "Current filter likely does: item.nameEn.toLowerCase().includes(query) for the active locale",
+        "Change to: const q = query.toLowerCase(); return item.nameEn.toLowerCase().includes(q) || item.nameMs.toLowerCase().includes(q) || item.nameZh.toLowerCase().includes(q)",
+        "Also search item.description for completeness",
+        "This is a pure client-side change Ã¢â‚¬â€� no API needed",
+        "Ensure getLocalizedName() still returns the correct locale name for display"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-044",
+      "title": "Admin Notification When Customer Clicks 'Show Order to Waiter'",
+      "priority": 44,
+      "description": "When a customer clicks 'Show Order to Waiter' in the tray panel, the admin should see a real-time notification in the admin panel (top-right badge/bell icon) showing the order details: table area, items ordered, and total. This creates a lightweight ordering workflow without POS integration.",
+      "acceptanceCriteria": [
+        "Clicking 'Show Order to Waiter' in the tray panel sends the order to the server via POST /api/orders",
+        "The admin panel (/admin) shows a notification bell at top-right with a badge count of pending orders",
+        "Clicking the bell shows a dropdown list of pending orders (time, items, total)",
+        "Admin can mark an order as 'Seen' to clear the notification",
+        "Orders persist across page refreshes (stored in DB or a JSON file)",
+        "If admin is on a different page, the badge count is visible when they return to /admin",
+        "Verify: customer submits order Ã¢â€ â€™ navigate to /admin Ã¢â€ â€™ bell badge shows 1 Ã¢â€ â€™ click bell Ã¢â€ â€™ order details visible"
+      ],
+      "technicalNotes": [
+        "Create DB table or file-based store: orders (id, items JSON, total, created_at, status: pending/seen)",
+        "Create API route src/app/api/orders/route.ts (POST Ã¢â‚¬â€� public, no auth) to submit an order",
+        "Create API route src/app/api/admin/orders/route.ts (GET Ã¢â‚¬â€� admin auth) to list pending orders",
+        "Create API route src/app/api/admin/orders/[id]/route.ts (PATCH Ã¢â‚¬â€� mark as seen)",
+        "In the tray panel (src/components/menu/tray-widget.tsx): on 'Show Order' click, call POST /api/orders with items + total",
+        "In admin layout: add AdminOrdersBell component that polls GET /api/admin/orders every 30s",
+        "AdminOrdersBell renders a bell icon with badge count if pending > 0",
+        "Use SQL table or append to a local JSON file data/orders.json"
+      ],
+      "dependencies": [
+        "US-001"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-045",
+      "title": "PWA with Push Notifications for Customer Orders",
+      "priority": 45,
+      "description": "Convert the website into a Progressive Web App (PWA) so that: (1) customers can install it on their phone home screen, (2) the admin receives browser push notifications when a customer submits an order (even when the admin tab is not active). The push notification shows the order summary.",
+      "acceptanceCriteria": [
+        "Website is installable as a PWA (shows 'Add to Home Screen' prompt on mobile)",
+        "A web app manifest (manifest.json) exists with name, icons, theme color, and display: standalone",
+        "A service worker is registered that handles push notifications",
+        "When a customer clicks 'Show Order to Waiter', the admin (if subscribed to push) receives a notification: 'New Order: [X items] Ã¢â‚¬â€� RM [total]'",
+        "Admin can subscribe to push notifications from the admin panel settings",
+        "Service worker caches key assets for offline resilience (basic shell caching)",
+        "Lighthouse PWA audit score Ã¢â€°Â¥ 80",
+        "Verify: install app on mobile Ã¢â€ â€™ submit order as customer Ã¢â€ â€™ admin browser shows push notification"
+      ],
+      "technicalNotes": [
+        "Install next-pwa or configure Next.js service worker manually: npm install next-pwa",
+        "Create public/manifest.json with name, short_name, icons (use logo from US-019), theme_color (green from US-021), display: standalone",
+        "Add <link rel='manifest'> to src/app/layout.tsx head",
+        "For push notifications: use Web Push API with VAPID keys",
+        "Generate VAPID keys: npx web-push generate-vapid-keys",
+        "Create API route src/app/api/admin/push-subscribe/route.ts to store admin PushSubscription",
+        "On POST /api/orders: call web-push sendNotification() to all stored admin subscriptions",
+        "Install web-push: npm install web-push",
+        "Add VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY to .env.local",
+        "In admin panel: add 'Enable Push Notifications' button that calls Notification.requestPermission() then subscribes via PushManager",
+        "Service worker file: public/sw.js Ã¢â‚¬â€� handle 'push' event to show notification"
+      ],
+      "dependencies": [
+        "US-044"
+      ],
+      "estimatedComplexity": "large",
+      "passes": true
+    },
+    {
+      "id": "US-046",
+      "title": "Tests for US-041 to US-045 in Admin Tests Tab",
+      "priority": 46,
+      "description": "Add programmatic tests for all features introduced in US-041 through US-045 into the admin Tests tab (/admin > Tests). Tests should cover: menu card name/price layout, multi-language search, admin translation fields, order notification bell, and PWA manifest. Tests must be runnable via 'Run All' and report pass/fail with logs.",
+      "acceptanceCriteria": [
+        "New test cases appear in /admin > Tests for each of US-041 to US-045",
+        "US-041 test: renders a menu card with long name ('BIG Hot Cham-C') and verifies name and price are in separate DOM elements (not inline)",
+        "US-042 test: admin item edit form contains nameMs and nameZh input fields; POST /api/admin/menu/translate returns a non-empty string",
+        "US-043 test: search 'tomyam' returns items containing 'tom yum' in any language field; search 'ç‚’é¥­' returns fried rice items",
+        "US-044 test: POST /api/orders creates an order; GET /api/admin/orders returns it with status=pending; PATCH /api/admin/orders/[id] marks it seen",
+        "US-045 test: GET /manifest.json returns valid PWA manifest with name, icons, display fields; service worker file exists at /sw.js",
+        "All new tests appear under a 'New Features' category in the Tests tab",
+        "Verify: Run All in /admin > Tests â€” new tests show pass/fail status"
+      ],
+      "technicalNotes": [
+        "Add new test group to src/lib/tests/smoke.ts or create src/lib/tests/new-features.ts",
+        "US-041 test: render MenuCard with item { nameEn: 'BIG Hot Cham-C', price: 4.20 }, assert name and price are in separate elements",
+        "US-042 test: fetch POST /api/admin/menu/translate with { nameEn: 'Tom Yum Soup', targetLanguage: 'zh' }, assert response.translation is non-empty",
+        "US-043 test: filter menu items array with query 'ç‚’é¥­', assert at least one result contains 'ç‚’é¥­' in nameZh",
+        "US-044 test: POST /api/orders with test order, assert 201 response; GET /api/admin/orders, assert order present",
+        "US-045 test: fetch /manifest.json, assert JSON has name/icons/display fields; fetch /sw.js, assert 200 response",
+        "Register test group in src/app/api/admin/tests/route.ts test registry"
+      ],
+      "dependencies": [
+        "US-009",
+        "US-041",
+        "US-042",
+        "US-043",
+        "US-044",
+        "US-045"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": true
+    },
+    {
+      "id": "US-047",
+      "title": "Rename 'Show Order to Waiter' to 'Send Order to Waiter' / 'Send Order' on Mobile",
+      "priority": 47,
+      "description": "The tray panel button currently says 'Show Order to Waiter'. Rename it to 'Send Order to Waiter' on desktop/tablet, and 'Send Order' on mobile (to save space). This better reflects the new pre-ordering flow where the order is actually sent to the system, not just shown. Update all i18n translations in EN/MS/ZH.",
+      "acceptanceCriteria": [
+        "On desktop (md+): tray panel primary button shows 'Send Order to Waiter'",
+        "On mobile (< md): same button shows 'Send Order' (shorter, saves space)",
+        "The change is reflected in all 3 languages: EN/MS/ZH",
+        "The button still triggers the same order submission action (POST /api/orders from US-044)",
+        "Verify at 390px: button shows 'Send Order'; at 768px+: shows 'Send Order to Waiter'"
+      ],
+      "technicalNotes": [
+        "Find the button in src/components/menu/tray-widget.tsx",
+        "Use responsive Tailwind: <span class='hidden md:inline'>Send Order to Waiter</span><span class='md:hidden'>Send Order</span>",
+        "Update i18n keys in messages/en.json: tray.sendOrder = 'Send Order' and tray.sendOrderToWaiter = 'Send Order to Waiter'",
+        "Update messages/ms.json: tray.sendOrder = 'Hantar Pesanan', tray.sendOrderToWaiter = 'Hantar Pesanan ke Pelayan'",
+        "Update messages/zh.json: tray.sendOrder = 'å�‘é€�è®¢å�•', tray.sendOrderToWaiter = 'å�‘é€�è®¢å�•ç»™æœ�åŠ¡å‘˜'"
+      ],
+      "dependencies": [
+        "US-044"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-048",
+      "title": "Customer Can View Previous Order History After Sending",
+      "priority": 48,
+      "description": "After a customer submits an order via 'Send Order to Waiter', their order should be saved in the browser (localStorage or sessionStorage) so they can still see what they ordered even after the tray is cleared. The tray panel should show a 'View Last Order' section or a separate 'Order History' tab showing previous orders sent during the session.",
+      "acceptanceCriteria": [
+        "After clicking 'Send Order', the submitted order is saved to localStorage with timestamp",
+        "The tray panel (or a dedicated 'My Orders' section) shows the last submitted order",
+        "If multiple orders were sent in the session, all are visible in a scrollable history list",
+        "Each past order shows: items, quantities, total, timestamp, and status (Pending/Approved/Ready)",
+        "Order history persists across page refreshes (localStorage, not sessionStorage)",
+        "The tray is cleared after sending but the history section is not",
+        "Verify: send order â†’ tray clears â†’ 'My Orders' section shows the submitted order with timestamp"
+      ],
+      "technicalNotes": [
+        "In src/components/menu/tray-widget.tsx: after POST /api/orders succeeds, save order to localStorage key 'mm_order_history'",
+        "Order history format: [{ id, items, total, timestamp, status }]",
+        "Add an 'Order History' collapsible section at the bottom of the tray panel",
+        "Poll GET /api/orders/[id] every 30s to update status (pending â†’ approved â†’ ready) â€” or use the order ID returned from POST",
+        "Create public API GET /api/orders/[id] (no auth) to let customer check their own order status by ID",
+        "Show status badges: ðŸŸ¡ Pending | ðŸŸ¢ Approved | âœ… Ready",
+        "Keep history for last 5 orders max in localStorage"
+      ],
+      "dependencies": [
+        "US-044",
+        "US-047"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-049",
+      "title": "Fix Admin Page Dark Overlay Problem",
+      "priority": 49,
+      "description": "The admin page at http://localhost:3030/admin has a dark overlay problem that makes content hard to read or interact with. Use the agent-browser skill and Chrome DevTools to diagnose the exact cause (z-index stacking, backdrop, modal overlay not closing, etc.) and fix it.",
+      "acceptanceCriteria": [
+        "No dark/semi-transparent overlay covering admin page content during normal use",
+        "All admin tabs (Menu, Categories, Rules, Blog, Tests, Settings) are fully interactive without any blocking overlay",
+        "Modals and dialogs close properly and do not leave orphaned backdrops",
+        "The fix is verified with Chrome DevTools screenshot showing clean admin UI",
+        "No z-index conflicts between the overlay and page content",
+        "Verify with agent-browser: navigate to /admin â†’ take screenshot â†’ no dark overlay visible"
+      ],
+      "technicalNotes": [
+        "Use mcp__chrome-devtools__navigate_page to go to http://localhost:3030/admin",
+        "Use mcp__chrome-devtools__take_screenshot to capture current state",
+        "Use mcp__chrome-devtools__evaluate_script to inspect: document.querySelectorAll('[class*=overlay],[class*=backdrop],[style*=opacity]') and find the culprit element",
+        "Common causes: a modal component with backdrop that did not unmount, a ThemeProvider overlay, or a portal element stuck in the DOM",
+        "Inspect z-index stacking with: [...document.querySelectorAll('*')].filter(el => getComputedStyle(el).zIndex > 0 && getComputedStyle(el).opacity < 1)",
+        "Fix by ensuring all modal/dialog components properly clean up their backdrop on unmount",
+        "Check src/components/admin/*.tsx for any Dialog/Modal components missing cleanup"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-050",
+      "title": "Admin Settings Tab with System-Wide Configuration",
+      "priority": 50,
+      "description": "Add a 'Settings' tab to the admin panel (/admin > Settings) with system-wide configuration options. Initial settings to include: default language for the website, operating hours, currency symbol, cafe name display, and a 'Pre-Order System' toggle to enable/disable the pre-ordering workflow (US-051). Settings are saved to data/site-settings.json and applied globally.",
+      "acceptanceCriteria": [
+        "A 'Settings' tab appears in /admin alongside Menu/Categories/Rules/Blog/Tests",
+        "Settings tab shows sections: General, Operating Hours, Pre-Order System",
+        "General section: default language selector (EN/MS/ZH), cafe display name, currency symbol",
+        "Operating Hours section: open time, last order time, close time (editable, used by US-036)",
+        "Pre-Order System section: toggle on/off, deposit required toggle, payment methods accepted",
+        "A 'Save Settings' button persists changes to data/site-settings.json via POST /api/admin/settings",
+        "Settings are read at app startup and applied globally",
+        "Verify: change default language to 'zh' â†’ save â†’ new visitors land on /zh by default"
+      ],
+      "technicalNotes": [
+        "Add 'Settings' to TABS array in src/components/admin/admin-tabs.tsx",
+        "Create src/components/admin/admin-settings-panel.tsx",
+        "Create src/app/api/admin/settings/route.ts (GET + POST, admin-auth required)",
+        "Store in data/site-settings.json: { defaultLocale, operatingHours: { open, lastOrder, close }, preOrderEnabled, currency, cafeName }",
+        "Read site-settings.json in middleware.ts to apply default locale redirect",
+        "Export getSiteSettings() helper in src/lib/site-settings.ts for server components to consume",
+        "Operating hours here replace the hardcoded values used in US-036"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-051",
+      "title": "Pre-Order: DB Schema + Order Submission Form (Contact + ETA)",
+      "priority": 51,
+      "description": "First piece of the pre-ordering system. When a customer clicks 'Send Order', instead of submitting immediately, show a modal asking for: (1) contact number in Malaysian format and (2) estimated arrival time (minimum 15 min from now). On submit, POST the order with these fields and redirect the customer to their order status page. Set up the DB schema that all subsequent pre-order stories depend on.",
+      "acceptanceCriteria": [
+        "Clicking 'Send Order' opens a modal with: contact number input and arrival time picker",
+        "Contact number validates Malaysian format (01X-XXXXXXX) â€” shows error if invalid",
+        "Arrival time picker enforces minimum 15 minutes from current time",
+        "Submitting the form POSTs to /api/orders with items, total, contactNumber, estimatedArrival",
+        "Order is saved to DB with status='pending_approval'",
+        "On success, customer is shown an order confirmation screen with their order ID and status 'Awaiting confirmation'",
+        "Tray is cleared after successful submission",
+        "Verify: fill contact + ETA â†’ submit â†’ see confirmation screen with order ID"
+      ],
+      "technicalNotes": [
+        "DB migration: ALTER TABLE orders ADD COLUMN contact_number TEXT, estimated_arrival TIMESTAMPTZ, estimated_ready TIMESTAMPTZ, rejection_reason TEXT, payment_screenshot_url TEXT; ALTER COLUMN status SET DEFAULT 'pending_approval'",
+        "Create src/components/menu/order-form-modal.tsx â€” two-step modal: Step 1 (contact + ETA form), Step 2 (confirmation screen with order ID)",
+        "Malaysian phone regex: /^(\\+?60|0)1[0-9]{8,9}$/",
+        "Arrival time: <input type='time'> with min computed as now + 15 minutes",
+        "Update POST /api/orders/route.ts to accept and store contactNumber + estimatedArrival",
+        "After successful POST: save order ID to localStorage (mm_order_history), show order ID to customer",
+        "Order ID should be short and memorable: use nanoid(8) or similar"
+      ],
+      "dependencies": [
+        "US-044",
+        "US-047"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-052",
+      "title": "Pre-Order: Customer Order Status Tracking Page",
+      "priority": 52,
+      "description": "Create a public order status page at /order/[id] where customers can track their order in real time. The page polls the server every 15 seconds and displays the current status with a clear visual progress indicator: Pending Approval â†’ Approved â†’ Payment Pending â†’ Payment Uploaded â†’ Preparing â†’ Ready. Each stage shows relevant info (estimated ready time, rejection reason, etc.).",
+      "acceptanceCriteria": [
+        "A page exists at /[locale]/order/[id] accessible without login",
+        "Page shows a step-by-step progress bar with 6 stages: Pending â†’ Approved â†’ Pay â†’ Paid â†’ Preparing â†’ Ready",
+        "Current stage is highlighted; completed stages are checked",
+        "Status auto-refreshes every 15 seconds without full page reload",
+        "Approved stage shows: estimated ready time set by admin",
+        "Rejected stage shows: rejection reason and a 'Contact Us' link",
+        "Payment Pending stage shows the payment instructions (Touch & Go details from settings)",
+        "Page is mobile-friendly and works well on small screens",
+        "Verify: create test order â†’ navigate to /order/[id] â†’ see 'Pending Approval' status"
+      ],
+      "technicalNotes": [
+        "Create src/app/[locale]/order/[id]/page.tsx â€” client component ('use client') to enable polling",
+        "Create GET /api/orders/[id]/route.ts â€” public endpoint, returns order status + metadata (no auth required, just the ID)",
+        "Use setInterval(fetchStatus, 15000) in useEffect for polling; clear on unmount",
+        "Status progress component: array of steps, highlight step matching current status",
+        "Steps: ['pending_approval', 'approved', 'payment_pending', 'payment_uploaded', 'preparing', 'ready']",
+        "Fetch Touch & Go details from GET /api/settings (public read for tng_phone, tng_qr_url)",
+        "Link from tray order history (US-048): clicking an order ID navigates to /order/[id]"
+      ],
+      "dependencies": [
+        "US-051",
+        "US-050"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-053",
+      "title": "Pre-Order: Admin Orders Tab with Approve / Reject Actions",
+      "priority": 53,
+      "description": "Add an 'Orders' tab to the admin panel showing all incoming pre-orders. Admin can see order details (items, total, customer contact, ETA) and take actions: Approve (setting an estimated food-ready time) or Reject (with a reason). Approved/Rejected status is immediately reflected on the customer's tracking page.",
+      "acceptanceCriteria": [
+        "An 'Orders' tab appears in /admin alongside Menu/Categories/Rules/Blog/Tests/Settings",
+        "Orders tab shows a list of all orders sorted by newest first",
+        "Each order card shows: order ID, customer contact, items summary, total, ETA, time received, current status",
+        "Orders with status 'pending_approval' have an 'Approve' button and a 'Reject' button",
+        "Clicking 'Approve' opens a mini-form to enter estimated ready time, then saves",
+        "Clicking 'Reject' opens a text input for rejection reason, then saves",
+        "After approval/rejection, the order card updates to show the new status",
+        "Admin notification bell (US-044) badge clears when admin views the Orders tab",
+        "Verify: submit test order â†’ go to /admin Orders tab â†’ approve with ready time â†’ customer status page shows 'Approved'"
+      ],
+      "technicalNotes": [
+        "Add 'Orders' to TABS in src/components/admin/admin-tabs.tsx",
+        "Create src/components/admin/admin-orders-panel.tsx",
+        "Create PATCH /api/admin/orders/[id]/route.ts: accepts { action: 'approve'|'reject', estimatedReady?, rejectionReason? }",
+        "Approve action: UPDATE orders SET status='approved', estimated_ready=$1 WHERE id=$2",
+        "Reject action: UPDATE orders SET status='rejected', rejection_reason=$1 WHERE id=$2",
+        "Poll for new orders every 30s in the Orders panel (or use the bell notification from US-044)",
+        "Status color codes: yellow=pending, green=approved, red=rejected, blue=preparing, purple=ready",
+        "Order list is paginated: show 20 per page, with filter tabs: All / Pending / Active / Done"
+      ],
+      "dependencies": [
+        "US-051",
+        "US-044"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-054",
+      "title": "Pre-Order: Touch & Go Payment Step for Customer",
+      "priority": 54,
+      "description": "Once admin approves an order, the customer's status page shows a 'Proceed to Payment' section. This displays the Touch & Go phone number / QR code (from admin settings), the exact amount to pay, and an upload field for the payment screenshot. After uploading, order status changes to 'payment_uploaded' and the customer sees a confirmation.",
+      "acceptanceCriteria": [
+        "When order status is 'approved', the customer status page shows a payment section",
+        "Payment section displays: total amount in bold, Touch & Go phone number and/or QR code image (from site settings)",
+        "A file upload input accepts JPEG/PNG images (max 5MB)",
+        "Uploading a screenshot calls POST /api/orders/[id]/payment with the image",
+        "On success: order status changes to 'payment_uploaded', customer sees 'Payment received â€” waiting for confirmation'",
+        "Upload progress indicator is shown during upload",
+        "File size validation: reject files > 5MB with a clear error message",
+        "Verify: approve order â†’ customer page shows payment section â†’ upload screenshot â†’ status changes to 'payment_uploaded'"
+      ],
+      "technicalNotes": [
+        "Add 'payment_pending' status transition: when admin approves, status = 'approved' first, then customer sees payment UI, then after upload status = 'payment_uploaded'",
+        "Create POST /api/orders/[id]/payment/route.ts: accepts multipart/form-data with image file",
+        "Save image to public/uploads/payments/{orderId}.jpg (create directory if not exists)",
+        "Update order: SET status='payment_uploaded', payment_screenshot_url='/uploads/payments/{orderId}.jpg'",
+        "TnG details come from GET /api/settings â†’ tng_phone and tng_qr_url fields",
+        "Add tng_phone and tng_qr_url fields to admin Settings panel (US-050) and data/site-settings.json",
+        "Use <input type='file' accept='image/*'> with FileReader for preview before upload",
+        "Limit file size on server: check content-length header"
+      ],
+      "dependencies": [
+        "US-052",
+        "US-053",
+        "US-050"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-055",
+      "title": "Pre-Order: Admin Confirms Payment â†’ Kitchen Start",
+      "priority": 55,
+      "description": "After a customer uploads their payment screenshot, the admin sees a 'Payment Uploaded' badge on the order in the Orders tab with a thumbnail of the screenshot. Admin reviews it and clicks 'Confirm Payment' to advance the order to 'preparing' status. The customer's tracking page then shows 'Kitchen is preparing your order!' with the estimated ready time countdown.",
+      "acceptanceCriteria": [
+        "Orders with status 'payment_uploaded' show a 'View Payment' button in admin Orders tab",
+        "Clicking 'View Payment' shows the uploaded screenshot in a modal",
+        "A 'Confirm Payment âœ“' button advances order to status='preparing'",
+        "A 'Reject Payment âœ—' button returns order to 'payment_pending' with a note",
+        "Customer status page shows 'Kitchen is preparing your order!' when status='preparing'",
+        "A countdown or estimated time display shows time remaining until estimated_ready",
+        "When admin marks order as 'ready', customer sees 'ðŸŽ‰ Your order is ready! Come pick it up'",
+        "Verify: upload payment â†’ admin confirms â†’ customer sees 'preparing' with countdown"
+      ],
+      "technicalNotes": [
+        "Extend PATCH /api/admin/orders/[id]/route.ts to handle action: 'confirm_payment' â†’ status='preparing' and action: 'mark_ready' â†’ status='ready'",
+        "Payment screenshot shown as <img src={order.payment_screenshot_url}> in admin modal",
+        "Countdown on customer page: compute (estimated_ready - now) and show MM:SS or 'X minutes remaining'",
+        "Update setInterval polling on customer page to refresh the countdown",
+        "Add 'Mark Ready' button to admin Orders tab for orders with status='preparing'",
+        "Push notification (US-045) should fire when status changes to 'ready' â€” notify customer"
+      ],
+      "dependencies": [
+        "US-054",
+        "US-053"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-056",
+      "title": "Pre-Order: End-to-End Flow Tests + Edge Cases",
+      "priority": 56,
+      "description": "Add comprehensive tests for the full pre-ordering flow (US-051 to US-055) in the admin Tests tab. Cover the happy path, validation errors, and edge cases. Also handle edge cases in the flow: order expiry (no payment within 30 min), multiple orders from same customer, and cancelled orders.",
+      "acceptanceCriteria": [
+        "Happy path test: submit order â†’ approve â†’ upload payment â†’ confirm â†’ ready â€” all status transitions verified",
+        "Validation test: submit with invalid phone number â†’ error shown, order not created",
+        "Validation test: submit with arrival time < 15 min â†’ error shown",
+        "Edge case: order status 'approved' but no payment in 30 min â†’ auto-expire to 'expired' status",
+        "Edge case: customer refreshes the order status page â€” still shows correct status from localStorage",
+        "Admin can filter Orders tab by status: Pending / Active / Completed / Expired",
+        "All pre-order tests appear in /admin > Tests under a 'Pre-Order System' category",
+        "Verify: run all pre-order tests â†’ all pass (or fail with actionable error messages)"
+      ],
+      "technicalNotes": [
+        "Add test group 'Pre-Order System' to src/lib/tests/",
+        "Tests: POST /api/orders with valid data â†’ assert 201 and status=pending_approval",
+        "Tests: POST /api/orders with invalid phone â†’ assert 400",
+        "Tests: PATCH /api/admin/orders/[id] approve â†’ assert status=approved",
+        "Tests: POST /api/orders/[id]/payment with image â†’ assert status=payment_uploaded",
+        "Auto-expiry: add a scheduled check or check on GET /api/orders/[id] â€” if approved and no payment after 30 min, return status=expired",
+        "Add 'expired' to order status flow; show on customer page: 'Order expired â€” please start a new order'",
+        "Admin Orders filter: tab pills for All / Pending / Active (approved+payment stages) / Done (preparing+ready) / Expired"
+      ],
+      "dependencies": [
+        "US-051",
+        "US-052",
+        "US-053",
+        "US-054",
+        "US-055",
+        "US-009"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-057",
+      "title": "Admin: Adjust Image Focal Point (Pan Up/Down/Left/Right)",
+      "priority": 57,
+      "description": "Food photos are cropped to fit fixed aspect ratios (4:3 on menu cards, 16:9 on chef pick cards, aspect-video on blog cards). The default crop is center, but this often cuts off the most appetising part of the dish. Allow admin to adjust the image focal point — dragging the image up/down/left/right to reposition it within the crop frame. The offset is saved per image and applied via CSS object-position.",
+      "acceptanceCriteria": [
+        "In admin edit mode on the menu page, each image card shows a drag handle or arrow controls (↑ ↓ ← →) when hovered",
+        "Admin can drag the image or click arrows to shift the visible crop area",
+        "The position adjustment is live-previewed as the admin drags",
+        "Clicking 'Save Position' persists the object-position value (e.g., '50% 30%') to the DB via PATCH /api/admin/menu/[id]",
+        "The saved position is applied on the public menu page via inline style: objectPosition: '50% 30%'",
+        "Works for: menu cards, chef-pick hero cards, blog cover images, hero section images, about page images",
+        "Non-admin users never see the drag controls — images just display with their saved position",
+        "Verify: drag image up on menu card → food subject centres → save → public page shows correct crop"
+      ],
+      "technicalNotes": [
+        "Add imagePosition TEXT column to menu_items table (default '50% 50%')",
+        "For blog posts: add imagePosition field to content/blog/*.md frontmatter",
+        "For static images (hero, about): store positions in data/image-positions.json keyed by image path",
+        "In admin menu card: wrap <Image> in a draggable container; on drag, compute new object-position percentage",
+        "Use onMouseDown + onMouseMove to track drag delta: newX = clamp(oldX + deltaX/containerWidth * 100, 0, 100)",
+        "Show a semi-transparent crosshair or grid overlay while dragging to aid alignment",
+        "Arrow buttons: each click shifts position by 5% increments (less precise but easier on mobile)",
+        "Apply saved position: <Image style={{ objectPosition: item.imagePosition || '50% 50%' }} className='object-cover' />",
+        "PATCH /api/admin/menu/[id] already exists — add imagePosition to the updatable fields",
+        "For blog + static images: PATCH /api/admin/image-positions route.ts with { imagePath, position }"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-058",
+      "title": "Admin Menu Preview: Show Time-Based Dynamic Menu Same as Customer View",
+      "priority": 58,
+      "description": "When admin visits http://localhost:3030/en/menu, they currently see all items with the admin edit overlay. However the default category shown should reflect the current time of day (same logic as US-035 for customers). Admin should see exactly what customers see at this moment — which category is pre-selected, which items are greyed out as unavailable, and the 'Serving now' indicator — plus the admin edit tools on top. This ensures admin can verify the dynamic display is working correctly.",
+      "acceptanceCriteria": [
+        "Admin visiting /en/menu sees the same time-based default category as customers (e.g., lunch items pre-selected at noon)",
+        "Items outside their time window are visually de-emphasised (greyed out / 'Not available now' badge) in admin view too",
+        "The admin edit banner still appears at the top with a note: 'Showing customer view at current time (11:45 AM)'",
+        "A 'Preview as time:' input in the edit banner lets admin simulate any time (e.g., set to 8:00 AM to see breakfast view)",
+        "The time preview is admin-only and does not affect customer experience",
+        "The 'Serving now' indicator is visible in admin view to confirm it's working",
+        "Verify: admin visits /en/menu at lunch time → lunch category pre-selected → change time preview to 8AM → breakfast category selected"
+      ],
+      "technicalNotes": [
+        "Time-based default category logic already exists from US-035 in src/lib/time-slots.ts",
+        "In menu/page.tsx server component: isAdmin users still get the time-based defaultCategory (currently they may be getting 'All' or ignoring time)",
+        "Add a previewTime query param: /en/menu?previewTime=08:00 — admin only, parsed in server component",
+        "If previewTime param present and isAdmin: use that time instead of real Malaysia time for category selection",
+        "Add a time preview input to the AdminEditBanner component: <input type='time' value={previewTime} onChange={...} /> that updates the URL query param",
+        "Items not available at the current (or preview) time get a visual indicator: opacity-50 + 'Not serving now' badge in admin view",
+        "This is purely a display/preview feature — no data changes needed"
+      ],
+      "dependencies": [
+        "US-035"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-059",
+      "title": "Bug Fix: Admin Image Changes Not Reflected on Public Menu Page",
+      "priority": 59,
+      "description": "When admin uploads or changes an image for a menu item (e.g. MT04, MT01) via the admin panel, the change is not reflected on the public menu page at /en/menu. This is likely a caching issue — Next.js ISR cache or the image optimisation cache is serving the old image. Fix by: revalidating the menu page cache on image update, and ensuring the image URL includes a cache-busting mechanism.",
+      "acceptanceCriteria": [
+        "After admin uploads a new image for any menu item, the public /en/menu page reflects the new image within 1 page reload (no waiting for ISR expiry)",
+        "The fix works for items like MT04 (Seafood Tom Yum) and MT01 (Pineapple Fried Rice)",
+        "No manual server restart required to see the update",
+        "Admin sees a confirmation that the image was saved and the page cache was cleared",
+        "Verify: upload new image for MT04 in admin → open /en/menu in a new tab → new image displayed"
+      ],
+      "technicalNotes": [
+        "Root cause is likely one of: (1) Next.js ISR cache (revalidate = 1800) not purged on image save, (2) next/image optimisation cache serving old image at the same URL, or (3) image file written to disk but menu data (photo field) not updated in DB",
+        "Fix 1 — revalidate on save: after PATCH /api/admin/menu/[id] with new image, call revalidatePath('/[locale]/menu', 'page') for all locales (en, ms, zh)",
+        "Fix 2 — cache-bust image URL: append ?v={updatedAt timestamp} to the image src so next/image treats it as a new URL: src={`/images/menu/${item.code}.jpg?v=${item.updatedAt}`}",
+        "Fix 3 — confirm DB update: ensure the image upload API (POST /api/admin/images or similar) actually updates a field in menu_items (e.g. photo_updated_at = NOW())",
+        "Check src/app/api/admin/images/route.ts — confirm it writes the file AND updates the DB",
+        "Check src/app/[locale]/menu/page.tsx — add revalidatePath call after any menu item update",
+        "Use Chrome DevTools Network tab to verify the image request URL and response headers (Cache-Control)"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-060",
+      "title": "Remove Notion-Specific UI Text from Homepage Highlights",
+      "priority": 60,
+      "description": "The homepage or admin panel displays the text 'Featured items are managed in Notion — mark menu items as featured there to change what appears here.' This is outdated — the system no longer uses Notion for menu management. Remove this text and replace with accurate guidance pointing to the admin panel instead.",
+      "acceptanceCriteria": [
+        "The text 'Featured items are managed in Notion' is completely removed from all pages and components",
+        "If a replacement hint is needed, it says something like: 'Manage featured items in Admin → Menu → toggle the Featured flag'",
+        "Search the entire codebase for 'Notion' references in UI-facing strings and remove/replace any that are no longer accurate",
+        "No other Notion-specific UI text remains visible to users or admins",
+        "Verify: search rendered pages for 'Notion' — no visible references remain"
+      ],
+      "technicalNotes": [
+        "Search codebase: grep -r 'Notion' src/ messages/ --include='*.tsx' --include='*.ts' --include='*.json' to find all occurrences",
+        "The specific string is likely in src/components/home/highlights.tsx or src/components/admin/admin-categories-panel.tsx or a message translation file",
+        "Remove or replace the string in the component and in all 3 messages/*.json files (en, ms, zh)",
+        "Also check knowledge/*.md files — if they mention Notion as the CMS, update to say 'admin panel'",
+        "Do a final grep to confirm no 'Notion' UI strings remain in rendered output"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-061",
+      "title": "Fix: Chef's Picks Display Category Shows 0 Items",
+      "priority": 61,
+      "description": "On /en/menu, selecting Chef's Picks filter shows 0 items. Fix by: (1) populating Chef's Picks with featured=true items, (2) ensuring the display category filter query works end-to-end. The display_categories table has the category but item_display_categories junction table has no rows for it.",
+      "acceptanceCriteria": [
+        "Selecting 'Chef's Picks' on /en/menu shows at least 6 items (the featured items)",
+        "If no items are manually assigned to Chef's Picks, fall back to items where featured=true",
+        "The filter count badge shows the correct number",
+        "Verify: navigate to /en/menu, click 'Chef's Picks' tab — items appear, not 'No items found'"
+      ],
+      "technicalNotes": [
+        "Check DB: SELECT count(*) FROM item_display_categories idc JOIN display_categories dc ON dc.id = idc.display_category_id WHERE dc.name ILIKE '%chef%'",
+        "Fix in src/components/menu/menu-grid.tsx: add special case: if activeCategory is Chef's Picks and filteredItems is empty, fall back to items.filter(i => i.featured)",
+        "Alternative DB fix: INSERT INTO item_display_categories (item_id, display_category_id) SELECT mi.id, dc.id FROM menu_items mi, display_categories dc WHERE mi.featured = true AND dc.name ILIKE '%chef%' ON CONFLICT DO NOTHING",
+        "Also verify getDisplayCategories() returns active=true for Chef's Picks",
+        "Check MenuFilter: ensure display category names are passed correctly to the filter function in menu-grid.tsx"
+      ],
+      "dependencies": [
+        "US-031"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-062",
+      "title": "Under RM15 Category: Auto-Computed from Price",
+      "priority": 62,
+      "description": "The 'Under RM15' display category should automatically show all menu items priced below RM15.00 without requiring admin to manually assign each item. This is a dynamic/computed category. When the filter is selected, filter by price < 15, not from the junction table.",
+      "acceptanceCriteria": [
+        "Selecting 'Under RM15' filter shows all currently available items priced < RM15",
+        "When prices change in DB, the list automatically reflects the change without admin action",
+        "Items priced exactly RM15 are NOT included (strictly less than)",
+        "Verify: a new item priced RM12 appears under Under RM15 without admin assignment"
+      ],
+      "technicalNotes": [
+        "In src/components/menu/menu-grid.tsx: add special filter branch for 'Under RM15': if (activeCategory === 'Under RM15') filteredItems = items.filter(i => i.price < 15)",
+        "This overrides the display category junction table lookup for this specific category name",
+        "Display category still exists in DB for ordering/visibility management but junction rows are ignored",
+        "No DB migration needed — purely a client-side filtering logic change in menu-grid.tsx"
+      ],
+      "dependencies": [
+        "US-031"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-063",
+      "title": "Vegetarian Category: Auto-Computed from Dietary Tag",
+      "priority": 63,
+      "description": "Add a 'Vegetarian' display category on the menu page that automatically shows all items tagged with 'vegetarian' in their dietary array. Admin marks items as vegetarian via the dietary badge, and the Vegetarian tab auto-populates. No manual junction table assignment needed.",
+      "acceptanceCriteria": [
+        "A 'Vegetarian' filter tab appears on /en/menu",
+        "Selecting 'Vegetarian' shows all items with dietary array containing 'vegetarian' (case-insensitive)",
+        "If no vegetarian items exist, show 'No vegetarian items currently available' message",
+        "Verify: mark 2 items as vegetarian in admin — Vegetarian tab shows exactly those 2 items"
+      ],
+      "technicalNotes": [
+        "Insert 'Vegetarian' into display_categories if not present: INSERT INTO display_categories (name, sort_order, active) VALUES ('Vegetarian', 6, true) ON CONFLICT (name) DO NOTHING",
+        "In src/components/menu/menu-grid.tsx: add filter branch: if (activeCategory === 'Vegetarian') filteredItems = items.filter(i => i.dietary?.some(d => d.toLowerCase() === 'vegetarian'))",
+        "In dietary-badge.tsx: ensure 'vegetarian' has a distinct green color and leaf or V icon",
+        "Verify the admin item edit modal includes 'vegetarian' as an option in the dietary checkboxes"
+      ],
+      "dependencies": [
+        "US-031",
+        "US-062"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-064",
+      "title": "Mobile Menu: Category Quick-Jump Bar and Sticky Section Headers",
+      "priority": 64,
+      "description": "Improve mobile menu browsing with: (1) a sticky horizontal category quick-jump chip bar at top, (2) sticky category section headers as you scroll (like UberEats/Grab Food). Tapping a chip smoothly scrolls to that section. Active chip highlights based on scroll position via IntersectionObserver.",
+      "acceptanceCriteria": [
+        "A horizontal scrollable category chip bar is pinned below the page header on mobile",
+        "Tapping a category chip smoothly scrolls to that section",
+        "Each category section has a sticky sub-header that sticks to top as you scroll",
+        "The active category chip highlights as you scroll (IntersectionObserver)",
+        "Works at 390px — chips are horizontally scrollable, no wrapping",
+        "Verify on mobile: scroll down — sticky header shows current section, active chip updates"
+      ],
+      "technicalNotes": [
+        "In src/components/menu/menu-grid.tsx: group items by category and render sections with headings",
+        "Section header: className='sticky top-[60px] z-10 bg-background py-2 font-semibold border-b'",
+        "Use IntersectionObserver on each section heading to track viewport position and update active chip",
+        "Chip bar: flex overflow-x-auto scrollbar-hidden gap-2, scroll-smooth",
+        "On chip click: document.getElementById('section-'+category).scrollIntoView({ behavior: 'smooth' })",
+        "Use scroll-mt-20 on section headings to offset for sticky header height"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-065",
+      "title": "Mobile Menu: Favorite Items (Heart) and Always-Visible Add Button",
+      "priority": 65,
+      "description": "Add fast item interactions for mobile: (1) heart/favorite icon on each card saved to localStorage, (2) a Favorites filter tab showing only saved items, (3) always-visible Add button on mobile (not hidden behind hover). Like ShopeeFood or Grab Food browsing experience.",
+      "acceptanceCriteria": [
+        "Each menu card has a heart icon in the top-right corner of the image",
+        "Tapping heart toggles favorite state (filled red = favorited), saved to localStorage mm_favorites",
+        "A 'Favorites' filter tab appears showing only hearted items",
+        "The Add button is always visible on mobile (not hover-only)",
+        "Tapping Add shows a brief scale bounce animation confirming the add",
+        "Verify: heart 3 items, select Favorites — only those 3 shown"
+      ],
+      "technicalNotes": [
+        "Create useFavorites() hook in src/hooks/use-favorites.ts: reads/writes mm_favorites (array of item IDs) in localStorage",
+        "Heart icon: Lucide Heart, absolute top-2 right-2 z-10 on card image, fill-red-500 when favorited",
+        "Add 'Favorites' as special filter in menu-grid.tsx: filteredItems = items.filter(i => favorites.includes(i.id))",
+        "On mobile: ensure Add button uses opacity-100 (not opacity-0 group-hover:opacity-100) — check menu-card.tsx",
+        "Add button animation: onClick briefly add scale-110 class then remove after 150ms"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-066",
+      "title": "AI Waiter: Voice Input via Web Speech API",
+      "priority": 66,
+      "description": "Add a microphone button to the AI chat widget. Customers tap the mic, speak their question, and it transcribes to text and sends to the AI. Uses browser Web Speech API (no external API cost). Gracefully hides the button if the browser does not support it.",
+      "acceptanceCriteria": [
+        "A microphone icon button appears in the chat input area",
+        "Tapping mic starts listening — button pulses red to show recording",
+        "Speaking transcribes to text in the input field in real-time",
+        "After 2s silence or second tap, recording stops and text is auto-submitted",
+        "If Web Speech API is not supported, mic button is hidden (no error shown)",
+        "Verify on Chrome mobile: tap mic, speak a question — AI responds correctly"
+      ],
+      "technicalNotes": [
+        "In src/components/chat/chat-widget.tsx: check support: const supported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)",
+        "Create recognition object: new (window.SpeechRecognition || window.webkitSpeechRecognition)()",
+        "recognition.lang = 'en-US'; recognition.continuous = false; recognition.interimResults = true",
+        "recognition.onresult: update input value with event.results[0][0].transcript",
+        "recognition.onend: auto-submit if transcript is non-empty",
+        "Button states: idle (gray Mic icon), listening (red Mic + animate-pulse ring)",
+        "Wrap in try/catch — fail silently on permission denied"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-067",
+      "title": "Menu Search: Fuzzy Matching with Fuse.js",
+      "priority": 67,
+      "description": "Improve the 'Search dishes' bar to use fuzzy matching via Fuse.js instead of exact substring search. 'tom yam' should find 'Tom Yum Seafood'. Search across all 3 languages simultaneously. Debounce input by 300ms. Rank results by relevance score.",
+      "acceptanceCriteria": [
+        "Searching 'tom yam' finds 'Tom Yum Seafood' (fuzzy match, typo tolerance)",
+        "Searching in Chinese finds items by nameZh; Malay finds by nameMs",
+        "Search is debounced 300ms to avoid firing on every keystroke",
+        "Results ranked by relevance — best matches first",
+        "Verify: type 'noodle' — shows pad thai, mee goreng, and similar even if word differs"
+      ],
+      "technicalNotes": [
+        "Install: npm install fuse.js",
+        "In src/components/menu/menu-grid.tsx: create Fuse instance with keys: ['nameEn', 'nameMs', 'nameZh', 'description', 'categories'], threshold: 0.4, minMatchCharLength: 2",
+        "Add useDebounce(query, 300) custom hook in src/hooks/use-debounce.ts",
+        "When query non-empty: replace filtered items with fuse.search(debouncedQuery).map(r => r.item)",
+        "When query empty: show all items in active category as normal",
+        "No server changes needed — Fuse works entirely client-side on the items array passed as props"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-068",
+      "title": "Menu Search Bar: Voice-to-Text Input Button",
+      "priority": 68,
+      "description": "Add a microphone button inside the 'Search dishes' input bar on the menu page. Customers tap the mic, speak a dish name, and it populates the search field triggering the fuzzy search. Separate from the AI chat voice input (US-066).",
+      "acceptanceCriteria": [
+        "A mic icon appears at the right end of the 'Search dishes' input",
+        "Tapping mic starts recognition — placeholder changes to 'Listening...'",
+        "Spoken text populates the search field and triggers the Fuse.js search filter",
+        "Recording stops after 2s silence or second tap",
+        "If Web Speech API unsupported, mic icon is hidden",
+        "Verify: tap mic, say 'fried rice' — search bar shows 'fried rice' and filters items"
+      ],
+      "technicalNotes": [
+        "In src/components/menu/menu-filter.tsx: add mic button inside the search input wrapper div (position: relative)",
+        "Mic button: absolute right-2 top-1/2 -translate-y-1/2, p-1.5 rounded-full",
+        "Reuse Web Speech API pattern from US-066: on recognition result, call setSearchQuery(transcript)",
+        "Listening state: mic icon becomes animate-pulse text-red-500",
+        "This triggers the Fuse.js search from US-067 automatically via the shared search state in menu-grid.tsx"
+      ],
+      "dependencies": [
+        "US-067"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-069",
+      "title": "Favicon: Cafe Logo as Browser Tab Icon",
+      "priority": 69,
+      "description": "Replace the generic Next.js favicon with the Makan Moments Cafe logo. Use public/images/logo.png (or public/logo.png) to generate favicon.ico and all required sizes (32x32, 180x180 apple touch, 192x192 PWA). Wire up in app/layout.tsx metadata.",
+      "acceptanceCriteria": [
+        "Browser tab shows the cafe logo icon (not generic icon or blank)",
+        "Apple touch icon (180x180) set for iOS home screen bookmarks",
+        "PWA manifest icons use the cafe logo",
+        "Verify: open /en in Chrome — browser tab shows the cafe logo"
+      ],
+      "technicalNotes": [
+        "Check if public/images/logo.png or public/logo.png exists — use whichever is present",
+        "Simplest approach: copy logo to app/favicon.ico (Next.js auto-wires this without metadata config)",
+        "For proper multi-size icons: create scripts/generate-favicon.ts using sharp to output 16x16, 32x32, 180x180, 192x192, 512x512 PNG files to /public",
+        "In src/app/layout.tsx metadata: add icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' }",
+        "Update public/manifest.json icons array to use cafe logo paths",
+        "If logo not found at either path, create a simple orange square SVG with letter M at app/icon.svg"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-070",
+      "title": "Landing Page: Prominent Pre-Order System Messaging",
+      "priority": 70,
+      "description": "The homepage does not explain that this is a pre-ordering system. Add a warm, branded section explaining: browse menu, pre-order online, arrive at your time, food is ready. Should feel inviting, not a disclaimer. Translated in all 3 languages.",
+      "acceptanceCriteria": [
+        "A visible section on the homepage explains the pre-order concept",
+        "The message is near the top of the page — visible on mobile without much scrolling",
+        "Translated in all 3 languages (en/ms/zh)",
+        "Design matches cafe brand — amber/warm tones, not a cold alert box",
+        "Includes a CTA button linking to /[locale]/menu",
+        "Verify: open /en on 390px mobile — pre-order explanation is visible near top of page"
+      ],
+      "technicalNotes": [
+        "Create src/components/home/preorder-banner.tsx",
+        "Insert in src/app/[locale]/page.tsx between hero and highlights sections",
+        "Style: rounded-xl bg-amber-50 border border-amber-200 px-6 py-5 with a clock or checkmark icon",
+        "3-step visual: Browse Menu -> Pre-order -> Arrive & Enjoy (flex row on desktop, stacked on mobile)",
+        "Add translation keys to messages/en.json: preorder.title, preorder.subtitle, preorder.step1, preorder.step2, preorder.step3, preorder.cta — match in ms.json and zh.json",
+        "CTA: Link to /[locale]/menu styled as primary orange button"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-071",
+      "title": "Admin: Multiple Images per Menu Item (Up to 3)",
+      "priority": 71,
+      "description": "Allow admin to upload up to 3 images per menu item. Primary image stays as {code}.jpg. Additional images are {code}-2.jpg and {code}-3.jpg. Menu card shows primary; a swipeable carousel in the expanded view shows all images. Admin can upload, preview, and delete secondary images in the edit modal.",
+      "acceptanceCriteria": [
+        "Admin can upload up to 3 images per menu item in the edit modal",
+        "Images stored as {code}.jpg (primary), {code}-2.jpg, {code}-3.jpg in public/images/menu/",
+        "Menu card shows only primary image by default",
+        "Expanded/detail view shows swipeable carousel if multiple images exist",
+        "Thumbnail dot indicators show how many images exist",
+        "Admin can delete secondary images",
+        "Verify: upload 2 extra images for an item — swipe carousel shows all 3"
+      ],
+      "technicalNotes": [
+        "Update src/app/api/admin/images/route.ts: accept imageIndex param (1=primary, 2, 3), save as {code}-{index}.jpg for index > 1",
+        "In src/types/menu.ts: add photos?: string[] to MenuItem type",
+        "In src/lib/menu.ts rowToMenuItem: populate photos by checking fs.existsSync for {code}-2.jpg and {code}-3.jpg, or add a photos text[] column to menu_items table",
+        "Create src/components/menu/image-carousel.tsx: horizontal scroll-snap carousel with dot indicators",
+        "In menu-card.tsx: if item.photos?.length > 1, render ImageCarousel instead of single Image",
+        "Admin edit modal: add secondary image upload slots with preview thumbnails and X delete button per slot"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-072",
+      "title": "Mobile Homepage: Prominent 'View Menu' CTA Above Fold",
+      "priority": 72,
+      "description": "On mobile (/en at 390px), the 'View Menu' CTA button is not prominent enough. Make it the unmissable primary action: large, high-contrast, visible above the fold on a 390px screen without scrolling.",
+      "acceptanceCriteria": [
+        "A large 'View Menu' button is visible above the fold on 390px without scrolling",
+        "Button is at least 52px tall and spans most of screen width (w-full or near)",
+        "Uses primary orange/amber brand color with strong contrast",
+        "Hero section is max 70-80vh on mobile so CTA is above fold",
+        "Verify with Chrome DevTools 390px emulation: CTA visible without scrolling"
+      ],
+      "technicalNotes": [
+        "Read src/components/home/hero-section.tsx — find the current CTA button and its container",
+        "Ensure button has: w-full sm:w-auto, min-h-[52px], text-lg font-bold, bg-orange-500 hover:bg-orange-600 text-white rounded-xl",
+        "On mobile, hero section should be max-h-[75vh] so CTA stays above fold",
+        "Position CTA below the headline (not floating on top of image) for guaranteed visibility",
+        "Hide secondary decorative elements on mobile (hidden lg:block) to keep focus on the CTA"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-073",
+      "title": "AI Waiter: Proactive Greetings and Item Promotion",
+      "priority": 73,
+      "description": "Make the AI waiter proactive: (1) Auto-greet when chat opens with a welcome mentioning 1-2 featured items by name. (2) When customer asks about a dish, AI suggests a complementary item. (3) After 3 minutes of inactivity, AI sends one gentle nudge. Update system prompt and add proactive trigger logic in the chat widget.",
+      "acceptanceCriteria": [
+        "Opening chat shows an auto-generated welcome message mentioning 1-2 real featured items",
+        "When customer asks about a dish, AI response includes a complementary suggestion",
+        "After 3 min of chat inactivity (chat is open), AI sends one nudge message",
+        "Nudge fires only once per session (not repeatedly)",
+        "Messages feel warm and natural, not spammy",
+        "Verify: open chat — welcome message appears automatically mentioning real menu items"
+      ],
+      "technicalNotes": [
+        "Update data/chat-settings.json system prompt: instruct AI to greet with 2 featured items, suggest pairings when asked about a dish, and be proactively enthusiastic like a friendly waiter",
+        "Update knowledge/cafe-facts.md: add a 'Featured Today' section listing current featured items for AI context",
+        "In src/components/chat/chat-widget.tsx: on isOpen becoming true and messages.length === 0, trigger initial greeting by calling the /api/chat with a greeting prompt or adding a pre-set assistant welcome message",
+        "Proactive nudge: on chat open, set setTimeout(3 * 60 * 1000, nudgeCallback); nudgeCallback adds a friendly prompt if user has not sent a message in last 3 min",
+        "Cancel nudge timeout on new user message (clearTimeout) and on chat close",
+        "Featured items for greeting: GET /api/menu/featured or read from constants.ts CAFE featured items list"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    }
+  ]
+}
