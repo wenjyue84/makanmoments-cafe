@@ -3497,3 +3497,34 @@ Completed: Multi-Language Search: Search Dishes in Any Language (ID: US-043) in 
 ### Result
 - prd.json: US-044 passes = true
 - TypeScript check: PASS (exit 0)
+
+## Pre-analysis for US-045 (Gemini 2.5 Pro)
+This user story describes a **Next.js PWA implementation**, not a Frappe/Python one. The following technical brief is based on the Next.js framework as detailed in the story's `technicalNotes`.
+
+**Subject: Technical Brief for US-045: PWA with Push Notifications (Next.js)**
+
+**1. Python/Frappe Files & DocTypes:**
+*   None. This is a JavaScript/TypeScript project using the Next.js framework.
+
+**2. Core Files to Modify/Create:**
+*   `next.config.ts`: To integrate the `next-pwa` plugin for service worker generation.
+*   `src/app/layout.tsx`: To link the web app manifest.
+*   `public/manifest.json` (New): To define PWA properties like name, icons, and display mode.
+*   `src/app/api/admin/push-subscribe/route.ts` (New): An API route to handle the logic for saving an admin's push subscription object.
+*   `src/app/api/orders/route.ts` (or similar): Modify the existing order creation endpoint to trigger the push notification to subscribed admins.
+*   New Admin UI Component (e.g., `src/components/admin/Settings.tsx`): A client-side component with a button to allow an admin to subscribe to notifications.
+
+**3. Implementation Approach:**
+1.  Install and configure the `next-pwa` and `web-push` npm packages.
+2.  Generate VAPID keys using `npx web-push` and store them in `.env.local`.
+3.  Create the `manifest.json` file in the `public` directory.
+4.  Develop a frontend component for the admin panel that uses the `Notification.requestPermission()` and `PushManager.subscribe()` browser APIs.
+5.  This component will POST the resulting `PushSubscription` object to the new `/api/admin/push-subscribe` endpoint, which saves it (e.g., in a database or file store).
+6.  Update the order submission API to fetch all stored admin subscriptions and use the `web-push` library to `sendNotification()` for each one.
+
+**4. Edge Cases & Gotchas:**
+*   **Subscription Management:** The backend must gracefully handle expired/invalid subscriptions, deleting them when a push fails.
+*   **Security:** The VAPID private key must be kept secret on the server. The subscription endpoint must be authenticated to ensure only admins can subscribe.
+*   **Service Worker Updates:** `next-pwa` helps, but be mindful of browser caching. Ensure users get the latest service worker after deployments.
+*   **Browser Support:** The Web Push API is not supported in all browsers. The UI should handle this possibility.
+
