@@ -1,12 +1,13 @@
 "use client";
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback } from "react";
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport } from "ai";
 import { useTranslations } from "next-intl";
-import { X, Send, MessageCircle } from "lucide-react";
+import { X, Send, MessageCircle, Mic } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import { ChatBubble } from "./chat-bubble";
+import { cn } from "@/lib/utils";
 
 interface ChatPanelProps {
   onClose: () => void;
@@ -14,12 +15,29 @@ interface ChatPanelProps {
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER;
 
+// Check Web Speech API support once (browser-only)
+const speechSupported =
+  typeof window !== "undefined" &&
+  ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+
 export function ChatPanel({ onClose }: ChatPanelProps) {
   const t = useTranslations("chat");
   const scrollRef = useRef<HTMLDivElement>(null);
   const [input, setInput] = useState("");
   const { addItem } = useTray();
   const handledToolCalls = useRef(new Set<string>());
+  const [isListening, setIsListening] = useState(false);
+  // Use state (not module var) in JSX to avoid SSR hydration mismatch
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
+  const pendingSubmitRef = useRef(false);
+  const submitInputRef = useRef<(() => void) | null>(null);
+
+  // Reveal mic button only on client after hydration
+  useEffect(() => {
+    setVoiceSupported(speechSupported);
+  }, []);
 
   const welcomeText = t("welcome");
   const { messages, sendMessage, status, error } = useChat({
@@ -35,7 +53,71 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  // Auto-scroll on new messages
+  // Keep submitInputRef in sync so voice onend handler can call latest version
+  const handleSubmitText = useCallback(
+    (text: string) => {
+      if (!text.trim() || isLoading) return;
+      sendMessage({ text });
+      setInput("");
+    },
+    [isLoading, sendMessage]
+  );
+
+  submitInputRef.current = () => handleSubmitText(input);
+
+  function toggleVoice() {
+    if (!speechSupported) return;
+    try {
+      if (isListening && recognitionRef.current) {
+        recognitionRef.current.stop();
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const SpeechRecognitionCtor =
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).SpeechRecognition ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).webkitSpeechRecognition;
+      const recognition = new SpeechRecognitionCtor();
+      recognition.lang = "en-US";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => setIsListening(true);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput(transcript);
+        if (event.results[0].isFinal) {
+          pendingSubmitRef.current = true;
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        if (pendingSubmitRef.current) {
+          pendingSubmitRef.current = false;
+          // Short timeout to allow state to flush before submitting
+          setTimeout(() => {
+            submitInputRef.current?.();
+          }, 50);
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+        pendingSubmitRef.current = false;
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setIsListening(false);
+    }
+  }
+
+  // Auto-scroll on new messages + process tool calls
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -63,9 +145,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
-    sendMessage({ text: input });
-    setInput("");
+    handleSubmitText(input);
   }
 
   return (
@@ -107,19 +187,17 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
           const text =
             msg.parts
               ?.filter(
-                (p: any): p is { type: "text"; text: string } => p.type === "text"
+                (p: any): p is { type: "text"; text: string } =>
+                  p.type === "text"
               )
               .map((p: any) => p.text)
               .join("") ?? "";
 
           const hasPureToolCall =
-            !text &&
-            msg.parts?.some((p: any) => p.type === "tool-invocation");
-          if (hasPureToolCall) return null; // hide pure tool calls with no text
+            !text && msg.parts?.some((p: any) => p.type === "tool-invocation");
+          if (hasPureToolCall) return null;
 
-          return (
-            <ChatBubble key={msg.id} role={msg.role} content={text} />
-          );
+          return <ChatBubble key={msg.id} role={msg.role} content={text} />;
         })}
         {isLoading && (
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -128,9 +206,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
             <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:300ms]" />
           </div>
         )}
-        {error && (
-          <p className="text-sm text-destructive">{t("error")}</p>
-        )}
+        {error && <p className="text-sm text-destructive">{t("error")}</p>}
       </div>
 
       {/* Input */}
@@ -146,6 +222,25 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
           className="flex-1 rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           disabled={isLoading}
         />
+        {voiceSupported && (
+          <button
+            type="button"
+            onClick={toggleVoice}
+            disabled={isLoading}
+            className={cn(
+              "relative flex h-10 w-10 shrink-0 items-center justify-center rounded-lg transition-colors disabled:opacity-50",
+              isListening
+                ? "bg-red-500 text-white"
+                : "bg-muted text-muted-foreground hover:bg-muted/80"
+            )}
+            aria-label={isListening ? "Stop recording" : "Start voice input"}
+          >
+            {isListening && (
+              <span className="absolute inset-0 animate-ping rounded-lg bg-red-400 opacity-60" />
+            )}
+            <Mic className="relative h-4 w-4" />
+          </button>
+        )}
         <button
           type="submit"
           disabled={isLoading || !input.trim()}

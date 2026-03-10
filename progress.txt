@@ -5708,3 +5708,123 @@ Completed: Mobile Menu: Favorite Items (Heart) and Always-Visible Add Button (ID
 ## Iteration 38 - Tue, Mar 10, 2026  4:44:39 PM
 Completed: Mobile Menu: Category Quick-Jump Bar and Sticky Section Headers (ID: US-064) in 8m
 
+## Iteration 14 - Tue, Mar 10, 2026  4:44:49 PM
+Completed: Mobile Menu: Category Quick-Jump Bar and Sticky Section Headers (ID: US-064) in 10m
+
+
+## Pre-analysis for US-066 (Gemini 2.5 Pro)
+### Technical Brief: US-066 - AI Waiter Voice Input
+
+**Objective:** Implement a voice-to-text feature in the AI chat widget using the browser's Web Speech API.
+
+**1. Primary File to Modify:**
+*   `src/components/chat/chat-widget.tsx`: This component contains the chat input and interaction logic.
+
+**2. Involved APIs & Hooks:**
+*   **Browser API:** Web Speech API (`SpeechRecognition` or `webkitSpeechRecognition`).
+*   **React Hooks:**
+    *   `useState`: To manage recording state (e.g., `isListening`), transcript text, and API availability.
+    *   `useEffect`: To check for API support on component mount and to handle cleanup.
+    *   `useRef`: To hold the `SpeechRecognition` instance.
+
+**3. Implementation Approach:**
+*   In `useEffect`, check if `window.SpeechRecognition` or `window.webkitSpeechRecognition` exists. If not, set a state to hide the microphone button.
+*   Create a handler function to start/stop voice recognition.
+*   On mic button tap, create a new `SpeechRecognition` instance and set its properties (`lang`, `continuous`, `interimResults`).
+*   Implement `recognition.onresult` to capture the transcript in real-time and update the chat input's value.
+*   Implement `recognition.onend` to automatically submit the form/message when the user stops talking.
+*   Use a state variable like `isListening` to conditionally apply CSS classes for the button's appearance (e.g., `animate-pulse` and red color).
+
+**4. Edge Cases & Gotchas:**
+*   **Permissions:** The browser will prompt for microphone access. Wrap the recognition start logic in a `try/catch` block to handle cases where the user denies permission.
+*   **Browser Incompatibility:** The feature must fail gracefully by simply not rendering the button if the API is unsupported. No errors should be visible to the user.
+*   **Silence Detection:** The API has built-in silence detection which will trigger `onend`. Ensure this correctly triggers the message submission.
+*   **State Management:** Ensure the text input can be updated by both voice and keyboard without conflicts.
+
+
+## Pre-analysis for US-066 (Gemini 2.5 Pro)
+This user story is for a **Next.js/React frontend application**, not a Frappe/Python backend. The implementation will be entirely in TypeScript and will use browser-native APIs.
+
+### **Technical Brief: US-066 - AI Waiter Voice Input**
+
+**1. Primary File to Modify:**
+*   `src/components/chat/chat-widget.tsx`: This component contains the chat input and submission logic where the new functionality will be added.
+
+**2. Involved Browser APIs (No Frappe DocTypes/Hooks):**
+*   **Web Speech API:** The core technology. Specifically, `window.SpeechRecognition` or its prefixed variant `window.webkitSpeechRecognition`.
+
+**3. Recommended Implementation Approach:**
+*   **Feature Detection:** In a `useEffect` hook, check if the Web Speech API is supported by the browser. Store this in a state variable (e.g., `isSpeechSupported`).
+*   **Conditional Rendering:** Use the `isSpeechSupported` state to conditionally render the microphone icon button. If `false`, the button is never added to the DOM.
+*   **State Management:** Introduce React state to manage the listening status (`isListening`) and the transcribed text (`transcript`).
+*   **Mic Button Logic:**
+    *   On click, toggle the listening state.
+    *   If starting, create a new `SpeechRecognition` instance, set its properties (`lang`, `interimResults`), and call `.start()`.
+    *   If stopping, call `.stop()`.
+*   **Event Handling:**
+    *   `onresult`: Update the chat input's value with the live transcript.
+    *   `onend`: Trigger the message submission logic if the final transcript is not empty.
+*   **UI Feedback:** Dynamically change the button's style (e.g., add `animate-pulse` and a red color) when `isListening` is `true`.
+
+**4. Edge Cases & Gotchas:**
+*   **Microphone Permissions:** The browser will prompt for microphone access. The implementation should handle permission denial gracefully (the API will throw an error).
+*   **Browser Inconsistency:** The Web Speech API is not universally supported. The feature detection step is critical to prevent errors on browsers like Firefox (by default).
+*   **Auto-Submit Trigger:** The `onend` event fires both when the user stops talking and when `.stop()` is called manually. Ensure logic correctly identifies when to submit vs. just ending a session.
+
+
+## Pre-analysis for US-066 (Gemini 2.5 Pro)
+### US-066: AI Waiter Voice Input - Technical Brief
+
+**Objective:** Implement client-side voice-to-text functionality in the AI chat widget using the browser's Web Speech API for a hands-free user experience.
+
+**1. Files to Modify:**
+*   `src/components/chat/chat-widget.tsx`: Main component to house the core logic for feature detection and state management.
+*   `src/components/chat/chat-input.tsx`: Likely needs modification to include the new microphone button UI element and its state-driven classes.
+
+**2. Involved APIs & State:**
+*   **Browser API:** `window.SpeechRecognition` or `window.webkitSpeechRecognition`. This is purely a front-end task; no backend or Frappe DocTypes are involved.
+*   **React State:**
+    *   `isSpeechSupported (boolean)`: To conditionally render the mic button.
+    *   `isListening (boolean)`: To manage the recording state and button appearance (e.g., pulsing red).
+    *   `transcript (string)`: To hold the transcribed text.
+
+**3. Implementation Approach:**
+1.  **Feature Detection:** In `chat-widget.tsx`, use a `useEffect` hook to check for Web Speech API support on mount and set the `isSpeechSupported` state.
+2.  **Conditional UI:** Pass the `isSpeechSupported` state to `chat-input.tsx` to conditionally render a microphone icon button.
+3.  **Event Handling:**
+    *   On mic button tap, create a new `SpeechRecognition` instance.
+    *   Set `recognition.interimResults = true` to update the input field in real-time via the `onresult` event handler.
+    *   Toggle the `isListening` state to change the button's style (e.g., add `animate-pulse` and a red color).
+    *   Use the `onend` event to stop the listening animation and trigger the message submission logic.
+4.  **Auto-Submit:** When recognition ends (either by tapping again or after a pause), the existing form submission function should be called with the final transcript.
+
+**4. Edge Cases & Gotchas:**
+*   **Browser Permissions:** The call to `recognition.start()` must be wrapped in a `try/catch` block to gracefully handle cases where the user denies microphone access. The feature should fail silently.
+*   **API Unavailability:** The microphone button must not be rendered at all if the Web Speech API is not supported, ensuring a clean fallback with no errors.
+*   **Component Unmount:** Use the cleanup function in `useEffect` to abort any ongoing speech recognition if the user navigates away from the widget.
+
+
+## Iteration N - Story: AI Waiter: Voice Input via Web Speech API (US-066)
+
+### What was implemented
+- `src/components/chat/chat-panel.tsx`: Voice input fully implemented
+  - `speechSupported` module-level variable checks for Web Speech API support
+  - `voiceSupported` state (initialized false, set in useEffect) avoids SSR hydration mismatch
+  - `toggleVoice()` function: starts/stops recognition, auto-submits on final transcript
+  - Mic button in input form: hidden if `voiceSupported` is false
+  - Listening state: red background + `animate-ping` pulse ring on button
+  - `pendingSubmitRef` + `submitInputRef` pattern ensures correct input is submitted after recognition ends
+  - Fail-silent: `onerror` and try/catch both reset state without showing errors
+
+### Patterns discovered
+- A previous Ralph iteration had already added most of the logic (toggleVoice, speechSupported, isListening state) but missed the mic button in JSX and the `voiceSupported` state
+- The file was being auto-modified by a linter between reads — use Write tool for full rewrites instead of Edit tool when linter keeps firing
+- `voiceSupported` (useState) vs `speechSupported` (module-level): use the state version in JSX to avoid hydration mismatches in Next.js SSR
+
+### Acceptance Criteria Met
+- [x] Microphone icon button appears in chat input area
+- [x] Tapping mic starts listening — button pulses red (animate-ping ring)
+- [x] Speaking transcribes to text in the input field in real-time (interimResults=true)
+- [x] After final result, recording stops and text auto-submits
+- [x] If Web Speech API not supported, mic button hidden (voiceSupported = false by default)
+- [x] TypeScript check passes (npx tsc --noEmit — clean)
