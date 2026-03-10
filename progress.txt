@@ -9428,3 +9428,23 @@ Note: The user story describes a feature for a Next.js/React frontend, not a Fra
 - `md:hidden` on the X button and search icon ensures desktop never sees these mobile-only elements
 - `md:block` on the search wrapper ensures desktop always shows the search bar regardless of `isSearchOpen`
 - The circular search icon is added at the start of the category pills flex row (before "All" button) for easy tap access
+
+## Iteration - Story: US-098 - Security Headers via next.config.ts headers() Function
+
+### What was implemented
+- Added `async headers()` function to `next.config.ts`
+- Returns one rule matching `source: "/(.*)"` with 5 headers:
+  - X-Frame-Options: DENY
+  - X-Content-Type-Options: nosniff
+  - Referrer-Policy: strict-origin-when-cross-origin
+  - Permissions-Policy: camera=(), microphone=(), geolocation=()
+  - Content-Security-Policy: default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com
+
+### Patterns discovered
+- `async headers()` is a top-level NextConfig option — no plugin wrapping needed
+- `withBundleAnalyzer(withNextIntl(nextConfig))` wrapping order from US-097 is preserved
+- `unsafe-inline` required for style-src (Next.js injects inline styles) and script-src (admin dark-mode script + noscript locale fallback)
+
+### Gotchas
+- Single change to next.config.ts only — no component or API changes needed
+- TypeScript check passes clean (no new errors introduced)
