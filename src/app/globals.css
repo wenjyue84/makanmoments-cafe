@@ -64,9 +64,9 @@
   --popover: oklch(0.99 0.006 78);
   --popover-foreground: oklch(0.19 0.025 45);
 
-  /* /colorize: Richer terracotta — deeper, more earthy */
-  --primary: oklch(0.50 0.19 22);
-  --primary-foreground: oklch(0.98 0.006 78);
+  /* /colorize: Forest green — earthy, logo-matched */
+  --primary: oklch(0.42 0.14 145);
+  --primary-foreground: oklch(0.98 0.01 145);
 
   /* /colorize: Warm sand secondary */
   --secondary: oklch(0.91 0.025 80);
@@ -83,7 +83,7 @@
   --destructive: oklch(0.52 0.22 22);
   --border: oklch(0.88 0.025 78);
   --input: oklch(0.88 0.025 78);
-  --ring: oklch(0.50 0.19 22);
+  --ring: oklch(0.42 0.14 145);
 
   --chart-1: oklch(0.58 0.17 25);
   --chart-2: oklch(0.63 0.12 148);
@@ -93,12 +93,12 @@
 
   --sidebar: oklch(0.95 0.010 78);
   --sidebar-foreground: oklch(0.28 0.025 45);
-  --sidebar-primary: oklch(0.50 0.19 22);
-  --sidebar-primary-foreground: oklch(0.98 0.006 78);
+  --sidebar-primary: oklch(0.42 0.14 145);
+  --sidebar-primary-foreground: oklch(0.98 0.01 145);
   --sidebar-accent: oklch(0.89 0.05 72);
   --sidebar-accent-foreground: oklch(0.28 0.04 45);
   --sidebar-border: oklch(0.88 0.025 78);
-  --sidebar-ring: oklch(0.50 0.19 22);
+  --sidebar-ring: oklch(0.42 0.14 145);
 }
 
 /* /colorize: Dark mode — warm charcoal, not cold dark */
