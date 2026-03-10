@@ -10,14 +10,13 @@ export default function AdminLoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function doLogin(u: string, p: string) {
     setLoading(true);
     setError("");
     const res = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ username: u, password: p }),
     });
     setLoading(false);
     if (res.ok) {
@@ -25,6 +24,15 @@ export default function AdminLoginPage() {
     } else {
       setError("Invalid username or password");
     }
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    await doLogin(username, password);
+  }
+
+  async function handleDemoLogin() {
+    await doLogin("admin", "admin123");
   }
 
   return (
@@ -66,6 +74,16 @@ export default function AdminLoginPage() {
             {loading ? "Signing in…" : "Sign In"}
           </button>
         </form>
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={handleDemoLogin}
+            disabled={loading}
+            className="w-full rounded-lg border border-gray-300 bg-white py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-50 disabled:opacity-50"
+          >
+            Login with Demo Account
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -32,7 +32,7 @@ export async function Highlights({ items, highlightsTitle, highlightsSubtitle }:
             className="animate-fade-up"
             style={{ "--delay": `${index * 60}ms` } as CSSProperties}
           >
-            <MenuCard item={item} priority={index < 3} />
+            <MenuCard item={item} />
           </div>
         ))}
       </div>

@@ -157,7 +157,13 @@
     padding-bottom: env(safe-area-inset-bottom);
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
-    transition: background-color 0.25s var(--ease-in-out), color 0.25s var(--ease-in-out);
+  }
+
+  /* Theme-switch transition only when motion is allowed — prevents initial flash and respects accessibility */
+  @media (prefers-reduced-motion: no-preference) {
+    body {
+      transition: background-color 0.25s var(--ease-in-out), color 0.25s var(--ease-in-out);
+    }
   }
 }
 

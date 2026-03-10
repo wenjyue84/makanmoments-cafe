@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
@@ -9,7 +8,6 @@ import { HeroSection } from "@/components/home/hero-section";
 import { Highlights } from "@/components/home/highlights";
 import { InfoStrip } from "@/components/home/info-strip";
 import { PreorderBanner } from "@/components/home/preorder-banner";
-import { HighlightsSkeleton } from "@/components/home/highlights-skeleton";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 import { HomeInlineEditor, type HomeContent } from "@/components/admin/home-inline-editor";
 import { CAFE } from "@/lib/constants";
@@ -33,23 +31,6 @@ function readHomeContent(fallback: HomeContent): HomeContent {
   };
 }
 
-async function HighlightsLoader({
-  highlightsTitle,
-  highlightsSubtitle,
-}: {
-  highlightsTitle: string;
-  highlightsSubtitle: string;
-}) {
-  const featured = await getFeaturedItems();
-  return (
-    <Highlights
-      items={featured}
-      highlightsTitle={highlightsTitle}
-      highlightsSubtitle={highlightsSubtitle}
-    />
-  );
-}
-
 export default async function HomePage({
   params,
 }: {
@@ -68,12 +49,14 @@ export default async function HomePage({
 
   const content = readHomeContent(fallback);
 
-  const cookieStore = await cookies();
+  const [cookieStore, featured] = await Promise.all([
+    cookies(),
+    getFeaturedItems(),
+  ]);
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const isAdmin = token ? await verifyAdminToken(token) : false;
 
   if (isAdmin) {
-    const featured = await getFeaturedItems();
     return <HomeInlineEditor content={content} featuredItems={featured} />;
   }
 
@@ -91,12 +74,11 @@ export default async function HomePage({
         <InfoStrip />
       </FadeUp>
       <FadeUp delay={150}>
-        <Suspense fallback={<HighlightsSkeleton />}>
-          <HighlightsLoader
-            highlightsTitle={content.highlightsTitle}
-            highlightsSubtitle={content.highlightsSubtitle}
-          />
-        </Suspense>
+        <Highlights
+          items={featured}
+          highlightsTitle={content.highlightsTitle}
+          highlightsSubtitle={content.highlightsSubtitle}
+        />
       </FadeUp>
     </>
   );

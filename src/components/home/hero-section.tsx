@@ -25,8 +25,8 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: Hero
       <div className="mx-auto max-w-6xl px-4 py-3 sm:py-16 lg:py-24">
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-center lg:gap-16">
 
-          {/* Mobile hero image — FIRST so food is above the fold on mobile */}
-          <div className="relative aspect-[2/1] w-full overflow-hidden rounded-2xl shadow-2xl lg:hidden animate-fade-in">
+          {/* Mobile hero image — FIRST so food is above the fold on mobile. No fade-in: LCP element must be immediately visible */}
+          <div className="relative aspect-[2/1] w-full overflow-hidden rounded-2xl shadow-2xl lg:hidden">
             <Image
               src="/images/hero/hero-mobile.webp"
               alt="RM55.90 Steamed Fish Promo Set — premium Thai-style steamed fish at Makan Moments Cafe"
@@ -34,6 +34,7 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: Hero
               className="object-cover img-scale"
               sizes="100vw"
               priority
+              fetchPriority="high"
               placeholder="blur"
               blurDataURL={HERO_BLUR.heroMobile}
             />
@@ -124,7 +125,7 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: Hero
                 fill
                 className="object-cover img-scale"
                 sizes="(max-width: 1024px) 50vw, 800px"
-                priority
+                loading="eager"
                 placeholder="blur"
                 blurDataURL={HERO_BLUR.heroMobile}
               />
