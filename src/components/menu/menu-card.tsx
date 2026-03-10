@@ -100,9 +100,9 @@ export function MenuCard({ item, priority = false, isHighlighted = false }: Menu
 
         {/* Content */}
         <div className="space-y-1.5">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold leading-tight">{name}</h3>
-            <span className="shrink-0 text-sm font-bold text-primary">
+          <div className="space-y-0.5">
+            <h3 className="font-semibold leading-snug">{name}</h3>
+            <span className="block text-sm font-bold text-primary">
               {item.originalPrice ? (
                 <>
                   <s className="text-muted-foreground text-xs font-normal mr-1">
