@@ -5510,3 +5510,32 @@ Completed: Fix: Chef's Picks Display Category Shows 0 Items (ID: US-061) in 5m
 
 ### Gotchas
 - prd.json must be read/written with encoding='utf-8' (Python default cp1252 fails on Windows)
+
+## Pre-analysis for US-064 (Gemini 2.5 Pro)
+Here is the technical brief for implementing US-064.
+
+**Objective:** Implement a sticky category quick-jump bar and sticky section headers for the mobile menu page, based on the provided Next.js/React technical notes.
+
+**1. Primary Files to Modify:**
+*   `src/components/menu/menu-grid.tsx`: This is the core file. It will be refactored to group menu items by category and manage the scrolling/observation logic.
+*   `src/app/menu/page.tsx`: The page component that renders the menu grid; may need to be adjusted to pass down correctly structured data.
+*   **New Component**: Create `src/components/menu/category-quick-jump.tsx` to encapsulate the sticky, horizontally-scrolling category chip bar.
+
+**2. Key React Components & Hooks (Instead of Frappe DocTypes):**
+*   **React State/Refs**: `useState` for tracking the active category, `useRef` to create references to each category's section header element for the observer.
+*   **React Effect**: `useEffect` to set up and tear down the `IntersectionObserver` instance.
+*   **Browser API**: The `IntersectionObserver` API is central to this task for detecting which category is in the viewport.
+
+**3. Recommended Implementation Approach:**
+1.  In `menu-grid.tsx`, transform the flat list of menu items into a data structure grouped by category.
+2.  Render the new `CategoryQuickJump` component at the top, passing it the list of unique categories and the currently active category state.
+3.  Iterate over the grouped data. For each category, render a `<section>` with a unique `id` (e.g., `id="category-thai-classics"`) and a sticky `<h2>` header as specified in the technical notes.
+4.  In a `useEffect` hook, create an `IntersectionObserver` that watches all section header `ref`s. The observer's callback will update the active category state when a section's visibility changes.
+5.  The `onClick` handler for a chip in `CategoryQuickJump` will use `document.getElementById(...).scrollIntoView({ behavior: 'smooth' })` to navigate.
+
+**4. Edge Cases & Gotchas:**
+*   **Scroll-Padding**: The sections will need `scroll-margin-top` (e.g., `scroll-mt-20` or similar) to ensure the section header doesn't get hidden behind the sticky chip bar after a jump-scroll.
+*   **Observer Threshold**: The `IntersectionObserver` `threshold` or `rootMargin` will need tuning. A `rootMargin` that offsets the top of the viewport by the sticky header heights is often more reliable than a simple threshold.
+*   **State Management**: Ensure the observer is created only once and dependencies for `useEffect` are correct to prevent performance issues from re-renders.
+*   **Styling**: The chip bar needs `overflow-x: auto` and custom scrollbar hiding (`scrollbar-hidden`) to work correctly on mobile without wrapping.
+

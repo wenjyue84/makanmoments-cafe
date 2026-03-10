@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import type { MenuItem } from "@/types/menu";
 import { MenuCard } from "./menu-card";
 import { ChefPickCard } from "./chef-pick-card";
 import { EditableMenuCard } from "./editable-menu-card";
 import { MenuFilter } from "./menu-filter";
+import { cn } from "@/lib/utils";
 
 // Display category values are prefixed with "__dc__" to distinguish from POS categories
 const DC_PREFIX = "__dc__";
@@ -58,6 +59,8 @@ export function MenuGrid({
   });
   const [search, setSearch] = useState("");
   const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const chipBarScrollRef = useRef<HTMLDivElement>(null);
 
   // Resolve whether selected tab is a POS category or display category
   const isDisplayCategorySelected = category?.startsWith(DC_PREFIX) ?? false;
@@ -123,6 +126,7 @@ export function MenuGrid({
   }, [highlights]);
 
   // Build category sections for grouped view (used when no search text)
+  // Note: isFlatView is used in effects below — computed after categorySections
   const categorySections = useMemo(() => {
     if (selectedDisplayCat) {
       // Display category selected: flat list, no chef's pick hierarchy
@@ -145,6 +149,46 @@ export function MenuGrid({
   // When a display category is selected, show flat grid (no grouping)
   const isFlatView = isSearching || isDisplayCategorySelected;
 
+  // IntersectionObserver: update active chip as user scrolls through sections
+  useEffect(() => {
+    if (isFlatView || categorySections.length <= 1) {
+      setActiveSection(null);
+      return;
+    }
+    // Init first section as active
+    setActiveSection((prev) => prev ?? (categorySections[0]?.cat ?? null));
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id.replace("section-", ""));
+            break;
+          }
+        }
+      },
+      { rootMargin: "-108px 0px -50% 0px", threshold: 0 }
+    );
+
+    categorySections.forEach(({ cat }) => {
+      const el = document.getElementById(`section-${cat}`);
+      if (el) observer.observe(el);
+    });
+
+    return () => observer.disconnect();
+  }, [categorySections, isFlatView]);
+
+  // Auto-scroll chip bar to keep the active chip visible
+  useEffect(() => {
+    if (!chipBarScrollRef.current || !activeSection) return;
+    const chip = chipBarScrollRef.current.querySelector<HTMLElement>(`[data-chip="${activeSection}"]`);
+    chip?.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+  }, [activeSection]);
+
+  const handleChipClick = useCallback((cat: string) => {
+    document.getElementById(`section-${cat}`)?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
   return (
     <div className="pb-48 md:pb-0">
       <MenuFilter
@@ -157,6 +201,32 @@ export function MenuGrid({
         itemCount={filtered.length}
         servingNowCategories={servingNowCategories}
       />
+
+      {/* Quick-jump chip bar — mobile only, shown when browsing all sections */}
+      {!isFlatView && categorySections.length > 1 && (
+        <div className="sticky top-16 z-30 md:hidden bg-background/95 backdrop-blur-sm border-b border-border -mx-4 px-4 py-2 mb-2">
+          <div
+            ref={chipBarScrollRef}
+            className="flex gap-2 overflow-x-auto pb-0.5 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
+          >
+            {categorySections.map(({ cat }) => (
+              <button
+                key={cat}
+                data-chip={cat}
+                onClick={() => handleChipClick(cat)}
+                className={cn(
+                  "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                  activeSection === cat
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                )}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {filtered.length === 0 ? (
         <div className="py-20 text-center">
@@ -192,10 +262,10 @@ export function MenuGrid({
         /* Category sections: Chef's Pick hero + regular grid */
         <div className="mt-6 space-y-10">
           {categorySections.map(({ cat, chefPick, rest }, sectionIdx) => (
-            <section key={cat} aria-labelledby={`cat-${cat}`}>
+            <section key={cat} id={`section-${cat}`} aria-labelledby={`cat-${cat}`} className="scroll-mt-[108px]">
               <h2
                 id={`cat-${cat}`}
-                className="mb-4 text-lg font-bold tracking-tight text-foreground border-b border-border pb-2"
+                className="sticky top-[108px] md:top-[68px] z-10 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-2 mb-4 text-lg font-bold tracking-tight text-foreground border-b border-border"
               >
                 {cat}
               </h2>
