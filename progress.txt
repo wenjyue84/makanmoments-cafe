@@ -1521,3 +1521,33 @@ Completed: Replace Menu Item Images with High-Quality Food Photos (ID: US-020) i
 ### Gotchas
 - `COVER PAGE.png` has a space in filename — works fine with forward slashes in Node
 - TypeScript check: `npx tsc --noEmit` shows no errors on changed files
+
+## Pre-analysis for US-023 (Gemini 2.5 Pro)
+This user story describes a frontend task for a Next.js application, not a Frappe/Python one. Here is the technical brief adapted for the correct technology stack.
+
+**Project:** Next.js / React
+
+**1. Files to Modify:**
+*   `src/app/[locale]/about/page.tsx`: The primary React component that renders the `/about` page. This is where the new "Ambiance" section and 2-column layout will be defined.
+*   `content/about.md`: May need review to see how content is structured, but layout changes will happen in the `tsx` file.
+*   New Script `scripts/process-about-image.mjs`: A one-time script should be created to handle image compression and placement, following the pattern of existing scripts like `compress-hero.mjs`.
+
+**2. DocTypes / Hooks Involved:**
+*   **Next.js App Router:** The file-based routing at `src/app/[locale]/about/page.tsx` is the entry point.
+*   **React Server Components (RSC):** The about page is likely an RSC, meaning data fetching and rendering happen on the server.
+*   **`next/image` component:** Will be used to display the optimized image.
+
+**3. Implementation Approach:**
+1.  Create `scripts/process-about-image.mjs` using the `sharp` library.
+2.  The script will take the source path, resize the image to 1200px max width, set quality to 82, convert to WebP, and save it to `public/images/about/paintings.webp`.
+3.  Modify `src/app/[locale]/about/page.tsx`.
+4.  Add a new JSX section with a heading like "Our Ambiance".
+5.  Use Tailwind CSS (e.g., `md:grid-cols-2`) to create a responsive 2-column grid.
+6.  In one column, add the `<Image>` component with `src="/images/about/paintings.webp"` and the required alt text.
+7.  In the other column, add the descriptive text.
+
+**4. Edge Cases & Gotchas:**
+*   The source image path is a local file path; the image processing script must be run manually from a machine with access to it. The resulting `webp` file should then be committed to the repository.
+*   Ensure the layout is responsive, stacking to a single column on mobile screens.
+*   Verify that the `next/image` component is used correctly to avoid layout shift and ensure optimization.
+
