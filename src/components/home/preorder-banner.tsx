@@ -12,7 +12,7 @@ export async function PreorderBanner() {
   const t = await getTranslations("home");
 
   return (
-    <section className="px-4 py-6 sm:py-8">
+    <section className="hidden px-4 py-6 sm:py-8 lg:block">
       <div className="mx-auto max-w-4xl rounded-2xl border border-amber-200 bg-amber-50 px-6 py-6 dark:border-amber-800/50 dark:bg-amber-950/30">
         {/* Header */}
         <div className="mb-5 text-center">

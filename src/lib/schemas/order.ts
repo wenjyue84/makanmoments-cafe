@@ -41,6 +41,7 @@ export const OrderPatchSchema = z.object({
         "ready",
         "rejected",
         "seen",
+        "expired",
       ],
       { message: "Invalid status value" }
     )
