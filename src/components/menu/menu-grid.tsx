@@ -33,7 +33,14 @@ export function MenuGrid({
 }: MenuGridProps) {
   const t = useTranslations("common");
   const locale = useLocale();
-  const [category, setCategory] = useState<string | null>(initialCategory);
+  // Validate initialCategory — fall back to null if the category doesn't exist in known lists
+  const [category, setCategory] = useState<string | null>(() => {
+    if (!initialCategory) return null;
+    if (categories.includes(initialCategory)) return initialCategory;
+    const dcPrefixed = displayCategories.map((dc) => `${DC_PREFIX}${dc}`);
+    if (dcPrefixed.includes(initialCategory)) return initialCategory;
+    return null;
+  });
   const [search, setSearch] = useState("");
   const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
 
