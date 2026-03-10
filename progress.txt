@@ -1597,3 +1597,21 @@ This user story is for a **Next.js/React** web project, not Frappe/Python. Here 
 
 ### Gotchas
 - prd.json must be read/written with `encoding='utf-8'` on Windows (default cp1252 fails on special chars)
+
+## Iteration - Story: US-023 - Add Paintings Photo to About Page
+
+### What was implemented
+- paintings.webp was already present in public/images/about/ (untracked in git from previous work)
+- about/page.tsx already had the paintings image integrated in the Ambiance section (2-column lg layout)
+- Image has proper alt text and figcaption about hand-drawn wall art
+- No additional code changes needed — just committed the existing work
+
+### Patterns discovered
+- Sometimes stories are implemented in a prior iteration but not marked as passes: true
+- Check actual file state before assuming work needs to be done
+
+### Acceptance criteria met
+- [x] paintings.webp in public/images/about/
+- [x] Paintings shown in Ambiance section with 2-col desktop layout
+- [x] Alt text and figcaption present
+- [x] Responsive layout
