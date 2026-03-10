@@ -1551,3 +1551,49 @@ This user story describes a frontend task for a Next.js application, not a Frapp
 *   Ensure the layout is responsive, stacking to a single column on mobile screens.
 *   Verify that the `next/image` component is used correctly to avoid layout shift and ensure optimization.
 
+## Iteration 9 - Tue, Mar 10, 2026 11:24:32 AM
+Completed: Green Theme Using Logo Colors + Impeccable Tool (ID: US-021) in 3m
+
+
+## Pre-analysis for US-023 (Gemini 2.5 Pro)
+This user story is for a **Next.js/React** web project, not Frappe/Python. Here is the technical brief for the frontend developer:
+
+**Objective:** Add the cafe's wall painting photo to the About Us page.
+
+**1. Files to Modify:**
+*   `content/about.md`: Add a new markdown section for "Our Ambiance" with descriptive text.
+*   `src/app/[locale]/about/page.tsx`: Update the component to render the new section and the image.
+*   `scripts/compress-image.mjs` (or new script): A one-off script using the `sharp` library to process the image.
+
+**2. Key Next.js/React Components:**
+*   `next/image`: For optimized, responsive image display.
+*   `tailwindcss`: For creating the 2-column responsive layout (flexbox/grid).
+
+**3. Implementation Approach:**
+1.  Manually run a script using `sharp` to compress `paintings.jpg` to a 1200px `webp` image at `public/images/about/paintings.webp`.
+2.  Add a new "Our Ambiance" header and descriptive text to `content/about.md`.
+3.  In `src/app/[locale]/about/page.tsx`, read the new markdown section.
+4.  Create a `<div>` with a responsive two-column layout (e.g., `md:grid-cols-2`).
+5.  Place the text on the left and use the `next/image` component on the right, referencing `/images/about/paintings.webp`.
+
+**4. Gotchas & Edge Cases:**
+*   Ensure the layout gracefully collapses to a single column on mobile screens.
+*   The `alt` text for the image is crucial for accessibility and SEO.
+*   Verify the image path is correct, as `next/image` paths start from the `public` directory.
+*   Maintain visual consistency with existing page sections.
+
+
+## Iteration N - Story: US-023 - Add Paintings Photo to About Page
+
+### What was implemented
+- Compressed `paintings.jpg` → `public/images/about/paintings.webp` (1200×1600, quality 82, 303KB)
+- Modified the Ambiance section in `src/app/[locale]/about/page.tsx` to use a 2-column grid on desktop (lg:grid-cols-2): feature tags on left, paintings image on right
+- Added figcaption describing the hand-drawn wall art
+
+### Patterns discovered
+- Sharp is available as a project dependency — can be used inline with `node -e "require('sharp')..."`
+- About page has both an admin path (AboutInlineEditor) and a regular visitor path — only need to modify the visitor path
+- Image is portrait (3:4 ratio), works well as right column on desktop
+
+### Gotchas
+- prd.json must be read/written with `encoding='utf-8'` on Windows (default cp1252 fails on special chars)

@@ -155,16 +155,32 @@ export default async function AboutPage({
 
       {/* Ambiance */}
       <section className="mb-16">
-        <h2 className="mb-6 font-display text-2xl font-bold">{content.ambianceTitle}</h2>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {CAFE.ambiance.map((feature) => (
-            <div
-              key={feature}
-              className="rounded-lg border border-border bg-card p-4 text-sm font-medium"
-            >
-              {feature}
+        <div className="grid gap-10 lg:grid-cols-2 lg:items-start">
+          <div>
+            <h2 className="mb-6 font-display text-2xl font-bold">{content.ambianceTitle}</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {CAFE.ambiance.map((feature) => (
+                <div
+                  key={feature}
+                  className="rounded-lg border border-border bg-card p-4 text-sm font-medium"
+                >
+                  {feature}
+                </div>
+              ))}
             </div>
-          ))}
+          </div>
+          <figure className="overflow-hidden rounded-2xl shadow-lg">
+            <Image
+              src="/images/about/paintings.webp"
+              alt="Hand-drawn wall art inside Makan Moments Cafe — original paintings that give the space its soulful, artistic character"
+              width={1200}
+              height={1600}
+              className="w-full object-cover"
+            />
+            <figcaption className="bg-card px-4 py-2 text-xs text-muted-foreground">
+              Original hand-drawn wall art — a signature of our space
+            </figcaption>
+          </figure>
         </div>
       </section>
 
