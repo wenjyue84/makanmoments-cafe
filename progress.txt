@@ -6956,3 +6956,22 @@ This is a **frontend-only** story for a Next.js/React application. It does not i
 *   **Layout Shift (CLS):** Ensure the animated sections occupy their space in the layout even when invisible to prevent content from jumping as it fades in.
 *   **Observer Performance:** Use the `triggerOnce` pattern within the hook so the animation only fires once per element, and ensure the observer is disconnected properly to prevent memory leaks.
 
+
+## Iteration 47 - Story: US-076 - Landing Page: Elegant Progressive Text Reveal
+
+### What was implemented
+- `src/app/globals.css`: added `.scroll-reveal` (opacity:0, translateY:16px, 0.4s ease-out) and `.scroll-reveal.in-view` states; prefers-reduced-motion override
+- `src/hooks/use-intersection-observer.ts`: new hook, trigger-once IntersectionObserver returning {ref, inView}
+- `src/components/ui/fade-up.tsx`: SSR-safe client wrapper — renders with no class (visible) on server; adds `scroll-reveal` after mount, `in-view` on viewport entry
+- `src/app/[locale]/page.tsx`: wrapped PreorderBanner, InfoStrip, and Suspense/Highlights in `<FadeUp>` with 0/100/150ms stagger
+- `src/components/home/hero-section.tsx`: `heroSubtitle` paragraph now `hidden sm:block` to keep mobile above-fold minimal
+- `src/app/[locale]/layout.tsx`: added noscript style forcing `.scroll-reveal` visible
+
+### Patterns discovered
+- FadeUp SSR pattern: use `mounted` state (false on server) to avoid applying hidden classes before hydration — avoids no-JS breakage
+- Linter auto-improved the component to use this pattern
+- `.scroll-reveal` (16px translate) is separate from `.animate-fade-up` (22px, CSS @keyframes) — different use cases: scroll-triggered vs load-triggered
+
+### Gotchas
+- The linter modified fade-up.tsx to add `useState(mounted)` — this is the correct SSR-safe pattern
+- Don't conflict `.scroll-reveal` with `.animate-fade-up` — they coexist for different trigger contexts
