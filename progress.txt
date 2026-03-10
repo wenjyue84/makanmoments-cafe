@@ -12478,3 +12478,16 @@ Here is the technical brief for **US-140**:
 - TypeScript: `npx tsc --noEmit` passes cleanly with no errors for changed files
 - The original file had 14 columns in grouped view (with separate Display Cats column) vs 13 in flat view — unified to 13 in new implementation
 - The linter auto-adds fields to TypeScript interfaces — always read the file after editing before writing again
+
+## Iteration (US-139 verification pass) - Story: Split AdminMenuTable into Row Component and Edit Hook
+
+### What was verified
+- Previous iterations had already partially completed this story across 3 commits
+- Final state: admin-menu-table.tsx = 365 lines (uses useMenuTableEdit + AdminMenuTableRow), useMenuTableEdit.ts = 219 lines, admin-menu-table-row.tsx = 468 lines
+- useMenuTableEdit now exports: editingId, editForm, imgVersion, imagePickerCode, setImagePickerCode, handleImageChange, handleSave, handleCancel, plus all mutation functions
+- prd.json already had passes: true from a previous iteration
+
+### Patterns discovered
+- The project has a linter/hook that auto-reverts file changes to match git HEAD if the write triggers formatting — always re-read after writing to confirm actual state
+- git status at session start may show stale state; re-check mid-session with `git status --porcelain`
+- When a Ralph iteration has made 3 commits for the same story, check if it's actually complete before rewriting
