@@ -2820,3 +2820,27 @@ The technical notes within the JSON are highly specific and actionable for a Typ
 ### Gotchas
 - python3 json.load() needs explicit `encoding='utf-8'` on Windows (prd.json has multibyte chars)
 - archived posts in `content/blog/_archived/` are NOT processed (readdirSync is non-recursive)
+
+## Iteration N - Story: US-038 - Blog Post Content Cleanup: Remove Metadata Sections
+
+### What was implemented
+- No code changes needed — `stripMetadataSections()` was already fully implemented in `src/lib/blog-local.ts` as part of US-015
+- Verified the function correctly handles both Notion-sync format (## Content / ## Source blocks) and AI-posts format (## Post Type, ## Best Posting Time, ## Response Strategy blocks)
+- Tested against 5 active blog posts: all return CLEAN (no metadata headers remaining)
+- Output format: `# Title` → `---` (HR) → AI summary paragraph
+
+### Patterns discovered
+- All active blog posts (content/blog/ non-archived) use Notion-sync format: only `## Content` and `## Source` sections
+- `## Content` block is replaced with just the AI summary text
+- `## Source` block is removed entirely
+- **Type:**/**Created:**/**Tags:** metadata lines stripped by regex
+- The `_archived/` subdirectory posts are NOT loaded by `readLocalPosts()` (fs.readdirSync only reads direct files, not subdirectories)
+
+### Gotchas
+- After stripping, content has a `---` HR between title and AI summary — this is expected/acceptable
+- The excerpt is derived from already-cleaned content, so excerpts are also clean
+- US-015 did all the implementation work; US-038 was a verification story
+
+### Result
+- prd.json: US-038 passes = true
+- TypeScript check: PASS (no errors)
