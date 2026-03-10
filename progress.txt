@@ -7293,3 +7293,36 @@ Completed: Site-Wide: Micro-Interactions and Scroll-Triggered Polish (ID: US-078
 ### Gotchas
 - prd.json uses UTF-8 with em-dash unicode — must open with `encoding='utf-8'` in Python
 - TypeScript check (`npx tsc --noEmit`) passes clean with no errors for this file
+
+## Pre-analysis for US-079 (Gemini 2.5 Pro)
+Here is the technical brief for implementing US-079 in a Frappe/Python environment.
+
+---
+
+### **Technical Brief: US-079 - Frappe Admin Sidebar**
+
+This brief outlines the Frappe/Python implementation plan for replacing a custom horizontal navigation with a standard Workspace sidebar.
+
+**1. Files to Modify / Create:**
+*   **Create:** `lhdn_payroll_integration/lhdn_payroll_integration/workspace/admin_dashboard/admin_dashboard.json`. This new file will define the Workspace structure, its link cards, and all the sidebar shortcuts.
+*   **Modify:** `lhdn_payroll_integration/hooks.py`. If the old UI was injected via `app_include_js` or `app_include_css`, those lines must be removed.
+*   **Modify:** `lhdn_payroll_integration/config/desktop.py`. The "Admin" icon on the main desk should be updated to point to the new 'Admin Dashboard' Workspace instead of the old custom page.
+
+**2. Frappe DocTypes & Hooks:**
+*   **Primary DocType:** `Workspace`. We will create a new Workspace record named "Admin Dashboard".
+*   **Linked DocTypes:** The sidebar will link to existing DocTypes like `Menu Item`, `Item Category`, `Blog Post`, `Order`, etc.
+*   **Hooks:** The primary task is removing old UI hooks from `hooks.py`, not adding new ones.
+
+**3. Implementation Approach:**
+1.  Create the `admin_dashboard.json` file to define a new `Workspace`.
+2.  Within the JSON, create a "Link Card" that will serve as the sidebar navigation.
+3.  Add "Shortcuts" to this card for each required section (Menu, Rules, Orders, etc.), linking each to its corresponding `DocType`, `Report`, or `Page`.
+4.  Map the requested icons to Frappe's standard icon set (e.g., `UtensilsCrossed` -> `uil uil-cutlery`).
+5.  Update `desktop.py` to make the main "Admin" route point to this new Workspace.
+6.  Delete the old custom Page/HTML/JS asset that rendered the horizontal tab bar.
+
+**4. Edge Cases & Gotchas:**
+*   **Permissions:** Ensure user roles have permission to access the new "Admin Dashboard" Workspace.
+*   **Responsiveness:** Frappe Workspaces are inherently responsive; verify the mobile view collapses correctly without extra code.
+*   **URL Route:** The existing `/admin` URL must be preserved. Update Page/Route settings if needed to point to the new Workspace.
+
