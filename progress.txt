@@ -11779,3 +11779,67 @@ Memoize the Fuse.js search index instance within the `MenuGrid` React component 
 *   **Constant Options:** Defining `fuseOptions` outside the component is crucial. If it were an inline object, a new object reference on each render would break the memoization.
 *   **No-Op Renders:** The primary goal is to stop the Fuse index from rebuilding during renders caused by state changes that don't affect the item list (e.g., typing in the search box).
 
+## Iteration 4 - Wed, Mar 11, 2026  2:26:50 AM
+Completed: Move Hardcoded Display Category Names to Constants (ID: US-136) in 5m
+
+
+## Pre-analysis for US-137 (Gemini 2.5 Pro)
+This user story describes a frontend performance optimization for a **React/Next.js** application, not a Frappe/Python one. The implementation details relate to TypeScript (`.tsx`), the `useMemo` hook, and the Fuse.js library.
+
+Here is the technical brief based on the provided JSON:
+
+**Subject: Technical Brief for US-137: Memoize Fuse.js Instance**
+
+**1. Python Files to Modify:**
+*   This is a frontend task. The target file is: `src/components/menu/menu-grid.tsx`.
+
+**2. Frappe DocTypes/Hooks Involved:**
+*   No Frappe elements are involved.
+*   The key React hook is `useMemo`.
+*   The primary library is `Fuse.js`.
+
+**3. Recommended Implementation Approach:**
+*   In `src/components/menu/menu-grid.tsx`, define the `fuseOptions` object as a `const` outside the component function to ensure a stable reference.
+*   Locate the Fuse.js instantiation (`new Fuse(...)`).
+*   Wrap the instantiation in a `useMemo` hook to memoize the `fuse` instance.
+*   The dependency array for `useMemo` must contain only `[items]`, ensuring the search index is rebuilt only when the menu items change.
+
+**4. Edge Cases & Gotchas to Watch For:**
+*   Ensure the `fuseOptions` object is truly a constant outside the component. If it's redefined on each render, `useMemo` will not work correctly.
+*   The dependency array `[items]` is critical. Adding other state variables that change on every render will defeat the optimization.
+*   Verify that search functionality remains fully intact after the change. Incorrect memoization can lead to searching against a stale data index.
+
+
+## Pre-analysis for US-137 (Gemini 2.5 Pro)
+Here is the technical brief for the user story `US-137`:
+
+**To**: Claude Code Agent
+**From**: Gemini Pre-Analysis Agent
+**Re**: Technical Brief for US-137: Memoize Fuse.js Instance
+
+**1. Python/Frappe Files to Modify:**
+This user story is for a **React/TypeScript** frontend task, not Python/Frappe. The primary file to modify is:
+- `src/components/menu/menu-grid.tsx`
+
+**2. Involved DocTypes/Hooks:**
+- **React Hook:** `useMemo`
+- **Component:** `MenuGrid` (inferred from `menu-grid.tsx`)
+- **Library:** `Fuse.js`
+
+**3. Recommended Implementation Approach:**
+The goal is to prevent the expensive `Fuse.js` index from being rebuilt on every render of the `MenuGrid` component.
+
+1.  In `src/components/menu/menu-grid.tsx`, locate the `fuseOptions` object.
+2.  Move this object outside the React component function to define it as a module-level `const`. This prevents it from being recreated on each render.
+3.  Find the line where the Fuse instance is created (e.g., `const fuse = new Fuse(...)`).
+4.  Wrap this instantiation in a `useMemo` hook.
+5.  The dependency array for `useMemo` must be `[items]`, ensuring the index is only rebuilt when the underlying item data changes.
+
+**Example:**
+`const fuse = useMemo(() => new Fuse(items, fuseOptions), [items]);`
+
+**4. Edge Cases & Gotchas:**
+- Ensure the search logic correctly uses the memoized `fuse` instance.
+- Verify that `fuseOptions` has no dependencies on component props or state before moving it.
+- The `items` prop passed to the component should be stable; otherwise, the memoization will be ineffective. The `useMemo` will re-run if the parent component unnecessarily re-creates the `items` array on every render.
+
