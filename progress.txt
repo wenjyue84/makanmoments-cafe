@@ -5992,3 +5992,37 @@ Based on the user story `US-068`, here is a concise technical brief for implemen
 ### Gotchas
 - `menu-filter.tsx` needs `pr-10` on input when voice is ready (not `pr-4`) to avoid text overlapping the mic button
 - The `listening` placeholder only shows while browser recognition is active, reverts to normal on stop
+
+## Iteration N - Story: US-068 - Menu Search Bar: Voice-to-Text Input Button
+
+### What was implemented
+- `src/components/menu/menu-filter.tsx` already had the mic button implementation pre-built (hydration guard, toggleVoice function, mic button UI with animate-pulse/red on listening state)
+- Translation keys `menu.listening` already existed in all 3 message files (en/ms/zh)
+- Only verified the implementation was complete and working
+
+### Patterns discovered
+- A `voiceReady` state (set via useEffect after hydration) is used instead of `speechSupported` directly — avoids SSR/hydration mismatch
+- `interimResults: true` used so the search field updates in real-time as user speaks
+- Mic button: `absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5` inside relative wrapper
+- Input `pr-10` when speechSupported, `pr-4` otherwise
+
+### Gotchas
+- File was already modified before this iteration ran — previous work had pre-built the full implementation
+- TypeScript check passed with 0 errors; ESLint passed with 0 warnings on changed file
+
+## Iteration 40 - Story: Menu Search Bar: Voice-to-Text Input Button (US-068)
+
+### What was implemented
+- No new code needed — US-068 was already fully implemented in menu-filter.tsx from a previous iteration
+- Verified all acceptance criteria met:
+  - Mic icon (Lucide `Mic`) in right end of search input
+  - `isListening` state → placeholder changes to `t("listening")` ("Listening..."/etc)
+  - On recognition result → calls `onSearchChange(text)` which triggers Fuse.js search
+  - `recognitionRef.current.stop()` on second tap stops recording
+  - `speechSupported` + `voiceReady` (hydration-safe) → mic button hidden if unsupported
+- All 3 translation files have `menu.listening` key (EN: "Listening...", MS: "Mendengar...", ZH: "聆听中...")
+- TypeScript check: 0 errors
+
+### Patterns discovered
+- `voiceReady` state (set in useEffect) prevents SSR hydration mismatch for `speechSupported` check
+- `recognitionRef` stores the active recognition instance to support second-tap-stop
