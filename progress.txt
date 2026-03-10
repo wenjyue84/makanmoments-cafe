@@ -5681,3 +5681,24 @@ Here is the technical brief for implementing User Story US-065.
 ### Gotchas
 - `isFavoritesSelected` check must come before `isDisplayCategorySelected` in condition chain to avoid false positive
 - `favoritesCount` badge uses `bg-current/20` for subtle tint matching active/inactive state
+
+## Iteration N - Story: US-065 - Mobile Menu: Favorite Items (Heart) and Always-Visible Add Button
+
+### What was implemented
+- `src/hooks/use-favorites.ts` already existed from a prior partial iteration
+- Modified `src/components/menu/menu-card.tsx`: Heart icon (top-right), `isFavorited`/`onToggleFavorite` optional props, scale bounce animation on Add
+- Modified `src/components/menu/menu-filter.tsx`: added `favoritesCount` prop, Favorites chip with Heart icon using `"__favorites__"` key
+- Modified `src/components/menu/menu-grid.tsx`: wires `useFavorites()`, passes favorites to MenuCard, handles `__favorites__` filter
+- Translations added to all 3 message files: `common.favorites`, `common.noFavorites`
+- Discount badge moved from `right-2 top-2` to `left-2 bottom-2` to avoid heart overlap
+
+### Patterns discovered
+- Favorited items use `item.code` (POS code string) as the ID in localStorage, consistent with tray pattern
+- Special filter keys use prefix pattern: `__dc__` for display categories, `__favorites__` for favorites
+- `isFlatView` condition extended to include `isFavoritesSelected`
+- US-064 was already fully implemented and committed but prd.json wasn't updated — check for this pattern
+
+### Gotchas
+- `bg-current/20` in Tailwind is valid (current text color at 20% opacity as background)
+- File "modified since read" error happens when a linter auto-formats — always re-read before editing
+- Key constant mismatch between menu-grid (`__favorites__`) and menu-filter (`__fav__`) needed to be unified
