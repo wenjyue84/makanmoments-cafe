@@ -9372,3 +9372,59 @@ Note: The user story describes a feature for a Next.js/React frontend, not a Fra
 ### Gotchas
 - python3 on Windows needs encoding='utf-8' when reading/writing prd.json (cp1252 default fails)
 - Build succeeds cleanly with all dynamic imports — no type errors
+
+
+## Pre-analysis for US-107 (Gemini 2.5 Pro)
+### Technical Brief: US-107 Collapsible Menu Search
+
+**Project:** Next.js / React (Frontend)
+
+**1. Primary Files to Modify:**
+*   `src/components/menu/MenuFilter.tsx`: This component likely contains the current search bar logic and is the main target for modification.
+*   `src/app/[locale]/menu/page.tsx`: The state for search visibility might need to be lifted to this parent page component if it orchestrates multiple child components.
+*   `src/components/layout/BottomBar.tsx` or similar: The new search icon button may need to be integrated here for consistent mobile layout.
+
+**2. Framework/Libraries Involved:**
+*   **React:** For state management (`useState`, `useEffect`, `useRef`).
+*   **Next.js:** The component is part of a Next.js application.
+*   **Tailwind CSS:** For styling and smooth transitions (`transition-all`, `opacity`, `max-width`).
+*   **Lucide-React:** For the `Search` and `X` icons.
+*   **Note:** This is a **frontend task** and does not involve Python, Frappe DocTypes, or hooks.
+
+**3. Recommended Implementation Approach:**
+1.  Introduce a state `const [isSearchOpen, setIsSearchOpen] = useState(false);` in `MenuFilter.tsx` or its parent.
+2.  Render a circular `Button` with a `Search` icon, absolutely positioned at the bottom-right. Its `onClick` will set `isSearchOpen(true)`.
+3.  Conditionally render the search bar based on `isSearchOpen`. Animate its entry/exit using Tailwind's transition classes on `max-width` or `opacity`.
+4.  The search bar itself should contain an `X` icon button to set `isSearchOpen(false)`.
+5.  Use a `useRef` on the `<input>` and a `useEffect` to call `inputRef.current?.focus()` when `isSearchOpen` becomes `true`.
+6.  Add a global `useEffect` to listen for the 'Escape' keydown event to set `isSearchOpen(false)`.
+
+**4. Edge Cases & Gotchas:**
+*   **Focus Management:** Ensure the `Escape` keydown listener is only active when the search is open and is properly cleaned up.
+*   **Accessibility:** The icon buttons must have `aria-label` attributes for screen readers.
+*   **Layout Shift:** Position the expanding search bar absolutely to prevent it from pushing other page content and causing layout shifts during animation.
+*   **Mobile UX:** Ensure the 44x44px touch target for the icon and that the expanded bar doesn't obstruct the main menu tray/cart button.
+
+
+## Iteration N - Story: US-107 Menu Page — Collapsible Search: Icon by Default, Expands on Tap
+
+### What was implemented
+- Added `isSearchOpen` state (default `false`) to `menu-filter.tsx`
+- Added `searchInputRef` for auto-focus on expand
+- Added `useEffect` to auto-focus input when `isSearchOpen` becomes true
+- Added `useEffect` with Escape key listener to collapse search
+- Added `closeSearch()` helper that resets both state and query
+- Modified search div: hidden on mobile by default (`hidden`), shown when `isSearchOpen` (`block`) — desktop always shows (`md:block`)
+- Added X button next to search input (mobile-only, `md:hidden`) to close/clear search
+- Added circular search icon button (mobile-only, `md:hidden`) in the category pills row when search is collapsed
+- Desktop behavior unchanged: search always visible, no search icon in pill row
+
+### Patterns discovered
+- Write tool may trigger auto-formatter that reverts changes; use Edit tool for targeted changes instead
+- The linter/formatter hook restores old content when a full Write is used — always use Edit for existing files
+- `isSearchOpen` default `false` correctly hides search on mobile at page load
+
+### Gotchas
+- `md:hidden` on the X button and search icon ensures desktop never sees these mobile-only elements
+- `md:block` on the search wrapper ensures desktop always shows the search bar regardless of `isSearchOpen`
+- The circular search icon is added at the start of the category pills flex row (before "All" button) for easy tap access

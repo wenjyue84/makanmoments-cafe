@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Search, Heart, Mic } from "lucide-react";
+import { Search, X, Heart, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const speechSupported =
@@ -38,12 +38,37 @@ export function MenuFilter({
   const tc = useTranslations("common");
   const [isListening, setIsListening] = useState(false);
   const [voiceReady, setVoiceReady] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   // Reveal mic after hydration to avoid SSR mismatch
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setVoiceReady(speechSupported); }, []);
+
+  // Auto-focus search input when expanded on mobile
+  useEffect(() => {
+    if (isSearchOpen && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [isSearchOpen]);
+
+  // Escape key collapses search
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape" && isSearchOpen) {
+        setIsSearchOpen(false);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [isSearchOpen]);
+
+  function closeSearch() {
+    setIsSearchOpen(false);
+    onSearchChange("");
+  }
 
   function toggleVoice() {
     if (!speechSupported) return;
@@ -100,38 +125,68 @@ export function MenuFilter({
       )}
       style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
     >
-      {/* Search */}
-      <div className="relative mb-2 md:mb-0">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          placeholder={isListening ? t("listening") : t("searchPlaceholder")}
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className={cn(
-            "w-full rounded-lg border border-input bg-background py-2.5 pl-10 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary",
-            voiceReady ? "pr-10" : "pr-4"
-          )}
-        />
-        {voiceReady && (
+      {/* Search — always visible on desktop; collapsible on mobile */}
+      <div
+        className={cn(
+          "md:block",
+          isSearchOpen ? "block mb-2" : "hidden"
+        )}
+      >
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              ref={searchInputRef}
+              type="text"
+              placeholder={isListening ? t("listening") : t("searchPlaceholder")}
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+              className={cn(
+                "w-full rounded-lg border border-input bg-background py-2.5 pl-10 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary",
+                voiceReady ? "pr-10" : "pr-4"
+              )}
+            />
+            {voiceReady && (
+              <button
+                type="button"
+                onClick={toggleVoice}
+                className={cn(
+                  "absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 transition-colors",
+                  isListening
+                    ? "animate-pulse text-red-500"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+                aria-label={isListening ? "Stop voice search" : "Voice search"}
+              >
+                <Mic className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          {/* X button — mobile only, closes the search */}
           <button
             type="button"
-            onClick={toggleVoice}
-            className={cn(
-              "absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 transition-colors",
-              isListening
-                ? "animate-pulse text-red-500"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-            aria-label={isListening ? "Stop voice search" : "Voice search"}
+            onClick={closeSearch}
+            className="md:hidden flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-secondary/80 active:scale-95"
+            aria-label="Close search"
           >
-            <Mic className="h-4 w-4" />
+            <X className="h-4 w-4" />
           </button>
-        )}
+        </div>
       </div>
 
       {/* Category pills — horizontally scrollable on mobile, wrapping on desktop */}
-      <div className="flex flex-nowrap gap-2 overflow-x-auto pb-0.5 md:flex-wrap md:overflow-visible">
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 md:flex-wrap md:overflow-visible">
+        {/* Search icon — mobile only, visible when search is collapsed */}
+        {!isSearchOpen && (
+          <button
+            type="button"
+            onClick={() => setIsSearchOpen(true)}
+            className="md:hidden flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-secondary/80 active:scale-95"
+            aria-label="Open search"
+          >
+            <Search className="h-4 w-4" />
+          </button>
+        )}
         {/* All button */}
         <button
           onClick={() => onCategoryChange(null)}
