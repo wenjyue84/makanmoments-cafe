@@ -5156,3 +5156,27 @@ Based on the user story, this is a **Next.js/TypeScript** feature, not a Frappe/
 - `editable-menu-card.tsx` is always in admin edit mode — no need for additional auth check; just add controls unconditionally
 - Arrow controls appear on hover via `group-hover/card:opacity-100` pattern, matching existing button patterns in the card
 - The `recipeOpen` state was unused in the original (no trigger) but kept for consistency; left as-is to minimize diff
+## Iteration 37 - Tue, Mar 10, 2026  4:10:28 PM
+Completed: Pre-Order: End-to-End Flow Tests + Edge Cases (ID: US-056) in 11m
+
+
+## Iteration 38 - Story: US-057 Admin: Adjust Image Focal Point
+
+### What was implemented
+- `src/components/menu/chef-pick-card.tsx`: Added `style={{ objectPosition: item.imagePosition || "50% 50%" }}` to the Image component
+- All other parts were pre-built in prior iterations:
+  - `imagePosition` field in `MenuItem` type (src/types/menu.ts)
+  - DB migration (`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_position TEXT DEFAULT '50% 50%'`) in PATCH route
+  - `rowToMenuItem()` maps `row.image_position` → `imagePosition` (src/lib/menu.ts)
+  - PATCH /api/admin/menu/[id] accepts and persists `imagePosition`
+  - `EditableMenuCard` has arrow controls (↑↓←→), live preview, Save Position + Reset (src/components/menu/editable-menu-card.tsx)
+  - `MenuCard` applies `style={{ objectPosition: item.imagePosition || "50% 50%" }}` (src/components/menu/menu-card.tsx)
+  - `admin-menu-table.tsx`: default `imagePosition: "50% 50%"` for new items
+
+### Patterns discovered
+- Admin mode uses `EditableMenuCard` for ALL items (including the chef's pick hero slot); `ChefPickCard` is public-only
+- The only gap was `ChefPickCard` not applying `objectPosition` — 1-line fix
+
+### Result
+- prd.json: US-057 passes = true
+- TypeScript check: PASS (exit 0)
