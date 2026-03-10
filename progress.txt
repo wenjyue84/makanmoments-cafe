@@ -8449,3 +8449,53 @@ Completed: KDS: Kitchen Display System — Login + Order Queue View (ID: US-087)
 ### Gotchas
 - `prevOrderIdsRef.current === null` guard skips new-order detection on very first fetch (avoids false positives on page load)
 - dismissTimersRef cleanup must reference the Map object directly in the cleanup effect, not via a fresh ref read
+
+## Iteration N - Story: US-089 - KDS: Real-Time Order Updates and New Order Alert
+
+### What was implemented
+- Already fully implemented in the US-087/US-088 prior iterations
+- `src/app/kds/page.tsx` already contains:
+  - 15s polling interval (setInterval 15000ms)
+  - `prevOrderIdsRef` diff logic to detect new arriving orders
+  - `newOrderIds` Set state tracking unacknowledged new orders
+  - `playNewOrderChime()` Web Audio API chime (3-note ascending sine wave)
+  - Mute toggle button in header (🔇/🔔)
+  - NEW ORDER badge (yellow, pulsing border `animate-pulse`) on new cards
+  - Auto-dismiss after 60s per new order (dismissTimersRef setTimeout)
+  - Manual dismiss button on each new card
+  - Optimistic removal from list when marked ready
+
+### Patterns discovered
+- All US-089 features were pre-built alongside US-087/US-088 — same pattern as US-088
+
+### Gotchas
+- TypeScript check: PASS (exit 0)
+- Story was already complete — just needed prd.json updated
+
+## Pre-analysis for US-089 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-089.
+
+**Subject: Technical Brief for US-089: KDS Real-Time Order Updates**
+
+This brief outlines the implementation plan for enhancing the Kitchen Display System (KDS). While the request mentions Frappe/Python, the user story's technical notes point heavily to a **React frontend implementation**. The Python/Frappe backend will primarily serve the order data.
+
+**1. Primary Files to Modify:**
+*   **Frontend (React):** A component file managing the KDS interface, likely named `KdsPage.tsx` or `use-kds-orders.ts` (a custom hook). This is where the core logic will reside.
+*   **Backend (Python):** The file containing the Frappe API endpoint, e.g., `lhdn_payroll_integration/api.py`. A whitelisted method needs to provide the order data.
+
+**2. Frappe DocTypes & Hooks:**
+*   **DocType:** The query will target the `Sales Order` DocType (or a similar custom DocType), filtering by a status field (e.g., `status == 'Preparing'`).
+*   **Hook/API:** A whitelisted Python function (e.g., `get_kds_orders`) will be called by the frontend to fetch the current list of active orders.
+
+**3. Recommended Implementation Approach:**
+*   In the main KDS React component, decrease the `useEffect` polling interval to `15000` ms.
+*   Maintain a `useState` Set of previously seen order IDs. On each fetch, compare the new data to this set to identify new orders.
+*   For new orders, trigger `new Audio('/sounds/new-order.mp3').play()` (respecting a mute toggle) and add a 'NEW' badge or pulsing border via conditional CSS.
+*   Use a `setTimeout` or an `onClick` handler to remove the 'new' status after 60 seconds or on acknowledgment.
+*   Filter out any orders with a 'Ready' status from the rendered list on the client side.
+
+**4. Edge Cases & Gotchas:**
+*   **Audio Autoplay:** Browsers may block the initial notification sound until the user first interacts with the page.
+*   **Polling Performance:** The backend Python method must be efficient and the DocType fields indexed to avoid performance degradation from the 15-second polling interval.
+*   **Asset Management:** A new sound file (`new-order.mp3`) must be added to the `public/sounds/` directory.
+
