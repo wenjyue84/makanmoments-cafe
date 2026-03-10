@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { MenuItemWithRules } from "@/types/menu";
+import { SPECIAL_DISPLAY_CATEGORIES } from "@/lib/constants";
 
 interface Category {
   id: number;
@@ -257,7 +258,7 @@ export function AdminCategoriesPanel({
           </span>
         </div>
         <p className="mb-4 text-xs text-gray-500">
-          Curate items into website-only groups like "Chef&apos;s Picks" or "Vegetarian" — independent of POS.
+          Curate items into website-only groups like &quot;{SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS}&quot; or &quot;{SPECIAL_DISPLAY_CATEGORIES.VEGETARIAN}&quot; — independent of POS.
         </p>
 
         {displayError && (

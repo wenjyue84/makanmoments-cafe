@@ -11695,3 +11695,36 @@ Based on the provided user story's pattern, here is a technical brief for applyi
 
 ### Gotchas
 - TypeScript passes cleanly (`npx tsc --noEmit` with no output = success)
+
+## Iteration N - Story: Move Hardcoded Display Category Names to Constants (US-136)
+
+### What was implemented
+- `SPECIAL_DISPLAY_CATEGORIES` constant added to `src/lib/constants.ts` with keys: CHEFS_PICKS, UNDER_RM15, VEGETARIAN, FAVORITES
+- `menu-grid.tsx` updated to import and use `SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS` in place of hardcoded `"Chef's Picks"` at 2 logic points (lines 78 and 223)
+
+### Patterns discovered
+- The linter/auto-formatter is active and applies changes immediately — after editing constants.ts, menu-grid.tsx already showed the changes applied when re-read
+- `admin-categories-panel.tsx` only has the string in HTML text content (JSX), not in functional logic — no constant needed there
+- `menu-card.tsx` only has "Chef's Pick" as UI display text, not logic — no constant needed
+- `admin-menu-table.tsx:28` has "Vegetarian" in DIETARY_OPTIONS (dietary badge, not display category) — correctly left as-is
+
+### Gotchas
+- TypeScript check: use `npx tsc --noEmit` without `cd` — run from project root
+- `prd.json` must be read with `encoding='utf-8'` on Windows (cp1252 codec fails)
+
+## Iteration 6 - Wed, Mar 11, 2026
+Completed: Move Hardcoded Display Category Names to Constants (ID: US-136)
+
+### What was implemented
+- `SPECIAL_DISPLAY_CATEGORIES` constant already existed in `src/lib/constants.ts` (added by a previous agent run that left passes=false)
+- `src/components/menu/menu-grid.tsx` already imported and used `SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS` at lines 77 and 222
+- Added import of `SPECIAL_DISPLAY_CATEGORIES` to `src/components/admin/admin-categories-panel.tsx`
+- Updated description text in admin-categories-panel.tsx line 261 to use `{SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS}` and `{SPECIAL_DISPLAY_CATEGORIES.VEGETARIAN}` instead of hardcoded strings
+
+### Patterns discovered
+- Previous iterations sometimes partially implement a story (add constants but don't wire them) — always verify what's already done before coding
+- JSX description text can reference constants via `{SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS}` interpolation
+- menu-card.tsx uses "Chef's Pick" (no trailing 's') for badge labels — different from the category name "Chef's Picks", no change needed
+
+### Gotchas
+- prd.json must be read/written with `encoding='utf-8'` on Windows to avoid cp1252 decode error
