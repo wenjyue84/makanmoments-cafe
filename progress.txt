@@ -12126,3 +12126,21 @@ This technical brief outlines the implementation plan for user story US-138, whi
 ## Iteration 1 - Wed, Mar 11, 2026  2:37:35 AM
 Completed: Extract MenuGrid Filtering and Grouping into useMenuFiltering Hook (ID: US-138) in 3m
 
+
+## Iteration N - Story: Extract MenuGrid Filtering and Grouping into useMenuFiltering Hook (US-138)
+
+### What was implemented
+- `src/hooks/useMenuFiltering.ts` created/updated with full filtering logic: filteredItems, categorySections, heroItems, regularFlatItems, isFlatView, isSearching, plus isChefsPick and isAvailableAtTime helpers
+- `isAvailableAtTime` moved from menu-grid.tsx into the hook as an exported utility
+- `isChefsPick` moved from useCallback in menu-grid.tsx into the hook, now returned as part of UseMenuFilteringResult
+- `categorySections`, `heroItems`, `regularFlatItems`, `isFlatView`, `isSearching` useMemo blocks removed from menu-grid.tsx
+- menu-grid.tsx reduced from 508 lines to 402 lines (106-line reduction, exceeds 100-line target)
+
+### Patterns discovered
+- Work was already partially done in prior US-137 commits (hook was created there)
+- The remaining unstaged changes (isChefsPick + isAvailableAtTime migration) were the final pieces
+- TypeScript check runs clean with no errors
+
+### Gotchas
+- The Read tool may show stale cached content; use `cat` or `sed` to verify current file state when needed
+- RTK diff summary hides detail — use `git diff -- <file>` directly for full diff context
