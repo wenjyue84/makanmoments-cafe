@@ -257,12 +257,12 @@ export function HomeInlineEditor({ content, featuredItems }: HomeInlineEditorPro
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
-            No featured items — mark items as featured in Notion to show them here.
+            No featured items — toggle the Featured flag on items in Admin → Menu to show them here.
           </div>
         )}
 
         <p className="mt-4 text-xs text-muted-foreground">
-          Featured items are managed in Notion — mark menu items as featured there to change what appears here.
+          Manage featured items in Admin → Menu → toggle the Featured flag on any item.
         </p>
       </section>
     </div>
