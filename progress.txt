@@ -2113,3 +2113,22 @@ Based on the `technicalNotes` in the JSON, this implementation is for a **Next.j
 *   **Storage:** Strictly use `sessionStorage` as requested to ensure the alert reappears on the next visit (new session). Do not use `localStorage`.
 *   **Async Operations:** The file system check on the backend is synchronous (`existsSync`), which is acceptable for this use case but should be noted. The frontend fetch is asynchronous.
 
+
+## Iteration N - Story: US-030 - Admin Alerts: Missing Photos Banner
+
+### What was implemented
+- Created `src/app/api/admin/menu/missing-photos/route.ts` — GET route, nodejs runtime, checks fs.existsSync for .jpg/.webp/.png in public/images/menu/
+- Added amber alert banner to `AdminMenuTable` (top of Menu tab)
+- useEffect fetches /api/admin/menu/missing-photos on mount (skipped if sessionStorage dismissed key is set)
+- Clicking item name scrolls to `id="menu-row-{code}"` on both mobile cards and desktop table rows, highlights with ring-2 ring-amber-400 for 2 seconds
+- Dismiss button sets sessionStorage key, hides banner
+
+### Patterns discovered
+- Admin API routes use `export const runtime = "nodejs"` for fs access
+- AdminMenuTable state: add useEffect-based fetches for side data (not passed as props)
+- DB query: US-029 DB migration done via scripts/set-featured.mjs — 6 items featured: MT01, MT04, TM03, Thai-styled_green_cu, AP01, DD02
+- DB item code for "Thai-styled green curry rice" is `Thai-styled_green_cu` (truncated POS code)
+
+### Gotchas
+- US-029 was already `passes: true` in prd.json when this session started — DB update was still needed (0 featured items before)
+- `ring-2` on `<tr>` elements: works in Chrome but may need `ring-inset` on table rows in some browsers
