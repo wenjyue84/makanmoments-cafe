@@ -3932,3 +3932,63 @@ This technical brief is for a Next.js/TypeScript implementation, not Frappe/Pyth
 ### Result
 - prd.json: US-048 passes = true
 - TypeScript check: PASS (exit 0)
+## Iteration 2 - Tue, Mar 10, 2026  2:37:27 PM
+Completed: Customer Can View Previous Order History After Sending (ID: US-048) in 6m
+
+
+## Pre-analysis for US-049 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-049.
+
+***
+
+**Project:** Makan Moments Cafe (Next.js / TypeScript)
+**Story:** US-049 - Fix Admin Page Dark Overlay Problem
+
+**Technical Brief for Implementation**
+
+This user story concerns a frontend bug in a **Next.js/TypeScript** application, not a Frappe/Python one. The issue is a persistent dark overlay on the `/admin` page, likely due to a CSS stacking or an un-dismounted modal backdrop.
+
+**1. Primary Files to Investigate:**
+*   `src/app/admin/layout.tsx` or `src/app/admin/page.tsx`: The root component for the admin section where the faulty component is likely rendered.
+*   `src/components/admin/**/*.tsx`: Search this directory for any custom Dialog, Modal, or Drawer components that might be leaving an orphaned overlay.
+*   `src/components/ui/dialog.tsx` or `src/components/ui/modal.tsx`: Check for a generic, reusable modal component. The bug is often in the core implementation (e.g., Radix UI or a custom portal).
+*   `eslint.config.mjs`: Added this file to fix the linting issues in the codebase.
+
+**2. Key Next.js/React Constructs Involved:**
+*   **React Components:** The issue originates from a React component, not a Frappe DocType. The component is likely a `Dialog`, `Modal`, `Sheet`, or a custom wrapper around them.
+*   **React Hooks:** The fix will likely involve `useState` to correctly manage the open/closed state and `useEffect` to ensure proper cleanup (e.g., removing a class from the `<body>` tag on unmount).
+
+**3. Recommended Implementation Approach:**
+1.  Navigate to `http://localhost:3030/admin`.
+2.  Use Chrome DevTools to inspect the DOM and identify the specific element causing the overlay (look for high `z-index` and low `opacity`).
+3.  Use React DevTools to trace that DOM element back to its source React component.
+4.  Analyze the component's state logic. The bug is probably due to a state variable for visibility not being reset on close.
+5.  If the component uses a portal, ensure the portal and its contents are fully unmounted when the component closes.
+6.  Ensure any `useEffect` hooks that manipulate the DOM (e.g., `document.body.classList.add`) have a corresponding cleanup function that reverts the changes.
+
+**4. Edge Cases & Gotchas:**
+*   **React Portals:** The overlay element might be rendered via a portal, appearing at the end of `<body>` in the DOM, separate from the component that creates it.
+*   **State Management:** The bug might not be in the modal component itself but in a parent component or a global state management library (like Zustand/Context) that controls its visibility.
+*   **Third-Party Libraries:** If a UI library like Shadcn/UI, Radix, or Headless UI is used, the issue could be in its composition. Ensure the `open` and `onOpenChange` props are correctly wired.
+*   **CSS Conflicts:** Another global style could be unexpectedly targeting the same element, creating the visual bug.
+
+
+
+## Iteration - Story: US-048 Customer Order History After Sending (verification pass)
+
+### What was implemented
+- Verified implementation already committed in `2d00ffe` by previous Ralph iteration
+- GET /api/orders/[id]/route.ts: public endpoint that queries `tray_orders` by ID, returns `{id, status}`
+- tray-widget.tsx: localStorage save on POST success, collapsible "My Orders" history section, 30s status polling
+- Translations added to messages/en.json, ms.json, zh.json (orderHistory, statusPending, statusApproved, statusReady keys)
+- prd.json: passes=true confirmed
+
+### Patterns discovered
+- `StatusBadge` in tray-widget uses hardcoded text (not `useTranslations`); emoji + label hardcoded
+- History uses `loadHistory()` / `saveHistory()` with `localStorage` key `mm_order_history`, max 5 entries
+- Status polling: setInterval 30_000ms, only polls if any entry has status !== "ready"
+- GET /api/orders/[id] uses `params: Promise<{ id: string }>` (Next.js 15 async params pattern)
+
+### Gotchas
+- When Ralph re-enters a story already committed, `prd.json` shows `passes: true` and git shows clean; verify before re-implementing
+- Windows terminal encoding issue with Chinese chars in Python print — use `encoding='utf-8'` on file open
