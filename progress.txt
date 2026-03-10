@@ -13126,3 +13126,31 @@ FAILED quality gates: Add Reliability Tests to /admin/tests Panel (ID: US-142) �
 - Use `performance.now()` (not `Date.now()`) for high-res timing as specified in story
 - Result message format: `{path}: {ms}ms ✓/✗ (threshold: {threshold}ms)`
 - `/api/admin/menu` and `/api/admin/highlights` require auth — tests will get 401/redirect; bench result shows actual latency regardless of auth outcome
+
+## Iteration N - Story: US-141 - Add Environment Variable Validation on Startup
+
+### What was implemented
+- `src/lib/env.ts` already existed with `server-only`, Zod validation, and clear error messages
+- `src/lib/db.ts` already imports `env.DATABASE_URL` from `./env`
+- `src/lib/auth.ts` already imports `env.ADMIN_JWT_SECRET` from `./env`
+- Fixed TypeScript errors in `admin-tests-panel.tsx` (performance category was in types.ts but not wired into CATEGORY_LABELS/CATEGORY_ORDER/groupedTests)
+
+### Patterns discovered
+- When adding a new TestCategory, wire it into 4 places: types.ts union, test file, index.ts exports, admin-tests-panel.tsx (CATEGORY_LABELS, CATEGORY_ORDER, groupedTests initializer)
+
+### Gotchas
+- Implementation was complete in prior session; prd.json just needed updating
+- TypeScript errors from partial US-143 work (performance in types.ts) blocked the check
+
+## Iteration N - Story: US-143 - Add Performance Benchmark Tests to /admin/tests Panel
+
+### What was implemented
+- `src/lib/tests/performance.ts` was already created with 3 benchmark tests (menu < 500ms, settings < 200ms, highlights < 300ms)
+- `src/lib/tests/index.ts` already exports `performanceTests` and includes in `ALL_TESTS`
+- `admin-tests-panel.tsx` now wired with `performance: "Performance"` label, `CATEGORY_ORDER`, and `groupedTests` initializer
+
+### Patterns discovered
+- `benchmarkApi` helper uses `performance.now()` for accurate timing, gracefully handles non-200 and network errors
+
+### Gotchas
+- All test files were already created in prior sessions; only the panel wiring was missing
