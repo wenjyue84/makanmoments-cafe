@@ -7121,3 +7121,90 @@ This user story describes a frontend task for a Next.js/React application, not a
 ## Iteration 25 - Tue, Mar 10, 2026  6:13:21 PM
 Completed: Menu Page: Progressive Item Reveal and Reduced Visual Noise (ID: US-077) in 6m
 
+## Iteration 48 - Tue, Mar 10, 2026  6:14:02 PM
+Completed: Menu Page: Progressive Item Reveal and Reduced Visual Noise (ID: US-077) in 5m
+
+
+## Pre-analysis for US-078 (Gemini 2.5 Pro)
+This user story is for a **Next.js/React** application, not a Frappe/Python one. The following brief is tailored to the provided JSON and the project's frontend stack.
+
+---
+
+### **Technical Brief: US-078 - Micro-Interactions & Polish**
+
+This brief outlines the implementation for adding site-wide micro-interactions and animations. The focus is on using CSS transitions and animations for performance, with `framer-motion` as an alternative if available.
+
+**1. Python Files to Modify (File Candidates):**
+This is a frontend task. The relevant files are `.tsx` and `.css`, not Python.
+-   **`src/app/globals.css`**: For global button styles and the `prefers-reduced-motion` media query.
+-   **`src/components/menu/menu-card.tsx`**: To implement the image skeleton loader.
+-   **`src/components/tray/tray-button.tsx`**: For the tray icon bounce animation.
+-   **`src/components/ui/button.tsx`**: The likely location to apply the `active:scale-95` press feedback.
+-   **`src/components/menu/category-filters.tsx`**: To add the active underline animation to filter chips.
+-   **`src/app/layout.tsx`**: To implement smooth page transitions, likely wrapping the page content.
+
+**2. Frappe DocTypes or Hooks (Involved Components/State):**
+-   **Components**: `Button`, `MenuCard`, `TrayButton`, `CategoryFilters`.
+-   **State/Hooks**: The tray bounce animation will depend on watching for changes in the global tray/cart state (e.g., via Zustand or React Context). Page transitions will require `usePathname`.
+
+**3. Recommended Implementation Approach:**
+-   **Button Feedback**: Add `active:scale-95 transition-transform duration-100` classes to the base button component.
+-   **Image Skeleton**: In `menu-card.tsx`, wrap the `next/image` component in a `div`. Give the `div` a matching aspect ratio and the classes `bg-gray-200 animate-pulse`. Use the image's `onLoad` callback to hide the skeleton.
+-   **Tray Bounce**: In `tray-button.tsx`, use a `useEffect` hook that watches the number of items in the tray. When the count increases, apply a temporary CSS class to the badge that triggers a keyframe bounce animation.
+-   **Page Transitions**: Check `package.json` for `framer-motion`. If present, use `<AnimatePresence>` and `motion.div` in `layout.tsx`. If not, use simple CSS keyframe animations on the root layout.
+-   **Motion Safety**: Implement a global `prefers-reduced-motion` rule in `globals.css` to disable all transitions and animations when requested by the user's OS settings.
+
+**4. Edge Cases & Gotchas:**
+-   **CLS**: The image skeleton placeholders *must* match the final image's aspect ratio to prevent layout shift.
+-   **Animation Re-triggering**: The CSS class for the tray bounce must be removed after the animation completes so it can be re-applied on subsequent additions.
+-   **Fly-to-Tray Animation**: The "item flies toward the tray" animation is the most complex requirement and is underspecified. It may require calculating DOM element positions, which can be brittle. Defer or simplify this if it proves too complex.
+-   **Dependency Check**: Do not implement any `framer-motion` logic without first confirming it is a project dependency in `package.json`.
+
+
+## Pre-analysis for US-078 (Gemini 2.5 Pro)
+Based on the user story JSON, the request appears to be for a **Next.js/React frontend**, not a Frappe/Python backend. Here is the technical brief for implementing `US-078` in the correct (Next.js) context.
+
+### Technical Brief for US-078: Site-Wide Polish
+
+**1. Python Files to Modify:**
+*   None. This is a frontend-focused user story involving React/Next.js (`.tsx`) and CSS, not Python.
+
+**2. Frappe DocTypes / Hooks Involved:**
+*   None. The story pertains to frontend components, not Frappe DocTypes. The implementation will likely touch these component files:
+    *   `src/components/ui/button.tsx` (or global button class)
+    *   `src/components/menu/menu-card.tsx`
+    *   `src/components/tray/tray-button.tsx`
+    *   The component responsible for rendering category filters.
+    *   `globals.css` for site-wide animation rules.
+
+**3. Recommended Implementation Approach:**
+*   **Global Styles:** Add `active:scale-95 transition-transform` to the base button component/class. In `globals.css`, add a `@media (prefers-reduced-motion: reduce)` block to disable all animations and transitions site-wide.
+*   **Image Skeletons:** In `menu-card.tsx`, wrap the `next/image` component in a `div`. Style this `div` with `bg-gray-200 animate-pulse` and a matching aspect ratio to the image to prevent layout shift. Use the image's `onLoad` callback to hide the skeleton.
+*   **Tray Icon Animation:** In `tray-button.tsx`, use a `useEffect` hook that triggers on item count changes. This effect should add a temporary CSS class to the badge element that plays a short keyframe bounce animation (`@keyframes bounce { ... }`).
+*   **Animations:** Before implementing, check `package.json` for `framer-motion`. If present, use `motion.div` for complex animations like the category chip underline. If not, use pure CSS transitions and `::after` pseudo-elements to avoid adding a new dependency.
+
+**4. Edge Cases & Gotchas:**
+*   **Tech Stack Mismatch:** The request mentions Frappe/Python, but the story details are exclusively for a Next.js/React/Tailwind CSS frontend.
+*   **Layout Shift (CLS):** The image skeleton placeholders *must* have the same aspect ratio as the images they are loading to prevent content from jumping.
+*   **Reduced Motion:** All animations must be disabled via the global CSS rule. Test this by enabling the OS-level "reduce motion" setting.
+*   **Animation Re-triggering:** The tray icon bounce animation must be re-triggerable. Ensure the animation class is removed from the element after it completes so it can be re-added on subsequent events.
+
+
+## Iteration 48 - Story: US-078 - Site-Wide Micro-Interactions and Scroll-Triggered Polish
+
+### What was implemented
+- `globals.css`: `badge-bounce` keyframe animation (scale 1→1.35→0.88→1 in 300ms) + global `prefers-reduced-motion` override
+- `tray-widget.tsx`: `badgeBounce` state tracked via `useRef` + `useEffect` — triggers CSS class on item count increase
+- `menu-card.tsx`: `imgLoaded` state with `animate-pulse` on wrapper div, cleared on `onLoad`; `active:scale-90` on decrement button
+- `menu-filter.tsx`: `active:scale-95` added to all 4 filter chip button variants (All, POS categories, Display categories, Favorites)
+
+### Patterns discovered
+- US-077 was already committed by a previous iteration — prd.json correctly showed passes=true for it
+- `badge-bounce` class requires `inline-block` on the span for CSS transform to work
+- `transition-colors` on filter chips must be complemented with `active:scale-95` (they don't conflict)
+- Image skeleton: `animate-pulse` on the wrapper div (not the img itself) works cleanly with Next.js Image
+- Global `prefers-reduced-motion` override must come INSIDE the `@layer base` block at end of globals.css
+
+### Gotchas
+- prd.json file is UTF-8 encoded — python3 `open()` needs `encoding='utf-8'` explicitly on Windows
+- `useRef` for previous value tracking in effects prevents infinite loops when combined with `useEffect`

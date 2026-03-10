@@ -136,9 +136,9 @@ export function MenuFilter({
         <button
           onClick={() => onCategoryChange(null)}
           className={cn(
-            "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+            "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
             selectedCategory === null
-              ? "bg-primary text-primary-foreground"
+              ? "bg-primary text-primary-foreground scale-[1.04]"
               : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
           )}
         >
@@ -153,9 +153,9 @@ export function MenuFilter({
               key={cat}
               onClick={() => onCategoryChange(cat)}
               className={cn(
-                "flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors active:scale-95",
+                "flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95",
                 selectedCategory === cat
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-primary-foreground scale-[1.04]"
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
               )}
             >
