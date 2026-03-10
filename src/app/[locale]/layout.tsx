@@ -8,7 +8,7 @@ import { routing } from "@/i18n/routing";
 import { CAFE } from "@/lib/constants";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
-import { ChatWidget } from "@/components/chat/chat-widget";
+import { ChatWidgetLoader } from "@/components/chat/chat-widget-loader";
 import { TrayWidget } from "@/components/menu/tray-widget";
 import { RestaurantJsonLd } from "@/components/seo/json-ld";
 import { OperatingHoursAlert } from "@/components/menu/operating-hours-alert";
@@ -131,7 +131,7 @@ export default async function LocaleLayout({
               <main className="flex-1">{children}</main>
               <Footer />
             </div>
-            <ErrorBoundary fallback={null}><ChatWidget /></ErrorBoundary>
+            <ErrorBoundary fallback={null}><ChatWidgetLoader /></ErrorBoundary>
             <ErrorBoundary fallback={null}><TrayWidget /></ErrorBoundary>
             <PwaInit />
             <SplashOnboarding />

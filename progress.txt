@@ -9157,3 +9157,76 @@ Incomplete: Menu Page — Collapsible Search: Icon by Default, Expands on Tap (I
 
 ### Gotchas
 - File may have already been modified externally when attempting edits — always re-read before editing
+## Iteration 2 - Tue, Mar 10, 2026  9:22:35 PM
+Incomplete: Menu Page — Collapsible Search: Icon by Default, Expands on Tap (ID: US-107) — attempt 2/3
+
+
+## Pre-analysis for US-107 (Gemini 2.5 Pro)
+### US-107: Technical Brief for Collapsible Menu Search
+
+**Objective:** Transform the static "Search dishes" input on the menu page into a collapsible element, triggered by a floating search icon to create a cleaner, mobile-first interface.
+
+**1. Target Files for Modification:**
+*   **Primary Component:** `src/components/menu/menu-filter.tsx` is the most likely candidate containing the existing search bar logic.
+*   **Parent Page:** `src/app/[locale]/menu/page.tsx` may require adjustments to layout or props if the search component is tightly integrated.
+*   **Potentially:** A new component like `src/components/menu/menu-search-toggle.tsx` could be created to encapsulate the toggle and search bar logic.
+
+**2. Implementation Approach (React/Tailwind):**
+*   **State Management:** Introduce a `const [isOpen, setIsOpen] = useState(false);` within the `MenuFilter` component.
+*   **Conditional Rendering:**
+    *   If `!isOpen`, render only a `<Button>` component styled as a circular icon (using Lucide's `<Search />` icon). Position it fixed/absolute in the bottom-right corner.
+    *   If `isOpen`, render the full search `<Input />` component. The trigger icon should change to an `<X />`.
+*   **Auto-Focus:** Use a `ref` on the `<Input />` and a `useEffect` hook to call `ref.current?.focus()` whenever `isOpen` changes to `true`.
+*   **Dismissal Logic:**
+    *   The `<X />` icon's `onClick` handler should set `isOpen` to `false`.
+    *   Implement a `useEffect` hook to add a global `keydown` event listener that listens for the 'Escape' key and sets `isOpen` to `false`. Remember to clean up the listener on component unmount.
+*   **Animation:** Use Tailwind CSS classes (`transition-all`, `opacity-0`/`opacity-100`, `scale-95`/`scale-100`) for a smooth fade/scale animation on the search bar.
+
+**3. Gotchas & Edge Cases:**
+*   **Mobile Viewport:** On mobile (e.g., 390px), the expanded search bar should likely take up full-width for better usability.
+*   **Z-Index & Layout Shift:** Ensure the floating icon and expanded bar have a high enough `z-index` to appear above other content but do not overlap or conflict with the "View Order" tray button.
+*   **Accessibility:** The icon button must have an `aria-label="Search dishes"` for screen readers.
+
+
+## Pre-analysis for US-107 (Gemini 2.5 Pro)
+### US-107 Technical Brief: Collapsible Menu Search
+
+This is a **React/Next.js** task, not a Frappe/Python one. All changes will be in the frontend codebase.
+
+**1. Files to Modify:**
+*   `src/components/menu/MenuFilter.tsx`: Primary component to add state and conditional rendering logic.
+*   `src/app/(main)/[locale]/menu/page.tsx`: May require layout adjustments to position the search icon/bar correctly, likely near the bottom bar.
+*   Possibly a new component like `src/components/menu/SearchToggle.tsx` to encapsulate the icon and floating behavior.
+
+**2. Frappe DocTypes / Hooks:**
+*   None. This story involves client-side React components and state.
+
+**3. Implementation Approach:**
+*   In `MenuFilter.tsx`, introduce a `useState` hook: `const [isSearchOpen, setIsSearchOpen] = useState(false);`.
+*   Use this state to conditionally render the UI:
+    *   If `false`, render a circular `Button` with a Lucide `Search` icon, positioned at the bottom-right.
+    *   If `true`, render the full search input bar with an 'X' icon to close.
+*   Use a `useRef` on the `<input>` and a `useEffect` to call `ref.current.focus()` when `isSearchOpen` becomes true.
+*   Add another `useEffect` to attach a `keydown` event listener to the `document` to listen for the 'Escape' key, which sets `isSearchOpen` to `false`.
+
+**4. Edge Cases & Gotchas:**
+*   **Positioning**: Use `position: fixed` or `absolute` for the icon. Ensure its `z-index` is high enough to float above content but potentially below modals or the main navigation tray.
+*   **Mobile Touch Target**: The icon button must have a minimum size of `44x44px` to meet mobile accessibility standards.
+*   **Animation**: Use Tailwind's `transition-*` and `scale`/`opacity` classes for a smooth fade/scale animation, avoiding layout shift.
+*   **Accessibility**: The toggle button should have an appropriate `aria-label` like "Open Search".
+
+
+## Iteration — Story: US-095 Chat Widget: Defer Entire Widget Until First User Interaction
+
+### What was implemented
+- Created `src/components/chat/chat-widget-loader.tsx`: client component that listens for first 'scroll' or 'click' window event (using { once: true }), sets `mounted=true`, then renders a next/dynamic ChatWidget with ssr: false
+- Updated `src/app/[locale]/layout.tsx`: replaced direct `ChatWidget` import + render with `ChatWidgetLoader`
+- ErrorBoundary wrapper preserved around the loader
+
+### Patterns discovered
+- `once: true` option on addEventListener auto-removes the listener after first trigger — no manual removeEventListener needed on trigger, but cleanup still runs on unmount via useEffect return
+- ChatPanel inside chat-widget.tsx was already lazy (next/dynamic) — this adds outer deferral layer so entire chat-widget.tsx bundle is deferred too
+- scroll listener uses `{ passive: true }` to avoid blocking scroll performance
+
+### Gotchas
+- TypeScript check passes clean (no errors in changed files)
