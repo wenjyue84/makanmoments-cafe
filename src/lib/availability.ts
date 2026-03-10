@@ -89,3 +89,17 @@ export function isItemAvailableNow(item: MenuItem): boolean {
 export function filterByAvailability(items: MenuItem[]): MenuItem[] {
   return items.filter(isItemAvailableNow);
 }
+
+/**
+ * Checks if an item would be available at the given hour/minute (preview only).
+ * Only checks time-based rules (timeFrom/timeUntil); ignores day/date constraints.
+ */
+export function isItemAvailableAtPreviewTime(item: MenuItem, hour: number, minute: number): boolean {
+  if (!item.available) return false;
+  const { timeFrom, timeUntil } = item;
+  if (!timeFrom || !timeUntil) return true;
+  const [fh, fm] = timeFrom.split(":").map(Number);
+  const [uh, um] = timeUntil.split(":").map(Number);
+  const mins = hour * 60 + minute;
+  return mins >= fh * 60 + fm && mins < uh * 60 + um;
+}

@@ -19,6 +19,18 @@ interface MenuGridProps {
   highlightedByCategory?: Record<string, string>;
   initialCategory?: string | null;
   servingNowCategories?: string[];
+  previewTime?: string | null;
+}
+
+/** Returns false if an item has a time restriction and the given hour/minute is outside it. */
+function isAvailableAtTime(item: MenuItem, hour: number, minute: number): boolean {
+  if (!item.available) return false;
+  const { timeFrom, timeUntil } = item;
+  if (!timeFrom || !timeUntil) return true;
+  const [fh, fm] = timeFrom.split(":").map(Number);
+  const [uh, um] = timeUntil.split(":").map(Number);
+  const mins = hour * 60 + minute;
+  return mins >= fh * 60 + fm && mins < uh * 60 + um;
 }
 
 export function MenuGrid({
@@ -29,7 +41,12 @@ export function MenuGrid({
   highlightedByCategory: initialHighlights = {},
   initialCategory = null,
   servingNowCategories = [],
+  previewTime = null,
 }: MenuGridProps) {
+  // Parse preview time once
+  const previewHour = previewTime ? parseInt(previewTime.split(":")[0], 10) : null;
+  const previewMinute = previewTime ? parseInt(previewTime.split(":")[1], 10) : null;
+  const hasPreviewTime = previewHour !== null && previewMinute !== null && !isNaN(previewHour) && !isNaN(previewMinute);
   const t = useTranslations("common");
   // Validate initialCategory — fall back to null if the category doesn't exist in known lists
   const [category, setCategory] = useState<string | null>(() => {
@@ -137,12 +154,17 @@ export function MenuGrid({
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((item) => {
             const isHighlighted = item.categories.some((cat) => highlights[cat] === item.id);
+            const isUnavailableAtPreview =
+              isAdmin && hasPreviewTime
+                ? !isAvailableAtTime(item, previewHour!, previewMinute!)
+                : false;
             return isAdmin ? (
               <EditableMenuCard
                 key={item.id}
                 item={item}
                 isHighlighted={isHighlighted}
                 onSetHighlight={() => handleSetHighlight(item.id, item.categories)}
+                isUnavailableAtPreview={isUnavailableAtPreview}
               />
             ) : (
               <MenuCard key={item.id} item={item} isHighlighted={isHighlighted} />

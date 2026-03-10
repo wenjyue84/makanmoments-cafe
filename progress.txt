@@ -5180,3 +5180,33 @@ Completed: Pre-Order: End-to-End Flow Tests + Edge Cases (ID: US-056) in 11m
 ### Result
 - prd.json: US-057 passes = true
 - TypeScript check: PASS (exit 0)
+
+## Pre-analysis for US-058 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** application, not a Frappe/Python one. The technical brief below is based on the technologies and file paths mentioned in the JSON.
+
+---
+
+**TO:** Claude Code Agent
+**RE:** Technical Brief for US-058: Admin Time-Based Menu Preview
+
+**1. Primary Files to Modify:**
+*   `src/app/[locale]/menu/page.tsx`: The main server component. Logic to read query params and determine the "effective" time for an admin will go here.
+*   `src/components/admin/AdminEditBanner.tsx`: A client component (`'use client'`) where the interactive time input will be added.
+*   `src/components/menu/MenuItemComponent.tsx` (or similar): To apply visual styles (e.g., `opacity-50`) for unavailable items.
+*   `src/lib/time-slots.ts`: To ensure existing time logic can accept a simulated time parameter.
+
+**2. Key Next.js/React Concepts Involved:**
+*   **Server Component (`page.tsx`):** To handle admin checks and read URL `searchParams` on the server.
+*   **Client Component (`AdminEditBanner.tsx`):** To manage the interactive `<input type='time'>` and use the `useRouter` hook for client-side navigation.
+*   **URL State Management:** The `previewTime` query parameter will be the source of truth for the simulated time.
+
+**3. Recommended Implementation Approach:**
+1.  In `menu/page.tsx`, check for `isAdmin`. If true, read the `previewTime` URL search parameter.
+2.  Use `previewTime` if present; otherwise, use the current server time to determine the `defaultCategory` and item availability.
+3.  In `AdminEditBanner.tsx`, add an `<input type="time">`. On change, use `next/navigation`'s `useRouter` to update the `previewTime` query param in the URL without a full reload.
+4.  Pass the effective time down to each menu item, which will then conditionally apply a "disabled/unavailable" style.
+
+**4. Edge Cases & Gotchas:**
+*   **Timezone Consistency:** Ensure the server's current time and the client-provided `previewTime` are both consistently handled in the target timezone (e.g., `Asia/Kuala_Lumpur`).
+*   **Hydration:** The time input's initial value on the client must be correctly synchronized with the `previewTime` from the URL to avoid a mismatch on page load.
+

@@ -6,9 +6,10 @@ import { getHighlightsFromDB, computeEffectiveHighlights } from "@/lib/highlight
 import { MenuGrid } from "@/components/menu/menu-grid";
 import { MenuPageJsonLd } from "@/components/seo/json-ld";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
-import { getDefaultCategoryForTime, getServingNowCategories } from "@/lib/time-slots";
+import { getDefaultCategoryForTime, getServingNowCategories, getMalaysiaTimeString } from "@/lib/time-slots";
 import { getOperatingStatus } from "@/lib/availability";
 import { OperatingHoursAlert } from "@/components/menu/operating-hours-alert";
+import { AdminPreviewBanner } from "@/components/menu/admin-preview-banner";
 
 export const revalidate = 300;
 
@@ -25,10 +26,18 @@ export async function generateMetadata({
   };
 }
 
-export default async function MenuPage() {
+export default async function MenuPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ previewTime?: string }>;
+}) {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const isAdmin = token ? await verifyAdminToken(token) : false;
+
+  const resolvedParams = await searchParams;
+  // previewTime is admin-only; strip it for customers
+  const previewTime = isAdmin ? (resolvedParams.previewTime ?? null) : null;
 
   const [items, categories, displayCats, persistedHighlights] = await Promise.all([
     getMenuItems(),
@@ -42,16 +51,19 @@ export default async function MenuPage() {
     .filter((dc) => dc.active)
     .map((dc) => dc.name);
 
-  const initialCategory = getDefaultCategoryForTime();
-  const servingNowCategories = getServingNowCategories();
+  const initialCategory = getDefaultCategoryForTime(previewTime);
+  const servingNowCategories = getServingNowCategories(previewTime);
   const operatingStatus = isAdmin ? "open" : getOperatingStatus();
+  const currentTime = getMalaysiaTimeString();
 
   return (
     <>
       <MenuPageJsonLd />
       <OperatingHoursAlert status={operatingStatus} />
       <div className="mx-auto max-w-6xl px-4 py-12 pb-40 md:pb-12">
-        {isAdmin && <AdminEditBanner />}
+        {isAdmin && (
+          <AdminPreviewBanner currentTime={currentTime} previewTime={previewTime} />
+        )}
         <MenuPageHeader />
         <MenuGrid
           items={items}
@@ -61,20 +73,10 @@ export default async function MenuPage() {
           highlightedByCategory={highlightedByCategory}
           initialCategory={initialCategory}
           servingNowCategories={servingNowCategories}
+          previewTime={previewTime}
         />
       </div>
     </>
-  );
-}
-
-function AdminEditBanner() {
-  return (
-    <div className="mb-6 flex items-center gap-2 rounded-lg border border-amber-400/50 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300">
-      <span className="text-base">✎</span>
-      <span>
-        <strong>Edit mode</strong> — hover any item to edit its image, description, or price. Changes save instantly to the database.
-      </span>
-    </div>
   );
 }
 

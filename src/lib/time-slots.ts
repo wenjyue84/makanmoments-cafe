@@ -85,12 +85,20 @@ function getMalaysiaTime(): { hour: number; minute: number } {
   return { hour, minute };
 }
 
-/** Returns the active time slot for the current Malaysia time, or null if outside all slots. */
-export function getActiveSlot(): TimeSlot | null {
-  const config = readTimeSlots();
-  const { hour, minute } = getMalaysiaTime();
-  const now = toMinutes(hour, minute);
+/** Returns the current Malaysia time formatted for display, e.g. "11:45 AM". */
+export function getMalaysiaTimeString(): string {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone: "Asia/Kuala_Lumpur",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  }).format(new Date());
+}
 
+/** Returns the active slot for a given hour/minute, or null if outside all slots. */
+function getActiveSlotForTime(hour: number, minute: number): TimeSlot | null {
+  const config = readTimeSlots();
+  const now = toMinutes(hour, minute);
   for (const slot of config.slots) {
     const start = toMinutes(slot.startHour, slot.startMinute);
     const end = toMinutes(slot.endHour, slot.endMinute);
@@ -99,13 +107,38 @@ export function getActiveSlot(): TimeSlot | null {
   return null;
 }
 
-/** Returns the default category for the current Malaysia time, or null if outside all slots. */
-export function getDefaultCategoryForTime(): string | null {
+/** Returns the active time slot for the current Malaysia time, or null if outside all slots. */
+export function getActiveSlot(): TimeSlot | null {
+  const { hour, minute } = getMalaysiaTime();
+  return getActiveSlotForTime(hour, minute);
+}
+
+/**
+ * Returns the default category for the given time (HH:MM), or current Malaysia time if omitted.
+ * @param overrideTime - Optional "HH:MM" string, e.g. "08:00" for admin preview.
+ */
+export function getDefaultCategoryForTime(overrideTime?: string | null): string | null {
+  if (overrideTime) {
+    const [h, m] = overrideTime.split(":").map(Number);
+    if (!isNaN(h) && !isNaN(m)) {
+      return getActiveSlotForTime(h, m)?.defaultCategory ?? null;
+    }
+  }
   return getActiveSlot()?.defaultCategory ?? null;
 }
 
-/** Returns the set of all "serving now" default categories (all currently active slots). */
-export function getServingNowCategories(): string[] {
+/**
+ * Returns the set of "serving now" default categories.
+ * @param overrideTime - Optional "HH:MM" string for admin preview.
+ */
+export function getServingNowCategories(overrideTime?: string | null): string[] {
+  if (overrideTime) {
+    const [h, m] = overrideTime.split(":").map(Number);
+    if (!isNaN(h) && !isNaN(m)) {
+      const slot = getActiveSlotForTime(h, m);
+      return slot ? [slot.defaultCategory] : [];
+    }
+  }
   const slot = getActiveSlot();
   return slot ? [slot.defaultCategory] : [];
 }
