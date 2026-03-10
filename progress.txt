@@ -4546,3 +4546,40 @@ This technical brief is based on the provided user story JSON (US-052). Note tha
 ## Iteration 33 - Tue, Mar 10, 2026  3:28:11 PM
 Completed: Pre-Order: Customer Order Status Tracking Page (ID: US-052) in 7m
 
+## Iteration 7 - Tue, Mar 10, 2026  3:28:52 PM
+Completed: Pre-Order: Customer Order Status Tracking Page (ID: US-052) in 4m
+
+
+## Pre-analysis for US-053 (Gemini 2.5 Pro)
+Here is the technical brief for implementing US-053 in a Frappe/Python environment.
+
+***
+
+**To:** Claude Code Agent
+**From:** Gemini
+**Subject:** Technical Brief for US-053: Pre-Order Admin Management
+
+This brief outlines the Frappe/Python implementation plan for the Pre-Order Admin feature.
+
+**1. Python Files to Modify:**
+*   `lhdn_payroll_integration/lhdn_payroll_integration/doctype/pre_order/pre_order.py`: Create this file. It will house the server-side controller logic, including whitelisted `approve` and `reject` methods.
+*   `lhdn_payroll_integration/lhdn_payroll_integration/doctype/pre_order/pre_order.js`: Create this file. It will contain client-side script to add the "Approve" / "Reject" buttons to the form and handle dialogs for inputting ready time or rejection reasons.
+*   `lhdn_payroll_integration/hooks.py`: To register the `on_update` document hook for the new DocType.
+
+**2. Frappe DocTypes & Hooks:**
+*   **New DocType: `Pre-Order`**: This is the central object. It should have a `Workflow` with states: `Pending Approval`, `Approved`, `Rejected`. Key fields: `status`, `customer_contact`, `total`, `estimated_ready_time`, `rejection_reason`, and a child table for items.
+*   **New Child DocType: `Order Item`**: For the items table within the `Pre-Order` DocType.
+*   **Document Hook**: Use `on_update` for the `Pre-Order` DocType. This will trigger a function to push status updates to the customer's tracking page (simulating the external notification requirement).
+
+**3. Implementation Approach:**
+1.  Define the `Pre-Order` DocType with the necessary fields and a `Table` field linked to `Order Item`.
+2.  In `pre_order.js`, use `frm.add_custom_button` to show "Approve" and "Reject" buttons when `frm.doc.status == 'Pending Approval'`.
+3.  The "Approve" button should trigger `frappe.dialog` to get the `estimated_ready_time` before calling the backend.
+4.  Create whitelisted `@frappe.whitelist()` methods `approve_order` and `reject_order` in `pre_order.py`. These methods will update the document's `status` and other relevant fields, then call `doc.save()`.
+5.  In `hooks.py`, define the `on_update` hook to call a method that sends the new status to an external endpoint.
+
+**4. Gotchas & Edge Cases:**
+*   **Permissions**: Restrict the `Pre-Order` DocType to Admin/Manager roles using Role Permissions.
+*   **State Integrity**: Use the Frappe Workflow to manage state transitions. Ensure buttons are hidden/disabled after an action is taken to prevent re-approving a rejected order.
+*   **API Failure**: The `on_update` hook function must have robust error handling in case the external notification API fails. Log failures for later inspection.
+
