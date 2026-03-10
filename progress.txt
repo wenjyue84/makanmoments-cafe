@@ -919,3 +919,36 @@ Completed: Mobile Header: Language Selector Beside Hamburger, Replace Dark/Light
 ### Gotchas
 - TypeScript check passes cleanly (0 errors)
 - `text-base leading-none` on mobile flag emoji for consistent rendering at small sizes
+
+## Pre-analysis for US-014 (Gemini 2.5 Pro)
+Here is the technical brief for implementing US-014 in a Frappe/Python environment.
+
+---
+
+### **Technical Brief: US-014 - Language Selector Icons**
+
+This brief translates the user story's goal into a Frappe/Python context. The original technical notes refer to a React (`.tsx`) frontend, which is not applicable here.
+
+**1. Files to Modify:**
+*   `lhdn_payroll_integration/hooks.py`: To inject custom JavaScript and CSS into the web view.
+*   `lhdn_payroll_integration/public/js/language_switcher.js` (New File): To handle the DOM manipulation for adding icons.
+*   `lhdn_payroll_integration/public/css/language_switcher.css` (New File): For custom styling of the icons and active language state.
+
+**2. Frappe Hooks & DocTypes:**
+*   **Hooks:**
+    *   `app_include_js`: Add `language_switcher.js` to this hook.
+    *   `app_include_css`: Add `language_switcher.css` to this hook.
+*   **DocTypes:** No DocType modifications are required. This is a UI enhancement.
+
+**3. Recommended Implementation Approach:**
+*   In `hooks.py`, register the new JS and CSS files.
+*   In `language_switcher.js`, use jQuery (available in Frappe's Desk) to target the standard language selector dropdown menu after the document is ready.
+*   Iterate through each language link (`<li>` or `<a>`) inside the menu. Read the `data-lang` attribute (e.g., 'en', 'ms', 'zh-TW').
+*   Based on the language code, prepend the corresponding flag emoji (e.g., '🇬🇧', '🇲🇾', '🇨🇳') to the link text.
+*   In `language_switcher.css`, add styles to ensure proper alignment and create a visual indicator for the active language (e.g., targeting `[data-lang="${frappe.boot.lang}"]`).
+
+**4. Gotchas & Edge Cases:**
+*   **Selector Stability:** Frappe's navbar selectors can change. The JS should target a stable attribute like `[data-lang]`.
+*   **Mobile vs. Desktop:** Verify the solution works on both mobile and desktop views, as the navbar structure may differ. The jQuery selector must be robust enough for both.
+*   **Accessibility:** Ensure the text label (EN/MY/ZH) is retained alongside the icon to maintain accessibility and clarity.
+
