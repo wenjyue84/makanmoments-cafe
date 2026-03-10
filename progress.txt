@@ -11888,3 +11888,30 @@ Here is the correct technical brief based on the **actual content** of the story
 
 ### Gotchas
 - Build was already structurally correct; acceptance criteria gap was purely the module-level constant requirement
+
+## Iteration - Story: US-137 Memoize Fuse.js Instance in MenuGrid
+
+### What was implemented
+- No changes needed — all acceptance criteria were already met in the existing code
+- Line 110: `const fuse = useMemo(() => new Fuse(items, fuseOptions), [items]);`
+- Lines 22-27: `fuseOptions` defined at module-level constant outside component
+
+### Patterns discovered
+- Stories may already be complete from prior work; always read the file before implementing
+
+### Gotchas
+- None — TypeScript check passes clean
+
+## Iteration N - Story: Memoize Fuse.js Instance in MenuGrid (US-137)
+
+### What was implemented
+- No code changes needed — already fully implemented in a prior iteration
+- `fuseOptions` defined at module level (lines 22-27 in menu-grid.tsx)
+- `fuse` wrapped in `useMemo(() => new Fuse(items, fuseOptions), [items])` at line 110
+- TypeScript check passes with 0 errors
+
+### Patterns discovered
+- US-137 was already complete prior to this iteration — likely implemented as part of US-138 refactoring work
+
+### Gotchas
+- Always verify current file state before coding; stories may already be implemented
