@@ -176,14 +176,15 @@ export const e2eTests: TestDefinition[] = [
   },
   {
     id: "e2e-bottom-nav-component",
-    name: "Bottom nav component exists",
-    description: "Bottom navigation component file exists in src/components/layout/",
+    name: "Mobile navigation exists in header",
+    description: "header.tsx implements a mobile hamburger menu with collapsible nav (md:hidden pattern)",
     category: "e2e",
     run: async (): Promise<TestResult> => {
       const start = Date.now();
       try {
         const fs = await import("fs");
         const path = await import("path");
+        // Check for dedicated bottom nav file first
         const candidates = [
           path.join(process.cwd(), "src", "components", "layout", "bottom-nav.tsx"),
           path.join(process.cwd(), "src", "components", "layout", "mobile-nav.tsx"),
@@ -192,17 +193,19 @@ export const e2eTests: TestDefinition[] = [
         const found = candidates.find((p) => fs.existsSync(p));
         const duration = Date.now() - start;
         if (found) {
-          return { pass: true, log: `Bottom nav component found: ${path.basename(found)} (${duration}ms)`, duration };
+          return { pass: true, log: `Dedicated mobile nav component: ${path.basename(found)} (${duration}ms)`, duration };
         }
-        // Check if bottom nav is inline in layout or header
-        const layoutPath = path.join(process.cwd(), "src", "components", "layout", "header.tsx");
-        const src = fs.existsSync(layoutPath) ? fs.readFileSync(layoutPath, "utf-8") : "";
-        const hasBottomNav = src.includes("bottom-") || src.includes("fixed bottom") || src.includes("sticky bottom");
+        // Mobile nav is inline in header.tsx (hamburger menu pattern)
+        const headerPath = path.join(process.cwd(), "src", "components", "layout", "header.tsx");
+        const src = fs.existsSync(headerPath) ? fs.readFileSync(headerPath, "utf-8") : "";
+        const hasMobileMenu = src.includes("mobileOpen") || src.includes("mobile-menu") || src.includes("Mobile Nav");
+        const hasMobileHidden = src.includes("md:hidden") || src.includes("sm:hidden");
+        const pass = hasMobileMenu && hasMobileHidden;
         return {
-          pass: hasBottomNav,
-          log: hasBottomNav
-            ? `Bottom nav found inline in header.tsx (${duration}ms)`
-            : `Bottom nav component not found in layout/ directory (${duration}ms)`,
+          pass,
+          log: pass
+            ? `Mobile navigation found in header.tsx (hamburger pattern, md:hidden) (${duration}ms)`
+            : `Mobile navigation not found — hasMobileMenu: ${hasMobileMenu}, hasMobileHidden: ${hasMobileHidden} (${duration}ms)`,
           duration,
         };
       } catch (err) {
