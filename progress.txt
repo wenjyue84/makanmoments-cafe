@@ -8817,3 +8817,20 @@ This is a technical brief for a TypeScript/Next.js project, based on the `techni
 ### Gotchas
 - `menuCache` stores the combined two-section text string, so both sections are cached together and invalidated together
 - `invalidateSystemPromptCache()` already clears menuCache, so no extra changes needed for cache coherence
+
+## Iteration — Story: US-092 AI Waiter: Distinguish 'Not on Menu' vs 'Not Available Today' in Responses
+
+### What was implemented
+- Updated `src/lib/chat/system-prompt.ts` Important Rules section with explicit 3-way distinction:
+  1. Item in CURRENTLY AVAILABLE ITEMS → answer normally with price
+  2. Item in ITEMS NOT AVAILABLE TODAY → say not available today, suggest alternative, NEVER say "we don't have it"
+  3. Item not in either section (e.g. pizza) → say cafe doesn't serve that, suggest alternatives
+- The two-section menu format (available/unavailable) was already present from US-090
+- Added rule: "NEVER say the cafe does not have it or does not serve it" for unavailable items
+
+### Patterns discovered
+- File may be modified between first read and edit attempt (linter hook) — always re-read before editing
+- The DB query already fetched ALL items (available + unavailable) from US-090 — no DB changes needed
+
+### Gotchas
+- US-090 already split menu into two sections; US-092 was purely an instruction/rule update in the system prompt
