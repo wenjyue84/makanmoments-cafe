@@ -20,6 +20,16 @@ interface AdminRulesAiHelperProps {
   onApply: (suggestion: SuggestedRule) => void;
 }
 
+const TEMPLATE_PROMPTS = [
+  { label: "Hide after 3PM", prompt: "Hide all rice dishes after 3:00 PM every day" },
+  { label: "Breakfast hours", prompt: "Make all breakfast items available only between 7:00 AM and 11:00 AM" },
+  { label: "Weekday lunch", prompt: "Show lunch set items only on weekdays from 11:00 AM to 2:30 PM" },
+  { label: "Weekend specials", prompt: "Enable Chef's Picks items only on Saturday and Sunday" },
+  { label: "Monday closed", prompt: "Disable all menu items every Monday (cafe is closed)" },
+  { label: "Drink promo", prompt: "Apply a discount label to all drinks on Friday evenings after 5:00 PM" },
+  { label: "Dinner only", prompt: "Show dinner set items only after 6:00 PM daily" },
+];
+
 export function AdminRulesAiHelper({ categories, onApply }: AdminRulesAiHelperProps) {
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
@@ -82,6 +92,23 @@ export function AdminRulesAiHelper({ categories, onApply }: AdminRulesAiHelperPr
           <p className="text-xs text-orange-600">
             Describe the rule in plain language and let AI pre-fill the form for you.
           </p>
+
+          {/* Template chips */}
+          <div>
+            <p className="text-xs text-muted-foreground mb-2">Try a template:</p>
+            <div className="flex flex-wrap gap-2">
+              {TEMPLATE_PROMPTS.map((t) => (
+                <button
+                  key={t.label}
+                  type="button"
+                  onClick={() => setDescription(t.prompt)}
+                  className="text-xs px-2 py-1 rounded-full bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100 transition-colors"
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
 
           {/* Input */}
           <div className="flex gap-2">
