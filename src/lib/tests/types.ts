@@ -4,7 +4,7 @@ export interface TestResult {
   duration: number;
 }
 
-export type TestCategory = "smoke" | "unit" | "integration" | "e2e" | "new-features" | "pre-order" | "reliability";
+export type TestCategory = "smoke" | "unit" | "integration" | "e2e" | "new-features" | "pre-order" | "reliability" | "performance";
 
 export interface TestDefinition {
   id: string;
