@@ -7723,3 +7723,20 @@ Here is the technical brief for a Next.js implementation:
 ### Gotchas
 - `/admin/[[...tab]]/page.tsx` (optional catch-all) conflicts with `/admin/page.tsx` for the bare `/admin` path — use required `[tab]` + redirect from root
 - `params` in Next.js App Router is a `Promise` in newer versions — must `await params` to destructure
+
+## Iteration N - Story: US-083 Admin: Deep-Linkable Sub-URLs for Each Tab
+
+### What was implemented
+- Already fully implemented: `src/app/admin/[tab]/page.tsx` dynamic route handles all tab slugs
+- `src/app/admin/page.tsx` redirects to `/admin/menu`
+- `src/components/admin/admin-tabs.tsx` uses `usePathname()` to derive active tab from URL and `router.push()` to update URL on click
+- All VALID_TABS: orders, menu, categories, rules, blog, tests, settings
+
+### Patterns discovered
+- Admin routing uses a single `[tab]` dynamic segment (not catch-all `[[...tab]]`)
+- Navigation buttons use `router.push()` instead of `<Link>` — both approaches work
+- Active tab derived via `pathname.split("/").pop()` — no prop needed
+
+### Gotchas
+- Implementation was already complete in the codebase — just needed verification and marking passes: true
+- TypeScript check passed with 0 errors
