@@ -4828,3 +4828,38 @@ This technical brief is based on translating the provided Next.js/TypeScript use
 ### Result
 - prd.json: US-054 passes = true
 - TypeScript check: PASS (exit 0)
+## Iteration 32 - Tue, Mar 10, 2026  3:49:58 PM
+Completed: Pre-Order: Admin Orders Tab with Approve / Reject Actions (ID: US-053) in 15m
+
+
+## Pre-analysis for US-055 (Gemini 2.5 Pro)
+### Technical Brief: US-055 - Admin Order Payment & Preparation Workflow
+
+**Note:** The user story's technical notes specify a Next.js/TypeScript stack, not Frappe/Python. This brief outlines the implementation for the described Next.js application.
+
+1.  **Primary API Endpoint to Modify:**
+    *   `src/app/api/admin/orders/[id]/route.ts`: Extend the `PATCH` handler to process new `action` payloads.
+        *   `action: 'confirm_payment'`: Change order status from `payment_uploaded` to `preparing`.
+        *   `action: 'reject_payment'`: Revert status to `payment_pending`.
+        *   `action: 'mark_ready'`: Change status from `preparing` to `ready`.
+
+2.  **Admin UI Components (Client-Side):**
+    *   `src/components/admin/OrdersList.tsx` (or similar):
+        *   Render a "View Payment" button for orders with `status === 'payment_uploaded'`.
+        *   Add a "Mark Ready" button for orders with `status === 'preparing'`.
+    *   Create `src/components/admin/PaymentReviewModal.tsx`:
+        *   Displays the `order.payment_screenshot_url` image.
+        *   Contains "Confirm Payment" and "Reject Payment" buttons that call the API.
+
+3.  **Customer UI Component (Client-Side):**
+    *   `src/app/track/[orderId]/page.tsx`:
+        *   Add conditional rendering to show "Kitchen is preparing your order!" when `status === 'preparing'`.
+        *   Implement a countdown timer component using the `estimated_ready` timestamp.
+        *   Show "Your order is ready!" when `status === 'ready'`.
+
+4.  **Implementation Approach & Gotchas:**
+    *   Use a state management hook (like SWR or React Query) in the admin UI to automatically re-fetch order data after confirming or rejecting a payment.
+    *   The customer-facing countdown should handle time zone differences and gracefully display "00:00" or a "Ready" message once the timer expires.
+    *   Ensure robust error handling on both client-side fetches and within the API route.
+    *   The API route *must* validate that the authenticated user is an admin before processing any state changes.
+

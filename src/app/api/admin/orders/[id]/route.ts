@@ -19,7 +19,7 @@ export async function PATCH(
     const body = await request.json();
     const { status, action, estimatedReady, rejectionReason } = body as {
       status?: string;
-      action?: "approve" | "reject";
+      action?: "approve" | "reject" | "confirm_payment" | "reject_payment" | "mark_ready";
       estimatedReady?: string;
       rejectionReason?: string;
     };
@@ -65,8 +65,45 @@ export async function PATCH(
       return NextResponse.json(rows[0]);
     }
 
+    // Confirm payment — advance to 'preparing'
+    if (action === "confirm_payment") {
+      const rows = await sql`
+        UPDATE tray_orders
+        SET status = 'preparing'
+        WHERE id = ${orderId}
+        RETURNING id, status
+      `;
+      if (rows.length === 0) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      return NextResponse.json(rows[0]);
+    }
+
+    // Reject payment — return to 'payment_pending'
+    if (action === "reject_payment") {
+      const note = (rejectionReason ?? "").trim() || "Payment not verified";
+      const rows = await sql`
+        UPDATE tray_orders
+        SET status = 'payment_pending', rejection_reason = ${note}
+        WHERE id = ${orderId}
+        RETURNING id, status, rejection_reason
+      `;
+      if (rows.length === 0) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      return NextResponse.json(rows[0]);
+    }
+
+    // Mark order ready
+    if (action === "mark_ready") {
+      const rows = await sql`
+        UPDATE tray_orders
+        SET status = 'ready'
+        WHERE id = ${orderId}
+        RETURNING id, status
+      `;
+      if (rows.length === 0) return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      return NextResponse.json(rows[0]);
+    }
+
     return NextResponse.json(
-      { error: "action must be 'approve' or 'reject', or status must be 'seen'" },
+      { error: "action must be 'approve', 'reject', 'confirm_payment', 'reject_payment', or 'mark_ready'; or status must be 'seen'" },
       { status: 400 }
     );
   } catch (err) {
