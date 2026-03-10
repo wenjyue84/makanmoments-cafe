@@ -5539,3 +5539,64 @@ Here is the technical brief for implementing US-064.
 *   **State Management**: Ensure the observer is created only once and dependencies for `useEffect` are correct to prevent performance issues from re-renders.
 *   **Styling**: The chip bar needs `overflow-x: auto` and custom scrollbar hiding (`scrollbar-hidden`) to work correctly on mobile without wrapping.
 
+## Iteration 37 - Tue, Mar 10, 2026  4:34:04 PM
+Completed: Vegetarian Category: Auto-Computed from Dietary Tag (ID: US-063) in 4m
+
+
+## Iteration N - Story: US-064 - Mobile Menu: Category Quick-Jump Bar and Sticky Section Headers
+
+### What was implemented
+- `src/components/menu/menu-grid.tsx`: Added sticky horizontal chip bar (mobile only, `md:hidden`, `sticky top-16 z-30`) below page header
+- Chip bar uses `IntersectionObserver` with `rootMargin: "-108px 0px -50
+## Pre-analysis for US-064 (Gemini 2.5 Pro)
+### Technical Brief: US-064 - Mobile Menu Enhancements
+
+**Correction:** This is a **frontend-only** user story for the Next.js/React application. The technical notes and acceptance criteria reference React components (`.tsx`), CSS, and browser-specific JavaScript APIs, not Frappe/Python.
+
+**1. Primary Files to Modify:**
+*   `src/components/menu/menu-grid.tsx`: Main file to implement item grouping and rendering category sections.
+*   `src/app/menu/page.tsx`: To orchestrate data fetching and pass it to the grid.
+*   A new component, e.g., `src/components/menu/category-nav.tsx`, should be created for the sticky quick-jump bar.
+
+**2. Involved DocTypes/Hooks:**
+*   **None.** This task does not interact with the Frappe backend. It consumes menu data that should already be available via an existing API endpoint.
+
+**3. Recommended Implementation Approach:**
+*   In `menu-grid.tsx`, group the incoming `items` prop by `category.name`.
+*   Render the new `CategoryNav` component above the grid, passing it the list of unique category names.
+*   Inside `menu-grid.tsx`, map through the grouped items, rendering a separate section for each category with a unique `id` (e.g., `id="category-desserts"`).
+*   Apply `sticky top-0` CSS to the `CategoryNav` and `sticky top-[60px]` to the category section headers to create the layered pinning effect.
+*   Use an `IntersectionObserver` to track which category section is currently visible in the viewport and update an "active category" state.
+*   The `CategoryNav` will use this state to highlight the correct chip. On chip click, use `scrollIntoView()` to navigate.
+
+**4. Edge Cases & Gotchas:**
+*   **Scroll Offset:** The scroll target sections need a `scroll-margin-top` to account for the height of both sticky headers, preventing titles from being hidden underneath.
+*   **Observer Threshold:** The `IntersectionObserver` threshold will need careful tuning to ensure the "active" state feels responsive and accurate as the user scrolls.
+*   **Mobile Viewport:** The category chip bar must be horizontally scrollable (`overflow-x-auto`) and not wrap on small screens (390px).
+
+
+## Iteration N - Story: US-064 - Mobile Menu: Category Quick-Jump Bar and Sticky Section Headers
+
+### What was implemented
+- `src/components/menu/menu-grid.tsx`: Added sticky horizontal chip bar (mobile only, `md:hidden`, `sticky top-16 z-30`)
+- Chip bar uses IntersectionObserver with rootMargin "-108px 0px -50% 0px" to track active section
+- Active chip auto-scrolls into view via scrollIntoView with inline:nearest, block:nearest
+- Section elements now have id="section-{cat}" and className="scroll-mt-[108px]"
+- Section h2 headers now sticky: top-[108px] on mobile, top-[68px] on desktop
+- Chip click calls scrollIntoView with behavior:smooth on target section
+- Added cn import and useEffect, useRef to React imports
+
+### Patterns discovered
+- Header is h-16 (64px), chip bar at sticky top-16; section headers need top-[108px] (64 + 44px chip bar)
+- Tailwind v4 supports [scrollbar-width:none] and [&::-webkit-scrollbar]:hidden for hiding scrollbars
+- Chip bar is md:hidden since desktop already has MenuFilter inline at top
+- [data-chip="catName"] attribute selector works fine for POS category names
+
+### Gotchas
+- Observer fires on all visible sections simultaneously on mount — break after first intersecting entry
+- isFlatView is a derived boolean (not state), can be used in useEffect deps directly
+- categorySections is memoized, stable as a dep
+
+### Result
+- prd.json: US-064 passes = true
+- TypeScript check: PASS (exit 0)
