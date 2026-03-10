@@ -4433,3 +4433,37 @@ Here is the technical brief for user story US-051, tailored for the project's Ne
 - Python must use `encoding='utf-8'` when reading/writing `prd.json` on Windows (cp1252 codec fails on special chars).
 - Node.js v24+ rejects `!!` in -e strings on Windows — use `Boolean(x)` or just grep instead.
 - TypeScript passed clean with zero errors (pre-existing lint errors don't affect tsc --noEmit).
+## Iteration 32 - Tue, Mar 10, 2026  3:20:02 PM
+Completed: Fix Admin Page Dark Overlay Problem (ID: US-049) in 10m
+
+
+## Pre-analysis for US-052 (Gemini 2.5 Pro)
+This user story describes a **Next.js/TypeScript** feature, not a Frappe/Python one. The file paths (`page.tsx`, `route.ts`) and directives (`'use client'`) are specific to a Next.js web application.
+
+Here is the technical brief based on the provided Next.js story:
+
+**Project:** Makan Moments Cafe (Next.js Frontend)
+
+**Objective:** Create a public, real-time order status tracking page.
+
+**1. Core Files to Create/Modify:**
+*   **Frontend Page:** `src/app/[locale]/order/[id]/page.tsx`
+    *   This will be a client component (`'use client'`) to manage state and polling.
+*   **API Endpoint:** `src/app/api/orders/[id]/route.ts`
+    *   A new public `GET` endpoint to fetch status for a single order.
+*   **Settings API:** `src/app/api/settings/route.ts`
+    *   Ensure this public endpoint exposes the required Touch & Go payment details.
+
+**2. Data/Models Involved:**
+*   **`Order` Model:** The API will query the primary database (e.g., NeonDB) for an order. The model must contain fields for `status`, `estimatedReadyTime`, and `rejectionReason`.
+*   **`Settings` Model:** The API will query for site-wide settings, specifically `tng_phone` and `tng_qr_url`.
+
+**3. Implementation Approach:**
+*   **Backend (`route.ts`):** Create a `GET` function that accepts an `id` parameter. It should query the database for the corresponding order and return a JSON object with only the necessary, non-sensitive data (status, timestamps, etc.). **No authentication is required for this endpoint.**
+*   **Frontend (`page.tsx`):** Use a `useEffect` hook to initiate a `setInterval` that fetches data from `/api/orders/[id]` every 15 seconds. Store the response in a state variable using `useState`. Pass this state to a UI component that renders a multi-step progress bar, highlighting the current status.
+
+**4. Edge Cases & Gotchas:**
+*   **Security:** The order ID must be a non-sequential, unguessable UUID to prevent enumeration. The API must *only* expose public-safe data.
+*   **Error Handling:** The frontend must gracefully handle scenarios where the order ID is not found (404) or the API fails.
+*   **Performance:** Ensure the `setInterval` is properly cleared in the `useEffect` cleanup function to prevent memory leaks on component unmount.
+
