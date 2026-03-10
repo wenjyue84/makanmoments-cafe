@@ -1,8 +1,12 @@
 import { readFileSync } from "fs";
 import { join } from "path";
 import { readChatSettings } from "./settings";
+import sql from "@/lib/db";
 
 let cachedKnowledge: string | null = null;
+let menuCache: { text: string; expiresAt: number } | null = null;
+
+const MENU_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 function loadKnowledge(filename: string): string {
   try {
@@ -15,17 +19,57 @@ function loadKnowledge(filename: string): string {
   }
 }
 
-function buildKnowledgeBlock(): string {
+async function fetchMenuFromDB(): Promise<string> {
+  if (menuCache && Date.now() < menuCache.expiresAt) {
+    return menuCache.text;
+  }
+
+  try {
+    const rows = await sql`
+      SELECT code, name_en, name_ms, name_zh, price, categories, dietary
+      FROM menu_items
+      WHERE available = true
+      ORDER BY sort_order ASC
+    `;
+
+    if (!rows || rows.length === 0) {
+      return loadKnowledge("menu-knowledge.md");
+    }
+
+    const lines = rows.map((row: {
+      code: string;
+      name_en: string;
+      name_ms: string;
+      name_zh: string;
+      price: string | number;
+      categories: string[];
+      dietary: string[];
+    }) => {
+      const categories = Array.isArray(row.categories) ? row.categories.join(", ") : row.categories;
+      const dietary = Array.isArray(row.dietary) ? row.dietary.join(", ") : row.dietary;
+      return `- ${row.code} ${row.name_en} (${row.name_ms} / ${row.name_zh}) — RM ${row.price} | Categories: ${categories} | Dietary: ${dietary}`;
+    });
+
+    const text = lines.join("\n");
+    menuCache = { text, expiresAt: Date.now() + MENU_CACHE_TTL_MS };
+    return text;
+  } catch (err) {
+    console.error("[system-prompt] Failed to fetch menu from DB, falling back to static file:", err);
+    return loadKnowledge("menu-knowledge.md");
+  }
+}
+
+async function buildKnowledgeBlock(): Promise<string> {
   if (cachedKnowledge) return cachedKnowledge;
 
-  const menuKnowledge = loadKnowledge("menu-knowledge.md");
+  const menuKnowledge = await fetchMenuFromDB();
   const cafeFacts = loadKnowledge("cafe-facts.md");
   const faq = loadKnowledge("faq.md");
 
   cachedKnowledge = `## Cafe Facts
 ${cafeFacts}
 
-## Menu Knowledge
+## Menu Knowledge (Live from Database)
 ${menuKnowledge}
 
 ## FAQ
@@ -36,11 +80,12 @@ ${faq}`;
 
 export function invalidateSystemPromptCache(): void {
   cachedKnowledge = null;
+  menuCache = null;
 }
 
-export function getSystemPrompt(): string {
+export async function getSystemPrompt(): Promise<string> {
   const settings = readChatSettings();
-  const knowledge = buildKnowledgeBlock();
+  const knowledge = await buildKnowledgeBlock();
 
   const base = `You are the AI Waiter for Makan Moments Cafe (食光记忆 / Kafe Kenangan Makan), a Thai-Malaysian fusion cafe in Skudai, Johor, Malaysia.
 

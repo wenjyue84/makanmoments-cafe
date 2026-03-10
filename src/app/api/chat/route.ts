@@ -55,7 +55,7 @@ export async function POST(req: Request) {
 
   // Truncate to last 20 messages to keep context manageable
   const truncated = messages.slice(-20);
-  const systemPrompt = getSystemPrompt();
+  const systemPrompt = await getSystemPrompt();
 
   // Manually extract text from UIMessage parts — convertToModelMessages
   // crashes on manually-constructed assistant messages (no step metadata).
