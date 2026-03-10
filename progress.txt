@@ -11231,3 +11231,43 @@ Completed in ~10m
 
 ### Gotchas
 - Don't fight the linter on key names — verify what key the linter settles on and use that consistently
+
+## Pre-analysis for US-134 (Gemini 2.5 Pro)
+This user story is written for a JavaScript/TypeScript/Next.js environment, but the request is to create a technical brief for a Frappe/Python context. The following brief translates the story's *intent* into a likely Frappe implementation.
+
+***
+
+**To:** Claude Code Agent
+**From:** Gemini
+**Subject:** Technical Brief for US-134 in a Frappe/Python Context
+
+Here is the plan for implementing the user story.
+
+### 1. Python Files to Modify:
+
+*   **`[app]/[module]/doctype/menu_item/menu_item.py`**: To add controller hooks (`on_update`, `on_trash`) for cache invalidation. (Assuming a `MenuItem` DocType).
+*   **`[app]/utils/system_prompt.py`** (or similar utility module): To house the core logic for building and caching the system prompt.
+*   **`[app]/hooks.py`**: To potentially clear cache on a global app update if needed, though DocType events are preferred.
+
+### 2. Frappe DocTypes & Hooks:
+
+*   **DocType:** `MenuItem` (Hypothesized). This is the master record for a menu item.
+*   **Hooks:**
+    *   `on_update`: Triggered when a `MenuItem` document is saved.
+    *   `on_trash`: Triggered when a `MenuItem` document is deleted.
+*   **Framework API:** `frappe.cache()` for all cache operations (get, set, delete).
+
+### 3. Implementation Approach:
+
+1.  **Create a Caching Function:** In `system_prompt.py`, create a function `get_cached_system_prompt()`.
+2.  **Cache Logic:** This function will use `frappe.cache().get("system_prompt_menu")`.
+3.  **Cache Miss:** If the cache is empty, the function will query all relevant `MenuItem` DocTypes, build the text-based prompt, and then store it using `frappe.cache().set("system_prompt_menu", generated_prompt, expires_in_sec=3600)`.
+4.  **Cache Invalidation:** In `menu_item.py`, implement the `on_update` and `on_trash` methods. Both methods will simply call `frappe.cache().delete("system_prompt_menu")`.
+
+### 4. Edge Cases & Gotchas:
+
+*   **Redis Dependency:** `frappe.cache()` relies on Redis. Ensure it is properly configured in `site_config.json`.
+*   **Cache Key Consistency:** The cache key (`"system_prompt_menu"`) must be identical in both the getter function and the invalidation hooks.
+*   **Related DocTypes:** If other DocTypes (e.g., `MenuCategory`) also affect the prompt, their controllers must also include the same cache invalidation logic.
+*   **Initial Generation:** The first time the prompt is generated, it could be slow. Ensure the database query to fetch menu items is optimized.
+
