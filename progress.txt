@@ -3594,3 +3594,31 @@ This is a **Next.js/TypeScript** user story, not Frappe/Python. The implementati
 ### Result
 - prd.json: US-045 passes = true
 - TypeScript check: PASS (exit 0)
+
+## Iteration 28 - Story: PWA with Push Notifications (US-045)
+
+### What was implemented
+All implementation was already complete from a previous cycle:
+- `public/manifest.json` — PWA manifest with name, icons, theme_color, display: standalone
+- `public/sw.js` — Service worker: shell caching, push event handler, notificationclick handler
+- `src/components/pwa/pwa-init.tsx` — Client component that registers `/sw.js` on mount
+- `src/app/[locale]/layout.tsx` — Manifest linked via Metadata API (`manifest: "/manifest.json"`) + `<PwaInit />` wired in
+- `src/app/api/admin/push-subscribe/route.ts` — POST (save) and DELETE (remove) subscription endpoints; protected by admin middleware; stores to `push_subscriptions` table in Neon
+- `src/app/api/orders/route.ts` — `sendPushToAllAdmins()` called fire-and-forget after every order save; reads all stored subscriptions; auto-cleans expired (410 Gone) subscriptions; VAPID keys from env
+- `src/components/admin/admin-push-settings.tsx` — Admin UI: checks if push is supported, shows current state, enable/disable buttons, converts VAPID key via urlBase64ToUint8Array
+- `src/components/admin/admin-tabs.tsx` — "Push Notifications" tab added, `AdminPushSettings` imported and rendered
+- VAPID keys already existed in `.env.local` (NEXT_PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT)
+
+### Patterns discovered
+- When this iteration started, all PWA code was already implemented but `prd.json` had `passes: false` (similar to US-044 pattern)
+- `push_subscriptions` table uses `endpoint TEXT UNIQUE` for deduplication (upsert on conflict)
+- The `disabled` prop in a ternary with state narrowing can cause TS2367 if narrowed type doesn't include the compared value — fix by broadening the ternary condition to include both states
+
+### Gotchas
+- TypeScript check flakiness: first run showed TS2367 error, second run passed clean (may be incremental build cache issue)
+- Push notifications require HTTPS in production (localhost works for dev)
+- VAPID subject must be `mailto:` or a valid URL
+
+### Result
+- prd.json: US-045 passes = true
+- TypeScript check: PASS (exit 0)
