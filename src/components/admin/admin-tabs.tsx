@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
+import { AiWaiterPage } from "./ai-waiter-page";
 import {
   UtensilsCrossed,
   Tag,
@@ -15,6 +16,7 @@ import {
   X,
   LogOut,
   Monitor,
+  Bot,
 } from "lucide-react";
 
 const KDS_URL = process.env.NEXT_PUBLIC_KDS_URL ?? "/kds";
@@ -64,6 +66,7 @@ interface AdminTabsProps {
 
 const TABS = [
   "Orders",
+  "AI Waiter",
   "Menu",
   "Categories",
   "Rules",
@@ -76,6 +79,7 @@ type Tab = (typeof TABS)[number];
 
 const TAB_ICONS: Record<Tab, React.ReactNode> = {
   Orders: <ShoppingBag className="h-4 w-4 shrink-0" />,
+  "AI Waiter": <Bot className="h-4 w-4 shrink-0" />,
   Menu: <UtensilsCrossed className="h-4 w-4 shrink-0" />,
   Categories: <Tag className="h-4 w-4 shrink-0" />,
   Rules: <Shield className="h-4 w-4 shrink-0" />,
@@ -87,6 +91,7 @@ const TAB_ICONS: Record<Tab, React.ReactNode> = {
 
 const TAB_SLUGS: Record<Tab, string> = {
   Orders: "orders",
+  "AI Waiter": "ai-waiter",
   Menu: "menu",
   Categories: "categories",
   Rules: "rules",
@@ -98,6 +103,7 @@ const TAB_SLUGS: Record<Tab, string> = {
 
 const SLUG_TO_TAB: Record<string, Tab> = {
   orders: "Orders",
+  "ai-waiter": "AI Waiter",
   menu: "Menu",
   categories: "Categories",
   rules: "Rules",
@@ -205,8 +211,9 @@ export function AdminTabs({ items, categories, displayCategories, posts }: Admin
         </div>
 
         {/* Content area */}
-        <main className="flex-1 p-6">
+        <main className={activeTab === "AI Waiter" ? "flex-1 p-2" : "flex-1 p-6"}>
           {activeTab === "Orders" && <AdminOrdersPanel />}
+          {activeTab === "AI Waiter" && <AiWaiterPage />}
           {activeTab === "Menu" && (
             <AdminMenuTable initialItems={items} categories={categories} displayCategories={displayCategories} />
           )}
