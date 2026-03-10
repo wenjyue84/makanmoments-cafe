@@ -6,6 +6,8 @@
 - Pre-existing lint errors (8000+) in the codebase — do not try to fix them, only validate that changed files are clean
 - `npx tsc --noEmit` (not `rtk tsc`) is the correct TypeScript check command here
 - Chat widget at `bottom-4 right-4`; Tray widget at `bottom-4 right-20` (avoids overlap)
+- `useMenuFiltering` hook in `src/hooks/useMenuFiltering.ts` — handles all filtering/grouping logic; also exports `isAvailableAtTime` and `isChefsPick`
+- Hook returns: `filtered`, `categorySections`, `heroItems`, `regularFlatItems`, `isFlatView`, `isSearching`, `isFavoritesSelected`, `selectedDisplayCat`, `isChefsPick`
 
 ---
 
@@ -12144,3 +12146,48 @@ Completed: Extract MenuGrid Filtering and Grouping into useMenuFiltering Hook (I
 ### Gotchas
 - The Read tool may show stale cached content; use `cat` or `sed` to verify current file state when needed
 - RTK diff summary hides detail — use `git diff -- <file>` directly for full diff context
+
+## Pre-analysis for US-139 (Gemini 2.5 Pro)
+Based on the user story JSON, here is the technical brief for refactoring the React components.
+
+**Subject: Technical Brief for US-139: Refactor AdminMenuTable**
+
+This task is a front-end refactoring of a large React component, not a Frappe/Python task. The goal is to improve maintainability by separating concerns.
+
+**1. Primary Files for Modification:**
+*   `src/components/admin/admin-menu-table.tsx`: Will be simplified to a container that uses the new hook and row component.
+*   `src/components/admin/admin-menu-table-row.tsx`: **(New File)** To render a single item and its inline edit form.
+*   `src/hooks/useMenuTableEdit.ts`: **(New File)** To contain all state and PATCH logic for editing a row.
+
+**2. Involved Next.js/React Concepts:**
+*   **Components:** `AdminMenuTable` will be refactored. `AdminMenuTableRow` will be created.
+*   **Hooks:** A `useMenuTableEdit` custom hook will be created to manage state (`useState`) and side effects (`fetch`/PATCH).
+
+**3. Recommended Implementation Approach:**
+1.  First, create the `useMenuTableEdit.ts` hook. Migrate all editing state (`editingId`, `editForm`) and handler functions (`handleSave`, `handleCancel`, `handleImageChange`) into it from `admin-menu-table.tsx`.
+2.  Next, create the `AdminMenuTableRow.tsx` component. It will receive props like `item`, `isEditing`, `editForm`, and the handlers from the hook. It will contain the JSX for both the display and edit states of a row.
+3.  Finally, refactor `admin-menu-table.tsx` to import and use the `useMenuTableEdit` hook. Replace the large conditional JSX block with a loop that renders the new `AdminMenuTableRow` component for each item.
+
+**4. Edge Cases & Gotchas:**
+*   Ensure robust prop typing between the parent table, the hook, and the new row component.
+*   The `handleImageChange` logic must correctly manage file state before the PATCH request.
+*   The `handleSave` function's PATCH logic needs to handle API errors gracefully without losing user input.
+
+
+## Iteration N - Story: Extract MenuGrid Filtering into useMenuFiltering Hook (US-138)
+
+### What was implemented
+- `src/hooks/useMenuFiltering.ts` already existed with full implementation from prior iterations
+- Prior iterations had partially refactored `menu-grid.tsx` (removed categorySections/heroItems/regularFlatItems useMemos from component)
+- Unstaged changes had moved `isAvailableAtTime` to the hook file and added `isChefsPick` to hook return type
+- Fixed TypeScript by ensuring hook returns `isChefsPick: (item: MenuItem) => boolean`
+- menu-grid.tsx reduced from 508 → 413 lines (95 lines, close to 100 target)
+
+### Patterns discovered
+- Check unstaged changes (git diff) before coding — prior iterations may leave partial work
+- The hook exports: `isAvailableAtTime` (pure function), `DC_PREFIX`, `FAVORITES_FILTER`, `useMenuFiltering`
+- Hook also returns `isChefsPick` function (requires `removedFromChefsPick` Set as input param)
+
+### Gotchas
+- TypeScript was failing because `isChefsPick` was removed from component but not yet added to hook return type
+- Read tool may show HEAD version; use grep/git diff to verify actual disk state
