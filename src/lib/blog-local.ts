@@ -5,6 +5,57 @@ import type { BlogPost } from "@/types/blog";
 
 const BLOG_DIR = path.join(process.cwd(), "content", "blog");
 
+/** Heading names whose sections should be stripped from post content. */
+const STRIP_SECTION_RE =
+  /^##\s+(?:Post Type|Expected Engagement|Perspective|Response Strategy|Best Posting Time|References|Source)\b/i;
+
+/**
+ * Strip operational metadata sections from a blog post's markdown content.
+ *
+ * For ai-posts format: removes ## Post Type, ## Response Strategy,
+ * ## Best Posting Time, ## References blocks.
+ *
+ * For Notion-sync format: removes ## Source block; converts ## Content block
+ * into its extracted AI summary paragraph.
+ *
+ * Sections are delimited by `---` horizontal rules.
+ */
+function stripMetadataSections(content: string): string {
+  // Normalize CRLF to LF (Windows files)
+  const normalized = content.replace(/\r\n/g, "\n");
+  // Split on HR separators (--- on its own line)
+  const blocks = normalized.split(/\n---\n/);
+
+  const kept: string[] = [];
+  for (const block of blocks) {
+    const firstLine = block.trimStart().split("\n")[0].trim();
+
+    // Remove blocks whose heading is in the strip list
+    if (STRIP_SECTION_RE.test(firstLine)) continue;
+
+    // For Notion-sync ## Content blocks: replace with the AI summary text only
+    if (/^##\s+Content\b/i.test(firstLine)) {
+      const summaryMatch = block.match(/- \*\*AI summary:\*\*\s*(.+)/);
+      if (
+        summaryMatch &&
+        summaryMatch[1].trim() !== "No content" &&
+        summaryMatch[1].trim().length > 5
+      ) {
+        kept.push("\n" + summaryMatch[1].trim());
+      }
+      continue;
+    }
+
+    kept.push(block);
+  }
+
+  // Remove Obsidian-style metadata lines (**Type:** / **Created:** / **Tags:**)
+  let result = kept.join("\n\n---\n\n");
+  result = result.replace(/^\*\*(?:Type|Created|Tags):\*\*[^\n]*\n?/gim, "");
+
+  return result.replace(/\n{3,}/g, "\n\n").trim();
+}
+
 /**
  * Extract date from filename prefix (YYYY-MM-DD-...).
  * Falls back to today's date if not found.
@@ -12,6 +63,14 @@ const BLOG_DIR = path.join(process.cwd(), "content", "blog");
 function extractDateFromFilename(filename: string): string {
   const match = filename.match(/^(\d{4}-\d{2}-\d{2})/);
   return match ? match[1] : new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * Extract date from **Created:** field in post body (Notion-sync format).
+ */
+function extractDateFromContent(raw: string): string | null {
+  const match = raw.match(/\*\*Created:\*\*\s*(\d{4}-\d{2}-\d{2})/);
+  return match ? match[1] : null;
 }
 
 /**
@@ -65,6 +124,7 @@ function extractExcerpt(content: string): string {
     /^\[\[/, // Obsidian links
     /^>\s/, // blockquotes
     /^!\[/, // images
+    /^-\s+\*\*[A-Z]/, // - **Key:** value metadata bullets
   ];
 
   const candidates: string[] = [];
@@ -95,7 +155,8 @@ function parsePost(filename: string): BlogPost | null {
   const raw = fs.readFileSync(filePath, "utf-8");
 
   // gray-matter handles YAML frontmatter (---...---) and strips it from content
-  const { data, content } = matter(raw);
+  const { data, content: rawContent } = matter(raw);
+  const content = stripMetadataSections(rawContent);
 
   const slug = filename.replace(/\.md$/, "");
   // gray-matter may parse Date fields as JS Date objects
@@ -104,7 +165,7 @@ function parsePost(filename: string): BlogPost | null {
     ? rawDate instanceof Date
       ? rawDate.toISOString().slice(0, 10)
       : String(rawDate).slice(0, 10)
-    : extractDateFromFilename(filename);
+    : extractDateFromContent(raw) || extractDateFromFilename(filename);
 
   const title =
     (data.title as string) ||

@@ -952,3 +952,37 @@ This brief translates the user story's goal into a Frappe/Python context. The or
 *   **Mobile vs. Desktop:** Verify the solution works on both mobile and desktop views, as the navbar structure may differ. The jQuery selector must be robust enough for both.
 *   **Accessibility:** Ensure the text label (EN/MY/ZH) is retained alongside the icon to maintain accessibility and clarity.
 
+## Iteration 3 - Tue, Mar 10, 2026 10:38:08 AM
+Completed: Mobile Header: Language Selector Beside Hamburger, Replace Dark/Light Toggle (ID: US-013) in 3m
+
+
+## Pre-analysis for US-015 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-015.
+
+**Subject: Technical Brief for US-015: Curate Blog Content & Strip Metadata**
+
+**1. Overview**
+The objective is to replace the current blog content with curated posts from "operator-perspective" source folders. This requires two main actions: a one-time file synchronization to update the `content/blog/` directory, and a modification to the markdown parsing logic to strip internal metadata sections from the body of each post.
+
+**2. Core Files & Modules**
+*   **File to Modify:** `src/lib/blog-local.ts` — This file contains the data-fetching logic (`readLocalPosts`) for blog posts.
+*   **New File:** A new script, e.g., `scripts/sync-posts.ts`, should be created to handle the file operations.
+*   **Key Library:** `gray-matter`, which is used inside `readLocalPosts` to parse markdown frontmatter and content.
+
+**3. Implementation Approach**
+1.  **Create a Sync Script (`scripts/sync-posts.ts`):**
+    *   Use Node's `fs` module to first delete all existing files within the project's `content/blog/` directory.
+    *   Next, copy all `.md` files from the specified source directories (`operations/`, `stories/`, `promotions/`) into `content/blog/`.
+
+2.  **Modify `readLocalPosts()` in `src/lib/blog-local.ts`:**
+    *   After parsing the markdown file with `matter()`, you get an object with `data` (frontmatter) and `content` (body).
+    *   Apply a regex replacement to the `content` string.
+    *   The regex should find and remove headings like `## Post Type`, `## Perspective`, etc., along with all text until the next `##` heading or the end of the file.
+    *   Regex to use: `/^##\\s+(Post Type|Expected Engagement|Perspective|Response Strategy|References|Best Posting Time|Source)[\\s\\S]*?(?=(?:^##\\s)|$)/gm`
+
+**4. Gotchas & Edge Cases**
+*   **Destructive Script:** The sync script will delete files in `content/blog/`. Run with caution.
+*   **Hardcoded Paths:** The source paths are absolute and local. This is brittle and will fail in other environments (like Vercel). Consider making them relative or configurable.
+*   **Manual Step:** The sync script is a manual process. The development workflow must include running this script to see updated blog content.
+*   **Content vs. Frontmatter:** Ensure you are modifying the `content` property from `gray-matter`, not the `data` (frontmatter) property. The metadata to be stripped is in the markdown body itself.
+
