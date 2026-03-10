@@ -34,7 +34,16 @@
     "infoHours": "每天营业 上午11时 – 晚上11时",
     "infoLocation": "金山园, 士古来",
     "infoDietary": "无猪肉 · 无猪油 · 清真友好",
-    "infoWifi": "免费WiFi"
+    "infoWifi": "免费WiFi",
+    "preorderTitle": "提前预订，免排队等候",
+    "preorderSubtitle": "浏览菜单，在线发送订单，到店时食物已为您准备好。",
+    "preorderStep1": "浏览菜单",
+    "preorderStep1Desc": "挑选您喜欢的菜肴",
+    "preorderStep2": "在线预订",
+    "preorderStep2Desc": "到来前发送订单",
+    "preorderStep3": "到店享用",
+    "preorderStep3Desc": "一到店食物便已准备好",
+    "preorderCta": "查看菜单并预订"
   },
   "menu": {
     "title": "我们的菜单",

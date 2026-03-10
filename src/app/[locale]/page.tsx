@@ -8,6 +8,7 @@ import { getFeaturedItems } from "@/lib/menu";
 import { HeroSection } from "@/components/home/hero-section";
 import { Highlights } from "@/components/home/highlights";
 import { InfoStrip } from "@/components/home/info-strip";
+import { PreorderBanner } from "@/components/home/preorder-banner";
 import { HighlightsSkeleton } from "@/components/home/highlights-skeleton";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 import { HomeInlineEditor, type HomeContent } from "@/components/admin/home-inline-editor";

@@ -34,7 +34,16 @@
     "infoHours": "Dibuka Setiap Hari 11PG – 11MLM",
     "infoLocation": "Taman Impian Emas, Skudai",
     "infoDietary": "Tanpa Babi · Tanpa Lard · Mesra Halal",
-    "infoWifi": "WiFi Percuma"
+    "infoWifi": "WiFi Percuma",
+    "preorderTitle": "Tempah Awal & Elak Tunggu",
+    "preorderSubtitle": "Layari menu kami, hantar pesanan dalam talian, dan tiba apabila makanan sudah siap.",
+    "preorderStep1": "Layari Menu",
+    "preorderStep1Desc": "Pilih hidangan kegemaran anda",
+    "preorderStep2": "Tempah Dalam Talian",
+    "preorderStep2Desc": "Hantar pesanan sebelum tiba",
+    "preorderStep3": "Tiba & Nikmati",
+    "preorderStep3Desc": "Makanan siap apabila anda tiba",
+    "preorderCta": "Lihat Menu & Tempah"
   },
   "menu": {
     "title": "Menu Kami",

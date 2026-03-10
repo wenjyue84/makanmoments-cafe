@@ -34,7 +34,16 @@
     "infoHours": "Open Daily 11AM – 11PM",
     "infoLocation": "Taman Impian Emas, Skudai",
     "infoDietary": "No Pork · No Lard · Halal-Friendly",
-    "infoWifi": "Free WiFi Available"
+    "infoWifi": "Free WiFi Available",
+    "preorderTitle": "Pre-Order & Skip the Wait",
+    "preorderSubtitle": "Browse our menu, send your order online, and arrive to find your food ready.",
+    "preorderStep1": "Browse Menu",
+    "preorderStep1Desc": "Pick your favourite dishes",
+    "preorderStep2": "Pre-Order Online",
+    "preorderStep2Desc": "Send your order before you arrive",
+    "preorderStep3": "Arrive & Enjoy",
+    "preorderStep3Desc": "Food ready when you walk in",
+    "preorderCta": "View Menu & Order"
   },
   "menu": {
     "title": "Our Menu",
