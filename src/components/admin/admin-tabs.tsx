@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import {
   UtensilsCrossed,
   Tag,
@@ -50,12 +51,37 @@ const TAB_ICONS: Record<Tab, React.ReactNode> = {
   Settings: <Settings className="h-4 w-4 shrink-0" />,
 };
 
+const TAB_SLUGS: Record<Tab, string> = {
+  Orders: "orders",
+  Menu: "menu",
+  Categories: "categories",
+  Rules: "rules",
+  Blog: "blog",
+  Tests: "tests",
+  Settings: "settings",
+};
+
+const SLUG_TO_TAB: Record<string, Tab> = {
+  orders: "Orders",
+  menu: "Menu",
+  categories: "Categories",
+  rules: "Rules",
+  blog: "Blog",
+  tests: "Tests",
+  settings: "Settings",
+};
+
 export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
-  const [activeTab, setActiveTab] = useState<Tab>("Menu");
+  const pathname = usePathname();
+  const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Derive active tab from URL segment
+  const slug = pathname.split("/").pop() ?? "";
+  const activeTab: Tab = SLUG_TO_TAB[slug] ?? "Menu";
+
   const handleTabClick = (tab: Tab) => {
-    setActiveTab(tab);
+    router.push(`/admin/${TAB_SLUGS[tab]}`);
     setSidebarOpen(false);
   };
 

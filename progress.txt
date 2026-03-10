@@ -7636,3 +7636,90 @@ This user story is for a **Next.js/React** frontend, not a Frappe/Python app. Th
 ## Iteration 51 - Tue, Mar 10, 2026  6:37:54 PM
 Completed: Admin Tests: Auto-Load Tests on Tab Open (Remove 'Load Tests' Button) (ID: US-081) in 4m
 
+## Iteration 28 - Tue, Mar 10, 2026  6:38:31 PM
+Completed: Admin Tests: Auto-Load Tests on Tab Open (Remove 'Load Tests' Button) (ID: US-081) in 4m
+
+
+## Pre-analysis for US-083 (Gemini 2.5 Pro)
+This user story is for a Next.js/TypeScript application, not Frappe/Python. The following brief is tailored to the technical notes in the JSON.
+
+**Project:** Makan Moments Cafe (Next.js)
+**User Story:** US-083: Admin: Deep-Linkable Sub-URLs for Each Tab
+
+**Technical Brief for Implementation Agent:**
+
+1.  **Files to Modify/Create:**
+    *   **Create:** `src/app/admin/[[...tab]]/page.tsx`. This single dynamic route will handle all admin tabs.
+    *   **Modify:** The component responsible for rendering the admin sidebar/navigation (likely in `src/components/admin/`). Update its navigation items from `onClick` handlers to Next.js `<Link>` components (e.g., `<Link href="/admin/menu">`).
+    *   **Modify:** The core `AdminTabs` component (or equivalent) to accept an `initialTab` prop to set its default state.
+    *   **Delete/Redirect:** The existing `src/app/admin/page.tsx` will be superseded by the new dynamic route.
+
+2.  **Key Framework Features & Hooks:**
+    *   **Next.js App Router:** Use a dynamic catch-all route (`[[...tab]]`).
+    *   **React Hooks:** Use the `useParams` hook in the new page to get the `tab` slug from the URL.
+    *   **Component Props:** Pass the slug down as an `initialTab` prop.
+    *   **Client-side Navigation:** Use the `next/link` component for seamless URL updates without page reloads.
+
+3.  **Recommended Approach:**
+    *   Implement the `src/app/admin/[[...tab]]/page.tsx` dynamic route.
+    *   This page component will extract the `tab` parameter from its `params` prop.
+    *   It should map the URL slug (e.g., "menu") to the corresponding tab's title or key (e.g., "Menu").
+    *   Render the main admin page/layout component, passing the resolved tab name as the `initialTab` prop.
+    *   Ensure the authentication logic currently protecting `/admin` is applied to this new dynamic route.
+
+4.  **Edge Cases & Gotchas:**
+    *   **Root URL:** Handle requests to `/admin` (where the `tab` param will be undefined). Default to a primary tab like 'menu'.
+    *   **Invalid URL:** If a user navigates to an invalid sub-URL (e.g., `/admin/nonexistent`), gracefully default to the primary tab instead of crashing.
+    *   **Auth:** Verify that the authentication check (e.g., token validation, redirect) is correctly inherited or moved to the new `[[...tab]]` route to secure all sub-pages.
+
+
+## Pre-analysis for US-083 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** application, not a Frappe/Python one. The technical notes clearly reference Next.js App Router features (`page.tsx`, `[[...tab]]`, `next/link`).
+
+Here is the technical brief for a Next.js implementation:
+
+**Project:** Next.js (Makan Moments Cafe)
+**User Story:** US-083: Admin Deep-Linkable Sub-URLs
+
+**1. Core Files to Modify/Create:**
+*   **Create:** `src/app/admin/[[...tab]]/page.tsx`. This single dynamic route will replace the existing static admin page to handle all `/admin/*` URLs.
+*   **Modify:** The `AdminTabs` component (likely located in `src/components/admin/`). It needs to accept an `initialTab` prop to set the default active tab.
+*   **Modify:** The admin sidebar/navigation component. Replace `onClick` handlers with Next.js `<Link>` components for client-side routing (e.g., `<Link href="/admin/menu">`).
+*   **Delete/Redirect:** The current `src/app/admin/page.tsx` should be removed, and a redirect might be needed if the structure changes significantly.
+
+**2. Key Next.js/React Concepts Involved:**
+*   **Routing:** Next.js App Router with dynamic segments (`[[...tab]]`). The `params` object in the page component will be used to get the active tab from the URL.
+*   **Components:** The main `AdminPage` will be rendered by the new dynamic route, passing the tab from the URL as a prop.
+*   **State Management:** The `AdminTabs` component will use the `initialTab` prop to initialize its internal `useState` for the active tab.
+
+**3. Recommended Implementation Approach:**
+1.  Create the `src/app/admin/[[...tab]]/page.tsx` file.
+2.  Inside this server component, read the `params.tab` array. The first element (`tab?.[0]`) is the slug (e.g., "menu").
+3.  Map the slug to the correct tab name (e.g., 'menu' -> 'Menu'). Handle the default case where `tab` is undefined, setting a default like 'Menu'.
+4.  Copy the authentication logic from the old `src/app/admin/page.tsx` to the new dynamic route to ensure all sub-pages are auth-gated.
+5.  Render the main `AdminPage` or `AdminTabs` component, passing the resolved tab name as the `initialTab` prop.
+6.  Update the sidebar navigation to use `<Link href="/admin/...">` instead of state-setting `onClick` handlers to ensure URL changes and proper navigation.
+
+**4. Edge Cases & Gotchas:**
+*   **Invalid Slugs:** If a user navigates to `/admin/non-existent-page`, the logic in `[[...tab]]/page.tsx` must handle it gracefully, likely by defaulting to the primary tab (e.g., 'Menu').
+*   **URL/State Desync:** Ensure that the component holding tab state correctly initializes from the `initialTab` prop and does not rely on its own default `useState` value when a URL parameter is present.
+*   **Base Route:** The logic must correctly handle the base `/admin` route (where `params.tab` will be `undefined`) and select a default tab.
+
+
+## Iteration - Story: US-083 - Admin: Deep-Linkable Sub-URLs for Each Tab
+
+### What was implemented
+- Created `src/app/admin/[tab]/page.tsx` — dynamic route that auth-gates and renders AdminTabs for valid tab slugs (orders/menu/categories/rules/blog/tests/settings)
+- Replaced `src/app/admin/page.tsx` content with a simple `redirect('/admin/menu')` (kept file intact)
+- Updated `AdminTabs` to derive `activeTab` from `usePathname()` instead of `useState`
+- `handleTabClick` now calls `router.push('/admin/' + TAB_SLUGS[tab])` for URL-based navigation
+- Added `TAB_SLUGS` (Tab → slug) and `SLUG_TO_TAB` (slug → Tab) mappings
+
+### Patterns discovered
+- `usePathname().split('/').pop()` reliably extracts the last URL segment for tab detection
+- Static sub-routes (`/admin/login`, `/admin/chat-settings`) take precedence over the dynamic `[tab]` segment — no conflicts
+- Cannot have both `/admin/page.tsx` AND `/admin/[[...tab]]/page.tsx` — conflicts for `/admin` — used `/admin/[tab]/page.tsx` + redirect at root instead
+
+### Gotchas
+- `/admin/[[...tab]]/page.tsx` (optional catch-all) conflicts with `/admin/page.tsx` for the bare `/admin` path — use required `[tab]` + redirect from root
+- `params` in Next.js App Router is a `Promise` in newer versions — must `await params` to destructure
