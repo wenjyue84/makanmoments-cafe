@@ -7889,3 +7889,17 @@ Here is the technical brief based on the actual story content:
 
 ### Gotchas
 - Story was already complete before this iteration — just needed passing marked
+
+## Iteration - Story: US-085 Admin Menu: Search Items by Code or Name
+
+### What was implemented
+- Already fully implemented in a prior session — `admin-menu-table.tsx` already has:
+  - `const [search, setSearch] = useState("")` (line 130)
+  - `searchedItems` filter logic across code/nameEn/nameMs/nameZh (lines 372-385)
+  - Search input UI with placeholder "Search by name or code..." (line 420-426)
+  - Empty state message: "No items match..." (line 461)
+- TypeScript check: passes cleanly
+- Simply marked `passes: true` in prd.json
+
+### Patterns discovered
+- Search was added to the state vars list but story wasn't marked done — check state vars + JSX before assuming a story needs work
