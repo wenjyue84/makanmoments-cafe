@@ -8422,3 +8422,30 @@ This brief outlines the backend implementation for real-time Kitchen Display Sys
 ## Iteration 56 - Tue, Mar 10, 2026  7:14:30 PM
 Completed: KDS: Mark Individual Food Items as Complete (ID: US-088) in 4m
 
+## Iteration 56 - Tue, Mar 10, 2026  7:14:59 PM
+Completed: KDS: Kitchen Display System — Login + Order Queue View (ID: US-087) in 7m
+
+
+## Iteration N - Story: KDS: Real-Time Order Updates and New Order Alert (US-089)
+
+### What was implemented
+- Changed KDS polling interval from 30s to 15s (useEffect interval + header text updated)
+- Added `prevOrderIdsRef` (useRef<Set<number>>) to track order IDs from previous fetch
+- Added `newOrderIds` state (Set<number>) — orders that arrived since last acknowledged
+- New order detection: on each fetch, IDs not in prevOrderIdsRef = new arrivals
+- Audio alert via Web Audio API (no MP3 needed) — triple-note ascending chime using OscillatorNode
+- `muted` state + header toggle button (🔔 Sound On / 🔇 Muted)
+- Auto-dismiss: each new order gets a 60s setTimeout, clears from newOrderIds automatically
+- Manual acknowledge: tap card or click "Dismiss" button to remove NEW indicator immediately
+- OrderCard `isNew` prop: yellow pulsing border + "🔔 NEW ORDER" badge
+- markReady also clears orderId from newOrderIds (prevents ghost NEW indicator)
+- dismissTimersRef cleanup on unmount
+
+### Patterns discovered
+- Web Audio API approach avoids needing a binary MP3 file in the repo
+- `useRef` for previous state comparison across renders without triggering re-renders
+- `muted` is in the fetchOrders callback dependency array — fetchOrders recreates when muted changes (interval restarts), which is fine at 15s interval
+
+### Gotchas
+- `prevOrderIdsRef.current === null` guard skips new-order detection on very first fetch (avoids false positives on page load)
+- dismissTimersRef cleanup must reference the Map object directly in the cleanup effect, not via a fresh ref read
