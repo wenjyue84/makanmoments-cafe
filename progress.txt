@@ -9138,3 +9138,22 @@ This technical brief is for implementing story US-107 in a **Next.js/React** app
 
 ### Gotchas
 - prd.json uses UTF-8 encoding with special chars — must open with `encoding='utf-8'` in Python
+## Iteration 4 - Tue, Mar 10, 2026  9:21:57 PM
+Incomplete: Menu Page — Collapsible Search: Icon by Default, Expands on Tap (ID: US-107) — attempt 1/3
+
+
+## Iteration — Story: US-094 Menu Page: Image Lazy Loading + Explicit sizes Prop on All MenuCards
+
+### What was implemented
+- Verified `menu-card.tsx` already had correct `sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 50vw, 33vw"` and `loading={priority ? "eager" : "lazy"}` on both the single Image and ImageCarousel
+- Verified `image-carousel.tsx` already had `sizes` as a prop with the correct default value
+- Verified `chef-pick-card.tsx` already had `sizes` and `priority`/`loading` correctly set
+- `menu-grid.tsx` flat view (search/display category results) already had `priority={index === 0}` added to the first MenuCard (change was already in place)
+- TypeScript check passes clean (`npx tsc --noEmit`)
+
+### Patterns discovered
+- The flat view in menu-grid.tsx is only triggered when searching or when a display category/favorites is selected — the default grouped view uses ChefPickCard as the LCP hero
+- `loading` prop on next/image defaults to 'lazy' unless priority={true} is set — so `loading={priority ? "eager" : "lazy"}` is redundant but explicit and documents intent clearly
+
+### Gotchas
+- File may have already been modified externally when attempting edits — always re-read before editing
