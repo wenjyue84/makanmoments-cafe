@@ -1618,3 +1618,80 @@ This user story is for a **Next.js/React** web project, not Frappe/Python. Here 
 ## Iteration 9 - Tue, Mar 10, 2026 11:27:58 AM
 Completed: Add Paintings Photo to About Page (ID: US-023) in 3m
 
+## Iteration 10 - Tue, Mar 10, 2026 11:28:40 AM
+Completed: Add Paintings Photo to About Page (ID: US-023) in 2m
+
+
+## Pre-analysis for US-024 (Gemini 2.5 Pro)
+This user story targets the Next.js/React frontend, not a Frappe/Python app. The technical brief below is adjusted for the correct (React/TypeScript) technology stack.
+
+---
+
+**Technical Brief: US-024 - Menu Item 'Added' State**
+
+**1. Primary File to Modify:**
+*   `src/components/menu/menu-card.tsx`
+
+**2. Key Framework Components:**
+*   **React Context:** `TrayContext` (likely `src/lib/tray-context.tsx`) will be the central state management source.
+*   **React Hook:** `useTray()` must be used inside the component to access tray items and methods.
+
+**3. Recommended Implementation Approach:**
+*   Inside the `MenuCard` component, invoke `const { items } = useTray();` to get the current tray contents.
+*   Establish a boolean flag to track the item's state: `const isInTray = items.some(i => i.id === item.code);`.
+*   Use this flag to conditionally apply Tailwind CSS classes to the main card `div` (e.g., `'bg-green-50/50'`) and the "Add" button (e.g., `'bg-teal-500'`).
+*   The button's text should also change based on `isInTray`, switching from `"+ Add"` to `"✓ Added"`. Use the `i18n` key `common.added`.
+*   For the quantity update pulse, a `useEffect` hook listening to changes in an item's quantity can briefly add and remove a CSS animation class (`animate-pulse`).
+
+**4. Edge Cases & Gotchas:**
+*   **State Desynchronization:** Ensure the component re-renders when an item is removed from the tray via the main tray panel, not just by interacting with the card itself.
+*   **Performance:** The pulse animation on quantity change should be a lightweight CSS transition to avoid re-render jank.
+*   **Mobile Interaction:** Verify that tap feedback is immediate and doesn't have a "sticky hover" state on mobile devices.
+
+
+## Pre-analysis for US-024 (Gemini 2.5 Pro)
+This user story is for a **React/Next.js frontend**, not a Frappe/Python backend. The technical notes explicitly reference `.tsx` files, React hooks (`useTray`, `useEffect`), and Tailwind CSS, which are hallmarks of a modern JavaScript web application.
+
+Assuming the intent was to get a technical brief for the described frontend task, here is the analysis:
+
+**1. Files to Modify:**
+*   `src/components/menu/menu-card.tsx`: The core component for a single menu item, where all UI logic will reside.
+*   `src/lib/tray-context.tsx`: To verify the `useTray` hook exposes the tray's items.
+*   `messages/*.json`: To add i18n keys for "Added" (`common.added`).
+
+**2. Key Components & Hooks:**
+*   **Component:** `MenuCard` is the primary target for modifications.
+*   **Hook:** `useTray()` is the critical hook to get the state of items in the shopping tray.
+
+**3. Recommended Implementation Approach:**
+*   Inside `MenuCard`, use the `useTray()` hook to get the list of items.
+*   Create a boolean, `isInTray`, by checking if the current item's ID exists in the tray items array.
+*   Conditionally apply Tailwind CSS classes to the card's root element and the "Add" button based on `isInTray`.
+*   For the button text, use a ternary operator: `isInTray ? t('common.added') : t('common.add')`.
+*   To handle the "pulse" on re-adding, use a `useEffect` hook that triggers on quantity changes to briefly apply and then remove an animation class.
+
+**4. Edge Cases & Gotchas:**
+*   **State Sync:** Ensure the card correctly reverts to its original state when the item is removed from the tray, which might be initiated from a different component. The context should handle this.
+*   **Accessibility:** The color change alone isn't enough for colorblind users; the text/icon change (`✓ Added`) is crucial for indicating the state.
+*   **Performance:** On very large menus, ensure that updates to a single card don't cause all cards to re-render. `React.memo` might be necessary.
+
+
+## Iteration - Story: US-024 - Menu Add Button 'Added' State with Background Color Change
+
+### What was implemented
+- Added `added` i18n key to all 3 message files: en ("Added"), ms ("Ditambah"), zh ("已加入")
+- Updated `src/components/menu/menu-card.tsx`:
+  - Added `items` from `useTray()` to detect if item is in tray
+  - `isInTray = !!items.find(i => i.id === item.code)`
+  - Card gets green tint + ring when `isInTray`: `bg-green-50/40 dark:bg-green-900/10 ring-2 ring-green-400/40`
+  - Add button becomes green with checkmark icon + "Added" text when `isInTray`
+  - Pulse animation on re-add via `useEffect` + `useRef` tracking previous quantity
+  - Reverts automatically when item removed from tray (context-driven state)
+
+### Patterns discovered
+- `useTray()` already exposes `items` array — no context changes needed
+- Pulse animation: track prev quantity with `useRef`, trigger `animate-pulse` for 600ms on increment
+
+### Gotchas
+- `Check` icon from lucide-react replaces `Plus` icon when in tray
+- `prd.json` write requires `encoding='utf-8'` on Windows

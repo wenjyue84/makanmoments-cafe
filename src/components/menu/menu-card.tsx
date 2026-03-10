@@ -1,9 +1,9 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Info } from "lucide-react";
+import { Plus, Check, Info } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import type { MenuItemWithRules } from "@/types/menu";
 import { formatPrice, getLocalizedName } from "@/lib/utils";
@@ -20,16 +20,36 @@ interface MenuCardProps {
 export function MenuCard({ item, priority = false, isHighlighted = false }: MenuCardProps) {
   const locale = useLocale();
   const tc = useTranslations("common");
-  const { addItem } = useTray();
+  const { addItem, items } = useTray();
   const name = getLocalizedName(item, locale);
   const [imgError, setImgError] = useState(false);
   const [recipeOpen, setRecipeOpen] = useState(false);
+  const [pulsing, setPulsing] = useState(false);
+  const prevQuantityRef = useRef<number>(0);
   const hasPhoto = !!item.code && !imgError;
   const hasRecipe = !!getRecipeInfo(item.nameEn);
 
+  const trayItem = items.find((i) => i.id === item.code);
+  const isInTray = !!trayItem;
+
+  // Pulse when quantity increases (re-add)
+  useEffect(() => {
+    const qty = trayItem?.quantity ?? 0;
+    if (qty > prevQuantityRef.current && prevQuantityRef.current > 0) {
+      setPulsing(true);
+      const t = setTimeout(() => setPulsing(false), 600);
+      return () => clearTimeout(t);
+    }
+    prevQuantityRef.current = qty;
+  }, [trayItem?.quantity]);
+
+  const cardClass = isInTray
+    ? `group rounded-xl border p-4 hover-lift transition-colors bg-green-50/40 dark:bg-green-900/10 ring-2 ring-green-400/40 ${isHighlighted ? "border-amber-400" : "border-green-300/60"}`
+    : `group rounded-xl border bg-card p-4 hover-lift ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-border"}`;
+
   return (
     <>
-      <div className={`group rounded-xl border bg-card p-4 hover-lift ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-border"}`}>
+      <div className={cardClass}>
         {/* Photo — clickable only when recipe data exists */}
         <div
           className={`mb-3 relative aspect-[4/3] overflow-hidden rounded-lg bg-muted ${hasRecipe ? "cursor-pointer" : ""}`}
@@ -113,10 +133,14 @@ export function MenuCard({ item, priority = false, isHighlighted = false }: Menu
           <button
             type="button"
             onClick={() => addItem({ id: item.code, name, price: item.price })}
-            className="flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+            className={`flex min-h-[36px] items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold transition-colors ${
+              isInTray
+                ? `bg-green-500 text-white hover:bg-green-600 ${pulsing ? "animate-pulse" : ""}`
+                : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
+            }`}
           >
-            <Plus className="h-4 w-4" />
-            {tc("add")}
+            {isInTray ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {isInTray ? tc("added") : tc("add")}
           </button>
         </div>
       </div>
