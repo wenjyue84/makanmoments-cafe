@@ -13649,3 +13649,6 @@ This story requires running automated or manual browser tests on critical pages 
 - Welcome splash modal on /en/menu uses `aria-label="Welcome splash"` and blocks pointer events to underlying elements — must dismiss before clicking chat widget
 - `AiWaiterPage` renders iframe only when status === "online" — correct pattern; health check is the gatekeeper
 - next.config.ts CSP was already being refactored when this story ran (file was modified by another tool before edit)
+## Iteration 7 - Wed, Mar 11, 2026  3:40:17 AM
+Completed: Browser Test All Key Pages and Fix Errors (ID: US-145) in 11m
+
