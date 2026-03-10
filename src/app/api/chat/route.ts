@@ -137,7 +137,7 @@ export async function POST(req: Request) {
       system: systemPrompt,
       messages: modelMessages,
       temperature: settings.temperature,
-      stopWhen: stepCountIs(2),
+      stopWhen: stepCountIs(3),
       tools: toolSet,
     }).toUIMessageStreamResponse();
   }
@@ -147,28 +147,38 @@ export async function POST(req: Request) {
   // The server emits ONE authoritative start event, then strips start from both model streams
   // so the client never sees a duplicate start event regardless of which model responds.
   const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
   const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
   const writer = writable.getWriter();
 
   // Pipe a model stream to the writer, stripping the top-level start event (already emitted).
   // Returns true if an error event was encountered (signals: try fallback).
+  // Parses at the SSE-event level (split on \n\n) so a chunk containing both
+  // {"type":"start"} and {"type":"start-step"} only drops the start event,
+  // not the entire chunk — fixing DefaultChatTransport getting stuck in loading.
   async function pipeStream(response: Response): Promise<boolean> {
     const reader = response.body!.getReader();
+    const dec = new TextDecoder();
+    let buf = "";
     try {
       while (true) {
         const { done, value } = await reader.read();
         if (done) return false;
-        const text = decoder.decode(value, { stream: true });
-        if (text.includes('"type":"error"')) {
-          console.warn("[chat] Stream error — switching to fallback");
-          return true;
+        buf += dec.decode(value, { stream: true });
+        // Split on SSE event delimiter; keep any incomplete trailing event in buf
+        const parts = buf.split("\n\n");
+        buf = parts.pop() ?? "";
+        for (const part of parts) {
+          if (!part.trim()) continue;
+          if (part.includes('"type":"error"')) {
+            console.warn("[chat] Stream error — switching to fallback");
+            return true;
+          }
+          // Strip the model's own start event (server already emitted one)
+          if (part.includes('"type":"start"') && !part.includes('"type":"start-step"')) {
+            continue;
+          }
+          await writer.write(encoder.encode(part + "\n\n"));
         }
-        // Strip the model's own start event (server already emitted one)
-        if (text.includes('"type":"start"') && !text.includes('"type":"start-step"')) {
-          continue;
-        }
-        await writer.write(value);
       }
     } finally {
       reader.releaseLock();

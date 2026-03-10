@@ -67,14 +67,24 @@ export async function checkOrderStatusHandler(orderId: string): Promise<string> 
     Date.now() - new Date(row.created_at).getTime() > 30 * 60 * 1000
   ) {
     await sql`UPDATE tray_orders SET status = 'expired' WHERE id = ${id}`;
-    return JSON.stringify({ id, status: "expired" });
+    return JSON.stringify({ message: `Order ID ${orderId} has expired — no payment was received within 30 minutes.` });
   }
 
-  return JSON.stringify({
-    id: row.id,
-    status: row.status,
-    estimatedReady: row.estimated_ready ?? null,
-  });
+  const statusMessages: Record<string, string> = {
+    pending_approval: "Your order is waiting for the cafe to confirm it.",
+    approved: "Your order has been confirmed! Please proceed to make your T&G deposit.",
+    payment_pending: "Your order is awaiting payment.",
+    payment_uploaded: "Your payment screenshot has been received. The kitchen will start preparing soon.",
+    preparing: "The kitchen is preparing your order right now!",
+    ready: "Your order is ready — come on in!",
+    rejected: "Unfortunately your order was not accepted. Please contact the cafe directly.",
+    seen: "Your order has been seen by the cafe.",
+  };
+
+  const statusMessage = statusMessages[row.status] ?? `Order status: ${row.status}`;
+  const readyNote = row.estimated_ready ? ` Estimated ready time: ${new Date(row.estimated_ready).toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" })}.` : "";
+
+  return JSON.stringify({ message: `Order #${row.id}: ${statusMessage}${readyNote}` });
 }
 
 /**
