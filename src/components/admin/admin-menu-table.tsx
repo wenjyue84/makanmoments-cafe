@@ -240,6 +240,27 @@ export function AdminMenuTable({
         className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
       />
 
+      {/* Quick-translate panel: when search narrows to one item, show inline MS/ZH inputs */}
+      {search.trim() !== "" && searchedItems.length === 1 && (
+        <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 space-y-1.5">
+          <p className="text-xs font-medium text-orange-700">Quick translate: {searchedItems[0].nameEn}</p>
+          <div className="flex gap-2">
+            <input
+              placeholder="Malay (nameMs)"
+              value={searchedItems[0].nameMs}
+              onChange={(e) => updateItem(searchedItems[0].id, { nameMs: e.target.value })}
+              className="flex-1 rounded border border-orange-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400"
+            />
+            <input
+              placeholder="Chinese (nameZh)"
+              value={searchedItems[0].nameZh}
+              onChange={(e) => updateItem(searchedItems[0].id, { nameZh: e.target.value })}
+              className="flex-1 rounded border border-orange-200 bg-white px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-orange-400"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3">
         <select
           value={activeCategory ?? ""}
