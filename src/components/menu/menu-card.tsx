@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Check, Info, Heart } from "lucide-react";
+import { Plus, Minus, Info, Heart } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import type { MenuItemWithRules } from "@/types/menu";
 import { formatPrice, getLocalizedName, cn } from "@/lib/utils";
@@ -23,7 +23,7 @@ interface MenuCardProps {
 export function MenuCard({ item, priority = false, isHighlighted = false, isFavorited = false, onToggleFavorite }: MenuCardProps) {
   const locale = useLocale();
   const tc = useTranslations("common");
-  const { addItem, items } = useTray();
+  const { addItem, decrementItem, items } = useTray();
   const name = getLocalizedName(item, locale);
   const [imgError, setImgError] = useState(false);
   const [recipeOpen, setRecipeOpen] = useState(false);
@@ -135,21 +135,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
 
         {/* Content */}
         <div className="space-y-1.5">
-          <div className="space-y-0.5">
-            <h3 className="font-semibold leading-snug">{name}</h3>
-            <span className="block text-sm font-bold text-primary">
-              {item.originalPrice ? (
-                <>
-                  <s className="text-muted-foreground text-xs font-normal mr-1">
-                    {formatPrice(item.originalPrice)}
-                  </s>
-                  {formatPrice(item.price)}
-                </>
-              ) : (
-                formatPrice(item.price)
-              )}
-            </span>
-          </div>
+          <h3 className="font-semibold leading-snug">{name}</h3>
           {item.description && (
             <p className="line-clamp-2 text-sm text-muted-foreground">
               {item.description}
@@ -164,25 +150,67 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
           )}
         </div>
 
-        <div className="mt-3 flex items-center justify-end border-t pt-3">
-          <button
-            type="button"
-            onClick={() => {
-              addItem({ id: item.code, name, price: item.price });
-              setAddScaling(true);
-              setTimeout(() => setAddScaling(false), 150);
-            }}
-            className={cn(
-              "flex min-h-[44px] items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold transition-all",
-              addScaling ? "scale-110" : "scale-100",
-              isInTray
-                ? `bg-green-500 text-white hover:bg-green-600 ${pulsing ? "animate-pulse" : ""}`
-                : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
+        {/* Price + Action row */}
+        <div className="mt-3 flex items-center justify-between border-t pt-3">
+          <span className="text-sm font-bold text-primary">
+            {item.originalPrice ? (
+              <>
+                <s className="text-muted-foreground text-xs font-normal mr-1">
+                  {formatPrice(item.originalPrice)}
+                </s>
+                {formatPrice(item.price)}
+              </>
+            ) : (
+              formatPrice(item.price)
             )}
-          >
-            {isInTray ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-            {isInTray ? tc("added") : tc("add")}
-          </button>
+          </span>
+
+          {isInTray ? (
+            <div className={cn("flex items-center gap-1", pulsing ? "animate-pulse" : "")}>
+              <button
+                type="button"
+                onClick={() => decrementItem(item.code)}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                aria-label="Remove one"
+              >
+                <Minus className="h-4 w-4" />
+              </button>
+              <span className="w-6 text-center text-sm font-semibold tabular-nums">
+                {trayItem?.quantity}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  addItem({ id: item.code, name, price: item.price });
+                  setAddScaling(true);
+                  setTimeout(() => setAddScaling(false), 150);
+                }}
+                className={cn(
+                  "flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all hover:bg-primary/90",
+                  addScaling ? "scale-110" : "scale-100"
+                )}
+                aria-label="Add one more"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                addItem({ id: item.code, name, price: item.price });
+                setAddScaling(true);
+                setTimeout(() => setAddScaling(false), 150);
+              }}
+              className={cn(
+                "flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground",
+                addScaling ? "scale-110" : "scale-100"
+              )}
+              aria-label={tc("add")}
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          )}
         </div>
       </div>
 

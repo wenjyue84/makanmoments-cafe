@@ -6634,3 +6634,57 @@ This is a **frontend task** involving React, TypeScript, and Tailwind CSS, not F
 *   **Accessibility:** Add an `aria-label` (e.g., "Add to tray") to the icon-only buttons for screen readers.
 *   **State Logic:** The core challenge is correctly reading the item quantity from the global state and calling the right increment/decrement functions.
 
+## Iteration 20 - Tue, Mar 10, 2026  5:35:22 PM
+Completed: AI Waiter: Proactive Greetings and Item Promotion (ID: US-073) in 7m
+
+
+## Pre-analysis for US-074 (Gemini 2.5 Pro)
+This is a technical brief for a **Next.js/TypeScript** implementation, not Frappe/Python as mentioned in the prompt. The user story JSON clearly details a frontend change.
+
+---
+
+**To:** Claude Code Agent
+**From:** Gemini Assistant
+**Subject:** Technical Brief for US-074: Compact Menu 'Add' Button
+
+**1. Files to Modify:**
+*   `src/components/menu/menu-card.tsx`: Primary component for menu items.
+*   `src/components/home/chef-pick-card.tsx`: Component for featured chef picks.
+*   `src/components/home/highlights.tsx`: May reuse the above cards, but verify if it has its own unique 'Add' button implementation.
+
+**2. Key Components Involved:**
+*   React Components: `MenuCard`, `ChefPickCard`.
+*   State Management: The logic will depend on the existing "tray" or "cart" state hook to get item quantity.
+*   Icons: `lucide-react` for `Plus` and `Minus` icons.
+
+**3. Implementation Approach:**
+*   In `menu-card.tsx` and `chef-pick-card.tsx`, find the `div` containing the price and `+Add` button.
+*   Replace the `<button>` containing `+Add` with a new icon button using the `Plus` icon.
+*   Wrap both the price `<span>` and the new button in a `div` with `className="flex items-center justify-between ..."` to align them on one row.
+*   Implement conditional rendering based on the item's quantity in the cart:
+    *   If quantity is 0, display the `+` icon button.
+    *   If quantity > 0, display a quantity stepper component (`<button>- | <span>{qty}</span> | <button>+`).
+*   Ensure the button's touch target is at least `44x44px` by using padding (e.g., `w-9 h-9` with padding is sufficient).
+
+**4. Gotchas & Edge Cases:**
+*   **State:** The components must correctly subscribe to the cart/tray state to trigger the re-render between the `+` button and the quantity stepper.
+*   **Responsiveness:** Double-check the layout at a narrow width (390px) to ensure the price and icon button do not stack vertically.
+*   **Component Re-use:** `highlights.tsx` likely reuses one of the card components. If so, changes will apply automatically. If not, it will need the same refactoring.
+
+
+## Iteration N - Story: US-074 - Menu Card: Replace '+Add' with Compact '+' Icon Aligned with Price
+
+### What was implemented
+- Added `decrementItem(id)` to TrayContext — reduces qty by 1, removes item if qty reaches 0
+- Updated MenuCard: price moved into bottom row (left), compact circular `+` button (right, 36px h/w = h-9 w-9)
+- When item is in tray, MenuCard shows `- N +` stepper inline on the price row
+- Updated ChefPickCard with same pattern — price + compact action on same row
+- Removed text labels ("Add", "Added") from both cards; icon-only buttons with aria-label
+
+### Patterns discovered
+- TrayContext `removeItem` deletes the item entirely; new `decrementItem` decrements properly
+- Pre-existing lint error in menu-card.tsx useEffect (setPulsing inside effect) — NOT introduced by this change, pre-existing
+
+### Gotchas
+- menu-card.tsx has a pre-existing lint error (react-hooks/set-state-in-effect at line 44) that existed before this story
+- `tc` (useTranslations("common")) still needed in MenuCard for aria-label (`tc("add")`) even after removing text labels

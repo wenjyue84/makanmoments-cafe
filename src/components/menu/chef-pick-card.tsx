@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Info } from "lucide-react";
+import { Plus, Minus, Info } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import type { MenuItemWithRules } from "@/types/menu";
 import { formatPrice, getLocalizedName } from "@/lib/utils";
@@ -19,10 +19,12 @@ interface ChefPickCardProps {
 export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
   const locale = useLocale();
   const tc = useTranslations("common");
-  const { addItem } = useTray();
+  const { addItem, decrementItem, items } = useTray();
   const name = getLocalizedName(item, locale);
   const [imgError, setImgError] = useState(false);
   const [recipeOpen, setRecipeOpen] = useState(false);
+  const trayItem = items.find((i) => i.id === item.code);
+  const isInTray = !!trayItem;
   const hasPhoto = !!item.code && !imgError;
   const hasRecipe = !!getRecipeInfo(item.nameEn);
   const imgVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
@@ -81,21 +83,7 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
 
         {/* Content */}
         <div className="p-4 sm:p-5">
-          <div className="space-y-0.5">
-            <h3 className="text-xl font-bold leading-snug">{name}</h3>
-            <span className="block text-base font-bold text-primary">
-              {item.originalPrice ? (
-                <>
-                  <s className="mr-1 text-sm font-normal text-muted-foreground">
-                    {formatPrice(item.originalPrice)}
-                  </s>
-                  {formatPrice(item.price)}
-                </>
-              ) : (
-                formatPrice(item.price)
-              )}
-            </span>
-          </div>
+          <h3 className="text-xl font-bold leading-snug">{name}</h3>
 
           {item.description && (
             <p className="mt-1.5 line-clamp-3 text-base text-muted-foreground">
@@ -111,15 +99,53 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
             </div>
           )}
 
-          <div className="mt-4 flex justify-end">
-            <button
-              type="button"
-              onClick={() => addItem({ id: item.code, name, price: item.price })}
-              className="flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-            >
-              <Plus className="h-4 w-4" />
-              {tc("add")}
-            </button>
+          {/* Price + Action row */}
+          <div className="mt-4 flex items-center justify-between border-t pt-3">
+            <span className="text-base font-bold text-primary">
+              {item.originalPrice ? (
+                <>
+                  <s className="mr-1 text-sm font-normal text-muted-foreground">
+                    {formatPrice(item.originalPrice)}
+                  </s>
+                  {formatPrice(item.price)}
+                </>
+              ) : (
+                formatPrice(item.price)
+              )}
+            </span>
+
+            {isInTray ? (
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => decrementItem(item.code)}
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                  aria-label="Remove one"
+                >
+                  <Minus className="h-4 w-4" />
+                </button>
+                <span className="w-7 text-center text-base font-semibold tabular-nums">
+                  {trayItem?.quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => addItem({ id: item.code, name, price: item.price })}
+                  className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90"
+                  aria-label="Add one more"
+                >
+                  <Plus className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => addItem({ id: item.code, name, price: item.price })}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                aria-label={tc("add")}
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            )}
           </div>
         </div>
       </div>
