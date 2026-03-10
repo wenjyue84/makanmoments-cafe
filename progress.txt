@@ -8834,3 +8834,6 @@ This is a technical brief for a TypeScript/Next.js project, based on the `techni
 
 ### Gotchas
 - US-090 already split menu into two sections; US-092 was purely an instruction/rule update in the system prompt
+## Iteration 58 - Tue, Mar 10, 2026  7:28:19 PM
+Completed: AI Waiter: Inject Live DB Menu into System Prompt (Replace Static knowledge/menu-knowledge.md) (ID: US-090) in 3m
+
