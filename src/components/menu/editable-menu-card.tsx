@@ -16,6 +16,7 @@ interface EditableMenuCardProps {
   priority?: boolean;
   isHighlighted?: boolean;
   onSetHighlight?: () => void;
+  onRemoveChefsPick?: () => void;
   isUnavailableAtPreview?: boolean;
 }
 
@@ -38,6 +39,7 @@ export function EditableMenuCard({
   priority = false,
   isHighlighted = false,
   onSetHighlight,
+  onRemoveChefsPick,
   isUnavailableAtPreview = false,
 }: EditableMenuCardProps) {
   const locale = useLocale();
@@ -343,9 +345,20 @@ export function EditableMenuCard({
           )}
 
           {isHighlighted && (
-            <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-amber-900 shadow">
-              ★ Chef&apos;s Pick
-            </span>
+            onRemoveChefsPick ? (
+              <button
+                type="button"
+                onClick={onRemoveChefsPick}
+                className="absolute left-2 top-2 rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-amber-900 shadow hover:bg-red-500 hover:text-white transition-colors"
+                title="Click to remove from Chef's Picks"
+              >
+                ★ Chef&apos;s Pick ×
+              </button>
+            ) : (
+              <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-amber-900 shadow">
+                ★ Chef&apos;s Pick
+              </span>
+            )
           )}
           {!isHighlighted && localItem.featured && (
             <span className="absolute left-2 top-2 rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">

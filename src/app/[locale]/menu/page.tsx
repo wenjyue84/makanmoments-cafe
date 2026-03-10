@@ -46,9 +46,9 @@ export default async function MenuPage({
   ]);
 
   const highlightedByCategory = computeEffectiveHighlights(items, persistedHighlights);
-  const displayCategoryNames = displayCats
-    .filter((dc) => dc.active)
-    .map((dc) => dc.name);
+  const activeDisplayCats = displayCats.filter((dc) => dc.active);
+  const displayCategoryNames = activeDisplayCats.map((dc) => dc.name);
+  const chefsCatId = activeDisplayCats.find((dc) => dc.name.toLowerCase().includes("chef"))?.id?.toString() ?? null;
 
   const initialCategory = getDefaultCategoryForTime(previewTime);
   const servingNowCategories = getServingNowCategories(previewTime);
@@ -73,6 +73,7 @@ export default async function MenuPage({
           initialCategory={initialCategory}
           servingNowCategories={servingNowCategories}
           previewTime={previewTime}
+          chefsCatId={chefsCatId}
         />
       </div>
     </>
