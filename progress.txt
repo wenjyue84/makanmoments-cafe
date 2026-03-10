@@ -847,3 +847,52 @@ Okay, I've analyzed the user story. It looks like this is a **Next.js/React** ta
     *   **Layout Shift:** Ensure the new element doesn't push the hamburger menu or logo, causing a layout shift, especially on narrow screens (e.g., 390px). Use flexbox properties carefully.
     *   **State & Interactivity:** The dropdown/modal for the language selector must not conflict with the mobile navigation drawer's state or overlay.
 
+## Iteration 2 - Tue, Mar 10, 2026 10:33:14 AM
+Completed: Mobile-First Bottom Navigation: Category Filter and Search at Bottom (ID: US-012) in 4m
+
+
+## Pre-analysis for US-013 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript frontend**, not Frappe/Python. The implementation will involve modifying React components and using Tailwind CSS for styling.
+
+Here is the technical brief for the frontend developer:
+
+**Objective:** Replace the dark/light theme toggle with a language selector in the mobile header, moving the theme toggle into the mobile navigation drawer.
+
+**1. Primary Files to Modify:**
+*   `src/components/layout/header.tsx`: This is the main file controlling the header's structure for both mobile and desktop.
+*   `src/components/layout/mobile-nav.tsx` (or equivalent): The component for the slide-out drawer menu that contains the navigation links on mobile.
+*   `src/components/ui/locale-switcher.tsx`: The language selector component. It may need a new compact variant.
+
+**2. Key Components & Hooks:**
+*   **React Components:** `Header`, `ThemeToggle`, `LocaleSwitcher`, `MobileNav`.
+*   **Hooks:** This task will primarily use responsive hooks/utility classes from Tailwind CSS (e.g., `md:hidden`, `hidden md:flex`) to render different layouts for mobile and desktop.
+
+**3. Recommended Implementation Approach:**
+1.  In `src/components/layout/header.tsx`, locate the JSX rendered for the mobile view (`< 768px`).
+2.  Remove the `<ThemeToggle />` component from this mobile header section.
+3.  Add the `<LocaleSwitcher />` component just before the hamburger menu button. Apply styles to ensure it's compact (e.g., showing "EN" instead of "English").
+4.  Open the component file for the mobile navigation drawer (e.g., `src/components/layout/mobile-nav.tsx`).
+5.  Add the `<ThemeToggle />` component to the list of items within this drawer.
+
+**4. Edge Cases & Gotchas:**
+*   **Layout Shift:** Ensure adding the language selector doesn't push the logo or hamburger icon undesirably. Use `flexbox` with `justify-between` to manage alignment.
+*   **Compact Variant:** The existing `LocaleSwitcher` might be too wide for the mobile header. You may need to add a `variant` prop or use CSS to create a more compact version (e.g., showing flags or 2-letter codes).
+*   **Breakpoint Consistency:** Double-check that the changes are strictly constrained to the mobile breakpoint (`max-w-md` or equivalent) and that the desktop navigation bar remains entirely unchanged.
+*   **Accessibility:** Ensure the new language selector button is properly labeled for screen readers and has an adequate tap target size (min `44x44px`).
+
+
+## Iteration N - Story: US-013 - Mobile Header: Language Selector Beside Hamburger, Replace Dark/Light Toggle
+
+### What was implemented
+- Added `mobileLangOpen` state to `src/components/layout/header.tsx`
+- Replaced `<ThemeToggle />` in mobile controls with a compact language selector (Globe icon + locale code label) + dropdown
+- Added `ThemeToggle` inside the mobile drawer bottom section (alongside existing language buttons)
+- Added `setMobileLangOpen(false)` to Escape key handler
+
+### Patterns discovered
+- Desktop nav (`md:flex`) and mobile controls (`md:hidden`) are separate JSX blocks — easy to modify independently
+- Mobile drawer bottom section uses a flex row for language buttons; ThemeToggle renders naturally alongside them
+
+### Gotchas
+- `switchLocale()` already calls `setLangOpen(false)` (desktop) — mobile version needs `setMobileLangOpen(false)` separately
+- The mobile lang dropdown uses `z-50` to float above the header border

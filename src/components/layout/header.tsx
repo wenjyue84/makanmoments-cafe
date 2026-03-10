@@ -29,6 +29,7 @@ export function Header() {
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
+  const [mobileLangOpen, setMobileLangOpen] = useState(false);
 
   // /harden: Close mobile menu and lang picker on Escape key
   useEffect(() => {
@@ -36,6 +37,7 @@ export function Header() {
       if (e.key === "Escape") {
         setMobileOpen(false);
         setLangOpen(false);
+        setMobileLangOpen(false);
       }
     }
     document.addEventListener("keydown", handleEscape);
@@ -107,18 +109,47 @@ export function Header() {
 
         {/* Mobile controls */}
         <div className="flex items-center gap-1 md:hidden">
-          <ThemeToggle />
+          {/* Compact language selector — replaces ThemeToggle in mobile header */}
+          <div className="relative">
+            <button
+              onClick={() => setMobileLangOpen(!mobileLangOpen)}
+              aria-label="Switch language"
+              className="flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+            >
+              <Globe className="h-4 w-4" />
+              <span className="text-xs font-semibold">{LOCALE_LABELS[locale]}</span>
+            </button>
+            {mobileLangOpen && (
+              <div className="absolute right-0 top-full z-50 mt-1 w-20 rounded-md border border-border bg-popover p-1 shadow-md">
+                {Object.entries(LOCALE_LABELS).map(([loc, label]) => (
+                  <button
+                    key={loc}
+                    onClick={() => {
+                      switchLocale(loc);
+                      setMobileLangOpen(false);
+                    }}
+                    className={cn(
+                      "block w-full rounded-sm px-3 py-1.5 text-left text-sm transition-colors hover:bg-accent",
+                      locale === loc && "bg-accent font-medium"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <button
             className="rounded-md p-2"
             onClick={() => setMobileOpen(!mobileOpen)}
             aria-label="Toggle menu"
             aria-expanded={mobileOpen}
-        >
-          {mobileOpen ? (
-            <X className="h-5 w-5" />
-          ) : (
-            <Menu className="h-5 w-5" />
-          )}
+          >
+            {mobileOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </button>
         </div>
       </div>
@@ -142,7 +173,8 @@ export function Header() {
                 {t(item.key)}
               </Link>
             ))}
-            <div className="mt-2 flex gap-2 border-t border-border pt-2">
+            <div className="mt-2 flex items-center gap-2 border-t border-border pt-2">
+              <ThemeToggle />
               {Object.entries(LOCALE_LABELS).map(([loc, label]) => (
                 <button
                   key={loc}
