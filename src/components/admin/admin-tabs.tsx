@@ -58,6 +58,7 @@ const AdminOrdersPanel = dynamic(
 interface AdminTabsProps {
   items: MenuItemWithRules[];
   categories: string[];
+  displayCategories: string[];
   posts: BlogPost[];
 }
 
@@ -105,7 +106,7 @@ const SLUG_TO_TAB: Record<string, Tab> = {
   settings: "Settings",
 };
 
-export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
+export function AdminTabs({ items, categories, displayCategories, posts }: AdminTabsProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -207,7 +208,7 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
         <main className="flex-1 p-6">
           {activeTab === "Orders" && <AdminOrdersPanel />}
           {activeTab === "Menu" && (
-            <AdminMenuTable initialItems={items} categories={categories} />
+            <AdminMenuTable initialItems={items} categories={categories} displayCategories={displayCategories} />
           )}
           {activeTab === "Categories" && (
             <AdminCategoriesPanel initialCategories={categories} allItems={items} />

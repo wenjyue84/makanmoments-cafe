@@ -5,19 +5,7 @@ import Image from "next/image";
 import type { MenuItemWithRules } from "@/types/menu";
 import { cn } from "@/lib/utils";
 import { ImagePickerModal } from "./image-picker-modal";
-import {
-  DndContext,
-  DragOverlay,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-  useDraggable,
-  useDroppable,
-  type DragEndEvent,
-  type DragStartEvent,
-} from "@dnd-kit/core";
-import { GripVertical, ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 const MISSING_PHOTOS_DISMISSED_KEY = "admin_missing_photos_dismissed";
 
@@ -42,63 +30,10 @@ const DIETARY_OPTIONS = ["Spicy", "Vegetarian", "Vegan", "Gluten Free"];
 interface AdminMenuTableProps {
   initialItems: MenuItemWithRules[];
   categories: string[];
+  displayCategories?: string[];
 }
 
 type EditableItem = MenuItemWithRules & { _dirty?: boolean; _new?: boolean };
-
-// — DnD helper components (must be top-level for stable references) —
-
-function DraggableHandle({
-  itemId,
-  sourceCategory,
-  nameEn,
-}: {
-  itemId: string;
-  sourceCategory: string;
-  nameEn: string;
-}) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `${itemId}::${sourceCategory}`,
-    data: { itemId, sourceCategory, nameEn },
-  });
-  return (
-    <button
-      ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      className={cn(
-        "cursor-grab touch-none rounded p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 active:cursor-grabbing",
-        isDragging && "opacity-40"
-      )}
-      aria-label="Drag to move to another category"
-    >
-      <GripVertical size={14} />
-    </button>
-  );
-}
-
-function DroppableCategoryLabel({
-  category,
-  label,
-}: {
-  category: string;
-  label: string;
-}) {
-  const { setNodeRef, isOver } = useDroppable({ id: category });
-  return (
-    <div
-      ref={setNodeRef}
-      className={cn(
-        "rounded px-2 py-1.5 text-xs font-semibold uppercase tracking-wide transition-colors select-none",
-        isOver
-          ? "bg-orange-200 text-orange-800 ring-2 ring-orange-400"
-          : "bg-gray-100 text-gray-600"
-      )}
-    >
-      {isOver ? `↓ Drop to move here` : label}
-    </div>
-  );
-}
 
 // — Grouping helper —
 
@@ -127,9 +62,49 @@ function groupByPrimaryCategory(
   return result;
 }
 
+// Helper: filter items by display category name (handles special computed cats)
+function filterByDisplayCat(item: EditableItem, dc: string): boolean {
+  const lc = dc.toLowerCase();
+  if (lc.includes("rm15"))
+    return (
+      item.price < 15 &&
+      !item.displayCategories.some(
+        (d) => d === "Hot Drinks" || d === "Cold Drinks & Juice"
+      )
+    );
+  if (lc.includes("vegetarian"))
+    return item.dietary?.some((d) => d.toLowerCase() === "vegetarian") ?? false;
+  return item.displayCategories.includes(dc);
+}
+
+// Group items by their first display category
+function groupByDisplayCategory(
+  items: EditableItem[],
+  displayCategories: string[]
+): { cat: string; label: string; items: EditableItem[] }[] {
+  const catMap = new Map<string, EditableItem[]>();
+  for (const dc of displayCategories) catMap.set(dc, []);
+  catMap.set("__none__", []);
+
+  for (const item of items) {
+    const primaryDC = item.displayCategories[0] ?? "__none__";
+    if (!catMap.has(primaryDC)) catMap.set(primaryDC, []);
+    catMap.get(primaryDC)!.push(item);
+  }
+
+  return [...catMap.entries()]
+    .map(([cat, catItems]) => ({
+      cat,
+      label: cat === "__none__" ? "Uncategorized" : cat,
+      items: catItems,
+    }))
+    .filter(({ cat: filterCat, items: catItems }) => catItems.length > 0 || displayCategories.includes(filterCat));
+}
+
 export function AdminMenuTable({
   initialItems,
   categories,
+  displayCategories = [],
 }: AdminMenuTableProps) {
   const [items, setItems] = useState<EditableItem[]>(initialItems);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -141,14 +116,8 @@ export function AdminMenuTable({
   const [photoAlertDismissed, setPhotoAlertDismissed] = useState(false);
   const [isAlertExpanded, setIsAlertExpanded] = useState(false);
   const [highlightedCode, setHighlightedCode] = useState<string | null>(null);
-  const [activeDrag, setActiveDrag] = useState<{ itemId: string; nameEn: string } | null>(null);
   const [suggesting, setSuggesting] = useState<Record<string, boolean>>({});
   const [search, setSearch] = useState("");
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
-  );
 
   useEffect(() => {
     const dismissed = sessionStorage.getItem(MISSING_PHOTOS_DISMISSED_KEY);
@@ -322,69 +291,6 @@ export function AdminMenuTable({
     updateItem(item.id, { categories: cats });
   }
 
-  function handleDragStart(event: DragStartEvent) {
-    const data = event.active.data.current as { itemId: string; nameEn: string; sourceCategory: string };
-    setActiveDrag({ itemId: data.itemId, nameEn: data.nameEn });
-  }
-
-  async function handleDragEnd(event: DragEndEvent) {
-    setActiveDrag(null);
-    const { active, over } = event;
-    if (!over) return;
-
-    const { itemId, sourceCategory } = active.data.current as {
-      itemId: string;
-      sourceCategory: string;
-      nameEn: string;
-    };
-    const targetCategory = over.id as string;
-    if (sourceCategory === targetCategory) return;
-
-    const item = items.find((i) => i.id === itemId);
-    if (!item) return;
-
-    let newCategories: string[];
-    if (sourceCategory === "__none__") {
-      // Item was uncategorized — add targetCategory
-      newCategories = [...item.categories, targetCategory];
-    } else if (targetCategory === "__none__") {
-      // Dropping to uncategorized — remove source category
-      newCategories = item.categories.filter((c) => c !== sourceCategory);
-    } else {
-      // Move from one category to another
-      newCategories = item.categories.filter((c) => c !== sourceCategory);
-      if (!newCategories.includes(targetCategory)) {
-        newCategories = [...newCategories, targetCategory];
-      }
-    }
-
-    const originalCategories = item.categories;
-    // Optimistic update
-    setItems((prev) =>
-      prev.map((i) =>
-        i.id === itemId ? { ...i, categories: newCategories, _dirty: false } : i
-      )
-    );
-
-    // Persist
-    try {
-      const res = await fetch(`/api/admin/menu/${itemId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ categories: newCategories }),
-      });
-      if (!res.ok) throw new Error("Failed");
-    } catch {
-      // Revert on failure
-      setItems((prev) =>
-        prev.map((i) =>
-          i.id === itemId ? { ...i, categories: originalCategories } : i
-        )
-      );
-      setError("Failed to move item. Please try again.");
-    }
-  }
-
   const searchedItems =
     search === ""
       ? items
@@ -394,11 +300,19 @@ export function AdminMenuTable({
           )
         );
 
+  const DC_PREFIX = "__dc__";
+  const isDisplayCatFilter = !!(activeCategory?.startsWith(DC_PREFIX));
+  const selectedDcName = isDisplayCatFilter ? activeCategory!.slice(DC_PREFIX.length) : null;
+
   const filteredItems = activeCategory
-    ? searchedItems.filter((i) => i.categories.includes(activeCategory))
+    ? isDisplayCatFilter
+      ? searchedItems.filter((i) => filterByDisplayCat(i, selectedDcName!))
+      : searchedItems.filter((i) => i.categories.includes(activeCategory))
     : searchedItems;
 
-  const groupedItems = groupByPrimaryCategory(searchedItems, categories);
+  const groupedItems = displayCategories.length > 0
+    ? groupByDisplayCategory(searchedItems, displayCategories)
+    : groupByPrimaryCategory(searchedItems, categories);
 
   return (
     <div className="space-y-4">
@@ -460,23 +374,34 @@ export function AdminMenuTable({
           className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
         >
           <option value="">All Categories ({items.length} items)</option>
-          {categories.map((cat) => {
-            const count = items.filter((i) => i.categories.includes(cat)).length;
-            return (
-              <option key={cat} value={cat}>
-                {cat} ({count} item{count !== 1 ? "s" : ""})
-              </option>
-            );
-          })}
+          {displayCategories.length > 0 && (
+            <optgroup label="Display Categories">
+              {displayCategories.map((dc) => {
+                const count = items.filter((i) => filterByDisplayCat(i, dc)).length;
+                return (
+                  <option key={`__dc__${dc}`} value={`__dc__${dc}`}>
+                    {dc} ({count} item{count !== 1 ? "s" : ""})
+                  </option>
+                );
+              })}
+            </optgroup>
+          )}
+          <optgroup label="POS Categories (internal)">
+            {categories.map((cat) => {
+              const count = items.filter((i) => i.categories.includes(cat)).length;
+              return (
+                <option key={cat} value={cat}>
+                  {cat} ({count} item{count !== 1 ? "s" : ""})
+                </option>
+              );
+            })}
+          </optgroup>
         </select>
         <h2 className="flex-1 text-lg font-semibold text-gray-900">
           {activeCategory
-            ? `${activeCategory} (${filteredItems.length} item${filteredItems.length !== 1 ? "s" : ""})`
+            ? `${selectedDcName ?? activeCategory} (${filteredItems.length} item${filteredItems.length !== 1 ? "s" : ""})`
             : `Menu Items (${items.length})`}
         </h2>
-        {activeCategory === null && (
-          <span className="text-xs text-gray-400 hidden sm:inline">Drag items between categories</span>
-        )}
         <button
           onClick={addNewRow}
           className="rounded-lg bg-orange-500 px-3 py-1.5 text-sm font-medium text-white hover:bg-orange-600"
@@ -492,196 +417,129 @@ export function AdminMenuTable({
       )}
 
       {activeCategory === null ? (
-        /* ——— DnD Grouped View (All Categories) ——— */
-        <DndContext
-          sensors={sensors}
-          onDragStart={handleDragStart}
-          onDragEnd={handleDragEnd}
-        >
-          {/* Mobile grouped DnD view */}
+        /* ——— Display Category Grouped View (All) ——— */
+        <>
+          {/* Mobile grouped view */}
           <div className="md:hidden space-y-4">
             {groupedItems.map(({ cat, label, items: groupItems }) => (
               <div key={cat} className="space-y-2">
-                <DroppableCategoryLabel
-                  category={cat}
-                  label={`${label} (${groupItems.length})`}
-                />
+                <div className="rounded px-2 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-50 text-amber-800 border border-amber-200">
+                  {label} ({groupItems.length})
+                </div>
                 {groupItems.length === 0 && (
-                  <p className="px-2 text-xs italic text-gray-400">
-                    No items — drag here to add
-                  </p>
+                  <p className="px-2 text-xs italic text-gray-400">No items</p>
                 )}
                 {groupItems.map((item) => (
-                  <div key={item.id} className="flex gap-1">
-                    <div className="flex items-start pt-3">
-                      <DraggableHandle
-                        itemId={item.id}
-                        sourceCategory={cat}
-                        nameEn={item.nameEn}
-                      />
-                    </div>
-                    <div
-                      id={item.code ? `menu-row-${item.code}` : undefined}
-                      className={cn(
-                        "flex-1 rounded-xl border p-4",
-                        highlightedCode === item.code
-                          ? "ring-2 ring-amber-400 bg-amber-50"
-                          : item.disabledByRule
-                            ? "bg-red-50/60"
-                            : item._dirty
-                              ? "bg-amber-50"
-                              : "bg-white"
-                      )}
-                    >
-                      <div className="flex gap-3">
-                        {/* Image */}
-                        <button
-                          onClick={() => item.code && setImagePickerCode(item.code)}
-                          disabled={!item.code}
-                          className="group relative h-16 w-20 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
-                          title={item.code ? `Change image for ${item.code}` : "Set code first"}
-                        >
-                          {item.code && (
-                            <Image
-                              src={`/images/menu/${item.code}.jpg?v=${imgVersion}`}
-                              alt={item.code}
-                              fill
-                              className="object-cover"
-                              sizes="80px"
-                              unoptimized
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).style.display = "none";
-                              }}
-                            />
-                          )}
-                        </button>
-
-                        {/* Key fields */}
-                        <div className="min-w-0 flex-1 space-y-1.5">
-                          <input
-                            value={item.code}
-                            onChange={(e) => updateItem(item.id, { code: e.target.value })}
-                            className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
-                            placeholder="CODE"
+                  <div
+                    key={item.id}
+                    id={item.code ? `menu-row-${item.code}` : undefined}
+                    className={cn(
+                      "rounded-xl border p-4",
+                      highlightedCode === item.code
+                        ? "ring-2 ring-amber-400 bg-amber-50"
+                        : item.disabledByRule
+                          ? "bg-red-50/60"
+                          : item._dirty
+                            ? "bg-amber-50"
+                            : "bg-white"
+                    )}
+                  >
+                    <div className="flex gap-3">
+                      {/* Image */}
+                      <button
+                        onClick={() => item.code && setImagePickerCode(item.code)}
+                        disabled={!item.code}
+                        className="group relative h-16 w-20 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
+                        title={item.code ? `Change image for ${item.code}` : "Set code first"}
+                      >
+                        {item.code && (
+                          <Image
+                            src={`/images/menu/${item.code}.jpg?v=${imgVersion}`}
+                            alt={item.code}
+                            fill
+                            className="object-cover"
+                            sizes="80px"
+                            unoptimized
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
                           />
-                          <div className="flex items-center gap-1">
-                            <input
-                              value={item.nameEn}
-                              onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
-                              className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
-                              placeholder="English name"
-                            />
-                            <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <input
-                              value={item.nameMs}
-                              onChange={(e) => updateItem(item.id, { nameMs: e.target.value })}
-                              className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs"
-                              placeholder="Malay name"
-                            />
-                            <button
-                              onClick={() => suggestTranslation(item, "ms")}
-                              disabled={!item.nameEn || suggesting[`${item.id}-ms`]}
-                              className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
-                              title="Suggest Malay translation"
-                            >
-                              {suggesting[`${item.id}-ms`] ? "…" : "✨"}
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <input
-                              value={item.nameZh}
-                              onChange={(e) => updateItem(item.id, { nameZh: e.target.value })}
-                              className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs"
-                              placeholder="Chinese name"
-                            />
-                            <button
-                              onClick={() => suggestTranslation(item, "zh")}
-                              disabled={!item.nameEn || suggesting[`${item.id}-zh`]}
-                              className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
-                              title="Suggest Chinese translation"
-                            >
-                              {suggesting[`${item.id}-zh`] ? "…" : "✨"}
-                            </button>
-                          </div>
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-xs text-gray-500">RM</span>
-                            <input
-                              type="number"
-                              step="0.1"
-                              min="0"
-                              value={item.originalPrice ?? item.price}
-                              onChange={(e) =>
-                                updateItem(item.id, { price: parseFloat(e.target.value) || 0 })
-                              }
-                              className="w-20 rounded border border-gray-300 px-2 py-1 text-sm"
-                            />
-                          </div>
-                        </div>
+                        )}
+                      </button>
 
-                        {/* Toggles */}
-                        <div className="flex shrink-0 flex-col items-center gap-2">
-                          <button
-                            onClick={() => updateItem(item.id, { available: !item.available })}
-                            className={cn(
-                              "h-7 w-12 rounded-full transition-colors",
-                              item.available ? "bg-green-500" : "bg-gray-300"
-                            )}
-                            aria-label={item.available ? "Available" : "Unavailable"}
-                          >
-                            <span
-                              className={cn(
-                                "block h-5 w-5 translate-x-1 rounded-full bg-white shadow transition-transform",
-                                item.available && "translate-x-6"
-                              )}
-                            />
-                          </button>
-                          <button
-                            onClick={() => updateItem(item.id, { featured: !item.featured })}
-                            className={cn("text-xl leading-none", item.featured ? "text-yellow-400" : "text-gray-300")}
-                            aria-label="Toggle featured"
-                          >
-                            ★
-                          </button>
+                      {/* Key fields */}
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <input
+                          value={item.code}
+                          onChange={(e) => updateItem(item.id, { code: e.target.value })}
+                          className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                          placeholder="CODE"
+                        />
+                        <div className="flex items-center gap-1">
+                          <input
+                            value={item.nameEn}
+                            onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
+                            className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
+                            placeholder="English name"
+                          />
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-gray-500">RM</span>
+                          <input
+                            type="number"
+                            step="0.1"
+                            min="0"
+                            value={item.originalPrice ?? item.price}
+                            onChange={(e) =>
+                              updateItem(item.id, { price: parseFloat(e.target.value) || 0 })
+                            }
+                            className="w-20 rounded border border-gray-300 px-2 py-1 text-sm"
+                          />
                         </div>
                       </div>
 
-                      {/* Categories (mobile) */}
-                      <div className="mt-2 flex flex-wrap items-center gap-1">
-                        <span className="text-xs text-gray-500 shrink-0">In:</span>
-                        {categories.map((cat) => (
-                          <button
-                            key={cat}
-                            onClick={() => toggleCategory(item, cat)}
+                      {/* Toggles */}
+                      <div className="flex shrink-0 flex-col items-center gap-2">
+                        <button
+                          onClick={() => updateItem(item.id, { available: !item.available })}
+                          className={cn(
+                            "h-7 w-12 rounded-full transition-colors",
+                            item.available ? "bg-green-500" : "bg-gray-300"
+                          )}
+                          aria-label={item.available ? "Available" : "Unavailable"}
+                        >
+                          <span
                             className={cn(
-                              "rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
-                              item.categories.includes(cat)
-                                ? "border-orange-400 bg-orange-100 text-orange-800"
-                                : "border-gray-300 bg-gray-100 text-gray-500"
+                              "block h-5 w-5 translate-x-1 rounded-full bg-white shadow transition-transform",
+                              item.available && "translate-x-6"
                             )}
-                          >
-                            {cat}
-                          </button>
-                        ))}
+                          />
+                        </button>
+                        <button
+                          onClick={() => updateItem(item.id, { featured: !item.featured })}
+                          className={cn("text-xl leading-none", item.featured ? "text-yellow-400" : "text-gray-300")}
+                          aria-label="Toggle featured"
+                        >
+                          ★
+                        </button>
                       </div>
+                    </div>
 
-                      {/* Actions */}
-                      <div className="mt-3 flex gap-2">
-                        <button
-                          onClick={() => saveItem(item)}
-                          disabled={saving === item.id || !item._dirty}
-                          className="min-h-[44px] flex-1 rounded-lg bg-orange-500 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-40"
-                        >
-                          {saving === item.id ? "Saving…" : "Save"}
-                        </button>
-                        <button
-                          onClick={() => deleteItem(item.id)}
-                          className="min-h-[44px] min-w-[44px] rounded-lg border border-red-200 px-3 text-sm text-red-600 hover:bg-red-50"
-                        >
-                          Del
-                        </button>
-                      </div>
+                    {/* Actions */}
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        onClick={() => saveItem(item)}
+                        disabled={saving === item.id || !item._dirty}
+                        className="min-h-[44px] flex-1 rounded-lg bg-orange-500 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-40"
+                      >
+                        {saving === item.id ? "Saving…" : "Save"}
+                      </button>
+                      <button
+                        onClick={() => deleteItem(item.id)}
+                        className="min-h-[44px] min-w-[44px] rounded-lg border border-red-200 px-3 text-sm text-red-600 hover:bg-red-50"
+                      >
+                        Del
+                      </button>
                     </div>
                   </div>
                 ))}
@@ -689,19 +547,19 @@ export function AdminMenuTable({
             ))}
           </div>
 
-          {/* Desktop grouped DnD view */}
+          {/* Desktop grouped table */}
           <div className="hidden overflow-x-auto rounded-xl border bg-white md:block">
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <th className="w-8 px-2 py-3"></th>
                   <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.IMAGE} className="cursor-help border-b border-dashed border-gray-400">Image</span></th>
                   <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CODE} className="cursor-help border-b border-dashed border-gray-400">Code</span></th>
                   <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.NAME} className="cursor-help border-b border-dashed border-gray-400">Name EN / MS / ZH</span></th>
                   <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.PRICE} className="cursor-help border-b border-dashed border-gray-400">Price</span></th>
                   <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.ON} className="cursor-help border-b border-dashed border-gray-400">On</span></th>
                   <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.STAR} className="cursor-help border-b border-dashed border-gray-400">★</span></th>
-                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CATEGORIES} className="cursor-help border-b border-dashed border-gray-400">Categories</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CATEGORIES} className="cursor-help border-b border-dashed border-gray-400">POS Categories</span></th>
+                  <th className="px-3 py-3"><span title="Display categories (website groups)" className="cursor-help border-b border-dashed border-gray-400">Display Cats</span></th>
                   <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DIETARY} className="cursor-help border-b border-dashed border-gray-400">Dietary</span></th>
                   <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DAYS} className="cursor-help border-b border-dashed border-gray-400">Days</span></th>
                   <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.TIME} className="cursor-help border-b border-dashed border-gray-400">Time</span></th>
@@ -713,22 +571,14 @@ export function AdminMenuTable({
               <tbody className="divide-y divide-gray-100">
                 {groupedItems.map(({ cat, label, items: groupItems }) => (
                   <Fragment key={cat}>
-                    {/* Droppable category header row */}
-                    <tr className="border-t border-b border-gray-200 bg-gray-50/80">
+                    {/* Category header row */}
+                    <tr className="border-t border-b border-gray-200 bg-amber-50/60">
                       <td colSpan={14} className="px-3 py-1.5">
-                        <DroppableCategoryLabel
-                          category={cat}
-                          label={`${label} (${groupItems.length})`}
-                        />
+                        <div className="rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
+                          {label} ({groupItems.length})
+                        </div>
                       </td>
                     </tr>
-                    {groupItems.length === 0 && (
-                      <tr key={`empty-${cat}`}>
-                        <td colSpan={14} className="px-3 py-2 text-xs italic text-gray-400">
-                          No items — drag here to add
-                        </td>
-                      </tr>
-                    )}
                     {groupItems.map((item) => (
                       <tr
                         key={item.id}
@@ -744,15 +594,6 @@ export function AdminMenuTable({
                                 : "bg-white"
                         )}
                       >
-                        {/* Drag handle */}
-                        <td className="px-2 py-2">
-                          <DraggableHandle
-                            itemId={item.id}
-                            sourceCategory={cat}
-                            nameEn={item.nameEn}
-                          />
-                        </td>
-
                         {/* Image */}
                         <td className="px-3 py-2">
                           <button
@@ -793,47 +634,24 @@ export function AdminMenuTable({
                         {/* Names */}
                         <td className="px-3 py-2">
                           <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-1">
-                              <input
-                                value={item.nameEn}
-                                onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
-                                className="w-40 rounded border border-gray-300 px-2 py-1 text-xs"
-                                placeholder="English"
-                              />
-                              <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <input
-                                value={item.nameMs}
-                                onChange={(e) => updateItem(item.id, { nameMs: e.target.value })}
-                                className="w-36 rounded border border-gray-300 px-2 py-1 text-xs"
-                                placeholder="Melayu"
-                              />
-                              <button
-                                onClick={() => suggestTranslation(item, "ms")}
-                                disabled={!item.nameEn || suggesting[`${item.id}-ms`]}
-                                className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
-                                title="Suggest Malay translation"
-                              >
-                                {suggesting[`${item.id}-ms`] ? "…" : "✨"}
-                              </button>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <input
-                                value={item.nameZh}
-                                onChange={(e) => updateItem(item.id, { nameZh: e.target.value })}
-                                className="w-36 rounded border border-gray-300 px-2 py-1 text-xs"
-                                placeholder="中文"
-                              />
-                              <button
-                                onClick={() => suggestTranslation(item, "zh")}
-                                disabled={!item.nameEn || suggesting[`${item.id}-zh`]}
-                                className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
-                                title="Suggest Chinese translation"
-                              >
-                                {suggesting[`${item.id}-zh`] ? "…" : "✨"}
-                              </button>
-                            </div>
+                            <input
+                              value={item.nameEn}
+                              onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
+                              className="w-48 rounded border border-gray-300 px-2 py-1 text-sm"
+                              placeholder="English name"
+                            />
+                            <input
+                              value={item.nameMs}
+                              onChange={(e) => updateItem(item.id, { nameMs: e.target.value })}
+                              className="w-48 rounded border border-gray-300 px-2 py-1 text-xs text-gray-500"
+                              placeholder="Malay name"
+                            />
+                            <input
+                              value={item.nameZh}
+                              onChange={(e) => updateItem(item.id, { nameZh: e.target.value })}
+                              className="w-48 rounded border border-gray-300 px-2 py-1 text-xs text-gray-500"
+                              placeholder="Chinese name"
+                            />
                           </div>
                         </td>
 
@@ -847,108 +665,79 @@ export function AdminMenuTable({
                             onChange={(e) =>
                               updateItem(item.id, { price: parseFloat(e.target.value) || 0 })
                             }
-                            className="w-20 rounded border border-gray-300 px-2 py-1 text-xs"
+                            className="w-16 rounded border border-gray-300 px-2 py-1 text-sm"
                           />
-                          {item.discountPercent && item.discountPercent > 0 && (
-                            <div className="mt-1 flex items-center gap-1">
-                              <span className="text-xs text-gray-400 line-through">
-                                RM{(item.originalPrice ?? item.price).toFixed(2)}
-                              </span>
-                              <span className="text-xs font-medium text-green-700">
-                                RM{item.price.toFixed(2)}
-                              </span>
-                              <span className="rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-medium text-green-700">
-                                -{item.discountPercent}%
-                              </span>
-                            </div>
-                          )}
                         </td>
 
-                        {/* Available toggle */}
+                        {/* On (available toggle) */}
                         <td className="px-3 py-2">
                           <button
                             onClick={() => updateItem(item.id, { available: !item.available })}
                             className={cn(
-                              "h-6 w-10 rounded-full transition-colors",
+                              "h-7 w-12 rounded-full transition-colors",
                               item.available ? "bg-green-500" : "bg-gray-300"
                             )}
+                            aria-label={item.available ? "Available" : "Unavailable"}
                           >
                             <span
                               className={cn(
-                                "block h-5 w-5 translate-x-0.5 rounded-full bg-white shadow transition-transform",
-                                item.available && "translate-x-4"
+                                "block h-5 w-5 translate-x-1 rounded-full bg-white shadow transition-transform",
+                                item.available && "translate-x-6"
                               )}
                             />
                           </button>
-                          {item.disabledByRule && (
-                            <span
-                              className="mt-0.5 block rounded-full bg-red-100 px-1.5 py-0.5 text-center text-[10px] font-medium text-red-700 whitespace-nowrap"
-                              title={item.appliedRules?.filter((r) => r.ruleType === "disable").map((r) => r.ruleName).join(", ")}
-                            >
-                              Disabled: {item.appliedRules?.find((r) => r.ruleType === "disable")?.ruleName ?? "rule"}
-                            </span>
-                          )}
                         </td>
 
                         {/* Featured star */}
                         <td className="px-3 py-2">
                           <button
                             onClick={() => updateItem(item.id, { featured: !item.featured })}
-                            className={cn(
-                              "text-xl",
-                              item.featured ? "text-yellow-400" : "text-gray-300"
-                            )}
+                            className={cn("text-xl leading-none", item.featured ? "text-yellow-400" : "text-gray-300")}
+                            aria-label="Toggle featured"
                           >
                             ★
                           </button>
-                          {item.featuredByRule && (
-                            <span className="mt-0.5 block rounded-full bg-amber-100 px-1.5 py-0.5 text-center text-[10px] font-medium text-amber-700">
-                              Rule
-                            </span>
-                          )}
                         </td>
 
-                        {/* Categories */}
+                        {/* POS Categories */}
                         <td className="px-3 py-2">
-                          <div className="relative group">
-                            <button className="rounded border border-gray-300 px-2 py-1 text-xs">
-                              {item.categories.length > 0
-                                ? item.categories.join(", ").slice(0, 20) + (item.categories.join(", ").length > 20 ? "…" : "")
-                                : "None"}
-                            </button>
-                            <div className="absolute left-0 top-8 z-10 hidden max-h-48 w-48 overflow-y-auto rounded-lg border bg-white p-2 shadow-lg group-focus-within:block group-hover:block">
-                              {categories.map((cat) => (
-                                <label key={cat} className="flex items-center gap-1.5 py-0.5 text-xs cursor-pointer hover:bg-gray-50 rounded px-1">
-                                  <input
-                                    type="checkbox"
-                                    checked={item.categories.includes(cat)}
-                                    onChange={() => toggleCategory(item, cat)}
-                                  />
-                                  {cat}
-                                </label>
-                              ))}
-                            </div>
+                          <div className="flex flex-wrap gap-1 max-w-[160px]">
+                            {item.categories.map((c) => (
+                              <span key={c} className="rounded-full bg-gray-100 px-1.5 py-0.5 text-[10px] text-gray-600">
+                                {c}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+
+                        {/* Display Categories */}
+                        <td className="px-3 py-2">
+                          <div className="flex flex-wrap gap-1 max-w-[140px]">
+                            {item.displayCategories.map((dc) => (
+                              <span key={dc} className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] text-amber-800">
+                                {dc}
+                              </span>
+                            ))}
                           </div>
                         </td>
 
                         {/* Dietary */}
                         <td className="px-3 py-2">
-                          <div className="relative group">
-                            <button className="rounded border border-gray-300 px-2 py-1 text-xs">
-                              {item.dietary.length > 0 ? item.dietary.join(", ") : "None"}
-                            </button>
-                            <div className="absolute left-0 top-8 z-10 hidden w-40 rounded-lg border bg-white p-2 shadow-lg group-focus-within:block group-hover:block">
-                              {DIETARY_OPTIONS.map((d) => (
-                                <label key={d} className="flex items-center gap-1.5 py-0.5 text-xs cursor-pointer hover:bg-gray-50 rounded px-1">
-                                  <input
-                                    type="checkbox"
-                                    checked={item.dietary.includes(d)}
-                                    onChange={() => toggleDietary(item, d)}
-                                  />
-                                  {d}
-                                </label>
-                              ))}
-                            </div>
+                          <div className="flex flex-wrap gap-1">
+                            {DIETARY_OPTIONS.map((d) => (
+                              <button
+                                key={d}
+                                onClick={() => toggleDietary(item, d)}
+                                className={cn(
+                                  "rounded-full border px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+                                  item.dietary.includes(d)
+                                    ? "border-green-400 bg-green-100 text-green-800"
+                                    : "border-gray-300 bg-gray-100 text-gray-400"
+                                )}
+                              >
+                                {d}
+                              </button>
+                            ))}
                           </div>
                         </td>
 
@@ -960,13 +749,15 @@ export function AdminMenuTable({
                                 key={day}
                                 onClick={() => toggleDay(item, day)}
                                 className={cn(
-                                  "rounded px-1.5 py-0.5 text-xs font-medium",
-                                  item.availableDays.includes(day)
-                                    ? "bg-orange-500 text-white"
-                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                                  "rounded px-1 py-0.5 text-[10px] font-medium transition-colors",
+                                  item.availableDays.length > 0 && item.availableDays.includes(day)
+                                    ? "bg-blue-500 text-white"
+                                    : item.availableDays.length === 0
+                                      ? "bg-blue-100 text-blue-400"
+                                      : "bg-gray-200 text-gray-400"
                                 )}
                               >
-                                {day.slice(0, 2)}
+                                {day}
                               </button>
                             ))}
                           </div>
@@ -974,26 +765,27 @@ export function AdminMenuTable({
 
                         {/* Time */}
                         <td className="px-3 py-2">
-                          <div className="flex flex-col gap-1">
+                          <div className="flex items-center gap-1">
                             <input
                               type="time"
-                              value={item.timeFrom}
+                              value={item.timeFrom || ""}
                               onChange={(e) => updateItem(item.id, { timeFrom: e.target.value })}
-                              className="rounded border border-gray-300 px-1 py-0.5 text-xs"
+                              className="w-24 rounded border border-gray-300 px-1 py-0.5 text-xs"
                             />
+                            <span className="text-xs text-gray-400">–</span>
                             <input
                               type="time"
-                              value={item.timeUntil}
+                              value={item.timeUntil || ""}
                               onChange={(e) => updateItem(item.id, { timeUntil: e.target.value })}
-                              className="rounded border border-gray-300 px-1 py-0.5 text-xs"
+                              className="w-24 rounded border border-gray-300 px-1 py-0.5 text-xs"
                             />
                           </div>
                         </td>
 
-                        {/* Special Dates */}
+                        {/* Dates */}
                         <td className="px-3 py-2">
                           <input
-                            value={item.specialDates.join(",")}
+                            value={item.specialDates?.join(", ") || ""}
                             onChange={(e) =>
                               updateItem(item.id, {
                                 specialDates: e.target.value
@@ -1044,16 +836,7 @@ export function AdminMenuTable({
               </tbody>
             </table>
           </div>
-
-          {/* Drag overlay — ghost shown while dragging */}
-          <DragOverlay dropAnimation={null}>
-            {activeDrag && (
-              <div className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-medium text-white shadow-lg opacity-90 pointer-events-none">
-                {activeDrag.nameEn || "Item"}
-              </div>
-            )}
-          </DragOverlay>
-        </DndContext>
+        </>
       ) : (
         /* ——— Filtered Flat View (Category selected) ——— */
         <>
