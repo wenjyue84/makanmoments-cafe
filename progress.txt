@@ -7271,3 +7271,25 @@ This technical brief translates the provided user story's concept into a Frappe/
 - `@layer base` rules can be overridden by utility classes (scale-100 etc.) — use `@layer utilities` for the global button rule instead, or add `active:scale-95` directly to button className
 - The global `button:not(:disabled):active` rule goes in `@layer utilities` to ensure it applies broadly
 
+## Iteration 49 - Tue, Mar 10, 2026  6:22:15 PM
+Completed: Site-Wide: Micro-Interactions and Scroll-Triggered Polish (ID: US-078) in 6m
+
+
+## Iteration N - Story: US-079 Admin: Replace Horizontal Tab Bar with Left Sidebar Navigation
+
+### What was implemented
+- Rewrote `src/components/admin/admin-tabs.tsx` with a left sidebar layout
+- Sidebar: fixed 208px wide (w-52), border-r, vertical nav items with Lucide icons + labels
+- Active item: orange-50 background + orange-600 text + orange-500 left border (2px)
+- Mobile: sidebar is a drawer (fixed, -translate-x-full by default), toggled by hamburger button in a top header bar
+- Mobile overlay: black/40 backdrop when drawer is open; clicking it closes sidebar
+- Kept TABS array and all content rendering logic unchanged — only nav UI changed
+
+### Patterns discovered
+- `TAB_ICONS` record maps each Tab literal to a JSX Lucide icon element
+- Mobile hamburger + overlay pattern: `sidebarOpen` state + `lg:hidden`/`lg:static` classes
+- `lg:translate-x-0 lg:static` overrides the mobile-only fixed+translate approach
+
+### Gotchas
+- prd.json uses UTF-8 with em-dash unicode — must open with `encoding='utf-8'` in Python
+- TypeScript check (`npx tsc --noEmit`) passes clean with no errors for this file
