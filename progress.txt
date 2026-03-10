@@ -9554,3 +9554,6 @@ This user story is for a **Next.js/React frontend**, not Frappe/Python. The tech
 ### Gotchas
 - `useScrollDirection` initial state is `"none"`, which falls into the `else` branch → `translate-y-0` (header visible on page load) ✓
 - TypeScript check: `npx tsc --noEmit` exits 0 with no errors
+## Iteration 5 - Tue, Mar 10, 2026  9:43:46 PM
+Completed: Menu Page — Hide Header on Scroll Down, Show on Scroll Up (ID: US-105) in 3m
+
