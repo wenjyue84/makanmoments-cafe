@@ -65,5 +65,5 @@ export async function POST(req: NextRequest) {
   // Strip surrounding quotes if AI returned them
   const translation = text.replace(/^["'「」『』""]|["'「」『』""]$/g, "").trim();
 
-  return Response.json({ translation });
+  return Response.json({ "translation": translation });
 }

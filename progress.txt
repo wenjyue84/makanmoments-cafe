@@ -10403,3 +10403,14 @@ This task addresses a brittle test (US-042) that performs a static source code c
 ### Gotchas
 - Story was pre-implemented; prd.json just needed `passes: true`
 - Use utf-8 encoding when reading/writing prd.json on Windows (cp1252 fails due to unicode chars)
+
+## Iteration N - Story: US-113 Fix Translate Route Literal String Key
+
+### What was implemented
+- Changed `return Response.json({ translation });` to `return Response.json({ "translation": translation });` in `src/app/api/admin/menu/translate/route.ts`
+
+### Patterns discovered
+- JS shorthand `{ translation }` does NOT contain the literal string `"translation"` (with quotes) in source — static text checks need explicit quoted keys
+
+### Gotchas
+- One-line change only; TypeScript clean
