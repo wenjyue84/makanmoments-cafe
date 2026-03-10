@@ -7564,3 +7564,42 @@ This story transitions the admin test panel from a manual load to an automatic o
 
 ### Gotchas
 - prd.json has non-ASCII characters (em-dashes in description) — must open with `encoding='utf-8'` in Python
+## Iteration 51 - Tue, Mar 10, 2026  6:35:21 PM
+Completed: Admin Tests: Auto-Load Tests on Tab Open (Remove 'Load Tests' Button) (ID: US-081) in 3m
+
+
+## Iteration - Story: US-082 - Admin Blog: Click Title to Enter Edit Mode
+
+### What was implemented
+- Added `editingTitleId` + `editTitle` state + `titleInputRef` to `AdminBlogTable`
+- Added `startEditTitle`, `cancelEditTitle`, `saveTitle` functions
+- `saveTitle` calls PATCH `/api/admin/blog/by-id/[id]` with `{ title }` and updates local state
+- Both mobile card list and desktop table now show inline `<input>` when that title is being edited
+- Visual cue: `cursor-text`, `group-hover:underline`, and `<Pencil>` icon (opacity-0 → opacity-60 on hover)
+- Enter = save, Escape = cancel, onBlur = save
+
+### Patterns discovered
+- PATCH `/api/admin/blog/by-id/[id]` already supports `title` via COALESCE — no API changes needed
+- `ref` forwarding for autoFocus: use `useEffect` on `editingTitleId` change rather than `autoFocus` prop, since the input is conditionally rendered
+- Desktop table uses same `titleInputRef` since only one row can be edited at a time
+
+### Gotchas
+- Desktop `<input>` uses `ref={editingTitleId === post.id ? titleInputRef : undefined}` — conditional ref assignment needed since ref is shared
+
+## Iteration - Story: US-082 - Admin Blog: Click Title to Enter Edit Mode
+
+### What was implemented
+- Added `editingTitleId`, `editTitle` state and `titleInputRef` to `admin-blog-table.tsx`
+- `startEditTitle(post)` sets editing state; `cancelEditTitle()` clears it; `saveTitle(postId)` PATCHes `/api/admin/blog/by-id/[id]`
+- `useEffect` auto-focuses and selects the input when `editingTitleId` changes
+- Mobile cards: title becomes clickable `div` with pencil icon on hover; entering edit mode swaps to an `<input>`
+- Desktop table: same pattern — click title to edit inline, Enter saves, Escape cancels, blur saves
+
+### Patterns discovered
+- Linter pre-applied all changes before manual edits — always re-read file before editing to avoid "file modified" errors
+- `ref={editingTitleId === post.id ? titleInputRef : undefined}` in desktop table — the conditional is redundant but harmless (the input only renders when condition is true)
+- `group` + `group-hover:opacity-XX` Tailwind pattern works for the pencil icon reveal
+
+### Gotchas
+- File was modified by linter between reads — always re-read before editing
+- The `useEffect` focus approach works despite multiple inputs because only one can be in edit mode at a time

@@ -118,7 +118,24 @@ export function AdminBlogTable({ initialPosts }: AdminBlogTableProps) {
           <div key={post.id} className="rounded-xl border bg-white p-4">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0 flex-1">
-                <p className="truncate font-medium text-gray-900">{post.title}</p>
+                {editingTitleId === post.id ? (
+                  <input
+                    ref={titleInputRef}
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onBlur={() => saveTitle(post.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") saveTitle(post.id);
+                      if (e.key === "Escape") cancelEditTitle();
+                    }}
+                    className="w-full rounded border border-orange-300 bg-orange-50 px-2 py-0.5 text-sm font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                  />
+                ) : (
+                  <div className="group flex cursor-text items-center gap-1" onClick={() => startEditTitle(post)}>
+                    <p className="truncate font-medium text-gray-900 group-hover:underline">{post.title}</p>
+                    <Pencil className="h-3 w-3 shrink-0 text-gray-400 opacity-0 group-hover:opacity-60" />
+                  </div>
+                )}
                 <p className="truncate text-xs text-gray-400">{post.slug}</p>
                 <p className="mt-1 text-xs text-gray-500">{post.publishedAt || "No date"}</p>
               </div>
@@ -184,7 +201,24 @@ export function AdminBlogTable({ initialPosts }: AdminBlogTableProps) {
             {posts.map((post) => (
               <tr key={post.id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium text-gray-900">
-                  {post.title}
+                  {editingTitleId === post.id ? (
+                    <input
+                      ref={editingTitleId === post.id ? titleInputRef : undefined}
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      onBlur={() => saveTitle(post.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") saveTitle(post.id);
+                        if (e.key === "Escape") cancelEditTitle();
+                      }}
+                      className="w-full rounded border border-orange-300 bg-orange-50 px-2 py-0.5 font-medium text-gray-900 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                    />
+                  ) : (
+                    <div className="group flex cursor-text items-center gap-1" onClick={() => startEditTitle(post)}>
+                      <span className="group-hover:underline">{post.title}</span>
+                      <Pencil className="h-3 w-3 shrink-0 text-gray-400 opacity-0 group-hover:opacity-60" />
+                    </div>
+                  )}
                   <div className="text-xs text-gray-400">{post.slug}</div>
                 </td>
                 <td className="px-4 py-3">
