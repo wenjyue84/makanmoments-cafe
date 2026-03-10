@@ -275,6 +275,7 @@ export default function OrderStatusPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [countdown, setCountdown] = useState<string | null>(null);
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -311,6 +312,30 @@ export default function OrderStatusPage() {
     const interval = setInterval(() => void fetchOrder(), 15_000);
     return () => clearInterval(interval);
   }, [fetchOrder]);
+
+  // Countdown timer for preparing status
+  const estimatedReady = order?.estimatedReady ?? null;
+  const orderStatus = order?.status ?? null;
+  useEffect(() => {
+    if (orderStatus !== "preparing" || !estimatedReady) {
+      setCountdown(null);
+      return;
+    }
+    function tick() {
+      const diff = new Date(estimatedReady!).getTime() - Date.now();
+      if (diff <= 0) {
+        setCountdown(t("readySoon"));
+      } else {
+        const totalSecs = Math.floor(diff / 1000);
+        const mins = Math.floor(totalSecs / 60);
+        const secs = totalSecs % 60;
+        setCountdown(`${mins}:${String(secs).padStart(2, "0")}`);
+      }
+    }
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [orderStatus, estimatedReady, t]);
 
   if (loading) {
     return (
@@ -435,6 +460,11 @@ export default function OrderStatusPage() {
           {order.estimatedReady && (
             <p className="mt-1 text-sm text-green-700">
               {t("readyAt", { time: formatDateTime(order.estimatedReady) })}
+            </p>
+          )}
+          {countdown && (
+            <p className="mt-2 text-lg font-bold text-green-800">
+              {t("timeRemaining", { countdown })}
             </p>
           )}
         </div>

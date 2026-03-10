@@ -141,7 +141,9 @@
     "paymentUploaded": "Bayaran diterima ✔ — menunggu pengesahan",
     "fileTooLarge": "Fail terlalu besar. Maksimum adalah 5MB.",
     "invalidFileType": "Hanya fail JPEG dan PNG diterima.",
-    "uploadFailed": "Muat naik gagal. Sila cuba lagi."
+    "uploadFailed": "Muat naik gagal. Sila cuba lagi.",
+    "timeRemaining": "{countdown} lagi",
+    "readySoon": "Hampir siap!"
   },
   "orderForm": {
     "title": "Lengkapkan Pra-Pesanan Anda",

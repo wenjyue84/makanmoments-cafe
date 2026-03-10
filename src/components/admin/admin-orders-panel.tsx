@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Check, X, Clock, RefreshCw } from "lucide-react";
+import { Check, X, Clock, RefreshCw, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface OrderItem {
@@ -20,6 +20,7 @@ interface AdminOrder {
   estimated_arrival: string | null;
   estimated_ready: string | null;
   rejection_reason: string | null;
+  payment_screenshot_url: string | null;
   created_at: string;
 }
 
@@ -29,6 +30,8 @@ const STATUS_LABELS: Record<string, string> = {
   pending_approval: "Pending Approval",
   approved: "Approved",
   rejected: "Rejected",
+  payment_pending: "Awaiting Payment",
+  payment_uploaded: "Payment Uploaded",
   preparing: "Preparing",
   ready: "Ready",
   seen: "Seen",
@@ -39,6 +42,8 @@ const STATUS_COLORS: Record<string, string> = {
   pending_approval: "bg-yellow-100 text-yellow-800",
   approved: "bg-green-100 text-green-800",
   rejected: "bg-red-100 text-red-800",
+  payment_pending: "bg-orange-100 text-orange-800",
+  payment_uploaded: "bg-violet-100 text-violet-800",
   preparing: "bg-blue-100 text-blue-800",
   ready: "bg-purple-100 text-purple-800",
   seen: "bg-gray-100 text-gray-600",
@@ -70,7 +75,7 @@ function defaultReadyTime() {
 
 function filterOrders(orders: AdminOrder[], tab: FilterTab) {
   if (tab === "Pending") return orders.filter((o) => o.status === "pending_approval" || o.status === "pending");
-  if (tab === "Active") return orders.filter((o) => o.status === "approved" || o.status === "preparing");
+  if (tab === "Active") return orders.filter((o) => ["approved", "payment_pending", "payment_uploaded", "preparing"].includes(o.status));
   if (tab === "Done") return orders.filter((o) => o.status === "ready" || o.status === "rejected" || o.status === "seen");
   return orders;
 }
@@ -226,6 +231,137 @@ function RejectModal({ orderId, onClose, onDone }: RejectModalProps) {
 }
 
 // ---------------------------------------------------------------------------
+// Payment view modal
+// ---------------------------------------------------------------------------
+interface PaymentModalProps {
+  orderId: number;
+  screenshotUrl: string;
+  onClose: () => void;
+  onDone: (updated: Partial<AdminOrder>) => void;
+}
+
+function PaymentModal({ orderId, screenshotUrl, onClose, onDone }: PaymentModalProps) {
+  const [saving, setSaving] = useState(false);
+  const [rejectMode, setRejectMode] = useState(false);
+  const [reason, setReason] = useState("");
+  const [err, setErr] = useState("");
+
+  async function confirmPayment() {
+    setSaving(true);
+    setErr("");
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "confirm_payment" }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setErr(d.error ?? "Failed to confirm payment");
+        return;
+      }
+      onDone({ status: "preparing" });
+    } catch {
+      setErr("Network error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function rejectPayment() {
+    if (!reason.trim()) { setErr("Please enter a reason."); return; }
+    setSaving(true);
+    setErr("");
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "reject_payment", rejectionReason: reason.trim() }),
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        setErr(d.error ?? "Failed to reject payment");
+        return;
+      }
+      onDone({ status: "payment_pending", rejection_reason: reason.trim() });
+    } catch {
+      setErr("Network error");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="w-full max-w-sm rounded-xl bg-white shadow-2xl p-6">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-lg font-semibold text-gray-900">Payment Screenshot</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <img
+          src={screenshotUrl}
+          alt="Payment screenshot"
+          className="w-full rounded-lg border border-gray-200 object-contain max-h-64"
+        />
+
+        {err && <p className="mt-2 text-sm text-red-600">{err}</p>}
+
+        {!rejectMode ? (
+          <div className="mt-4 flex gap-2">
+            <button
+              onClick={() => void confirmPayment()}
+              disabled={saving}
+              className="flex-1 min-h-[40px] rounded-lg bg-green-600 text-white text-sm font-medium hover:bg-green-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Check className="h-4 w-4" />
+              {saving ? "Saving…" : "Confirm Payment ✓"}
+            </button>
+            <button
+              onClick={() => setRejectMode(true)}
+              disabled={saving}
+              className="min-h-[40px] rounded-lg border border-red-300 text-red-600 text-sm font-medium hover:bg-red-50 px-3 disabled:opacity-50 transition-colors"
+            >
+              Reject ✗
+            </button>
+          </div>
+        ) : (
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Reason for rejection</label>
+            <textarea
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              rows={2}
+              placeholder="e.g. Screenshot unclear, wrong amount"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+            />
+            <div className="mt-2 flex gap-2">
+              <button
+                onClick={() => void rejectPayment()}
+                disabled={saving}
+                className="flex-1 min-h-[40px] rounded-lg bg-red-600 text-white text-sm font-medium hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+              >
+                <X className="h-4 w-4" />
+                {saving ? "Saving…" : "Confirm Rejection"}
+              </button>
+              <button
+                onClick={() => { setRejectMode(false); setErr(""); }}
+                disabled={saving}
+                className="min-h-[40px] rounded-lg border border-gray-300 px-3 text-sm text-gray-600 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Order card
 // ---------------------------------------------------------------------------
 interface OrderCardProps {
@@ -236,8 +372,29 @@ interface OrderCardProps {
 function OrderCard({ order, onUpdate }: OrderCardProps) {
   const [showApprove, setShowApprove] = useState(false);
   const [showReject, setShowReject] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [markingReady, setMarkingReady] = useState(false);
 
   const isPending = order.status === "pending_approval" || order.status === "pending";
+  const hasPaymentUploaded = order.status === "payment_uploaded";
+  const isPreparing = order.status === "preparing";
+
+  async function handleMarkReady() {
+    setMarkingReady(true);
+    try {
+      const res = await fetch(`/api/admin/orders/${order.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "mark_ready" }),
+      });
+      if (!res.ok) return;
+      onUpdate(order.id, { status: "ready" });
+    } catch {
+      // non-critical
+    } finally {
+      setMarkingReady(false);
+    }
+  }
 
   return (
     <>
@@ -311,6 +468,30 @@ function OrderCard({ order, onUpdate }: OrderCardProps) {
             </button>
           </div>
         )}
+
+        {hasPaymentUploaded && (
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={() => setShowPayment(true)}
+              className="flex-1 min-h-[40px] rounded-lg bg-violet-600 text-white text-sm font-medium hover:bg-violet-700 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Eye className="h-4 w-4" /> View Payment
+            </button>
+          </div>
+        )}
+
+        {isPreparing && (
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={() => void handleMarkReady()}
+              disabled={markingReady}
+              className="flex-1 min-h-[40px] rounded-lg bg-purple-600 text-white text-sm font-medium hover:bg-purple-700 disabled:opacity-50 transition-colors flex items-center justify-center gap-1.5"
+            >
+              <Check className="h-4 w-4" />
+              {markingReady ? "Saving…" : "Mark Ready 🎉"}
+            </button>
+          </div>
+        )}
       </div>
 
       {showApprove && (
@@ -325,6 +506,14 @@ function OrderCard({ order, onUpdate }: OrderCardProps) {
           orderId={order.id}
           onClose={() => setShowReject(false)}
           onDone={(changes) => { onUpdate(order.id, changes); setShowReject(false); }}
+        />
+      )}
+      {showPayment && order.payment_screenshot_url && (
+        <PaymentModal
+          orderId={order.id}
+          screenshotUrl={order.payment_screenshot_url}
+          onClose={() => setShowPayment(false)}
+          onDone={(changes) => { onUpdate(order.id, changes); setShowPayment(false); }}
         />
       )}
     </>

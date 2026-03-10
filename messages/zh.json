@@ -141,7 +141,9 @@
     "paymentUploaded": "收到付款 ✔ — 等待确认",
     "fileTooLarge": "文件过大，最大为 5MB。",
     "invalidFileType": "仅支持 JPEG 和 PNG 文件。",
-    "uploadFailed": "上传失败，请重试。"
+    "uploadFailed": "上传失败，请重试。",
+    "timeRemaining": "还有 {countdown}",
+    "readySoon": "即将完成！"
   },
   "orderForm": {
     "title": "完成预订",

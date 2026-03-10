@@ -141,7 +141,9 @@
     "paymentUploaded": "Payment received ✔ — waiting for confirmation",
     "fileTooLarge": "File too large. Maximum is 5MB.",
     "invalidFileType": "Only JPEG and PNG files are accepted.",
-    "uploadFailed": "Upload failed. Please try again."
+    "uploadFailed": "Upload failed. Please try again.",
+    "timeRemaining": "{countdown} remaining",
+    "readySoon": "Ready soon!"
   },
   "orderForm": {
     "title": "Complete Your Pre-Order",
