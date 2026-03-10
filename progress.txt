@@ -11728,3 +11728,23 @@ Completed: Move Hardcoded Display Category Names to Constants (ID: US-136)
 
 ### Gotchas
 - prd.json must be read/written with `encoding='utf-8'` on Windows to avoid cp1252 decode error
+## Iteration 4 - Wed, Mar 11, 2026  2:25:38 AM
+Completed: Move Hardcoded Display Category Names to Constants (ID: US-136) in 4m
+
+
+## Iteration - Story: US-136 Move Hardcoded Display Category Names to Constants
+
+### What was implemented
+- No code changes needed — all work was already done in a prior commit
+- `SPECIAL_DISPLAY_CATEGORIES` constant already existed in `src/lib/constants.ts`
+- `menu-grid.tsx` already imports and uses `SPECIAL_DISPLAY_CATEGORIES`
+- `admin-categories-panel.tsx` already imports and uses `SPECIAL_DISPLAY_CATEGORIES`
+- `menu-card.tsx` had no hardcoded references to these strings
+
+### Patterns discovered
+- Git status in the session start may show pending changes that were already committed by time the iteration runs
+- Always run `git status` first to check actual working tree state before assuming changes are needed
+
+### Gotchas
+- `dietary-badge.tsx` uses "Vegetarian" as a CSS class key and dietary label — different from display categories, not a candidate for SPECIAL_DISPLAY_CATEGORIES
+- TypeScript passes clean (exit 0) with no changes needed
