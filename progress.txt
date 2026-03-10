@@ -8050,3 +8050,72 @@ Here is the technical brief for the user story:
 ## Iteration 54 - Tue, Mar 10, 2026  6:56:31 PM
 Completed: Admin Menu Table: Column Header Tooltips (ID: US-086) in 4m
 
+## Iteration 54 - Tue, Mar 10, 2026  6:57:00 PM
+Completed: Admin Menu Table: Column Header Tooltips (ID: US-086) in 4m
+
+
+## Pre-analysis for US-087 (Gemini 2.5 Pro)
+Here is the technical brief for implementing the KDS user story in a Frappe/Python environment.
+
+---
+
+**TO:** Claude Code Agent
+**RE:** Technical Brief for US-087: KDS Implementation in Frappe
+
+This brief outlines the Python/Frappe implementation for the Kitchen Display System (KDS) user story. The goal is a read-only, auto-refreshing web view at the `/kds` endpoint for kitchen staff.
+
+**1. Python Files & Structure:**
+-   **`[app_name]/www/kds/kds.py`**: To handle server-side logic. It will contain the whitelisted function to fetch orders and the `get_context` method to handle authentication checks.
+-   **`[app_name]/www/kds/kds.html`**: A Jinja2 template for the UI. It will conditionally render either a login form or the order queue based on the user's session.
+-   **`[app_name]/www/kds/kds.js`**: Frontend JavaScript to handle the 30-second auto-refresh via `frappe.call` and dynamically render the fetched order data.
+-   **`[app_name]/hooks.py`**: Use the `after_install` hook to create the "Kitchen Staff" role and seed the initial 'kitchen' user.
+
+**2. Frappe DocTypes & Hooks:**
+-   **DocTypes**:
+    -   `Sales Order` (or equivalent): The primary DocType to query. It must have a `status` field (e.g., 'Preparing') and fields for ETA and order items.
+    -   `User` & `Role`: A new `Role` named "Kitchen Staff" should be created to provide scoped, read-only access.
+-   **Whitelisted API**: The function in `kds.py` fetching orders must be decorated with `@frappe.whitelist()`.
+
+**3. Implementation Approach:**
+1.  Define the "Kitchen Staff" `Role` and grant it read-only access to the `Sales Order` DocType, filtered where `status` is 'Preparing'.
+2.  In `kds.py`, the `get_context` function will check if `frappe.session.user` has the "Kitchen Staff" role. If not, it renders the login portion of the template.
+3.  The whitelisted function will use `frappe.get_all()` to query for orders, returning key details as JSON.
+4.  The `kds.js` file will use `setInterval` to call the whitelisted function and update the DOM.
+
+**4. Gotchas & Edge Cases:**
+-   **Authentication**: Do not implement custom auth. Use Frappe's built-in `User` model. The login form should submit to the standard Frappe login handler.
+-   **Security**: The kitchen user's role must be strictly read-only to prevent unintended modifications.
+-   **Credentials**: The default kitchen user and password should be seeded during installation from `frappe.conf` or a custom Site Setting, not hardcoded in the Python source.
+-   **Performance**: Ensure the `status` field on the `Sales Order` DocType is indexed to handle frequent polling efficiently.
+
+
+## Pre-analysis for US-087 (Gemini 2.5 Pro)
+This is a technical brief for implementing the KDS feature described in story US-087. While the request mentions Frappe/Python, the story's technical notes and project structure clearly indicate a Next.js/TypeScript implementation.
+
+***
+
+**Technical Brief: US-087 - Kitchen Display System (Next.js)**
+
+**1. Core Files to Create:**
+*   `src/app/kds/page.tsx`: Main route. Will conditionally render the login form or the order queue based on authentication status.
+*   `src/app/api/kds/login/route.ts`: Handles POST requests for KDS authentication. Validates credentials against environment variables and returns a JWT.
+*   `src/app/api/kds/orders/route.ts`: A protected GET endpoint that fetches and returns orders where `status` is `'preparing'`.
+*   A client component for the order queue, e.g., `src/components/kds/OrderQueue.tsx`.
+*   `.env.example`: Update with `KITCHEN_USERNAME` and `KITCHEN_PASSWORD`.
+
+**2. Involved Logic & Data Structures:**
+*   **Data Model:** Requires querying the primary `orders` data source.
+*   **API Routes:** The implementation centers around the two new API routes for KDS-specific authentication and data fetching.
+
+**3. Recommended Implementation Approach:**
+*   **Authentication:** Use a dedicated JWT, separate from admin sessions. The `/api/kds/login` route should issue this token and set it in a secure, `HttpOnly` cookie.
+*   **Routing/Protection:** Use `middleware.ts` to protect the `/api/kds/orders` route, requiring the KDS-specific auth cookie. The `/kds` page itself can read the cookie to determine which component to show.
+*   **UI (Client-Side):** The `OrderQueue` component should use a `useEffect` hook with `setInterval` to poll the `/api/kds/orders` endpoint every 30 seconds.
+*   **Styling:** Employ a high-contrast, large-font design using Tailwind CSS, optimized for tablet viewing in a kitchen environment.
+
+**4. Edge Cases & Gotchas:**
+*   **Auth State:** The KDS authentication token/cookie must not grant access to any other admin part of the application.
+*   **Resource Cleanup:** The `setInterval` in the `useEffect` hook must be cleared on component unmount to prevent memory leaks.
+*   **Error Handling:** Implement clear feedback for failed login attempts and for errors during the auto-refresh data fetch.
+*   **Data Latency:** While polling is specified, for a real-world scenario, consider Server-Sent Events (SSE) for more efficient, real-time order updates.
+
