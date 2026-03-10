@@ -5210,3 +5210,65 @@ This user story is for a **Next.js/TypeScript** application, not a Frappe/Python
 *   **Timezone Consistency:** Ensure the server's current time and the client-provided `previewTime` are both consistently handled in the target timezone (e.g., `Asia/Kuala_Lumpur`).
 *   **Hydration:** The time input's initial value on the client must be correctly synchronized with the `previewTime` from the URL to avoid a mismatch on page load.
 
+## Iteration 11 - Tue, Mar 10, 2026  4:13:24 PM
+Completed: Admin: Adjust Image Focal Point (Pan Up/Down/Left/Right) (ID: US-057) in 6m
+
+
+## Pre-analysis for US-058 (Gemini 2.5 Pro)
+Here is the technical brief for implementing US-058.
+
+### Technical Brief: US-058 Admin Menu Time-Based Preview
+
+**1. High-Level Objective**
+To allow administrators to preview the customer-facing menu at any given time of day. This involves extending the existing time-based display logic (US-035) to the admin view, controlled by a new URL query parameter (`previewTime`).
+
+**2. Core Files to Modify**
+*   **`src/app/[locale]/menu/page.tsx`**: The main server component for the menu. This is where the core logic will reside to check for admin status, read the `previewTime` parameter, and determine the "effective time" for rendering.
+*   **`src/components/menu/AdminEditBanner.tsx`**: The React component for the admin-only banner at the top of the page. It will be updated to include the new time input control.
+*   **`src/components/menu/MenuItem.tsx`** (or equivalent item renderer): The component rendering each menu item will be modified to apply visual "unavailable" styling (e.g., greyed out) based on the effective time.
+*   **`src/lib/time-slots.ts`**: The existing utility file containing time-based logic. Its functions will be reused to determine the default category and item availability.
+
+**3. Implementation Approach**
+1.  **In `menu/page.tsx` (Server Component):**
+    *   Check if the user is an admin.
+    *   Read the `previewTime` from the `searchParams` prop.
+    *   Establish an `effectiveTime`: If the user is an admin and `previewTime` is a valid time string, use it. Otherwise, fall back to the current server time (in Malaysia's timezone).
+    *   Use the `getDefaultCategoryForTime` function from `src/lib/time-slots.ts` with the `effectiveTime` to determine the `defaultCategoryId`.
+    *   Pass both the `effectiveTime` and `defaultCategoryId` as props to the client-side menu component.
+
+2.  **In `AdminEditBanner.tsx` (Client Component):**
+    *   Add an `<input type="time">` element.
+    *   Use the `useSearchParams` and `useRouter` hooks from `next/navigation`.
+    *   On input change, update the URL by pushing a new route with the `previewTime` query parameter, which will trigger a server-side re-render of `page.tsx`.
+    *   Display the current preview time being used (e.g., "Showing customer view at 11:45 AM").
+
+3.  **In `MenuItem.tsx` (or equivalent):**
+    *   The component must receive the `effectiveTime` prop from the page.
+    *   Use a helper like `isAvailableAtTime(item.availability, effectiveTime)` to check if the item should be served.
+    *   Conditionally apply CSS classes (e.g., `opacity-50`, `pointer-events-none`) and display a "Not serving now" badge if the item is unavailable.
+
+**4. Gotchas & Edge Cases**
+*   **Timezone Consistency:** Ensure all server-side time calculations are consistently performed using the 'Asia/Kuala_Lumpur' timezone to match customer experience.
+*   **Invalid Input:** The logic in `page.tsx` must gracefully handle invalid or malformed `previewTime` query parameters by defaulting to the current time.
+*   **Security:** The entire preview functionality, including parsing the `previewTime` parameter, must be strictly gated and only active for authenticated admin users.
+*   **Hydration:** The default category and item availability are determined on the server. The client components should receive this state as props to prevent hydration mismatches.
+
+
+## Iteration N+1 - Story: US-058 - Admin Menu Preview: Show Time-Based Dynamic Menu Same as Customer View
+
+### What was implemented
+- `src/lib/time-slots.ts`: added `getMalaysiaTimeString()`, `getActiveSlotForTime(hour, minute)`, updated `getDefaultCategoryForTime(overrideTime?)` and `getServingNowCategories(overrideTime?)` to accept optional "HH:MM" override param (backward compatible)
+- `src/lib/availability.ts`: added `isItemAvailableAtPreviewTime(item, hour, minute)` for time-only availability check (ignores day/date constraints)
+- `src/components/menu/admin-preview-banner.tsx` (new): client component with current time display + time input that pushes `?previewTime=HH:MM` to URL on change; has Reset button when preview is active
+- `src/app/[locale]/menu/page.tsx`: reads `searchParams.previewTime` (admin only), passes to time-slot functions for correct `initialCategory`/`servingNowCategories`, passes `previewTime` to `MenuGrid`; renders `AdminPreviewBanner` instead of old static `AdminEditBanner`
+- `src/components/menu/menu-grid.tsx`: added `previewTime` prop, inline `isAvailableAtTime()` helper, passes `isUnavailableAtPreview` to each `EditableMenuCard`
+- `src/components/menu/editable-menu-card.tsx`: added `isUnavailableAtPreview` prop; applies `opacity-50` and "Not serving at preview time" badge overlay when true
+
+### Patterns discovered
+- `searchParams` in Next.js App Router server components must be awaited: `const { previewTime } = await searchParams`
+- Static `AdminEditBanner` → client `AdminPreviewBanner`: when a server-rendered banner needs interactive form elements, extract to a new `'use client'` component and pass server-computed values as props
+- `useSearchParams()` + `useRouter().push()` pattern works cleanly for URL param updates in client components
+
+### Gotchas
+- TypeScript check: use `npx tsc --noEmit` (still no errors after changes)
+- `formatPreviewTime` handles midnight (hour=0 → 12 AM) and noon (hour=12 → 12 PM) edge cases

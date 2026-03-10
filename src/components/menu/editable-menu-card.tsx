@@ -16,6 +16,7 @@ interface EditableMenuCardProps {
   priority?: boolean;
   isHighlighted?: boolean;
   onSetHighlight?: () => void;
+  isUnavailableAtPreview?: boolean;
 }
 
 type EditTarget = "description" | "price" | null;
@@ -37,6 +38,7 @@ export function EditableMenuCard({
   priority = false,
   isHighlighted = false,
   onSetHighlight,
+  isUnavailableAtPreview = false,
 }: EditableMenuCardProps) {
   const locale = useLocale();
   const tc = useTranslations("common");
@@ -169,7 +171,16 @@ export function EditableMenuCard({
 
   return (
     <>
-      <div className={`relative rounded-xl border bg-card p-4 hover-lift group/card ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-amber-400/60"}`}>
+      <div className={`relative rounded-xl border bg-card p-4 hover-lift group/card ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-amber-400/60"} ${isUnavailableAtPreview ? "opacity-50" : ""}`}>
+        {/* Preview-unavailable overlay */}
+        {isUnavailableAtPreview && (
+          <div className="absolute inset-x-3 top-2 z-20 flex items-center justify-center">
+            <span className="rounded-full bg-slate-700/80 px-2.5 py-0.5 text-xs font-medium text-white">
+              Not serving at preview time
+            </span>
+          </div>
+        )}
+
         {/* Saving overlay */}
         {saving && (
           <div className="absolute inset-0 z-30 flex items-center justify-center rounded-xl bg-black/40">

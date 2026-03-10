@@ -190,6 +190,9 @@ export function MenuGrid({
                   isHighlighted={true}
                   priority={sectionIdx === 0}
                   onSetHighlight={() => handleSetHighlight(chefPick.id, chefPick.categories)}
+                  isUnavailableAtPreview={
+                    hasPreviewTime ? !isAvailableAtTime(chefPick, previewHour!, previewMinute!) : false
+                  }
                 />
               ) : (
                 <ChefPickCard item={chefPick} priority={sectionIdx === 0} />
@@ -200,12 +203,15 @@ export function MenuGrid({
                 <div className="mt-4 grid gap-4 grid-cols-2 sm:grid-cols-3">
                   {rest.map((item) => {
                     const isHighlighted = item.categories.some((c) => highlights[c] === item.id);
+                    const isUnavailableAtPreview =
+                      hasPreviewTime ? !isAvailableAtTime(item, previewHour!, previewMinute!) : false;
                     return isAdmin ? (
                       <EditableMenuCard
                         key={item.id}
                         item={item}
                         isHighlighted={isHighlighted}
                         onSetHighlight={() => handleSetHighlight(item.id, item.categories)}
+                        isUnavailableAtPreview={isUnavailableAtPreview}
                       />
                     ) : (
                       <MenuCard key={item.id} item={item} isHighlighted={isHighlighted} />
