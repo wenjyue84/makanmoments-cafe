@@ -3443,6 +3443,377 @@
       ],
       "estimatedComplexity": "medium",
       "passes": true
+    },
+    {
+      "id": "US-130",
+      "title": "Remove Debug console.log from Production Chat Route",
+      "priority": 130,
+      "description": "The chat API route logs every customer message to server logs. This is a privacy issue and performance overhead. Remove all debug logging of user message content from production routes.",
+      "acceptanceCriteria": [
+        "No console.log with user message content remains in src/app/api/chat/route.ts",
+        "Any development-only logging is wrapped with `if (process.env.NODE_ENV === 'development')`",
+        "Error-level logs (console.error) are retained for actual server errors (DB failures, AI failures)",
+        "Start dev server, send a chat message — no message content appears in server terminal output"
+      ],
+      "technicalNotes": [
+        "Find console.log in src/app/api/chat/route.ts — the line logging modelMessages",
+        "Remove or gate with NODE_ENV check",
+        "Scan all other src/app/api/ files for similar debug logs containing request body or user data",
+        "Retain console.error calls for real errors only"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-131",
+      "title": "Standardize API Error Response Format with createErrorResponse Helper",
+      "priority": 131,
+      "description": "Admin API routes return inconsistent error formats. Create a shared createErrorResponse helper in src/lib/api-response.ts and apply it to all admin routes for predictable error handling.",
+      "acceptanceCriteria": [
+        "src/lib/api-response.ts exists with createErrorResponse(message, status) and createSuccessResponse(data) helpers",
+        "All admin API routes return { error: string } on failure with correct HTTP status codes (400/401/404/500)",
+        "No admin route returns { message: '...' } for error cases",
+        "At least the routes for menu, orders, settings, highlights, and rules use the helper",
+        "Build passes with no TypeScript errors"
+      ],
+      "technicalNotes": [
+        "Create src/lib/api-response.ts: export function createErrorResponse(message: string, status = 500) and createSuccessResponse<T>(data: T)",
+        "Update: src/app/api/admin/menu/route.ts, orders/route.ts, settings/route.ts, highlights/route.ts, rules/route.ts",
+        "Replace all NextResponse.json({ message: '...' }) error returns with createErrorResponse()",
+        "HTTP status codes: 400 validation, 401 auth, 404 not found, 500 server error"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-132",
+      "title": "Add Max-Retry Limit to Order Status Polling",
+      "priority": 132,
+      "description": "The order status page polls the API every 15 seconds indefinitely. If the order is lost or API is broken, it polls forever wasting resources. Add a 40-attempt limit and a graceful 'Order not found' message.",
+      "acceptanceCriteria": [
+        "Polling in /order/[id] stops after 40 consecutive failed API calls (~10 minutes)",
+        "After max retries, page shows 'Order not found — please contact the cafe' with WhatsApp link",
+        "Successful responses reset the fail counter",
+        "When order status is 'ready' or 'rejected', polling stops automatically",
+        "Test: navigate to /order/nonexistent — after 2 failed polls a timeout message shows"
+      ],
+      "technicalNotes": [
+        "In src/app/[locale]/order/[id]/page.tsx client component: add const failCount = useRef(0)",
+        "In fetchOrder: on non-OK response, increment failCount.current; if >= 40, clearInterval and show not_found state",
+        "On successful response: reset failCount.current = 0",
+        "On terminal statuses (ready, rejected): clearInterval after state update",
+        "Add 'not_found' to status union and render a card with cafe contact info"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-133",
+      "title": "Add AbortController Fetch Timeout to Critical Client-Side Calls",
+      "priority": 133,
+      "description": "Client-side fetch calls have no timeout — if the server hangs, users see infinite spinners for 30+ seconds. Add 8-second AbortController timeouts to critical fetch calls in the order status page and admin orders panel.",
+      "acceptanceCriteria": [
+        "fetchWithTimeout utility exists in src/lib/fetch.ts or src/lib/utils.ts",
+        "Order status fetch in /order/[id] uses fetchWithTimeout with 8000ms",
+        "Admin order approval/rejection fetches use fetchWithTimeout",
+        "On timeout, a visible error message appears: 'Request timed out — please try again'",
+        "Normal operations complete well within 8 seconds (no false timeouts)",
+        "Build passes"
+      ],
+      "technicalNotes": [
+        "Create fetchWithTimeout(url, options, timeoutMs = 8000): uses AbortController, clears timer on success",
+        "Place in src/lib/utils.ts or new src/lib/fetch.ts",
+        "Apply to: src/app/[locale]/order/[id]/page.tsx fetchOrder(), src/components/admin/admin-orders-panel.tsx action handlers",
+        "Handle AbortError: catch (err) { if (err.name === 'AbortError') setError('Request timed out') }"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-134",
+      "title": "Increase System Prompt Menu Cache TTL to 60 Minutes",
+      "priority": 134,
+      "description": "The AI chat system prompt re-fetches menu items from the database every 5 minutes. Since menu rarely changes, increase the TTL to 60 minutes and explicitly invalidate the cache when admin updates menu items.",
+      "acceptanceCriteria": [
+        "MENU_CACHE_TTL_MS in src/lib/chat/system-prompt.ts is 60 * 60 * 1000 (60 minutes)",
+        "The PATCH admin menu route calls invalidateSystemPromptCache() after a successful item update",
+        "Toggling item availability in admin also triggers cache invalidation",
+        "Chat still reflects the current menu after a manual cache clear",
+        "Build passes"
+      ],
+      "technicalNotes": [
+        "Change MENU_CACHE_TTL_MS in src/lib/chat/system-prompt.ts from 5 * 60 * 1000 to 60 * 60 * 1000",
+        "In src/app/api/admin/menu/[id]/route.ts PATCH handler: import { invalidateSystemPromptCache } and call it after successful DB update",
+        "If there is a separate availability toggle endpoint, add cache invalidation there too",
+        "The invalidateSystemPromptCache function is already exported from system-prompt.ts"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-135",
+      "title": "Fix TypeScript any Types in Chat Route",
+      "priority": 135,
+      "description": "The chat API route uses any types for message parsing, model selection, and stream building. Replace them with proper TypeScript types for compile-time safety.",
+      "acceptanceCriteria": [
+        "No `let body: any` in src/app/api/chat/route.ts — typed request body interface used",
+        "Message part filtering uses proper UIMessage part types from the 'ai' package",
+        "buildStream parameter has a proper type (not any)",
+        "No `as any` casts on streamText call",
+        "npx tsc --noEmit passes without new errors"
+      ],
+      "technicalNotes": [
+        "Define interface ChatRequestBody { messages: UIMessage[]; sessionId?: string } for request body",
+        "Import UIMessage from 'ai' package for message part typing",
+        "For buildStream parameter: use LanguageModelV1 from '@ai-sdk/provider' or the correct SDK type",
+        "The `(streamText as any)` cast can be removed with correct import overloads"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-136",
+      "title": "Move Hardcoded Display Category Names to Constants",
+      "priority": 136,
+      "description": "Display category names like 'Chef\\'s Picks', 'Under RM15', 'Vegetarian', and drink category names are hardcoded in multiple components. Centralize them in src/lib/constants.ts.",
+      "acceptanceCriteria": [
+        "src/lib/constants.ts has SPECIAL_DISPLAY_CATEGORIES constant with keys for Chef's Picks, Under RM15, Vegetarian, Favorites",
+        "All hardcoded references to these strings in menu-grid.tsx, menu-card.tsx, admin-categories-panel.tsx use the constants",
+        "Menu page renders correctly with the same category names",
+        "Build passes"
+      ],
+      "technicalNotes": [
+        "Add to src/lib/constants.ts: export const SPECIAL_DISPLAY_CATEGORIES = { CHEFS_PICKS: \"Chef's Picks\", UNDER_RM15: \"Under RM15\", VEGETARIAN: \"Vegetarian\", FAVORITES: \"Favorites\" } as const",
+        "Search src/ for these string literals and replace with constant references",
+        "Key files: src/components/menu/menu-grid.tsx, src/components/menu/menu-card.tsx, src/components/admin/admin-categories-panel.tsx"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-137",
+      "title": "Memoize Fuse.js Instance in MenuGrid",
+      "priority": 137,
+      "description": "The Fuse.js search index in MenuGrid rebuilds on every state change (~50ms on mobile for 364 items). Memoize the Fuse instance with [items] as the only dependency so it only rebuilds when the items array changes.",
+      "acceptanceCriteria": [
+        "Fuse instance in menu-grid.tsx is created inside useMemo with only [items] dependency",
+        "Switching categories does NOT rebuild the Fuse index (verified by reading code: no Fuse constructor in category switch path)",
+        "Search still works correctly",
+        "fuseOptions is defined as a constant outside the component",
+        "Build passes"
+      ],
+      "technicalNotes": [
+        "In src/components/menu/menu-grid.tsx: find `new Fuse(...)` and wrap: const fuse = useMemo(() => new Fuse(items, fuseOptions), [items])",
+        "Move fuseOptions object to module-level constant (prevents stale closure re-creation)",
+        "The search filtering uses the memoized fuse instance for fuse.search(searchQuery)"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-138",
+      "title": "Extract MenuGrid Filtering and Grouping into useMenuFiltering Hook",
+      "priority": 138,
+      "description": "MenuGrid has ~150 lines of filtering, search, and category grouping logic mixed with JSX. Extract into a useMenuFiltering hook to improve readability and enable easier testing.",
+      "acceptanceCriteria": [
+        "src/hooks/useMenuFiltering.ts exists",
+        "Hook accepts items, selectedCategory, searchQuery, highlights, displayCategories and returns filteredItems, categorySections, heroItems",
+        "MenuGrid.tsx reduced by at least 100 lines",
+        "All filtering behaviors unchanged: category filter, search, Chef's Picks hero display, display category filtering",
+        "Menu page renders and filters correctly",
+        "Build and npx tsc --noEmit pass"
+      ],
+      "technicalNotes": [
+        "Create src/hooks/useMenuFiltering.ts",
+        "Extract useMemo blocks for filteredItems, categorySections, heroItems from menu-grid.tsx",
+        "Hook receives all needed data as parameters (pure, no context calls inside)",
+        "Update menu-grid.tsx to call useMenuFiltering",
+        "Incorporate the memoized Fuse instance from US-137 inside the hook"
+      ],
+      "dependencies": [
+        "US-137"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-139",
+      "title": "Split AdminMenuTable into Row Component and Edit Hook",
+      "priority": 139,
+      "description": "admin-menu-table.tsx is ~1,349 lines. Extract the single-row edit UI into AdminMenuTableRow and all PATCH/state logic into a useMenuTableEdit hook.",
+      "acceptanceCriteria": [
+        "src/components/admin/admin-menu-table-row.tsx exists for single row rendering + inline edit form",
+        "src/hooks/useMenuTableEdit.ts exists with editingId, editForm state, handleSave, handleCancel, handleImageChange",
+        "admin-menu-table.tsx reduced to under 500 lines",
+        "All admin menu editing works: price, name, image, availability, dietary, display categories",
+        "No TypeScript errors on build"
+      ],
+      "technicalNotes": [
+        "Identify the row-level edit JSX in admin-menu-table.tsx (large conditional block with edit form)",
+        "Extract to AdminMenuTableRow with props: item, isEditing, editForm, onSave, onCancel, onChange",
+        "Extract to useMenuTableEdit hook: all useState for editingId, editForm, and all handler functions",
+        "Parent AdminMenuTable handles grouping and maps items to rows"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-140",
+      "title": "Extract AdminOrdersPanel into AdminOrderCard and useAdminOrders Hook",
+      "priority": 140,
+      "description": "admin-orders-panel.tsx is ~634 lines mixing data fetching, order display, and action buttons. Extract into a useAdminOrders hook and AdminOrderCard component.",
+      "acceptanceCriteria": [
+        "src/hooks/useAdminOrders.ts exists with orders state, fetchOrders, approveOrder, rejectOrder, updateOrderStatus",
+        "src/components/admin/admin-order-card.tsx exists for rendering a single order + action buttons",
+        "admin-orders-panel.tsx reduced to under 200 lines",
+        "All functionality works: view orders, approve, reject with reason, update status",
+        "Build passes"
+      ],
+      "technicalNotes": [
+        "Create src/hooks/useAdminOrders.ts — extract all useState, useEffect, fetch calls",
+        "Create src/components/admin/admin-order-card.tsx — extract single-order JSX block",
+        "Hook returns: { orders, loading, error, approveOrder, rejectOrder, updateStatus, refresh }",
+        "AdminOrderCard props: { order, onApprove, onReject, onStatusUpdate }"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-141",
+      "title": "Add Environment Variable Validation on Startup",
+      "priority": 141,
+      "description": "Missing critical env vars (DATABASE_URL, GROQ_API_KEY, ADMIN_JWT_SECRET) cause silent runtime failures. Add a startup validation module that throws a clear error during server start if required vars are absent.",
+      "acceptanceCriteria": [
+        "src/lib/env.ts exists, imports server-only, validates required env vars with Zod at import time",
+        "Missing DATABASE_URL throws: 'Missing required env var: DATABASE_URL' — not a silent empty array",
+        "Missing ADMIN_JWT_SECRET causes auth to throw on startup, not silently sign with undefined",
+        "src/lib/db.ts and src/lib/auth.ts import env constants from env.ts",
+        "Starting the server with a missing var shows the clear error in terminal"
+      ],
+      "technicalNotes": [
+        "Create src/lib/env.ts with Zod schema for server-side required vars",
+        "Add 'import \"server-only\"' to prevent client bundle inclusion",
+        "Export typed constants: export const env = EnvSchema.parse(process.env)",
+        "Update src/lib/db.ts: replace process.env.DATABASE_URL with env.DATABASE_URL",
+        "Update src/lib/auth.ts: replace process.env.ADMIN_JWT_SECRET with env.ADMIN_JWT_SECRET"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-142",
+      "title": "Add Reliability Tests to /admin/tests Panel",
+      "priority": 142,
+      "description": "Add a 'Reliability' test group to the /admin/tests panel with 5 tests verifying the chat API, orders API input validation, menu API, admin auth, and order status endpoint.",
+      "acceptanceCriteria": [
+        "Navigate to /admin/tests — a 'Reliability' section shows 5 tests",
+        "Test: Chat API responds within 5s for a simple message",
+        "Test: Orders API returns 400 for missing contact_number",
+        "Test: Menu API returns non-empty items array",
+        "Test: Admin settings returns 401 for invalid token",
+        "Test: Order status returns 404 for unknown order ID",
+        "All tests show pass/fail with result detail"
+      ],
+      "technicalNotes": [
+        "Find existing tests panel: src/components/admin/admin-tests-panel.tsx",
+        "Add new test group 'Reliability' with 5 async test functions returning { passed: boolean, message: string }",
+        "Chat test: fetch /api/chat with { messages: [{ role: 'user', parts: [{ type: 'text', text: 'hello' }] }] } with 5s timeout",
+        "Orders validation test: POST /api/orders with empty body, expect 400",
+        "Menu test: GET /api/admin/menu with auth cookie, expect non-empty array",
+        "Auth test: GET /api/admin/settings with Authorization: Bearer invalid, expect 401",
+        "Order 404 test: GET /api/orders/test-nonexistent-id, expect 404"
+      ],
+      "dependencies": [
+        "US-131"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-143",
+      "title": "Add Performance Benchmark Tests to /admin/tests Panel",
+      "priority": 143,
+      "description": "Add a 'Performance' test group to the /admin/tests panel measuring response times for key API endpoints. Tests show actual latency and flag if over threshold.",
+      "acceptanceCriteria": [
+        "Navigate to /admin/tests — a 'Performance' section shows benchmark tests",
+        "Test: Menu API < 500ms",
+        "Test: Settings API < 200ms",
+        "Test: Highlights API < 300ms",
+        "Each test shows actual measured latency (e.g., '87ms ✓')",
+        "Tests fail with actual ms shown if over threshold"
+      ],
+      "technicalNotes": [
+        "In admin-tests-panel.tsx add 'Performance' test group",
+        "Each test: const start = performance.now(); await fetch(url); const ms = Math.round(performance.now() - start)",
+        "Pass threshold: menu API < 500ms, settings < 200ms, highlights < 300ms",
+        "Show result message: e.g. 'Menu API: 87ms (threshold: 500ms) ✓'"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-144",
+      "title": "Run All Admin Tests and Fix Any Failing Tests",
+      "priority": 144,
+      "description": "After reliability and performance tests are added, use browser automation to run all tests in /admin/tests programmatically. Identify and fix failing tests. Each fix is committed atomically.",
+      "acceptanceCriteria": [
+        "Navigate to http://localhost:3030/admin/tests (log in first)",
+        "Click 'Run All Tests' — all tests in Smoke, Integration, Reliability, and Performance groups run",
+        "Any failing tests are identified with their error message",
+        "Root causes are investigated and fixed in the relevant source files",
+        "After fixes, re-run tests — at least 90% pass",
+        "Each fix committed with a descriptive message"
+      ],
+      "technicalNotes": [
+        "Use Chrome DevTools MCP to: navigate to admin login, log in, navigate to /admin/tests, click Run All, screenshot results",
+        "For each failure: read the error detail, trace to the relevant API route or component",
+        "Common failures: auth cookie not set in test context, wrong API endpoint path, missing test env vars",
+        "Fix the underlying issue (not just the test assertion) when root cause is a real bug"
+      ],
+      "dependencies": [
+        "US-142",
+        "US-143"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-145",
+      "title": "Browser Test All Key Pages and Fix Errors",
+      "priority": 145,
+      "description": "Use browser automation to test that key customer-facing and admin pages load without JavaScript errors or broken assets. Fix any issues found with atomic commits.",
+      "acceptanceCriteria": [
+        "Pages tested: /en, /en/menu, /en/about, /en/contact, /admin/login, /admin (post-login), /admin/ai-waiter",
+        "No JavaScript errors in browser console on any tested page",
+        "No broken image 404s",
+        "Chat widget opens on /en/menu",
+        "/admin/ai-waiter shows Rainbow AI iframe or offline status card",
+        "All found errors fixed with atomic commits per fix"
+      ],
+      "technicalNotes": [
+        "Use Chrome DevTools MCP: for each URL, navigate, wait for load, check console messages for errors",
+        "For /admin pages: log in via /admin/login first using ADMIN_USERNAME and ADMIN_PASSWORD from .env.local",
+        "Take screenshot of each page for visual confirmation",
+        "For broken images: check public/ folder for missing files",
+        "After all fixes: run npm run build to confirm production build succeeds"
+      ],
+      "dependencies": [
+        "US-129"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
     }
   ]
 }

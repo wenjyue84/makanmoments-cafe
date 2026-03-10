@@ -71,8 +71,6 @@ export async function POST(req: Request) {
     })
     .filter((m) => m.content.trim() !== "");
 
-  console.log("[chat] modelMessages:", JSON.stringify(modelMessages));
-
   // Admin detection — reads JWT cookie to set isAdmin flag (used for future admin-only tools)
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value ?? "";
