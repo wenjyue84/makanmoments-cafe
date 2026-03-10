@@ -12197,3 +12197,62 @@ Completed: Memoize Fuse.js Instance in MenuGrid (ID: US-137) in 10m
 ## Iteration 1 - Wed, Mar 11, 2026  2:39:56 AM
 Completed: Extract MenuGrid Filtering and Grouping into useMenuFiltering Hook (ID: US-138) in 5m
 
+## Iteration 8 - Wed, Mar 11, 2026  2:40:44 AM
+Completed: Extract MenuGrid Filtering and Grouping into useMenuFiltering Hook (ID: US-138) in 8m
+
+
+## Pre-analysis for US-139 (Gemini 2.5 Pro)
+This user story describes a **React/TypeScript frontend refactoring task**, not a Frappe/Python one. The goal is to simplify a large component. Here is the technical brief based on the provided JSON:
+
+**Project:** Next.js Frontend
+**Goal:** Refactor `admin-menu-table.tsx` for better maintainability.
+
+**1. Files to Modify/Create:**
+-   **Modify:** `src/components/admin/admin-menu-table.tsx`
+-   **Create:** `src/components/admin/admin-menu-table-row.tsx`
+-   **Create:** `src/hooks/useMenuTableEdit.ts`
+
+**2. Key React Constructs Involved:**
+-   **Components:** `AdminMenuTable` (parent), `AdminMenuTableRow` (new child).
+-   **Hooks:** A new custom hook `useMenuTableEdit` will encapsulate all editing logic.
+
+**3. Recommended Implementation Approach:**
+1.  Create `useMenuTableEdit.ts`. Migrate all `useState` variables (`editingId`, `editForm`) and related event handlers (`handleSave`, `handleCancel`, image changes) from `admin-menu-table.tsx` into this hook.
+2.  Create `AdminMenuTableRow.tsx`. Extract the single-row JSX (both display and edit states) into this component. It should receive props like `item`, `isEditing`, and handlers passed from the parent.
+3.  In `admin-menu-table.tsx`, remove the extracted logic and JSX. Call the `useMenuTableEdit` hook to get state and handlers.
+4.  Map over the menu items and render the new `<AdminMenuTableRow />` component for each one, passing the required props.
+
+**4. Edge Cases & Gotchas:**
+-   Ensure correct prop drilling for handlers and state between the parent, the row, and the hook.
+-   The `handleSave` (PATCH) logic must correctly update the UI state upon success, likely via SWR/TanStack Query cache invalidation or local state updates.
+-   Pay close attention to TypeScript types for props and form state to avoid build errors.
+
+
+## Pre-analysis for US-139 (Gemini 2.5 Pro)
+This user story describes a **React/TypeScript refactoring task**, not a Frappe/Python one. The goal is to break down the monolithic `admin-menu-table.tsx` component.
+
+Here is the technical brief for the agent:
+
+**Objective:** Refactor the `admin-menu-table.tsx` component to improve modularity and maintainability by extracting row rendering and state management logic.
+
+**1. Files to Create/Modify:**
+*   **Modify:** `src/components/admin/admin-menu-table.tsx` (This is the parent component to be simplified).
+*   **Create:** `src/hooks/useMenuTableEdit.ts` (To encapsulate editing state and logic).
+*   **Create:** `src/components/admin/admin-menu-table-row.tsx` (To render and manage a single menu item row).
+
+**2. Key React Constructs Involved:**
+*   **Components:** `AdminMenuTable`, `AdminMenuTableRow` (new).
+*   **Hooks:** `useState`, `useCallback`, and a new custom hook `useMenuTableEdit`.
+*   **State:** The main state to manage includes `editingId` (string or null) and `editForm` (object representing form data).
+
+**3. Recommended Implementation Approach:**
+1.  **Create `useMenuTableEdit.ts`:** Move all state (`useState` for `editingId`, `editForm`) and handler functions (`handleSave`, `handleCancel`, `handleImageChange`, etc.) from `admin-menu-table.tsx` into this custom hook. It should return the state variables and handlers.
+2.  **Create `AdminMenuTableRow.tsx`:** Extract the JSX for a single row from the existing table's `.map()` loop. This component will have two states: display mode and edit mode (a form). It will take the menu `item`, `isEditing`, `editForm` state, and event handlers from the parent as props.
+3.  **Refactor `AdminMenuTable.tsx`:** Simplify the main component to use the `useMenuTableEdit` hook. Its primary job will be to fetch the initial data and then map over the items, rendering an `AdminMenuTableRow` for each one, passing the necessary state and handlers from the hook.
+
+**4. Gotchas & Edge Cases:**
+*   **State Management:** Ensure that after a successful save, the local state (and thus the UI) is updated correctly. This might involve the `useMenuTableEdit` hook accepting a callback to update the parent component's master item list.
+*   **TypeScript:** Define strong types for component props and the `editForm` object to prevent runtime errors.
+*   **Performance:** The current component is large; ensure the refactor doesn't introduce unnecessary re-renders. Use `React.memo` on the new row component if needed.
+*   **API Logic:** The `PATCH` request logic inside `handleSave` must be self-contained within the `useMenuTableEdit` hook.
+
