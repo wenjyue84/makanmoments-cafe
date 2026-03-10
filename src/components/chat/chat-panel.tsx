@@ -31,9 +31,6 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   const [voiceSupported, setVoiceSupported] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
-  const pendingSubmitRef = useRef(false);
-  const submitInputRef = useRef<(() => void) | null>(null);
-
   // Reveal mic button only on client after hydration
   useEffect(() => {
     setVoiceSupported(speechSupported);
@@ -53,7 +50,6 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
 
   const isLoading = status === "streaming" || status === "submitted";
 
-  // Keep submitInputRef in sync so voice onend handler can call latest version
   const handleSubmitText = useCallback(
     (text: string) => {
       if (!text.trim() || isLoading) return;
@@ -63,8 +59,6 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     [isLoading, sendMessage]
   );
 
-  submitInputRef.current = () => handleSubmitText(input);
-
   function toggleVoice() {
     if (!speechSupported) return;
     try {
@@ -73,41 +67,37 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
         return;
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Win = window as any;
       const SpeechRecognitionCtor =
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).SpeechRecognition ||
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (window as any).webkitSpeechRecognition;
+        Win.SpeechRecognition || Win.webkitSpeechRecognition;
       const recognition = new SpeechRecognitionCtor();
       recognition.lang = "en-US";
       recognition.continuous = false;
       recognition.interimResults = true;
 
+      // Track final transcript within this recognition session
+      const session = { transcript: "" };
+
       recognition.onstart = () => setIsListening(true);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        setInput(transcript);
-        if (event.results[0].isFinal) {
-          pendingSubmitRef.current = true;
-        }
+        const text = event.results[0][0].transcript;
+        setInput(text);
+        session.transcript = text;
       };
 
       recognition.onend = () => {
         setIsListening(false);
-        if (pendingSubmitRef.current) {
-          pendingSubmitRef.current = false;
-          // Short timeout to allow state to flush before submitting
-          setTimeout(() => {
-            submitInputRef.current?.();
-          }, 50);
+        if (session.transcript.trim()) {
+          sendMessage({ text: session.transcript });
+          setInput("");
         }
       };
 
       recognition.onerror = () => {
         setIsListening(false);
-        pendingSubmitRef.current = false;
+        session.transcript = "";
       };
 
       recognitionRef.current = recognition;
