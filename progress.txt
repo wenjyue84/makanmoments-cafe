@@ -8285,3 +8285,74 @@ Here is the technical brief for the KDS implementation based on the provided use
 ## Iteration 55 - Tue, Mar 10, 2026  7:08:42 PM
 Completed: KDS: Kitchen Display System — Login + Order Queue View (ID: US-087) in 10m
 
+## Iteration 1 - Tue, Mar 10, 2026  7:09:35 PM
+Completed: Customer Can View Previous Order History After Sending (ID: US-048) in 8m
+
+
+## Pre-analysis for US-088 (Gemini 2.5 Pro)
+This user story appears to be for a **Next.js/React frontend**, not a Frappe/Python backend. The technical notes reference React components (`onClick`, `className`), JSX syntax, client-side state (`Map<orderId, Set<itemIndex>>`), and a REST API endpoint (`PATCH /api/...`), all of which are characteristic of a modern web frontend framework.
+
+Here is a technical brief based on the Next.js/React architecture suggested by the story and your project files.
+
+***
+
+**Technical Brief: US-088 KDS Item Completion**
+
+**1. Files to Modify:**
+*   **Frontend Page:** `src/app/kds/page.tsx` (or similar) - To manage the state of completed items across all orders.
+*   **Frontend Component:** `src/components/kds/OrderCard.tsx` - The component that renders an individual order card. It will need logic to check if all its items are complete.
+*   **Frontend Component:** A new or existing `src/components/kds/OrderItem.tsx` - To handle the individual item's display, tap interaction, and completed status visuals (strikethrough/check).
+*   **Backend API Route:** `src/app/api/admin/orders/[id]/route.ts` - The server-side handler for the `PATCH` request to update the order status.
+
+**2. Key DocTypes & Hooks (React/Next.js equivalent):**
+*   **Frontend State Hook:** Use `useState` in the main KDS page component to hold a `Map` tracking completed items (e.g., `useState(new Map<string, Set<number>>())`).
+*   **API Interaction:** A client-side `fetch` call to the `PATCH` API route.
+*   **Database Model:** The API route will interact with the `Order` model in your database (likely via Prisma or a similar ORM) to change its `status` field to 'ready'.
+
+**3. Recommended Implementation Approach:**
+1.  In `kds/page.tsx`, define a state `const [completedItems, setCompletedItems] = useState(new Map())`.
+2.  Create a `toggleItem(orderId, itemIndex)` function that updates this map. Pass this function down to `OrderCard`.
+3.  In `OrderCard`, determine if all items for its order are complete by checking against the `completedItems` prop.
+4.  Conditionally render a "Mark as Ready" button if all items are complete. This button will trigger a `markAsReady(orderId)` function.
+5.  The `markAsReady` function will make the `PATCH` request. On success, it should optimistically remove the order from the local state to update the UI instantly.
+6.  The `OrderItem` component will use the `toggleItem` handler and apply conditional styling (`line-through`, icons) based on its completed state.
+
+**4. Edge Cases & Gotchas:**
+*   **State Persistence:** The spec says state is local. If the user refreshes the page, the completion status of individual items will be lost. This is acceptable per the requirements but is a key UX point.
+*   **API Error Handling:** If the `PATCH` request to "Mark as Ready" fails, the UI must handle it gracefully (e.g., show a toast notification) and not remove the order card.
+*   **Race Conditions:** Not a major concern since item state is local, but the final `PATCH` should ensure the order is still in a 'preparing' state before updating it to 'ready'.
+
+
+## Pre-analysis for US-088 (Gemini 2.5 Pro)
+Here is the technical brief for implementing user story US-088 within the `lhdn_payroll_integration` app context.
+
+**Subject: Technical Brief for US-088: Payroll Batch Item Verification**
+
+This story adapts KDS item completion logic for a payroll context. The goal is to allow an admin to verify each employee record in a monthly payroll batch before finalizing the entire batch for submission.
+
+**1. DocTypes Involved:**
+*   **Parent:** `Monthly Payroll Submission` (or equivalent primary batch DocType).
+*   **Child Table:** The child table within the parent DocType holding individual employee payroll lines.
+*   **Action:** Add a new Check field named `is_verified` to the Child Table DocType.
+
+**2. Files to Modify:**
+*   **`.../doctype/monthly_payroll_submission/monthly_payroll_submission.js`**: A new client script to manage the UI logic.
+*   **`.../doctype/monthly_payroll_submission/monthly_payroll_submission.py`**: The server-side controller to add a finalization method.
+
+**3. Implementation Plan:**
+*   **Client-Side (`.js`):**
+    *   On form refresh, add a custom "Finalize for Submission" button and hide it initially.
+    *   Create a grid event handler for the `is_verified` checkbox. On toggle, visually distinguish the row (e.g., background color).
+    *   After each toggle, check if all rows in the child table are marked `is_verified`.
+    *   If all are verified, show the "Finalize for Submission" button. Otherwise, keep it hidden.
+*   **Server-Side (`.py`):**
+    *   Create a `@frappe.whitelist()` method (e.g., `finalize_batch`).
+    *   This method performs a final server-side check to confirm all child items are verified.
+    *   It then updates the parent document's `status` field to `Ready for Submission` and saves it.
+    *   The client-side button will call this whitelisted method.
+
+**4. Gotchas:**
+*   The final server-side validation is critical; do not trust the client state alone.
+*   Handle empty child tables gracefully (e.g., disable the finalize button).
+*   Ensure user permissions allow for status changes on the parent DocType.
+

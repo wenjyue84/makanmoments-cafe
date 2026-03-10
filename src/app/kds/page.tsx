@@ -42,7 +42,53 @@ function elapsedMinutes(createdAt: string): number {
   return Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
 }
 
-function OrderCard({ order }: { order: KdsOrder }) {
+function CheckCircleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      className={className ?? "h-6 w-6"}
+    >
+      <path
+        fillRule="evenodd"
+        d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z"
+        clipRule="evenodd"
+      />
+    </svg>
+  );
+}
+
+function CircleIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      className={className ?? "h-6 w-6"}
+    >
+      <circle cx="12" cy="12" r="9.75" />
+    </svg>
+  );
+}
+
+interface OrderCardProps {
+  order: KdsOrder;
+  completedItems: Set<number>;
+  onToggleItem: (itemIdx: number) => void;
+  onMarkReady: () => void;
+  isMarkingReady: boolean;
+}
+
+function OrderCard({
+  order,
+  completedItems,
+  onToggleItem,
+  onMarkReady,
+  isMarkingReady,
+}: OrderCardProps) {
   const [elapsed, setElapsed] = useState(elapsedMinutes(order.created_at));
 
   useEffect(() => {
@@ -53,15 +99,22 @@ function OrderCard({ order }: { order: KdsOrder }) {
   }, [order.created_at]);
 
   const urgent = elapsed >= 20;
+  const allDone =
+    order.items.length > 0 &&
+    order.items.every((_, i) => completedItems.has(i));
+
+  let borderClass = "border-gray-700";
+  let bgClass = "bg-gray-800";
+  if (allDone) {
+    borderClass = "border-green-500";
+    bgClass = "bg-gray-800";
+  } else if (urgent) {
+    borderClass = "border-red-500";
+    bgClass = "bg-red-950";
+  }
 
   return (
-    <div
-      className={`rounded-2xl border-2 p-6 shadow-lg ${
-        urgent
-          ? "border-red-500 bg-red-950"
-          : "border-gray-700 bg-gray-800"
-      }`}
-    >
+    <div className={`rounded-2xl border-2 p-6 shadow-lg ${borderClass} ${bgClass}`}>
       {/* Header */}
       <div className="mb-4 flex items-start justify-between gap-4">
         <div>
@@ -71,7 +124,7 @@ function OrderCard({ order }: { order: KdsOrder }) {
           <p className="text-4xl font-black text-white">#{order.id}</p>
         </div>
         <div className="text-right">
-          <p className={`text-2xl font-bold ${urgent ? "text-red-400" : "text-orange-400"}`}>
+          <p className={`text-2xl font-bold ${urgent && !allDone ? "text-red-400" : "text-orange-400"}`}>
             {elapsed}m
           </p>
           <p className="text-xs text-gray-400">elapsed</p>
@@ -91,16 +144,41 @@ function OrderCard({ order }: { order: KdsOrder }) {
         </p>
       </div>
 
-      {/* Items */}
-      <ul className="space-y-2">
-        {order.items.map((item, i) => (
-          <li key={i} className="flex items-center justify-between gap-4">
-            <span className="text-lg font-semibold text-white">{item.name}</span>
-            <span className="shrink-0 rounded-lg bg-orange-500 px-3 py-1 text-lg font-black text-white">
-              ×{item.quantity}
-            </span>
-          </li>
-        ))}
+      {/* Items — tap to complete */}
+      <ul className="space-y-1">
+        {order.items.map((item, i) => {
+          const done = completedItems.has(i);
+          return (
+            <li key={i}>
+              <button
+                onClick={() => onToggleItem(i)}
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors ${
+                  done
+                    ? "text-gray-400 hover:bg-gray-700/40"
+                    : "text-white hover:bg-gray-700/60"
+                }`}
+              >
+                {done ? (
+                  <CheckCircleIcon className="h-6 w-6 shrink-0 text-green-400" />
+                ) : (
+                  <CircleIcon className="h-6 w-6 shrink-0 text-gray-500" />
+                )}
+                <span
+                  className={`flex-1 text-lg font-semibold ${done ? "line-through" : ""}`}
+                >
+                  {item.name}
+                </span>
+                <span
+                  className={`shrink-0 rounded-lg px-3 py-1 text-lg font-black ${
+                    done ? "bg-gray-600 text-gray-400" : "bg-orange-500 text-white"
+                  }`}
+                >
+                  ×{item.quantity}
+                </span>
+              </button>
+            </li>
+          );
+        })}
       </ul>
 
       {/* Footer */}
@@ -112,6 +190,17 @@ function OrderCard({ order }: { order: KdsOrder }) {
           RM {parseFloat(order.total).toFixed(2)}
         </p>
       </div>
+
+      {/* Mark as Ready button — appears only when all items done */}
+      {allDone && (
+        <button
+          onClick={onMarkReady}
+          disabled={isMarkingReady}
+          className="mt-4 w-full rounded-xl bg-green-500 py-3 text-lg font-bold text-white transition-colors hover:bg-green-400 disabled:opacity-60"
+        >
+          {isMarkingReady ? "Marking Ready…" : "✅ Mark as Ready"}
+        </button>
+      )}
     </div>
   );
 }
@@ -121,6 +210,9 @@ export default function KdsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
+  // Map<orderId, Set<itemIndex>> — in-memory only
+  const [completedItems, setCompletedItems] = useState<Map<number, Set<number>>>(new Map());
+  const [markingReady, setMarkingReady] = useState<Set<number>>(new Set());
 
   const fetchOrders = useCallback(async () => {
     try {
@@ -149,6 +241,51 @@ export default function KdsPage() {
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
+  const toggleItem = useCallback((orderId: number, itemIdx: number) => {
+    setCompletedItems((prev) => {
+      const next = new Map(prev);
+      const set = new Set(next.get(orderId) ?? []);
+      if (set.has(itemIdx)) {
+        set.delete(itemIdx);
+      } else {
+        set.add(itemIdx);
+      }
+      next.set(orderId, set);
+      return next;
+    });
+  }, []);
+
+  const markReady = useCallback(
+    async (orderId: number) => {
+      setMarkingReady((prev) => new Set(prev).add(orderId));
+      try {
+        const res = await fetch(`/api/kds/orders/${orderId}/ready`, {
+          method: "POST",
+        });
+        if (!res.ok) {
+          const body = (await res.json()) as { error?: string };
+          throw new Error(body.error ?? `HTTP ${res.status}`);
+        }
+        // Optimistic removal from list
+        setOrders((prev) => prev.filter((o) => o.id !== orderId));
+        setCompletedItems((prev) => {
+          const next = new Map(prev);
+          next.delete(orderId);
+          return next;
+        });
+      } catch (err) {
+        alert(err instanceof Error ? err.message : "Failed to mark order ready");
+      } finally {
+        setMarkingReady((prev) => {
+          const next = new Set(prev);
+          next.delete(orderId);
+          return next;
+        });
+      }
+    },
+    []
+  );
+
   return (
     <div className="min-h-screen bg-gray-900 px-4 py-6">
       {/* Header */}
@@ -163,7 +300,11 @@ export default function KdsPage() {
           <p className="text-2xl font-bold text-orange-400">{orders.length}</p>
           <p className="text-xs text-gray-400">preparing</p>
           <p className="mt-1 text-xs text-gray-500">
-            Updated {lastRefresh.toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" })}
+            Updated{" "}
+            {lastRefresh.toLocaleTimeString("en-MY", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
           </p>
         </div>
       </div>
@@ -198,7 +339,14 @@ export default function KdsPage() {
       {!loading && !error && orders.length > 0 && (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {orders.map((order) => (
-            <OrderCard key={order.id} order={order} />
+            <OrderCard
+              key={order.id}
+              order={order}
+              completedItems={completedItems.get(order.id) ?? new Set()}
+              onToggleItem={(idx) => toggleItem(order.id, idx)}
+              onMarkReady={() => void markReady(order.id)}
+              isMarkingReady={markingReady.has(order.id)}
+            />
           ))}
         </div>
       )}
