@@ -6184,3 +6184,112 @@ Completed: Menu Search Bar: Voice-to-Text Input Button (ID: US-068) in 8m
 ## Iteration 42 - Tue, Mar 10, 2026  5:09:42 PM
 Completed: Favicon: Cafe Logo as Browser Tab Icon (ID: US-069) in 5m
 
+## Iteration 41 - Tue, Mar 10, 2026  5:10:16 PM
+Completed: Favicon: Cafe Logo as Browser Tab Icon (ID: US-069) in 6m
+
+
+## Pre-analysis for US-071 (Gemini 2.5 Pro)
+Here is the technical brief for implementing US-071 in a Frappe/Python environment.
+
+**Subject: Technical Brief: US-071 - Multiple Images for Menu Items**
+
+This brief outlines the Frappe/Python implementation for allowing up to three images per menu item.
+
+**1. DocType to Modify:**
+*   `Menu Item`: This DocType needs to be customized. Add two new fields:
+    *   `image_2` (Field Type: `Attach Image`)
+    *   `image_3` (Field Type: `Attach Image`)
+    *   The existing `image` field will serve as the primary image.
+
+**2. Key Python Files:**
+*   `lhdn_payroll_integration/lhdn_payroll_integration/doctype/menu_item/menu_item.py`: The controller for the DocType. Use the `validate` hook to add server-side validation.
+*   `lhdn_payroll_integration/hooks.py`: No changes are anticipated unless a custom API or permission query is required.
+
+**3. Implementation Approach:**
+*   **Backend:** Add the `image_2` and `image_3` fields to the `Menu Item` DocType. The standard Frappe Control Panel UI will automatically handle the upload, preview, and deletion for these new fields.
+*   **Frontend (Templates):** Modify the Jinja templates for the web view.
+    *   **List View/Card:** The template rendering the menu card should continue to only display the primary `doc.image`.
+    *   **Detail View (`menu_item.html`):** Implement logic to check if `doc.image_2` exists. If so, render an HTML/CSS/JS-based swipeable image carousel containing `doc.image`, `doc.image_2`, and `doc.image_3` (if they exist).
+
+**4. Edge Cases & Gotchas:**
+*   **Validation:** In `menu_item.py`, prevent a user from saving a secondary image (`image_2`) if the primary `image` is not set.
+*   **File Naming:** The story's `{code}-{index}.jpg` convention is specific to the old system. Frappe will handle file naming and storage automatically; we only need to reference the fields (`doc.image_2`, etc.).
+*   **Carousel:** Use a lightweight, CSS-first scroll-snap carousel to align with performance goals, avoiding heavy JS libraries.
+
+
+## Pre-analysis for US-071 (Gemini 2.5 Pro)
+Here is a technical brief for implementing US-071 in a Frappe/Python environment.
+
+**Subject: Technical Brief for US-071: Multiple Menu Item Images**
+
+This brief outlines the implementation strategy for adding multiple image support to the `MenuItem` DocType within the Frappe framework.
+
+**1. Python & Client Script Modifications:**
+
+*   **`.../doctype/menu_item/menu_item.json`**: This DocType definition is the primary file to modify.
+*   **`.../doctype/menu_item/menu_item.js`**: Client-side script to render the image carousel in the form view.
+*   **`.../doctype/menu_item/menu_item.py`**: The controller for adding a server-side property to easily access all image URLs for API consumers.
+
+**2. Involved Frappe DocTypes & Hooks:**
+
+*   **`MenuItem` DocType**: Will be modified to include fields for additional images.
+*   **Client Script `refresh` event**: This hook in `menu_item.js` will be used to dynamically build and render the image carousel whenever the form is loaded or refreshed.
+
+**3. Recommended Implementation Approach:**
+
+1.  **Modify `MenuItem` DocType**: Add two new fields, `image_2` and `image_3`, both of type **Attach Image**. These will store the secondary images. The existing `image` field remains the primary.
+2.  **Add UI Placeholder**: Insert a **Custom HTML** field (e.g., `image_carousel_html`) into the DocType layout to serve as a container for the carousel.
+3.  **Build Carousel in JS**: In `menu_item.js`, use the `frm.refresh` event to:
+    *   Check if `frm.doc.image_2` or `frm.doc.image_3` exist.
+    *   If they do, construct the HTML for a Bootstrap-style image carousel using the URLs from `frm.doc.image`, `frm.doc.image_2`, and `frm.doc.image_3`.
+    *   Inject the generated HTML into the `image_carousel_html` field.
+4.  **Consolidate in Python**: In `menu_item.py`, add a property like `@property def image_urls(self):` that returns a filtered list of all available image URLs. This simplifies API responses.
+
+**4. Edge Cases & Gotchas:**
+
+*   **File Naming**: Do not manually implement the `{code}-{index}.jpg` naming. Rely on Frappe's `Attach Image` fields, which handle file storage and naming securely.
+*   **Empty Images**: The carousel rendering logic must gracefully handle cases where only 1 or 2 images are uploaded, filtering out empty values.
+*   **List View**: The default List View will correctly show only the primary `image` field, satisfying the requirement. No change is needed there.
+*   **Deletion**: Deleting images is handled natively by the `Attach Image` field's "Clear" button, which simplifies implementation.
+
+
+## Iteration 43 - Story: Admin: Multiple Images per Menu Item (US-071)
+
+### What was implemented
+- `src/app/api/admin/images/route.ts`: Added `imageIndex` param to POST (1=primary saves as `{code}.jpg`, 2/3 save as `{code}-2.jpg`/`{code}-3.jpg`). Added DELETE endpoint that tries common extensions to find and remove secondary images.
+- `src/types/menu.ts`: Added `photos: string[]` field to `MenuItem` interface.
+- `src/lib/menu.ts`: Added `getSecondaryPhotosMap()` using `readdirSync` — reads the images directory once per request and returns a code→secondary paths map. Updated `rowToMenuItem` signature to accept the map. Updated all 4 callers (`getMenuItems`, `getFeaturedItems`, `getAllMenuItemsForAdmin`, `getAllMenuItemsWithRulesForAdmin`) to call `getSecondaryPhotosMap()` and pass it.
+- Created `src/components/menu/image-carousel.tsx`: State-based carousel with prev/next chevron buttons and dot indicators. Falls back gracefully to single Image when only 1 photo.
+- `src/components/menu/menu-card.tsx`: Imports `ImageCarousel`; when `item.photos.length > 1`, renders carousel instead of single `Image`.
+- `src/components/menu/editable-menu-card.tsx`: Added `secondaryPhotos` state initialized from `item.photos[1]`/`item.photos[2]`. Added `handleSecondaryUpload()` and `handleSecondaryDelete()` handlers. Added 2 hidden file inputs (`fileRef2`, `fileRef3`). Renders secondary image slot row below the main image — each slot shows thumbnail+X delete, or upload button if empty.
+- `src/components/admin/admin-menu-table.tsx`: Fixed `addNewRow()` object literal to include `photos: []`.
+
+### Patterns discovered
+- `readdirSync` is fine in Next.js server context — fast for local filesystem checks. Read once, build a map, reuse it.
+- Secondary image naming convention: `{code}-{index}.{ext}` where index is 2 or 3 (primary is just `{code}.{ext}`)
+- New `MenuItem` fields must also be added to the `addNewRow()` object literal in `admin-menu-table.tsx` or TypeScript will error
+
+### Gotchas
+- `admin-menu-table.tsx` `addNewRow()` hardcodes a new item literal — any new required fields on `MenuItem` must be added there manually
+- TypeScript check: 0 errors after adding `photos: []` to the new row literal
+
+## Iteration 43 - Tue, Mar 10, 2026
+Completed: Admin: Multiple Images per Menu Item (Up to 3) (ID: US-071)
+
+### What was implemented
+Most of US-071 was already pre-built by a previous iteration. This iteration completed the missing admin UI:
+- `src/types/menu.ts`: `photos: string[]` field already present
+- `src/lib/menu.ts`: `getSecondaryPhotosMap()` scans filesystem for `{code}-2.jpg`/`{code}-3.jpg` and populates `photos` in `rowToMenuItem`
+- `src/app/api/admin/images/route.ts`: `imageIndex` param support (POST saves as `{code}-{idx}.jpg`), DELETE endpoint for removing secondary images
+- `src/components/menu/image-carousel.tsx`: swipeable carousel with prev/next arrows and dot indicators
+- `src/components/menu/menu-card.tsx`: uses `ImageCarousel` when `item.photos.length > 1`
+- `src/components/admin/image-picker-modal.tsx`: added secondary image slots (Image 2 + Image 3) with upload and delete buttons
+
+### Patterns discovered
+- The `uploading` state was changed from `boolean` to `number | null` to track which imageIndex is uploading
+- The delete button inside the image preview div was redundant with the button below — kept both for UX clarity
+- `imgTimestamp` state resets image cache after upload/delete without closing the modal for secondary images
+
+### Gotchas
+- Python needs `encoding='utf-8'` for prd.json due to Unicode characters in descriptions
+- TypeScript check: 0 errors in changed files

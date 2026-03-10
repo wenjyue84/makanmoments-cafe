@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
+import { X, Upload } from "lucide-react";
 
 interface ImagePickerModalProps {
   open: boolean;
@@ -18,10 +19,14 @@ export function ImagePickerModal({
 }: ImagePickerModalProps) {
   const [images, setImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState<number | null>(null); // index being uploaded
+  const [deleting, setDeleting] = useState<number | null>(null);
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [imgTimestamp, setImgTimestamp] = useState(Date.now());
   const fileRef = useRef<HTMLInputElement>(null);
+  const fileRef2 = useRef<HTMLInputElement>(null);
+  const fileRef3 = useRef<HTMLInputElement>(null);
 
   const fetchImages = useCallback(async () => {
     setLoading(true);
@@ -41,15 +46,17 @@ export function ImagePickerModal({
       fetchImages();
       setSearch("");
       setError(null);
+      setImgTimestamp(Date.now());
     }
   }, [open, fetchImages]);
 
-  async function handleUpload(file: File) {
-    setUploading(true);
+  async function handleUpload(file: File, imageIndex: number = 1) {
+    setUploading(imageIndex);
     setError(null);
     const form = new FormData();
     form.append("file", file);
     form.append("code", code);
+    form.append("imageIndex", String(imageIndex));
     try {
       const res = await fetch("/api/admin/images", {
         method: "POST",
@@ -57,21 +64,41 @@ export function ImagePickerModal({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Upload failed");
+      setImgTimestamp(Date.now());
       onImageChanged();
-      onClose();
+      if (imageIndex === 1) onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload error");
     } finally {
-      setUploading(false);
+      setUploading(null);
+    }
+  }
+
+  async function handleDeleteSecondary(imageIndex: 2 | 3) {
+    setDeleting(imageIndex);
+    setError(null);
+    try {
+      const res = await fetch("/api/admin/images", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, imageIndex }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Delete failed");
+      setImgTimestamp(Date.now());
+      onImageChanged();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Delete error");
+    } finally {
+      setDeleting(null);
     }
   }
 
   async function handlePickExisting(filename: string) {
     // Copy the selected image as {code}.jpg by re-uploading via fetch from public
-    setUploading(true);
+    setUploading(1);
     setError(null);
     try {
-      // Fetch the existing image file
       const imgRes = await fetch(`/images/menu/${filename}`);
       const blob = await imgRes.blob();
       const ext = filename.split(".").pop() || "jpg";
@@ -80,6 +107,7 @@ export function ImagePickerModal({
       const form = new FormData();
       form.append("file", newFile);
       form.append("code", code);
+      form.append("imageIndex", "1");
       const res = await fetch("/api/admin/images", {
         method: "POST",
         body: form,
@@ -91,7 +119,7 @@ export function ImagePickerModal({
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error assigning image");
     } finally {
-      setUploading(false);
+      setUploading(null);
     }
   }
 
@@ -103,15 +131,15 @@ export function ImagePickerModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="relative mx-4 flex max-h-[85vh] w-full max-w-3xl flex-col rounded-xl bg-white shadow-2xl">
+      <div className="relative mx-4 flex max-h-[90vh] w-full max-w-3xl flex-col rounded-xl bg-white shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b px-5 py-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
-              Image for {code}
+              Images for {code}
             </h3>
             <p className="text-sm text-gray-500">
-              Upload a new image or pick from existing ({images.length} images)
+              Primary + up to 2 secondary images (carousel on menu page)
             </p>
           </div>
           <button
@@ -130,47 +158,122 @@ export function ImagePickerModal({
           </div>
         )}
 
-        {/* Current image + Upload */}
-        <div className="flex items-start gap-4 border-b px-5 py-4">
-          <div className="shrink-0">
-            <p className="mb-1.5 text-xs font-medium text-gray-500">Current</p>
-            <div className="relative h-24 w-32 overflow-hidden rounded-lg border bg-gray-50">
-              <Image
-                src={`/images/menu/${code}.jpg?t=${Date.now()}`}
-                alt={code}
-                fill
-                className="object-cover"
-                unoptimized
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = "none";
-                }}
-              />
-              <div className="flex h-full items-center justify-center text-2xl text-gray-300">
-                🍽️
+        {/* Primary image + Upload */}
+        <div className="border-b px-5 py-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">Primary Image</p>
+          <div className="flex items-start gap-4">
+            <div className="shrink-0">
+              <div className="relative h-24 w-32 overflow-hidden rounded-lg border bg-gray-50">
+                <Image
+                  src={`/images/menu/${code}.jpg?t=${imgTimestamp}`}
+                  alt={code}
+                  fill
+                  className="object-cover"
+                  unoptimized
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = "none";
+                  }}
+                />
+                <div className="flex h-full items-center justify-center text-2xl text-gray-300">
+                  🍽️
+                </div>
               </div>
             </div>
+            <div className="flex-1">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleUpload(f, 1);
+                }}
+              />
+              <button
+                onClick={() => fileRef.current?.click()}
+                disabled={uploading !== null}
+                className="rounded-lg border-2 border-dashed border-gray-300 px-6 py-4 text-sm text-gray-500 hover:border-orange-400 hover:text-orange-600 disabled:opacity-50"
+              >
+                {uploading === 1 ? "Uploading..." : "Click to replace primary image (max 5MB)"}
+              </button>
+            </div>
           </div>
-          <div className="flex-1">
-            <p className="mb-1.5 text-xs font-medium text-gray-500">
-              Upload new image
-            </p>
-            <input
-              ref={fileRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) handleUpload(f);
-              }}
-            />
-            <button
-              onClick={() => fileRef.current?.click()}
-              disabled={uploading}
-              className="rounded-lg border-2 border-dashed border-gray-300 px-6 py-4 text-sm text-gray-500 hover:border-orange-400 hover:text-orange-600 disabled:opacity-50"
-            >
-              {uploading ? "Uploading..." : "Click to choose file (max 5MB)"}
-            </button>
+        </div>
+
+        {/* Secondary images */}
+        <div className="border-b px-5 py-4">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-400">
+            Secondary Images (optional — shown in carousel)
+          </p>
+          <div className="flex gap-4">
+            {([2, 3] as const).map((idx) => {
+              const fileRefN = idx === 2 ? fileRef2 : fileRef3;
+              const slotSrc = `/images/menu/${code}-${idx}.jpg?t=${imgTimestamp}`;
+              return (
+                <div key={idx} className="flex flex-col gap-2">
+                  <p className="text-xs text-gray-500">Image {idx}</p>
+                  <div className="relative h-24 w-32 overflow-hidden rounded-lg border bg-gray-50">
+                    <Image
+                      src={slotSrc}
+                      alt={`${code} image ${idx}`}
+                      fill
+                      className="object-cover"
+                      unoptimized
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                    <div className="flex h-full items-center justify-center text-2xl text-gray-300">
+                      +
+                    </div>
+                    {/* Delete button */}
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSecondary(idx)}
+                      disabled={deleting !== null || uploading !== null}
+                      className="absolute right-1 top-1 rounded-full bg-red-500 p-0.5 text-white opacity-0 transition-opacity hover:bg-red-600 group-hover:opacity-100 disabled:opacity-50 peer-[img]:opacity-100"
+                      aria-label={`Delete image ${idx}`}
+                      title={`Delete image ${idx}`}
+                      style={{ display: "none" }}
+                      id={`del-btn-${code}-${idx}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                  <div className="flex gap-1">
+                    <input
+                      ref={fileRefN}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0];
+                        if (f) handleUpload(f, idx);
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileRefN.current?.click()}
+                      disabled={uploading !== null || deleting !== null}
+                      className="flex items-center gap-1 rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:border-orange-400 hover:text-orange-600 disabled:opacity-50"
+                    >
+                      <Upload className="h-3 w-3" />
+                      {uploading === idx ? "Uploading..." : "Upload"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteSecondary(idx)}
+                      disabled={uploading !== null || deleting !== null}
+                      className="flex items-center gap-1 rounded-md border border-red-200 px-2 py-1 text-xs text-red-500 hover:bg-red-50 disabled:opacity-50"
+                    >
+                      <X className="h-3 w-3" />
+                      {deleting === idx ? "Deleting..." : "Delete"}
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -179,7 +282,7 @@ export function ImagePickerModal({
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search images by filename..."
+            placeholder="Search existing images to set as primary..."
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
           />
         </div>
@@ -200,7 +303,7 @@ export function ImagePickerModal({
                   <button
                     key={filename}
                     onClick={() => handlePickExisting(filename)}
-                    disabled={uploading}
+                    disabled={uploading !== null}
                     className={`group relative aspect-[4/3] overflow-hidden rounded-lg border-2 transition-all hover:border-orange-400 hover:shadow-md ${
                       isCurrentCode
                         ? "border-orange-500 ring-2 ring-orange-200"
