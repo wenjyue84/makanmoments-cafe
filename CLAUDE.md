@@ -9,6 +9,17 @@ Public-facing website for **Makan Moments Cafe** (食光记忆 / Kafe Kenangan M
 **Live site:** https://makanmoments.cafe
 **Deploy:** Vercel (`.vercel/` config present)
 
+### Pre-Order System
+
+Customers can pre-order food online before arriving at the cafe. **FeedMe POS has no API** — there is intentionally no direct integration. The workflow is:
+
+1. **Customer** browses menu → adds items → submits pre-order with name, phone, arrival time, pax count, and notes
+2. **System** saves order to Notion (`NOTION_ORDERS_DB_ID`) and sends WhatsApp notification to the waiter's phone
+3. **Waiter** receives WhatsApp message with full order details → manually types the order into FeedMe POS before the customer arrives
+4. **Customer** arrives to find their meal being prepared or ready
+
+This human-in-the-loop design is deliberate: FeedMe handles payments and receipts; the website handles intake and routing.
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -31,10 +42,16 @@ makanmoments.cafe/
 │   │   ├── [locale]/           # All public pages (locale-prefixed)
 │   │   │   ├── page.tsx        # Home
 │   │   │   ├── menu/page.tsx   # Menu listing
+│   │   │   ├── order/          # Pre-order flow
+│   │   │   │   ├── page.tsx    # Order form (browse menu + cart + submit)
+│   │   │   │   └── confirm/page.tsx  # Order confirmation page
 │   │   │   ├── blog/           # Blog listing + slug pages
 │   │   │   ├── about/page.tsx
 │   │   │   └── contact/page.tsx
-│   │   ├── api/chat/route.ts   # AI waiter chat endpoint
+│   │   ├── api/
+│   │   │   ├── chat/route.ts   # AI waiter chat endpoint
+│   │   │   └── orders/
+│   │   │       └── route.ts    # POST /api/orders — save to Notion + notify waiter via WhatsApp
 │   │   ├── layout.tsx          # Root layout
 │   │   └── globals.css         # Global styles (Tailwind)
 │   ├── components/
@@ -43,6 +60,7 @@ makanmoments.cafe/
 │   │   ├── home/               # hero-section, highlights, info-strip
 │   │   ├── layout/             # header, footer
 │   │   ├── menu/               # menu-card, menu-filter, menu-grid, dietary-badge
+│   │   ├── order/              # order-cart, order-form, order-item, order-summary
 │   │   ├── seo/                # json-ld
 │   │   └── ui/                 # shadcn/ui primitives (button, etc.)
 │   ├── i18n/
@@ -54,6 +72,8 @@ makanmoments.cafe/
 │   │   ├── menu.ts             # Notion menu data fetching
 │   │   ├── blog.ts             # Notion blog data fetching
 │   │   ├── notion.ts           # Notion client singleton
+│   │   ├── orders.ts           # Save pre-order to Notion orders DB
+│   │   ├── whatsapp.ts         # Send WhatsApp notification via Periskope/Baileys
 │   │   ├── utils.ts            # cn() and helpers
 │   │   └── chat/
 │   │       ├── provider.ts     # AI SDK model config (Groq/OpenRouter)
@@ -61,7 +81,8 @@ makanmoments.cafe/
 │   │       └── system-prompt.ts # Loads knowledge/ files into AI system prompt
 │   └── types/
 │       ├── menu.ts             # MenuItem, MenuCategory types
-│       └── blog.ts             # BlogPost types
+│       ├── blog.ts             # BlogPost types
+│       └── order.ts            # PreOrder, OrderItem, OrderStatus types
 ├── knowledge/                  # AI waiter knowledge base (markdown)
 │   ├── cafe-facts.md           # Hours, address, WiFi, ambiance
 │   ├── menu-knowledge.md       # Full menu with prices for AI context
@@ -104,6 +125,10 @@ See `.env.example` for all required vars:
 | `GROQ_API_KEY` | Groq API key for AI waiter |
 | `OPENROUTER_API_KEY` | OpenRouter fallback for AI waiter |
 | `NEXT_PUBLIC_SITE_URL` | Production URL (https://makanmoments.cafe) |
+| `NOTION_ORDERS_DB_ID` | Notion database ID for pre-orders (separate from menu/blog) |
+| `WAITER_WHATSAPP_NUMBER` | Waiter's WhatsApp number to receive order notifications (e.g. `601XXXXXXXX`) |
+| `WHATSAPP_API_URL` | WhatsApp send endpoint (Periskope or Baileys) |
+| `WHATSAPP_API_KEY` | API key / token for WhatsApp sender |
 
 ## Key Conventions
 
@@ -117,6 +142,66 @@ See `.env.example` for all required vars:
 - Menu and blog data fetched from Notion via `src/lib/notion.ts`
 - `src/lib/menu.ts` and `src/lib/blog.ts` wrap Notion queries with typed results
 - All Notion fetches are server-side (RSC or route handlers)
+
+### Pre-Order System
+
+**Flow overview:**
+
+```
+Customer → /order page → selects items + fills form → POST /api/orders
+  → Notion (stores order) + WhatsApp (notifies waiter)
+  → Customer sees /order/confirm page with order summary
+  → Waiter reads WhatsApp → manually enters into FeedMe POS
+  → Customer arrives → food is ready / being prepared
+```
+
+**Order form fields (customer-facing):**
+- Name (required)
+- Phone number (required — for waiter to call if needed)
+- Arrival date + time (required)
+- Number of pax (required)
+- Items with quantity (required — from menu)
+- Special requests / notes (optional — e.g. "no spicy", "extra rice")
+
+**Notion Orders database schema:**
+| Field | Type | Notes |
+|-------|------|-------|
+| Name | Title | Customer name |
+| Phone | Phone | Customer phone |
+| Arrival Time | Date | When they plan to arrive |
+| Pax | Number | Party size |
+| Items | Rich Text | JSON string of [{name, qty, price}] |
+| Total (RM) | Number | Calculated total |
+| Notes | Rich Text | Special requests |
+| Status | Select | Pending / Confirmed / Cancelled |
+| Submitted At | Date | Timestamp of submission |
+
+**WhatsApp notification format (sent to waiter):**
+```
+🍽 New Pre-Order!
+👤 Name: [name] | 📞 [phone]
+🕐 Arriving: [date] [time] | 👥 [pax] pax
+
+Order:
+• [Item] x[qty] — RM[price]
+• [Item] x[qty] — RM[price]
+
+Total: RM[total]
+📝 Notes: [notes]
+
+Please enter into FeedMe POS before arrival.
+```
+
+**FeedMe POS — Manual Entry Protocol:**
+- FeedMe has **no API** — never attempt programmatic integration
+- Waiter enters order manually after receiving WhatsApp notification
+- Lead time target: customer should arrive to food already in queue
+- If customer calls to modify order: waiter updates FeedMe directly
+- Notion order status is updated manually by staff (Pending → Confirmed / Cancelled)
+
+**Cart state:** Held in `localStorage` (client-side only). No server session needed. Cart is cleared on successful order submission.
+
+**Rate limiting:** Apply same per-IP limits as chat (`src/lib/chat/rate-limit.ts`) to `POST /api/orders` — max 3 orders per IP per hour.
 
 ### AI Waiter Chat
 - Chat widget floats on every page (injected via `[locale]/layout.tsx`)
@@ -191,3 +276,6 @@ User has a logo image file (PNG/SVG). Place at `public/images/logo.png` (or `.sv
 4. **No pork, no lard, Halal-friendly** — always preserve this dietary info accurately
 5. **3 languages always** — any new user-facing text needs translations in all 3 `messages/` files
 6. **Prices in RM** — all price references use Malaysian Ringgit (RM)
+7. **FeedMe has NO API** — never attempt direct POS integration; all order routing goes through WhatsApp → manual waiter entry
+8. **Pre-orders are intent, not payment** — no payment is collected online; customer pays at the cafe via FeedMe POS as normal
+9. **Orders DB is separate** — use `NOTION_ORDERS_DB_ID`, not the menu or blog DB, for pre-order records

@@ -1918,3 +1918,65 @@ Here is a technical brief for the user story:
 *   **Wrapping:** Use `flex-wrap` on the button container to ensure they stack gracefully if horizontal space is insufficient.
 *   **Long Text:** Test with an unusually long rule name to confirm it wraps correctly and doesn't break the layout.
 
+## Iteration 13 - Tue, Mar 10, 2026 11:44:50 AM
+Completed: Admin Panel Mobile-First Redesign: No Horizontal Scroll (ID: US-027) in 4m
+
+
+## Pre-analysis for US-028 (Gemini 2.5 Pro)
+This is a frontend ticket for a Next.js/React application using Tailwind CSS, not a Frappe/Python story.
+
+Here is the technical brief based on the JSON for ticket US-028:
+
+**Objective:** Fix the mobile layout for the Admin Rules panel, where rule names stack improperly and buttons get cut off.
+
+**File to Modify:**
+*   `src/components/admin/admin-rules-panel.tsx`
+
+**Affected UI Component:**
+*   The individual rule "card" rendered within the `AdminRulesPanel` component.
+
+**Implementation Approach:**
+1.  Locate the mapping function rendering each rule within the specified `.tsx` file.
+2.  Change the main container for each rule card from a `flex-row` to `flex flex-col gap-2` to stack content vertically.
+3.  The first item within the card will be the rule's name. It should occupy the full width, allowing it to wrap naturally.
+4.  Below the name, create a new `div` with `flex flex-row items-center gap-2` to hold the status badges and action buttons.
+5.  Group the `Active`/`Disable` badge and the `Edit`/`Delete` buttons inside this second row.
+6.  Ensure no fixed-width or restrictive styles are applied to the rule name's container.
+
+**Gotchas & Verification:**
+*   Verify the fix at a 390px viewport to ensure no content is horizontally truncated.
+*   Action buttons must have a minimum touch target of 44px. Use padding (e.g., `p-2`) if the icons/text are too small.
+*   Confirm the rule name wraps cleanly across multiple lines if long, rather than stacking word-by-word.
+
+
+## Iteration - Story: US-028 Admin Rules Mobile View Fix: Horizontal Rule Name + Buttons
+
+### What was implemented
+- Restructured rule card in `src/components/admin/admin-rules-panel.tsx` (rules list section)
+- Changed outer container from `flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between` to `flex flex-col gap-2` (always stacked)
+- Rule name is now a standalone full-width `<p>` at top of card (no longer in same flex row as type badge)
+- Type badge (Disable/Discount/Featured), Inactive badge, toggle/edit/delete buttons all moved to bottom `flex flex-wrap items-center gap-2` row
+- Toggle button label changed from "Active"/"Inactive" to "Active"/"Disable" (more action-oriented)
+
+### Patterns discovered
+- Rule card was already using `flex-col` on mobile but the inner name+badge flex-wrap could still cause narrow-column word-stacking on very long names
+- Moving badges and action buttons to a single bottom row prevents all cut-off/overflow issues
+
+### Gotchas
+- US-027 dependency was already done; this story was purely a layout restructure
+- TypeScript check clean on changed file (no errors in admin-rules-panel.tsx)
+
+## Iteration - Story: US-028 Admin Rules Mobile View Fix
+
+### What was implemented
+- Restructured rule card in `src/components/admin/admin-rules-panel.tsx`
+- Changed outer container from `flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between` to `flex flex-col gap-2`
+- Rule name now on its own full-width `<p className="font-medium leading-snug">` row
+- Moved type badge + inactive badge + Active/Edit/Delete buttons into single `flex flex-wrap items-center gap-2 pt-1` row at bottom of card
+- Removed `sm:flex-row` two-column layout (name left, buttons right) that was causing cramping on mobile
+
+### Patterns discovered
+- Rule card was already partially restructured in git history — file may have been modified before this iteration ran
+
+### Gotchas
+- TypeScript clean: `npx tsc --noEmit` passes with no errors
