@@ -1,4 +1,4 @@
-import { streamText, stepCountIs, type UIMessage, tool } from "ai";
+import { streamText, stepCountIs, type UIMessage, type LanguageModel, type ToolSet, tool, isTextUIPart } from "ai";
 import { z } from "zod";
 import { groq, openrouter } from "@/lib/chat/provider";
 import { getSystemPrompt } from "@/lib/chat/system-prompt";
@@ -10,6 +10,11 @@ import { checkOrderStatusHandler, submitOrderHandler } from "@/lib/tools/orders"
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
+
+interface ChatRequestBody {
+  messages: UIMessage[];
+  sessionId?: string;
+}
 
 export async function POST(req: Request) {
   // Rate limiting
@@ -33,13 +38,13 @@ export async function POST(req: Request) {
     );
   }
 
-  let body: any;
+  let body: ChatRequestBody;
   try {
-    body = await req.json();
+    body = await req.json() as ChatRequestBody;
   } catch (e) {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400 });
   }
-  const { messages } = body as { messages: UIMessage[] };
+  const { messages } = body;
   if (!messages) {
     return new Response(JSON.stringify({ error: "No messages" }), { status: 400 });
   }
@@ -63,9 +68,9 @@ export async function POST(req: Request) {
   // crashes on manually-constructed assistant messages (no step metadata).
   const modelMessages = truncated
     .map((msg) => {
-      const text = (msg.parts as any[])
-        ?.filter((p: any) => p.type === "text")
-        .map((p: any) => p.text as string)
+      const text = msg.parts
+        ?.filter(isTextUIPart)
+        .map((p) => p.text)
         .join("") ?? "";
       return { role: msg.role as "user" | "assistant" | "system", content: text };
     })
@@ -125,12 +130,10 @@ export async function POST(req: Request) {
     }) => submitOrderHandler({ items, contactNumber, estimatedArrival }),
   } as any);
 
-  const toolSet = { addToTray: addToTrayTool, checkOrderStatus: checkOrderStatusTool, submitOrder: submitOrderTool };
+  const toolSet = { addToTray: addToTrayTool, checkOrderStatus: checkOrderStatusTool, submitOrder: submitOrderTool } as ToolSet;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function buildStream(model: any): Response {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (streamText as any)({
+  function buildStream(model: LanguageModel): Response {
+    return streamText({
       model,
       system: systemPrompt,
       messages: modelMessages,
