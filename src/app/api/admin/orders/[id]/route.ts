@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import sql from "@/lib/db";
+import { OrderPatchSchema } from "@/lib/schemas/order";
 
 export const runtime = "nodejs";
 
@@ -17,12 +18,20 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { status, action, estimatedReady, rejectionReason } = body as {
-      status?: string;
-      action?: "approve" | "reject" | "confirm_payment" | "reject_payment" | "mark_ready";
-      estimatedReady?: string;
-      rejectionReason?: string;
-    };
+    const parsed = OrderPatchSchema.safeParse(body);
+    if (!parsed.success) {
+      const fields = Object.fromEntries(
+        Object.entries(parsed.error.flatten().fieldErrors).map(([k, v]) => [
+          k,
+          v?.[0] ?? "Invalid",
+        ])
+      );
+      return NextResponse.json(
+        { error: "Validation failed", fields },
+        { status: 422 }
+      );
+    }
+    const { status, action, estimatedReady, rejectionReason } = parsed.data;
 
     // Legacy: mark as 'seen' (from bell notification)
     if (status === "seen") {

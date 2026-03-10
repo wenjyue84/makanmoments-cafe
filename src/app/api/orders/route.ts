@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import sql from "@/lib/db";
 import webpush from "web-push";
 import { createRateLimiter } from "@/lib/chat/rate-limit";
+import { OrderSubmitSchema } from "@/lib/schemas/order";
 
 // 5 orders per hour per IP
 const ordersRateLimiter = createRateLimiter({
@@ -52,9 +53,6 @@ async function sendPushToAllAdmins(itemCount: number, total: number) {
   }
 }
 
-// Malaysian phone: allows +60, 60, or 0 prefix, then 1x followed by 8–9 digits
-const MALAYSIAN_PHONE_RE = /^(\+?60|0)1[0-9]{8,9}$/;
-
 export const runtime = "nodejs";
 
 // Public endpoint — no auth required.
@@ -76,44 +74,22 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { items, total, contactNumber, estimatedArrival } = body as {
-      items: { id: string; name: string; price: number; quantity: number }[];
-      total: number;
-      contactNumber?: string;
-      estimatedArrival?: string;
-    };
-
-    if (!items || !Array.isArray(items) || items.length === 0) {
-      return NextResponse.json({ error: "items is required" }, { status: 400 });
-    }
-    if (typeof total !== "number") {
-      return NextResponse.json({ error: "total is required" }, { status: 400 });
-    }
-
-    // Validate Malaysian contact number
-    const normalizedPhone = (contactNumber ?? "").replace(/[-\s]/g, "");
-    if (!normalizedPhone || !MALAYSIAN_PHONE_RE.test(normalizedPhone)) {
+    const parsed = OrderSubmitSchema.safeParse(body);
+    if (!parsed.success) {
+      const fields = Object.fromEntries(
+        Object.entries(parsed.error.flatten().fieldErrors).map(([k, v]) => [
+          k,
+          v?.[0] ?? "Invalid",
+        ])
+      );
       return NextResponse.json(
-        { error: "Invalid Malaysian phone number (e.g. 0123456789 or +60123456789)" },
-        { status: 400 }
+        { error: "Validation failed", fields },
+        { status: 422 }
       );
     }
 
-    // Validate estimated arrival — must be at least 15 min from now
-    if (!estimatedArrival) {
-      return NextResponse.json({ error: "estimatedArrival is required" }, { status: 400 });
-    }
+    const { items, total, contactNumber: normalizedPhone, estimatedArrival } = parsed.data;
     const arrivalTime = new Date(estimatedArrival);
-    if (isNaN(arrivalTime.getTime())) {
-      return NextResponse.json({ error: "estimatedArrival is not a valid date" }, { status: 400 });
-    }
-    const minArrival = new Date(Date.now() + 14 * 60 * 1000); // 14 min buffer for server clock drift
-    if (arrivalTime < minArrival) {
-      return NextResponse.json(
-        { error: "Arrival time must be at least 15 minutes from now" },
-        { status: 400 }
-      );
-    }
 
     // Ensure table exists with full schema (idempotent)
     await sql`

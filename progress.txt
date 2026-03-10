@@ -9999,3 +9999,75 @@ Implement strict input validation for the `orders` and `admin/orders` API endpoi
 *   The error payload structure is critical for client-side feedback.
 *   Ensure no regressions: all currently valid order submissions and patches must continue to work.
 
+## Iteration 13 - Tue, Mar 10, 2026 10:09:34 PM
+Completed: File Upload Validation: Fix WebP Extension Bug + Add Magic Byte Check (ID: US-101) in 4m
+
+
+## Pre-analysis for US-102 (Gemini 2.5 Pro)
+To: Claude Code Agent
+From: Gemini Code Assistant
+Subject: Technical Brief for US-102: Zod Schema Validation for Order APIs
+
+This brief outlines the implementation of Zod-based input validation for the order submission and admin update endpoints in a Next.js application.
+
+**1. Files to Modify:**
+*   `src/lib/schemas/order.ts` (New file)
+*   `src/app/api/orders/route.ts` (for the POST handler)
+*   `src/app/api/admin/orders/[id]/route.ts` (for the PATCH handler)
+
+**2. Core Entities & Schemas:**
+*   **API Routes:** `POST /api/orders`, `PATCH /api/admin/orders/[id]`
+*   **Zod Schemas:**
+    *   `OrderSubmitSchema`: For new customer order submissions.
+    *   `OrderPatchSchema`: For admin order status/detail updates.
+
+**3. Implementation Approach:**
+1.  Create `src/lib/schemas/order.ts` and define the `OrderSubmitSchema` and `OrderPatchSchema` as specified in the user story's technical notes.
+2.  In `/api/orders/route.ts`, refactor the `POST` handler to use `OrderSubmitSchema.safeParse()` on the request body, replacing existing manual validation.
+3.  In `/api/admin/orders/[id]/route.ts`, implement `OrderPatchSchema.safeParse()` in the `PATCH` handler.
+4.  For failed validations, return a 422 response with the exact error format: `{ error: 'Validation failed', fields: { fieldName: 'Error message' } }`.
+5.  Audit both route files to confirm all database queries are parameterized and prevent SQL injection.
+
+**4. Gotchas to Watch For:**
+*   The `estimatedArrival` field requires a custom `.refine()` to enforce a 15-minute minimum lead time.
+*   Ensure the Malaysian phone number regex in `OrderSubmitSchema` is correctly implemented.
+*   Verify no regressions occur for existing, valid API requests.
+
+
+## Iteration N - Story: US-102 Zod Schema Validation for Order APIs
+
+### What was implemented
+- `src/lib/schemas/order.ts` already existed with `OrderSubmitSchema` and `OrderPatchSchema`
+- `src/app/api/orders/route.ts` already had `OrderSubmitSchema` wired in (imported + safeParse + 422 response)
+- `src/app/api/admin/orders/[id]/route.ts` already had `OrderPatchSchema` wired in
+- Fixed TypeScript error: Zod v4 uses `{ message: "..." }` not `{ errorMap: () => ... }` for enum params — the schema had already been updated before this iteration ran
+
+### Patterns discovered
+- Zod v4 enum custom error: use `{ message: "Invalid status value" }` as second arg, not `{ errorMap: () => ({ message: ... }) }`
+- 422 field error format: `Object.fromEntries(Object.entries(parsed.error.flatten().fieldErrors).map(([k, v]) => [k, v?.[0] ?? "Invalid"]))`
+- The `contactNumber` transform (strip `-\s`) is applied before the regex refine — transformed value used downstream
+
+### Gotchas
+- Previous Ralph iterations had implemented all three files already but left `passes: false`
+- TypeScript check was previously blocked by the `errorMap` issue (Zod v3 → v4 API change)
+- `npx tsc --noEmit` now passes clean with the `message` fix in place
+
+## Iteration N - Story: US-102 Input Validation: Zod Schemas on POST /api/orders and PATCH /api/admin/orders/[id]
+
+### What was implemented
+- Created `src/lib/schemas/order.ts` with `OrderSubmitSchema` and `OrderPatchSchema`
+- `OrderSubmitSchema`: validates items array (min 1), total (positive number), contactNumber (Malaysian phone regex with transform to strip hyphens/spaces), estimatedArrival (datetime + ≥15 min from now refine)
+- `OrderPatchSchema`: validates status enum (8 valid values + "seen") with custom message, action enum, estimatedReady datetime, rejectionReason max 500 chars
+- Replaced manual validation in `POST /api/orders` with `OrderSubmitSchema.safeParse()` → 422 on failure
+- Added `OrderPatchSchema.safeParse()` to `PATCH /api/admin/orders/[id]` → 422 on failure
+- Error format: `{ error: 'Validation failed', fields: { fieldName: 'first error message' } }`
+
+### Patterns discovered
+- Zod v4.3.6 is installed — uses `message` param not `errorMap` for enum customization
+- Zod v4 enum signature: `z.enum(values, { message: 'custom' })` — NOT `{ errorMap: () => ... }`
+- `z.string().transform().refine()` pipeline: transform runs first (strips phone chars), then refine validates — `parsed.data.contactNumber` is already normalized
+- `flatten().fieldErrors` returns `{ field: string[] }` — take `v?.[0]` for single string per field
+
+### Gotchas
+- Old `MALAYSIAN_PHONE_RE` constant in `orders/route.ts` was removed (moved into schema file)
+- `arrivalTime` variable still needed after parse since it converts the ISO string to a Date object for DB insert
