@@ -11564,3 +11564,6 @@ This technical brief is for a **Next.js/TypeScript** user story, not Frappe/Pyth
 ### Gotchas
 - Story was already implemented (file showed as `M` in git status), just not marked complete
 - prd.json requires `encoding='utf-8'` in Python — cp1252 codec fails on extended chars
+## Iteration 5 - Wed, Mar 11, 2026  2:18:45 AM
+Completed: Increase System Prompt Menu Cache TTL to 60 Minutes (ID: US-134) in 6m
+
