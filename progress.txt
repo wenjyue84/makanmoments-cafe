@@ -6688,3 +6688,23 @@ This is a technical brief for a **Next.js/TypeScript** implementation, not Frapp
 ### Gotchas
 - menu-card.tsx has a pre-existing lint error (react-hooks/set-state-in-effect at line 44) that existed before this story
 - `tc` (useTranslations("common")) still needed in MenuCard for aria-label (`tc("add")`) even after removing text labels
+
+## Iteration - Story: US-074 Menu Card: Replace '+Add' with Compact '+' Icon Aligned with Price
+
+### What was implemented
+- Both `menu-card.tsx` and `chef-pick-card.tsx` had already been substantially updated by a previous iteration:
+  - '+Add' button replaced with compact icon-only '+' button
+  - Price and action on same horizontal row (flex justify-between)
+  - Stepper (- qty +) shown when item is already in tray
+  - Layout: name/description/dietary badges above, price+action row at bottom
+- This iteration fixed the remaining acceptance criteria gap: touch target size
+  - Changed `h-9 w-9` (36px) → `h-11 w-11` (44px) on all action buttons in both files
+  - Applied to both single '+' button and stepper buttons (- and +)
+
+### Patterns discovered
+- Previous incomplete iterations may leave partial changes in source files - always read first
+- Tailwind: h-9 = 36px, h-11 = 44px (minimum mobile touch target per Apple/Google guidelines)
+- highlights.tsx delegates to MenuCard — no separate changes needed there
+
+### Verification
+- TypeScript check: zero errors
