@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTranslations, useLocale } from "next-intl";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
-import { Menu, X, Globe } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import type { Locale } from "@/i18n/routing";
@@ -16,10 +16,10 @@ const NAV_ITEMS = [
   { key: "contact", href: "/contact" },
 ] as const;
 
-const LOCALE_LABELS: Record<string, string> = {
-  en: "EN",
-  ms: "BM",
-  zh: "中文",
+const LOCALE_CONFIG: Record<string, { label: string; flag: string; ariaLabel: string }> = {
+  en: { label: "EN", flag: "🇬🇧", ariaLabel: "Switch to English" },
+  ms: { label: "MY", flag: "🇲🇾", ariaLabel: "Tukar ke Bahasa Malaysia" },
+  zh: { label: "中文", flag: "🇨🇳", ariaLabel: "切换到中文" },
 };
 
 export function Header() {
@@ -83,23 +83,26 @@ export function Header() {
           <div className="relative ml-1">
             <button
               onClick={() => setLangOpen(!langOpen)}
+              aria-label={LOCALE_CONFIG[locale]?.ariaLabel ?? "Switch language"}
               className="flex items-center gap-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              <Globe className="h-4 w-4" />
-              {LOCALE_LABELS[locale]}
+              <span aria-hidden="true">{LOCALE_CONFIG[locale]?.flag}</span>
+              <span>{LOCALE_CONFIG[locale]?.label}</span>
             </button>
             {langOpen && (
-              <div className="absolute right-0 top-full mt-1 w-24 rounded-md border border-border bg-popover p-1 shadow-md">
-                {Object.entries(LOCALE_LABELS).map(([loc, label]) => (
+              <div className="absolute right-0 top-full mt-1 w-28 rounded-md border border-border bg-popover p-1 shadow-md">
+                {Object.entries(LOCALE_CONFIG).map(([loc, { label, flag, ariaLabel }]) => (
                   <button
                     key={loc}
                     onClick={() => switchLocale(loc)}
+                    aria-label={ariaLabel}
                     className={cn(
-                      "block w-full rounded-sm px-3 py-1.5 text-left text-sm transition-colors hover:bg-accent",
-                      locale === loc && "bg-accent font-medium"
+                      "flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-left text-sm transition-colors hover:bg-accent",
+                      locale === loc && "bg-accent font-semibold"
                     )}
                   >
-                    {label}
+                    <span aria-hidden="true">{flag}</span>
+                    <span>{label}</span>
                   </button>
                 ))}
               </div>
@@ -113,27 +116,29 @@ export function Header() {
           <div className="relative">
             <button
               onClick={() => setMobileLangOpen(!mobileLangOpen)}
-              aria-label="Switch language"
+              aria-label={LOCALE_CONFIG[locale]?.ariaLabel ?? "Switch language"}
               className="flex min-h-[44px] items-center gap-1 rounded-md px-2 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
             >
-              <Globe className="h-4 w-4" />
-              <span className="text-xs font-semibold">{LOCALE_LABELS[locale]}</span>
+              <span aria-hidden="true" className="text-base leading-none">{LOCALE_CONFIG[locale]?.flag}</span>
+              <span className="text-xs font-semibold">{LOCALE_CONFIG[locale]?.label}</span>
             </button>
             {mobileLangOpen && (
-              <div className="absolute right-0 top-full z-50 mt-1 w-20 rounded-md border border-border bg-popover p-1 shadow-md">
-                {Object.entries(LOCALE_LABELS).map(([loc, label]) => (
+              <div className="absolute right-0 top-full z-50 mt-1 w-28 rounded-md border border-border bg-popover p-1 shadow-md">
+                {Object.entries(LOCALE_CONFIG).map(([loc, { label, flag, ariaLabel }]) => (
                   <button
                     key={loc}
                     onClick={() => {
                       switchLocale(loc);
                       setMobileLangOpen(false);
                     }}
+                    aria-label={ariaLabel}
                     className={cn(
-                      "block w-full rounded-sm px-3 py-1.5 text-left text-sm transition-colors hover:bg-accent",
-                      locale === loc && "bg-accent font-medium"
+                      "flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-left text-sm transition-colors hover:bg-accent",
+                      locale === loc && "bg-accent font-semibold"
                     )}
                   >
-                    {label}
+                    <span aria-hidden="true">{flag}</span>
+                    <span>{label}</span>
                   </button>
                 ))}
               </div>
@@ -175,21 +180,23 @@ export function Header() {
             ))}
             <div className="mt-2 flex items-center gap-2 border-t border-border pt-2">
               <ThemeToggle />
-              {Object.entries(LOCALE_LABELS).map(([loc, label]) => (
+              {Object.entries(LOCALE_CONFIG).map(([loc, { label, flag, ariaLabel }]) => (
                 <button
                   key={loc}
                   onClick={() => {
                     switchLocale(loc);
                     setMobileOpen(false);
                   }}
+                  aria-label={ariaLabel}
                   className={cn(
-                    "rounded-md px-3 py-1.5 text-sm transition-colors",
+                    "flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors",
                     locale === loc
-                      ? "bg-primary text-primary-foreground"
+                      ? "bg-primary font-semibold text-primary-foreground"
                       : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                   )}
                 >
-                  {label}
+                  <span aria-hidden="true">{flag}</span>
+                  <span>{label}</span>
                 </button>
               ))}
             </div>
