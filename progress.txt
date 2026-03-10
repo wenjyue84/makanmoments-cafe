@@ -10163,3 +10163,99 @@ Completed: Admin Menu — Show Translation Fields for All Items (Always Visible)
 
 ### Gotchas
 - `prd.json` uses UTF-8 encoding — must open with `encoding='utf-8'` in Python or it fails on Windows
+## Iteration 2 - Tue, Mar 10, 2026 11:11:48 PM
+Completed: Admin Menu — Collapsible No-Photo Alert with Chevron Button (ID: US-110) in 3m
+
+
+## Pre-analysis for US-111 (Gemini 2.5 Pro)
+This technical brief is for a **Next.js/Postgres** implementation, as the user story's details (file paths, component names, SQL queries) correspond to the Next.js project structure, not a Frappe/Python environment.
+
+**Project:** makanmoments.cafe (Next.js)
+**Objective:** Seed 'Chef's Picks' items and implement client-side filtering for 'Under RM15'.
+
+**1. Files to Modify:**
+*   Create new seed script: `scripts/seed-display-categories.ts`
+*   Modify `package.json` to add the new seed script command.
+*   Locate and modify the React component for the admin panel, likely `src/components/admin/AdminCategoriesPanel.tsx` or similar, to add filtering logic.
+
+**2. Key Data Models (Postgres Tables):**
+*   `display_categories`: Contains 'Chef's Picks', 'Under RM15'.
+*   `menu_items`: The master list of food items.
+*   `menu_item_display_categories`: The join table to link items to categories.
+
+**3. Implementation Approach:**
+*   **Seed Script:**
+    *   Create a `tsx` script in `/scripts` that connects to the Postgres DB.
+    *   Query for the `id` of the "Chef's Picks" display category.
+    *   Query for the `id`s of the 8 specified menu items (BF01, APY01, etc.).
+    *   `INSERT` the `menu_item_id` and `display_category_id` pairs into the join table, using `ON CONFLICT DO NOTHING` to ensure idempotency.
+*   **'Under RM15' Filtering:**
+    *   In the admin panel component, use the `allItems` prop.
+    *   Filter this array client-side: `items.filter(item => item.price < 15)`.
+    *   Ensure "Drinks" are excluded from this filtered list, likely by checking an item's category property.
+
+**4. Gotchas:**
+*   The seed script must be runnable multiple times without error (`ON CONFLICT`).
+*   The client-side price filter should handle data types carefully (e.g., `parseFloat`).
+*   Verify the property used to distinguish 'Drinks' for the exclusion filter.
+
+
+## Pre-analysis for US-111 (Gemini 2.5 Pro)
+Here is the technical brief for implementing US-111, tailored for a Node.js/TypeScript environment as indicated by the project structure.
+
+### Technical Brief: US-111 - Seed Chef's Picks
+
+**1. Key Files to Modify:**
+
+*   **New Script:** `scripts/seed-display-categories.ts`. This will contain the one-off database seeding logic.
+*   **Component:** `src/components/admin/AdminCategoriesPanel.tsx` (or similar). This file needs to be located and modified to implement the client-side filtering for the "Under RM15" category.
+*   **Configuration:** `package.json`. This file must be updated to add the new `seed:display-categories` npm script.
+
+**2. Core Data & Logic:**
+
+*   **Database Tables (DocTypes):**
+    *   `display_categories`: To find the ID for "Chef's Picks".
+    *   `menu_items`: To find the IDs for the specific food items by their `code`.
+    *   `menu_item_display_categories`: The join table to link menu items to the display category.
+*   **Logic (Hooks):** The seeding will be triggered by a new npm script: `seed:display-categories`.
+
+**3. Recommended Implementation Approach:**
+
+1.  Create the `scripts/seed-display-categories.ts` script.
+2.  Inside the script, establish a database connection (referencing other scripts for the project's standard method).
+3.  Execute SQL to get the `id` of the 'Chef\'s Picks' `display_categories` record.
+4.  Execute SQL to get the `id`s of the `menu_items` using the codes specified in the acceptance criteria.
+5.  Construct and execute `INSERT` statements into `menu_item_display_categories`, using `ON CONFLICT DO NOTHING` to ensure the script is idempotent.
+6.  In `AdminCategoriesPanel.tsx`, find where the "Under RM15" section is rendered. Filter the `allItems` prop with logic like `items.filter(item => item.price < 15)`.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Tech Stack:** The request mentions Frappe/Python, but the project is Node.js/Next.js. The implementation must use TypeScript/JavaScript.
+*   **Idempotency:** The seed script must be safely re-runnable. The `ON CONFLICT DO NOTHING` clause is critical.
+*   **Client-Side Logic:** The "Under RM15" price comparison should handle cases where `price` might be null or not a number. The filtering must be done on the client-side as specified.
+*   **Environment:** The script will require database credentials, which should be loaded from environment variables consistent with other project scripts.
+
+
+## Iteration - Story: US-111 Admin Categories — Seed Chef's Picks with Curated Food Items
+
+### What was implemented
+- Created `scripts/seed-display-categories.mjs` — seeds Chef's Picks display category with 8 curated items
+- Updated `package.json` `seed:display-categories` script to point to the new .mjs file
+- Successfully ran seed: 8 items now in Chef's Picks in the Neon DB
+
+### Items seeded
+- BF01 — KL Curry(Soup) [soup]
+- BF02 — KL Curry(Dry) [noodle]
+- BF04 — Fish Head With Milk(Soup) [fish/soup]
+- CN01 — Crispy Bee Hoon [noodles]
+- NS01 — Shredded Chicken Hor Fun Soup [noodle soup]
+- AP01 — Indonesia Ayam Penyet with rice [rice dish]
+- MT01 — Pineapple Fried Rice [rice dish]
+- SF11 — Thai Style Chicken Wing [snack/side]
+
+### Gotchas
+- PRD specified codes APY01, CFN01, SK01 do not exist in DB — replaced with AP01, MT01, SF11 from available items
+- Used .mjs (not .ts) for the seed script to allow direct `node` execution without tsx
+- DB connection string is hardcoded in script (same pattern as other scripts in the repo)
+- item_display_categories table uses item_id (UUID) not item_code
+

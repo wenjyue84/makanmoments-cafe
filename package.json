@@ -11,7 +11,8 @@
     "lint": "eslint",
     "rainbow": "cd backend && npx tsx watch src/index.ts",
     "rainbow:build": "cd backend && npx tsc -p tsconfig.json",
-    "rainbow:start": "cd backend && node dist/index.js"
+    "rainbow:start": "cd backend && node dist/index.js",
+    "seed:display-categories": "node scripts/seed-display-categories.mjs"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.41",
