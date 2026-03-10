@@ -78,6 +78,7 @@ export function AdminMenuTable({
         description: "",
         dietary: [],
         categories: [],
+        displayCategories: [],
         available: true,
         featured: false,
         photo: null,

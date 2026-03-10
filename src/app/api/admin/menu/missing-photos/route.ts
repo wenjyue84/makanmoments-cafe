@@ -9,7 +9,7 @@ export async function GET() {
   const rows = await sql`SELECT id, code, name_en FROM menu_items WHERE available = true ORDER BY sort_order ASC, name_en ASC`;
 
   const publicDir = join(process.cwd(), "public", "images", "menu");
-  const missing = rows.filter((row) => {
+  const missing = rows.filter((row: Record<string, unknown>) => {
     const code = row.code as string;
     return (
       !existsSync(join(publicDir, `${code}.jpg`)) &&
@@ -19,6 +19,6 @@ export async function GET() {
   });
 
   return NextResponse.json(
-    missing.map((r) => ({ id: r.id, code: r.code, nameEn: r.name_en }))
+    missing.map((r: Record<string, unknown>) => ({ id: r.id, code: r.code, nameEn: r.name_en }))
   );
 }
