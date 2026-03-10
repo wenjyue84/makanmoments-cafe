@@ -694,3 +694,53 @@ Here is the technical brief for a frontend developer:
 ### Gotchas
 - prd.json has unicode chars (emoji); must open with `encoding='utf-8'` in Python
 - TypeScript check passes clean (npx tsc --noEmit exits 0)
+## Iteration 1 - Tue, Mar 10, 2026 10:24:10 AM
+Completed: Chef's Pick Item Displayed Bigger at Top of Each Category (ID: US-011) in 5m
+
+
+## Pre-analysis for US-012 (Gemini 2.5 Pro)
+This technical brief is based on the provided JSON, which outlines a Next.js/TypeScript frontend task, not a Frappe/Python one.
+
+### **Technical Brief: US-012 Mobile Bottom Navigation**
+
+**1. Primary File for Modification:**
+*   `src/components/menu/menu-filter.tsx`: This React component containing the category filters and search bar will be the main target for style changes.
+*   The parent page component (likely `src/app/menu/page.tsx`) will also require a padding modification.
+
+**2. Frameworks & Concepts Involved:**
+*   **Framework:** Next.js / React
+*   **Styling:** Tailwind CSS for responsive, mobile-first styling.
+*   **Component Logic:** Conditional class application based on screen size (`md:` prefixes).
+
+**3. Recommended Implementation Approach:**
+*   In `menu-filter.tsx`, modify the main container to be `fixed` to the bottom on mobile screens.
+*   Use `md:relative md:sticky md:top-0` to revert to the standard top-of-page layout for desktop.
+*   Apply a `z-index` of `40` to ensure it sits below other floating UI elements like the chat widget.
+*   Add `overflow-x-auto` to the direct container of the category chips for horizontal scrolling.
+*   In the parent menu page file, add padding to the bottom of the main content area (`pb-32 md:pb-0`) to prevent the new bottom bar from hiding menu items.
+
+**4. Edge Cases & Gotchas:**
+*   **Safe Area:** The bottom positioning must account for the iOS home bar. Use `env(safe-area-inset-bottom)` in the CSS `calc()` function for precise placement.
+*   **Z-Index Stacking:** Verify the bar renders below the tray and chat widgets (which are at `z-50`).
+*   **Content Obscuring:** Double-check that the added bottom padding on the page container is sufficient and correctly applied, preventing the last few menu items from being hidden.
+
+
+## Iteration 12 - Story: Chef's Pick Item Displayed Bigger at Top of Each Category (US-011)
+
+### What was implemented
+- `src/components/menu/chef-pick-card.tsx` — already existed with full implementation (aspect-video full-width image, amber-400 ring, ★ Chef's Pick badge, larger text, add-to-tray button)
+- `src/components/menu/menu-grid.tsx` — already updated with category grouping logic:
+  - `categorySections` memo: groups filtered items by category, finds Chef's Pick (highlighted item or first item as fallback)
+  - Renders category sections with `<h2>` heading, ChefPickCard hero card, then remaining items in 2-3 col grid
+  - Search mode: flat grid (no grouping)
+  - Admin mode: uses EditableMenuCard in hero position (maintains Set as Highlight functionality)
+
+### Patterns discovered
+- Both files were already updated by a previous iteration — only needed TypeScript/ESLint verification
+- ChefPickCard uses `w-full` outside the grid container for natural full-width layout on mobile
+- `categorySections` useMemo correctly handles: category filter, search filter, highlights, first-item fallback
+
+### Gotchas
+- TypeScript check passes clean (`npx tsc --noEmit` exits 0)
+- ESLint passes clean on both changed files
+- `prd.json` must be read with `encoding='utf-8'` on Windows (contains non-ASCII chars in story descriptions)
