@@ -8711,3 +8711,109 @@ Here is the technical brief for implementing the AI Waiter user story.
 *   Ensure the database query correctly handles empty or null values for fields like `categories` or `dietary` to prevent formatting errors.
 *   The `knowledge/menu-knowledge.md` file should be removed as a dependency for the menu, but `cafe-facts.md` and `faq.md` must still be loaded.
 
+## Iteration 3 - Tue, Mar 10, 2026  7:24:13 PM
+Completed: AI Waiter: Inject Live DB Menu into System Prompt (Replace Static knowledge/menu-knowledge.md) (ID: US-090) in 5m
+
+
+## Pre-analysis for US-090 (Gemini 2.5 Pro)
+### Technical Brief: US-090 - Live Menu Injection for AI Waiter
+
+**Objective:** Replace the static `knowledge/menu-knowledge.md` with a dynamic, database-driven menu source for the AI's system prompt. This ensures the AI has real-time access to all available menu items.
+
+**Files to Modify:**
+*   `src/lib/chat/system-prompt.ts`: Core logic for building the prompt.
+*   `src/app/api/chat/route.ts`: Main chat API endpoint, needs to handle the async prompt builder.
+*   `src/app/api/admin/menu/[id]/route.ts`: The PATCH route for menu updates, to trigger cache invalidation.
+
+**Implementation Approach:**
+1.  Make `getSystemPrompt()` in `system-prompt.ts` an `async` function.
+2.  Create a new `async function fetchMenuFromDB()` that queries the Neon DB for all menu items where `available = true`.
+3.  Format the DB results into a structured string list as detailed in the technical notes.
+4.  Implement an in-memory cache for the menu string with a 5-minute TTL to reduce DB load.
+5.  In `getSystemPrompt`, replace the file read of `menu-knowledge.md` with a call to the cached DB fetch function.
+6.  Update the admin PATCH route to call a cache invalidation function after successfully updating an item.
+7.  Ensure the main chat API route `await`s the `getSystemPrompt()` call.
+
+**Gotchas & Edge Cases:**
+*   Handle potential DB connection failures gracefully; consider logging the error without crashing.
+*   Ensure the system behaves predictably if the menu query returns zero items.
+*   The change from sync to `async` for `getSystemPrompt` requires updating all call sites to use `await`.
+
+
+## Pre-analysis for US-092 (Gemini 2.5 Pro)
+This is a Next.js/TypeScript user story, not Frappe/Python. All file paths and logic point to a Node.js backend and React frontend.
+
+**Technical Brief: US-092 AI Waiter Availability Logic**
+
+**1. Files to Modify:**
+*   `src/lib/chat/system-prompt.ts`: This is the primary file. It will be modified to process and structure the menu items into two distinct lists.
+*   Data Fetching Logic (from US-090): The database query that fetches menu items for the chat context needs to be located and changed. It is likely in `backend/src/chat.ts` or a related data-access module.
+
+**2. Involved DocTypes/Hooks (Next.js Equivalents):**
+*   **Data Model (Not DocType):** The 'Menu Item' database model/type is central. The key fields are `available` (boolean) and any fields used for time/day-based availability rules.
+*   **Data Fetching (Not Hook):** The server-side function that queries the PostgreSQL database to get menu items before building the system prompt.
+
+**3. Recommended Implementation Approach:**
+1.  Modify the database query to fetch *all* menu items, removing any existing `WHERE available = true` clause.
+2.  In `src/lib/chat/system-prompt.ts`, partition the full item list into two arrays:
+    *   `currentlyAvailable`: Items where `available` is true and all time/day rules pass.
+    *   `temporarilyUnavailable`: Items where `available` is false or time/day rules fail.
+3.  Inject both arrays into the system prompt under the headers specified in the technical notes.
+4.  Update the prompt's main instruction text to guide the AI on how to respond based on which list an item is in.
+
+**4. Edge Cases & Gotchas:**
+*   The time/day filtering logic must be robustly applied to correctly sort items.
+*   Fetching all items slightly increases DB load and prompt size. Ensure the context remains within the AI model's token limit.
+*   The prompt instructions must be unambiguous to prevent the AI from confusing the two lists.
+
+
+## Pre-analysis for US-092 (Gemini 2.5 Pro)
+This is a technical brief for a TypeScript/Next.js project, based on the `technicalNotes` in the JSON provided.
+
+**Technical Brief: US-092 - AI Waiter Availability Logic**
+
+**1. Primary Files to Modify:**
+*   `src/lib/chat/system-prompt.ts`: This file is the main target. It will need new logic to process and partition the menu items before injecting them into the prompt.
+*   The module responsible for the menu item database query (as per US-090) needs to be updated to fetch all items, not just `available: true` ones.
+
+**2. Core Data Structures Involved:**
+*   **Menu Item Type:** The TypeScript type for menu items, which includes `available: boolean`, pricing, and filtering criteria (e.g., available times/days).
+*   **System Prompt:** The string template that is dynamically assembled and sent to the AI model.
+
+**3. Recommended Implementation Approach:**
+1.  **Data Fetching:** Alter the DB query function to return all menu items, regardless of their `available` status or time-based rules.
+2.  **Item Partitioning:** In `system-prompt.ts`, before building the prompt, filter the full item list into two distinct arrays:
+    *   `availableNow`: Items where `available: true` and all time/day rules currently pass.
+    *   `unavailableToday`: Items where `available: false` OR which fail the current time/day rules.
+3.  **Prompt Injection:** Structure the prompt to include two clearly demarcated lists:
+    *   A section titled `CURRENTLY AVAILABLE ITEMS:` containing the `availableNow` list.
+    *   A section titled `ITEMS NOT AVAILABLE TODAY:` containing the `unavailableToday` list.
+4.  **Instruction Update:** Modify the prompt's core instructions with a rule like: "If a user asks about an item in the `unavailableToday` list, you must say it is not available today and suggest an alternative from the `availableNow` list. Never say the cafe does not have an item if it appears in either list."
+
+**4. Edge Cases & Gotchas:**
+*   The filtering logic must correctly distinguish between items that are permanently disabled (`available: false`) and those temporarily unavailable due to time rules. Both belong in the "unavailable" list for the AI's context.
+*   The prompt instructions must be explicit and unambiguous to ensure the AI correctly follows the new "unavailable today" vs. "not on menu" logic.
+*   This implementation is critically dependent on the upstream change to the database query from US-090.
+
+
+## Iteration — Story: US-092 - AI Waiter: Distinguish 'Not on Menu' vs 'Not Available Today'
+
+### What was implemented
+- Modified `src/lib/chat/system-prompt.ts`:
+  - `fetchMenuFromDB()` now fetches ALL items (`available` column included, no WHERE filter)
+  - Items split into two groups: `available=true` → "CURRENTLY AVAILABLE ITEMS" section; `available=false` → "ITEMS NOT AVAILABLE TODAY" section
+  - Added `MenuRow` type and `formatMenuRow()` helper to deduplicate row formatting
+  - Added instructional label in the unavailable section: "do not say the cafe does not have these — say they are not available today and suggest an alternative"
+- Updated system prompt "Important Rules" to add 3 new rules:
+  - Explains two-section structure to the AI
+  - Instructs AI: for available items, answer normally with price
+  - Instructs AI: for unavailable items, say "not available today" + suggest alternative; NEVER say "we don't have it"
+  - Instructs AI: for items genuinely not in DB (pizza, sushi), say the cafe doesn't serve it
+
+### Patterns discovered
+- The DB query change (remove `WHERE available = true`, add `available` to SELECT) is minimal — only one SQL template changed
+- Two-section format is self-documenting in the prompt (section headers carry the rule inline)
+
+### Gotchas
+- `menuCache` stores the combined two-section text string, so both sections are cached together and invalidated together
+- `invalidateSystemPromptCache()` already clears menuCache, so no extra changes needed for cache coherence

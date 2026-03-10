@@ -21,6 +21,23 @@ function loadKnowledge(filename: string): string {
   }
 }
 
+type MenuRow = {
+  code: string;
+  name_en: string;
+  name_ms: string;
+  name_zh: string;
+  price: string | number;
+  categories: string[] | string;
+  dietary: string[] | string;
+  available: boolean;
+};
+
+function formatMenuRow(row: MenuRow): string {
+  const categories = Array.isArray(row.categories) ? row.categories.join(", ") : (row.categories ?? "");
+  const dietary = Array.isArray(row.dietary) ? row.dietary.join(", ") : (row.dietary ?? "");
+  return `- ${row.code} ${row.name_en} (${row.name_ms} / ${row.name_zh}) — RM ${row.price} | Categories: ${categories} | Dietary: ${dietary}`;
+}
+
 async function fetchMenuFromDB(): Promise<string> {
   if (menuCache && Date.now() < menuCache.expiresAt) {
     return menuCache.text;
@@ -28,9 +45,8 @@ async function fetchMenuFromDB(): Promise<string> {
 
   try {
     const rows = await sql`
-      SELECT code, name_en, name_ms, name_zh, price, categories, dietary
+      SELECT code, name_en, name_ms, name_zh, price, categories, dietary, available
       FROM menu_items
-      WHERE available = true
       ORDER BY sort_order ASC
     `;
 
@@ -38,21 +54,21 @@ async function fetchMenuFromDB(): Promise<string> {
       return loadKnowledge("menu-knowledge.md");
     }
 
-    const lines = rows.map((row: {
-      code: string;
-      name_en: string;
-      name_ms: string;
-      name_zh: string;
-      price: string | number;
-      categories: string[];
-      dietary: string[];
-    }) => {
-      const categories = Array.isArray(row.categories) ? row.categories.join(", ") : row.categories;
-      const dietary = Array.isArray(row.dietary) ? row.dietary.join(", ") : row.dietary;
-      return `- ${row.code} ${row.name_en} (${row.name_ms} / ${row.name_zh}) — RM ${row.price} | Categories: ${categories} | Dietary: ${dietary}`;
-    });
+    const available = (rows as MenuRow[]).filter((r) => r.available);
+    const unavailable = (rows as MenuRow[]).filter((r) => !r.available);
 
-    const text = lines.join("\n");
+    const availableSection = available.length > 0
+      ? `CURRENTLY AVAILABLE ITEMS:\n${available.map(formatMenuRow).join("\n")}`
+      : "CURRENTLY AVAILABLE ITEMS:\n(none)";
+
+    const unavailableSection = unavailable.length > 0
+      ? `ITEMS NOT AVAILABLE TODAY (do not say the cafe does not have these — say they are not available today and suggest an alternative):\n${unavailable.map(formatMenuRow).join("\n")}`
+      : "";
+
+    const text = unavailableSection
+      ? `${availableSection}\n\n${unavailableSection}`
+      : availableSection;
+
     menuCache = { text, expiresAt: Date.now() + MENU_CACHE_TTL_MS };
     return text;
   } catch (err) {
@@ -104,7 +120,10 @@ export async function getSystemPrompt(): Promise<string> {
 
 ## Important Rules
 - NEVER make up menu items or prices — only reference items from the knowledge below
-- If asked about something not on the menu, say so honestly
+- The menu knowledge below has two sections: CURRENTLY AVAILABLE ITEMS and ITEMS NOT AVAILABLE TODAY
+- If a customer asks about an item in the CURRENTLY AVAILABLE section, answer normally with price and description
+- If a customer asks about an item in the ITEMS NOT AVAILABLE TODAY section, say it is not available today and suggest a similar alternative from the available items — NEVER say the cafe does not have it or does not serve it
+- If a customer asks about something that does not appear in either section (e.g. pizza, sushi), say the cafe does not serve that and suggest what the cafe does offer
 - For allergy or dietary questions, mention that the cafe is NO PORK, NO LARD, Halal-friendly
 - When a customer says they want to order or add something, ALWAYS call the \`addToTray\` tool to add it for them
 - Do not ask for payment details or process checkout — tell them to show their tray to the human waiter when they are ready
