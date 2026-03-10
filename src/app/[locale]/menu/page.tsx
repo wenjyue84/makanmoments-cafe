@@ -7,6 +7,8 @@ import { MenuGrid } from "@/components/menu/menu-grid";
 import { MenuPageJsonLd } from "@/components/seo/json-ld";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 import { getDefaultCategoryForTime, getServingNowCategories } from "@/lib/time-slots";
+import { getOperatingStatus } from "@/lib/availability";
+import { OperatingHoursAlert } from "@/components/menu/operating-hours-alert";
 
 export const revalidate = 300;
 
@@ -42,10 +44,12 @@ export default async function MenuPage() {
 
   const initialCategory = getDefaultCategoryForTime();
   const servingNowCategories = getServingNowCategories();
+  const operatingStatus = isAdmin ? "open" : getOperatingStatus();
 
   return (
     <>
       <MenuPageJsonLd />
+      <OperatingHoursAlert status={operatingStatus} />
       <div className="mx-auto max-w-6xl px-4 py-12 pb-40 md:pb-12">
         {isAdmin && <AdminEditBanner />}
         <MenuPageHeader />

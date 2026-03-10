@@ -2564,3 +2564,79 @@ All files were already present from a previous partial implementation. The only 
 ## Iteration 17 - Tue, Mar 10, 2026 12:40:47 PM
 Completed: Menu Page: Dynamic Display Based on Time of Day (ID: US-035) in 8m
 
+## Iteration 19 - Tue, Mar 10, 2026 12:40:51 PM
+Completed: Menu Page: Dynamic Display Based on Time of Day (ID: US-035) in 7m
+
+
+## Pre-analysis for US-036 (Gemini 2.5 Pro)
+### Technical Brief: US-036 Operating Hours Alert
+
+**To:** Claude Code Agent
+**From:** Gemini
+**Subject:** Implementation Plan for User Story US-036 in `lhdn_payroll_integration`
+
+This brief outlines the implementation strategy for a feature that restricts user activity based on a configured time window, adapted from the provided user story.
+
+---
+
+**1. Python Files to Modify:**
+*   `lhdn_payroll_integration/lhdn_payroll_integration/hooks.py`: To register a client script and whitelisted method.
+*   `lhdn_payroll_integration/lhdn_payroll_integration/api.py` (or a new `utils.py`): To house the core server-side logic for checking the time window.
+
+**2. Frappe DocTypes & Hooks:**
+*   **DocType:** Create a new **Singleton** DocType named `Payroll Settings`. It should contain `Time` fields: `opening_time`, `closing_time`, and `last_order_time`.
+*   **Hook (`hooks.py`):** Use `app_include_js` to inject a custom client script (`/assets/lhdn_payroll_integration/js/payroll_gate.js`) into the Desk.
+
+**3. Recommended Implementation Approach:**
+*   In `api.py`, create a `@frappe.whitelist` function `get_payroll_window_status`.
+*   This function will fetch the times from the `Payroll Settings` singleton.
+*   It will bypass the check if the user has the "System Manager" role (`frappe.user.has_role("System Manager")`).
+*   The function must get the current time, explicitly convert it to Malaysia's timezone (`pytz.timezone('Asia/Kuala_Lumpur')`), and compare it against the configured hours.
+*   It should return a status string: `'OPEN'`, `'BEFORE_OPEN'`, `'AFTER_LAST_ORDER'`, or `'CLOSED'`.
+*   The `payroll_gate.js` client script will call this whitelisted function on `frappe.ready`.
+*   Based on the status, the script will inject a non-dismissible banner at the top of the page if the status is not `'OPEN'`.
+
+**4. Edge Cases & Gotchas:**
+*   **Timezone:** This is the most critical part. Hardcode the use of `'Asia/Kuala_Lumpur'` (UTC+8) for comparison to avoid discrepancies with server or user profile timezones.
+*   **Admin Bypass:** Ensure the "System Manager" role check is robust, allowing admins to work at any time.
+*   **UI:** Use a custom HTML banner injected via jQuery (`$('.page-head').prepend(...)`) rather than `frappe.msgprint` to ensure it is non-dismissible.
+*   **Permissions:** Configure Role Permissions on the `Payroll Settings` DocType so only System Managers can read and write it.
+
+
+## Pre-analysis for US-036 (Gemini 2.5 Pro)
+This is a Next.js/TypeScript project. The "Frappe/Python" context seems incorrect; the analysis below is for the Next.js stack as reflected in your project files.
+
+### Technical Brief: US-036 Operating Hours Alert
+
+**Objective:** Implement a site-wide, non-dismissible banner for non-admin users, indicating if the cafe is closed based on configurable operating hours (UTC+8).
+
+**1. Primary Files to Modify/Create:**
+
+*   **`src/lib/availability.ts` (New File):** Create this file to house the core logic. It will export `getOperatingStatus()`, which checks the current time in Malaysia (UTC+8) against the rules and the user's role.
+*   **`src/app/[locale]/layout.tsx` (Modification):** As the root server layout, this is the best place to perform the check for all pages. It will call `getOperatingStatus()` and pass the result to a new client component in the UI.
+*   **`src/components/layout/OperatingHoursAlert.tsx` (New Component):** A client component that accepts a `closedStatus` prop and renders the appropriate banner message (`closed`, `before_open`, `after_last_order`) or nothing if `open`.
+*   **`src/lib/rules.ts` (Modification):** Update to fetch and parse the specific operating hours configuration.
+*   **`lib/auth.ts` (Usage):** Used within `availability.ts` to determine if the current user is an admin.
+
+**2. Frappe DocTypes / Data Models Involved:**
+
+*   This project uses a custom "Rules" system, not Frappe DocTypes.
+*   A new rule configuration is needed, likely fetched via `src/lib/rules.ts`. Propose a JSON object or database entry with `id: 'operating_hours'` and string fields: `startTime: "11:00"`, `closeTime: "23:00"`, `lastOrderTime: "22:30"`.
+
+**3. Recommended Implementation Approach:**
+
+1.  In `src/lib/availability.ts`, create `getOperatingStatus(user)`. This function will:
+    *   Return `{ status: 'open' }` immediately if `user.isAdmin`.
+    *   Fetch the `operating_hours` rule using `src/lib/rules.ts`.
+    *   Get the current time, explicitly converted to the `Asia/Kuala_Lumpur` timezone.
+    *   Return a status string: `'open'`, `'before_open'`, `'after_last_order'`, or `'closed'`.
+2.  In the `RootLayout` (`src/app/[locale]/layout.tsx`), `await` the result from `getOperatingStatus()` and pass it to the new `<OperatingHoursAlert />` component.
+3.  Place `<OperatingHoursAlert />` near the top of the `<body>` tag in the layout to ensure it's visible on all pages.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Timezone Precision:** All time comparisons must be strictly handled in `Asia/Kuala_Lumpur` (UTC+8) time to avoid off-by-one errors due to server location. Use a library like `date-fns-tz`.
+*   **Layout Shift (CLS):** The alert banner must not cause content to jump. Use `position: sticky` or pre-allocate its space in the DOM to avoid impacting Core Web Vitals.
+*   **Admin Role:** Ensure the `isAdmin` check is robust, as it's the sole bypass for the alert.
+*   **Caching:** The operating hours rule will be fetched on every page load for every user. Ensure it is aggressively cached to minimize database/network overhead.
+

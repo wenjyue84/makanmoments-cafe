@@ -1,4 +1,59 @@
+import fs from "fs";
+import path from "path";
 import type { MenuItem } from "@/types/menu";
+
+// ── Operating Hours ──────────────────────────────────────────────────────────
+
+export interface OperatingHoursConfig {
+  openHour: number;
+  openMinute: number;
+  lastOrderHour: number;
+  lastOrderMinute: number;
+  closeHour: number;
+  closeMinute: number;
+}
+
+export type OperatingStatus = "open" | "after_last_order" | "closed";
+
+const DEFAULT_HOURS: OperatingHoursConfig = {
+  openHour: 11, openMinute: 0, lastOrderHour: 22, lastOrderMinute: 30, closeHour: 23, closeMinute: 0,
+};
+
+export function readOperatingHours(): OperatingHoursConfig {
+  try {
+    const filePath = path.join(process.cwd(), "data", "operating-hours.json");
+    const raw = fs.readFileSync(filePath, "utf-8");
+    return { ...DEFAULT_HOURS, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_HOURS;
+  }
+}
+
+export function writeOperatingHours(data: OperatingHoursConfig): void {
+  const filePath = path.join(process.cwd(), "data", "operating-hours.json");
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+}
+
+export function getOperatingStatus(): OperatingStatus {
+  const cfg = readOperatingHours();
+
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kuala_Lumpur",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  });
+  const parts = Object.fromEntries(fmt.formatToParts(new Date()).map((x) => [x.type, x.value]));
+  const nowMins = parseInt(parts.hour) * 60 + parseInt(parts.minute);
+
+  const openMins = cfg.openHour * 60 + cfg.openMinute;
+  const lastOrderMins = cfg.lastOrderHour * 60 + cfg.lastOrderMinute;
+  const closeMins = cfg.closeHour * 60 + cfg.closeMinute;
+
+  if (nowMins < openMins || nowMins >= closeMins) return "closed";
+  if (nowMins >= lastOrderMins) return "after_last_order";
+  return "open";
+}
 
 export function isItemAvailableNow(item: MenuItem): boolean {
   if (!item.available) return false;

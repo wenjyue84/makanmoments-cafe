@@ -966,7 +966,7 @@
       ],
       "dependencies": [],
       "estimatedComplexity": "small",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-037",
@@ -1585,6 +1585,66 @@
         "US-009"
       ],
       "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-057",
+      "title": "Admin: Adjust Image Focal Point (Pan Up/Down/Left/Right)",
+      "priority": 57,
+      "description": "Food photos are cropped to fit fixed aspect ratios (4:3 on menu cards, 16:9 on chef pick cards, aspect-video on blog cards). The default crop is center, but this often cuts off the most appetising part of the dish. Allow admin to adjust the image focal point — dragging the image up/down/left/right to reposition it within the crop frame. The offset is saved per image and applied via CSS object-position.",
+      "acceptanceCriteria": [
+        "In admin edit mode on the menu page, each image card shows a drag handle or arrow controls (↑ ↓ ← →) when hovered",
+        "Admin can drag the image or click arrows to shift the visible crop area",
+        "The position adjustment is live-previewed as the admin drags",
+        "Clicking 'Save Position' persists the object-position value (e.g., '50% 30%') to the DB via PATCH /api/admin/menu/[id]",
+        "The saved position is applied on the public menu page via inline style: objectPosition: '50% 30%'",
+        "Works for: menu cards, chef-pick hero cards, blog cover images, hero section images, about page images",
+        "Non-admin users never see the drag controls — images just display with their saved position",
+        "Verify: drag image up on menu card → food subject centres → save → public page shows correct crop"
+      ],
+      "technicalNotes": [
+        "Add imagePosition TEXT column to menu_items table (default '50% 50%')",
+        "For blog posts: add imagePosition field to content/blog/*.md frontmatter",
+        "For static images (hero, about): store positions in data/image-positions.json keyed by image path",
+        "In admin menu card: wrap <Image> in a draggable container; on drag, compute new object-position percentage",
+        "Use onMouseDown + onMouseMove to track drag delta: newX = clamp(oldX + deltaX/containerWidth * 100, 0, 100)",
+        "Show a semi-transparent crosshair or grid overlay while dragging to aid alignment",
+        "Arrow buttons: each click shifts position by 5% increments (less precise but easier on mobile)",
+        "Apply saved position: <Image style={{ objectPosition: item.imagePosition || '50% 50%' }} className='object-cover' />",
+        "PATCH /api/admin/menu/[id] already exists — add imagePosition to the updatable fields",
+        "For blog + static images: PATCH /api/admin/image-positions route.ts with { imagePath, position }"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-058",
+      "title": "Admin Menu Preview: Show Time-Based Dynamic Menu Same as Customer View",
+      "priority": 58,
+      "description": "When admin visits http://localhost:3030/en/menu, they currently see all items with the admin edit overlay. However the default category shown should reflect the current time of day (same logic as US-035 for customers). Admin should see exactly what customers see at this moment — which category is pre-selected, which items are greyed out as unavailable, and the 'Serving now' indicator — plus the admin edit tools on top. This ensures admin can verify the dynamic display is working correctly.",
+      "acceptanceCriteria": [
+        "Admin visiting /en/menu sees the same time-based default category as customers (e.g., lunch items pre-selected at noon)",
+        "Items outside their time window are visually de-emphasised (greyed out / 'Not available now' badge) in admin view too",
+        "The admin edit banner still appears at the top with a note: 'Showing customer view at current time (11:45 AM)'",
+        "A 'Preview as time:' input in the edit banner lets admin simulate any time (e.g., set to 8:00 AM to see breakfast view)",
+        "The time preview is admin-only and does not affect customer experience",
+        "The 'Serving now' indicator is visible in admin view to confirm it's working",
+        "Verify: admin visits /en/menu at lunch time → lunch category pre-selected → change time preview to 8AM → breakfast category selected"
+      ],
+      "technicalNotes": [
+        "Time-based default category logic already exists from US-035 in src/lib/time-slots.ts",
+        "In menu/page.tsx server component: isAdmin users still get the time-based defaultCategory (currently they may be getting 'All' or ignoring time)",
+        "Add a previewTime query param: /en/menu?previewTime=08:00 — admin only, parsed in server component",
+        "If previewTime param present and isAdmin: use that time instead of real Malaysia time for category selection",
+        "Add a time preview input to the AdminEditBanner component: <input type='time' value={previewTime} onChange={...} /> that updates the URL query param",
+        "Items not available at the current (or preview) time get a visual indicator: opacity-50 + 'Not serving now' badge in admin view",
+        "This is purely a display/preview feature — no data changes needed"
+      ],
+      "dependencies": [
+        "US-035"
+      ],
+      "estimatedComplexity": "small",
       "passes": false
     }
   ]
