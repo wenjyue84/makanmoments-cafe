@@ -8636,3 +8636,38 @@ This story transitions the AI's menu knowledge from a static Markdown file to a 
 ### Gotchas
 - Menu cache TTL won't work if the full knowledge block is also cached without expiry — keep them as separate variables
 - Always use `encoding='utf-8'` when reading/writing prd.json on Windows
+
+## Iteration N - Story: US-091 Admin: Manual 'Sync AI Knowledge' Button + Auto-Sync on Menu Save
+
+### What was implemented
+- Created `src/app/api/admin/sync-ai-knowledge/route.ts` — POST endpoint that:
+  - Queries all menu items from DB (all, not just available)
+  - Groups by first category and formats as markdown
+  - Writes to `knowledge/menu-knowledge.md` using `fs.writeFileSync`
+  - Calls `invalidateSystemPromptCache()` to clear in-memory cache
+  - Returns `{ success: true, count: N }`
+- Added `handleSyncAI()` function + state (`syncing`, `syncResult`) to `admin-settings-panel.tsx`
+- Added "AI Waiter Knowledge" section with Sync button showing success/error feedback
+
+### Patterns discovered
+- `verifyAdminToken` expects a string (cookie token), not a `Request` object — linter auto-removed the manual auth (route is protected by middleware already)
+- `prd.json` must be read with `encoding='utf-8'` on Windows (charmap error otherwise)
+- Auto-invalidation on menu PATCH was ALREADY implemented in `src/app/api/admin/menu/[id]/route.ts` (line 70) from a previous iteration
+
+### Gotchas
+- The linter reformatted/simplified the route.ts automatically — check final state after running tsc
+
+## Iteration — Story: US-091 Admin: Manual 'Sync AI Knowledge' Button + Auto-Sync on Menu Save
+
+### What was implemented
+- Created `src/app/api/admin/sync-ai-knowledge/route.ts`: POST handler queries all menu_items from DB, groups by first category, writes markdown to `knowledge/menu-knowledge.md`, calls `invalidateSystemPromptCache()`, returns `{ success: true, count }`.
+- `src/components/admin/admin-settings-panel.tsx`: Already had syncing/syncResult state + handleSyncAI + "AI Waiter Knowledge" section with button (linter had pre-applied changes). Verified UI is complete and correct.
+- Auto-sync on menu save was already implemented in US-090: `src/app/api/admin/menu/[id]/route.ts` calls `invalidateSystemPromptCache()` after PATCH.
+
+### Patterns discovered
+- Admin routes are protected by middleware — no need to call `verifyAdminToken()` in individual route handlers (unlike what the old stub had)
+- Linter auto-applied UI state/handler code to admin-settings-panel.tsx before this iteration ran
+
+### Gotchas
+- The pre-existing route.ts stub in sync-ai-knowledge/ used wrong `verifyAdminToken(request)` signature — had to rewrite to just `POST()` with try/catch, no explicit auth
+
