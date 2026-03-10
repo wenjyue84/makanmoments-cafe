@@ -24,6 +24,7 @@ function rowToMenuItem(row: any, displayCatMap: Record<string, string[]> = {}): 
     timeFrom: row.time_from ?? "",
     timeUntil: row.time_until ?? "",
     specialDates: row.special_dates ?? [],
+    imagePosition: row.image_position ?? "50% 50%",
   };
 }
 

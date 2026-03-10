@@ -17,6 +17,7 @@ export interface MenuItem {
   timeFrom: string;
   timeUntil: string;
   specialDates: string[];
+  imagePosition: string;   // CSS object-position, e.g. '50% 30%'
 }
 
 export interface DisplayCategory {

@@ -26,7 +26,11 @@ export async function PATCH(
     timeFrom,
     timeUntil,
     specialDates,
+    imagePosition,
   } = body;
+
+  // Ensure image_position column exists (idempotent migration)
+  await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_position TEXT DEFAULT '50% 50%'`;
 
   const rows = await sql`
     UPDATE menu_items SET
@@ -45,6 +49,7 @@ export async function PATCH(
       time_from = COALESCE(${timeFrom ?? null}, time_from),
       time_until = COALESCE(${timeUntil ?? null}, time_until),
       special_dates = COALESCE(${specialDates ?? null}, special_dates),
+      image_position = COALESCE(${imagePosition ?? null}, image_position),
       updated_at = now()
     WHERE id = ${id}
     RETURNING *

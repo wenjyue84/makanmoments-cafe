@@ -5060,3 +5060,36 @@ Here is the technical brief for implementing user story US-056 in a Frappe/Pytho
 ## Iteration 10 - Tue, Mar 10, 2026  4:04:24 PM
 Completed: Pre-Order: Admin Confirms Payment â†’ Kitchen Start (ID: US-055) in 11m
 
+
+## Pre-analysis for US-057 (Gemini 2.5 Pro)
+Here is the technical brief for implementing US-057.
+
+**Project:** Makan Moments Cafe (Next.js / TypeScript)
+
+**Objective:** Implement an admin interface to adjust the focal point of images using CSS `object-position`.
+
+**1. Python Files to Modify:**
+*   This is a Next.js (TypeScript/JavaScript) project, not a Python/Frappe one. Key files are TypeScript/TSX.
+
+**2. Frappe DocTypes/Hooks (Next.js Equivalents):**
+*   **API Routes:**
+    *   Modify `src/app/api/admin/menu/[id]/route.ts` to handle `imagePosition` updates.
+    *   Create a new route `src/app/api/admin/image-positions/route.ts` for static and blog images.
+*   **Data Models:**
+    *   **Database:** Add `imagePosition: TEXT` to the `menu_items` table.
+    *   **Markdown:** Add `imagePosition: '50% 50%'` to the frontmatter of blog posts in `content/blog/`.
+    *   **JSON:** Create and manage `data/image-positions.json` for static assets (hero, about page images).
+
+**3. Recommended Implementation Approach:**
+1.  **Create an Admin UI Component:** Build a client component (`'use client'`) e.g., `ImagePositioner.tsx`, that wraps `next/image`.
+2.  **Implement Drag Logic:** Use `onMouseDown` and `onMouseMove` to track drag movements, converting the delta into a percentage value for `object-position`.
+3.  **Add Controls:** Include arrow buttons for incremental (e.g., 5%) adjustments and a "Save" button.
+4.  **Update API Handlers:** Enhance the existing menu PATCH route and create a new one to persist the `imagePosition` string to the correct data source (DB, JSON, or MD file).
+5.  **Apply Styles:** Read the `imagePosition` value and apply it as an inline `style={{ objectPosition: ... }}` to the public-facing `next/image` components.
+
+**4. Edge Cases & Gotchas:**
+*   **Authentication:** Ensure the new API route and admin UI are strictly locked down to admin users.
+*   **State:** The draggable component must be a `'use client'` component.
+*   **Coordinate Clamping:** The calculated `object-position` percentages must be clamped between `0%` and `100%`.
+*   **Data Keys:** Use a consistent, unique key (like the image's `src` path) for entries in `image-positions.json`.
+

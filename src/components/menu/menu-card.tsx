@@ -65,6 +65,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false }: Menu
               alt={name}
               fill
               className="object-cover img-scale"
+              style={{ objectPosition: item.imagePosition || "50% 50%" }}
               sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 50vw, 33vw"
               priority={priority}
               loading={priority ? "eager" : "lazy"}

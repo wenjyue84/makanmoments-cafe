@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Camera, Pencil, Check, X, Loader2 } from "lucide-react";
+import { Plus, Camera, Pencil, Check, X, Loader2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import type { MenuItemWithRules } from "@/types/menu";
 import { formatPrice, getLocalizedName } from "@/lib/utils";
@@ -19,6 +19,18 @@ interface EditableMenuCardProps {
 }
 
 type EditTarget = "description" | "price" | null;
+
+function parsePosition(pos: string): [number, number] {
+  const parts = pos.split(" ").map((p) => parseInt(p, 10));
+  return [isNaN(parts[0]) ? 50 : parts[0], isNaN(parts[1]) ? 50 : parts[1]];
+}
+
+function shiftPosition(pos: string, dx: number, dy: number): string {
+  const [x, y] = parsePosition(pos);
+  const nx = Math.max(0, Math.min(100, x + dx));
+  const ny = Math.max(0, Math.min(100, y + dy));
+  return `${nx}% ${ny}%`;
+}
 
 export function EditableMenuCard({
   item,
@@ -40,6 +52,11 @@ export function EditableMenuCard({
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const [recipeOpen, setRecipeOpen] = useState(false);
+
+  // Focal point state
+  const [imagePosition, setImagePosition] = useState(item.imagePosition || "50% 50%");
+  const [positionDirty, setPositionDirty] = useState(false);
+  const [savingPosition, setSavingPosition] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -95,6 +112,34 @@ export function EditableMenuCard({
   function cancelEdit() {
     setEditing(null);
     setErrorMsg(null);
+  }
+
+  function adjustPosition(dx: number, dy: number) {
+    const newPos = shiftPosition(imagePosition, dx, dy);
+    setImagePosition(newPos);
+    setPositionDirty(true);
+  }
+
+  async function savePosition() {
+    setSavingPosition(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch(`/api/admin/menu/${localItem.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imagePosition }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error || "Save failed");
+      }
+      setLocalItem((prev) => ({ ...prev, imagePosition }));
+      setPositionDirty(false);
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSavingPosition(false);
+    }
   }
 
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -159,6 +204,7 @@ export function EditableMenuCard({
               alt={name}
               fill
               className="object-cover img-scale"
+              style={{ objectPosition: imagePosition }}
               sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 50vw, 33vw"
               priority={priority}
               loading={priority ? "eager" : "lazy"}
@@ -209,7 +255,72 @@ export function EditableMenuCard({
             <Camera className="h-3.5 w-3.5" />
             Photo
           </button>
+
+          {/* Focal point arrow controls — shown on hover */}
+          {hasPhoto && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 transition-opacity group-hover/card:opacity-100 pointer-events-none">
+              <div className="pointer-events-auto flex flex-col items-center gap-0.5">
+                <button
+                  type="button"
+                  onClick={() => adjustPosition(0, -5)}
+                  className="rounded bg-black/60 p-1 text-white hover:bg-black/80"
+                  title="Pan up"
+                >
+                  <ArrowUp className="h-3.5 w-3.5" />
+                </button>
+                <div className="flex gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => adjustPosition(-5, 0)}
+                    className="rounded bg-black/60 p-1 text-white hover:bg-black/80"
+                    title="Pan left"
+                  >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                  </button>
+                  <div className="h-7 w-7" />
+                  <button
+                    type="button"
+                    onClick={() => adjustPosition(5, 0)}
+                    className="rounded bg-black/60 p-1 text-white hover:bg-black/80"
+                    title="Pan right"
+                  >
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => adjustPosition(0, 5)}
+                  className="rounded bg-black/60 p-1 text-white hover:bg-black/80"
+                  title="Pan down"
+                >
+                  <ArrowDown className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Save position button — shown when position changed */}
+        {positionDirty && (
+          <div className="mb-2 flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void savePosition()}
+              disabled={savingPosition}
+              className="flex items-center gap-1 rounded-full bg-blue-600 px-3 py-1 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {savingPosition ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3 w-3" />}
+              Save Position
+            </button>
+            <button
+              type="button"
+              onClick={() => { setImagePosition(localItem.imagePosition || "50% 50%"); setPositionDirty(false); }}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Reset
+            </button>
+          </div>
+        )}
 
         {/* Content */}
         <div className="space-y-1.5">
