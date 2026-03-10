@@ -1,3 +1,4 @@
+import { Leaf } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const BADGE_CLASSES: Record<string, string> = {
@@ -12,15 +13,17 @@ interface DietaryBadgeProps {
 }
 
 export function DietaryBadge({ label }: DietaryBadgeProps) {
+  const isVegetarian = label.toLowerCase() === "vegetarian";
   return (
     <span
       role="img"
       aria-label={`Dietary: ${label}`}
       className={cn(
-        "rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium",
         BADGE_CLASSES[label] || "bg-muted text-muted-foreground"
       )}
     >
+      {isVegetarian && <Leaf className="h-3 w-3" aria-hidden="true" />}
       {label}
     </span>
   );

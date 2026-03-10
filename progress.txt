@@ -5397,3 +5397,94 @@ This user story describes a bug fix for a **Next.js/React** frontend, not a Frap
 ## Iteration 36 - Tue, Mar 10, 2026  4:27:44 PM
 Completed: Bug Fix: Admin Image Changes Not Reflected on Public Menu Page (ID: US-059) in 7m
 
+## Iteration 38 - Tue, Mar 10, 2026  4:28:36 PM
+Completed: Admin Menu Preview: Show Time-Based Dynamic Menu Same as Customer View (ID: US-058) in 16m
+
+
+## Pre-analysis for US-063 (Gemini 2.5 Pro)
+Here is a technical brief for implementing story US-063 in a Frappe/Python environment.
+
+***
+
+### **Technical Brief: US-063 - Auto-Computed Vegetarian Category**
+
+This brief outlines the Frappe/Python implementation plan for creating a dynamic 'Vegetarian' menu category. The technical notes in the user story target a different (React) stack; this plan translates that intent into a Frappe-idiomatic approach.
+
+**1. Python Files to Modify:**
+
+*   `[app_name]/api.py`: Create a new whitelisted API endpoint here (e.g., `get_vegetarian_items`) to provide the list of vegetarian items on demand.
+*   `[app_name]/hooks.py`: Use the `after_migrate` hook to run a setup function that ensures the 'Vegetarian' category document exists.
+
+**2. Frappe DocTypes & Hooks:**
+
+*   **DocTypes:**
+    *   `Item` (or a custom `MenuItem` DocType): The source document. It's assumed to have a field for dietary tags (e.g., a Table MultiSelect named `dietary_tags`).
+    *   `Item Category`: The destination. We will programmatically create a record named 'Vegetarian' here.
+*   **Hooks:**
+    *   `after_migrate`: To create the 'Vegetarian' `Item Category` document via an ORM call.
+
+**3. Recommended Implementation Approach:**
+
+1.  In `hooks.py`, define an `after_migrate` function that creates the 'Vegetarian' `Item Category` using `frappe.get_doc({...}).insert(ignore_if_exists=True)`.
+2.  In `api.py`, create a `@frappe.whitelist()` function `get_vegetarian_items`.
+3.  Inside this function, use `frappe.get_list()` to query the `Item`/`MenuItem` DocType. The filter will target the dietary tag field (e.g., `filters={'dietary_tags': ['like', '%vegetarian%']}`).
+4.  The frontend client will fetch and display the 'Vegetarian' category tab along with others. When a user clicks it, the client must call this specific API endpoint instead of using the standard filtered list view.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Case-Insensitivity:** The user story requires a case-insensitive match. A `frappe.db.sql` query using `LOWER(dietary_tags)` may be required if the default ORM filter proves case-sensitive.
+*   **Data Model:** This plan assumes `Item`/`MenuItem` has a queryable field for dietary tags. The implementation must match the actual DocType schema.
+*   **Frontend Dependency:** This approach decouples backend and frontend logic. The frontend must know to treat 'Vegetarian' as a special category that uses a different API endpoint for its items.
+
+
+## Pre-analysis for US-063 (Gemini 2.5 Pro)
+Here is the technical brief for US-063.
+
+**Correction:** The user story and technical notes provided target a **Next.js/TypeScript** frontend application, not a Frappe/Python backend. The following brief is for the specified Next.js implementation.
+
+---
+
+### **Technical Brief: US-063 - Virtual Vegetarian Category**
+
+**1. Python/Frappe Files to Modify:**
+*   N/A. This is a frontend change. The relevant files are in the Next.js project.
+*   **Primary Target:** `src/components/menu/menu-grid.tsx`
+*   **Secondary Target:** `src/components/ui/dietary-badge.tsx` (for styling)
+
+**2. Frappe DocTypes / Hooks Involved:**
+*   N/A. This story involves frontend data handling, not Frappe backend models.
+*   The key data structures are the `MenuItem` type (specifically its `dietary: string[]` field) and the `DisplayCategory` type.
+
+**3. Recommended Implementation Approach:**
+1.  **Virtual Category Injection:** In `menu-grid.tsx`, after fetching the list of `display_categories`, programmatically add a static "Vegetarian" category object to the list that will be rendered as a tab.
+2.  **Conditional Filtering Logic:** Add a special branch to the filtering logic. If the `activeCategory` is "Vegetarian", perform a client-side filter on the master `items` list: `items.filter(i => i.dietary?.some(d => d.toLowerCase() === 'vegetarian'))`.
+3.  **UI State:** If the filtered array for the vegetarian category is empty, render the "No vegetarian items..." message.
+
+**4. Edge Cases & Gotchas:**
+*   This is a **client-side virtual category**. The backend API will be unaware of it. The component must fetch all (or all relevant) menu items first and then perform the filtering in the browser. Do not attempt to query the API for items "in" the vegetarian category.
+*   The filter must be case-insensitive as per the acceptance criteria.
+*   Ensure the `dietary` array exists on the item object before attempting to filter to avoid runtime errors.
+
+
+## Iteration N - Story: US-063 - Vegetarian Category: Auto-Computed from Dietary Tag
+
+### What was implemented
+- `src/components/menu/dietary-badge.tsx`: Added `Leaf` icon from lucide-react for Vegetarian badge (green + leaf icon)
+- `src/components/menu/menu-grid.tsx`: Added Vegetarian-specific empty state message using `t("noVegetarianItems")` when selectedDisplayCat includes "vegetarian"
+- `messages/en.json`: Added `"noVegetarianItems": "No vegetarian items currently available"`
+- `messages/ms.json`: Added Malay translation
+- `messages/zh.json`: Added Chinese translation
+
+### Patterns discovered
+- Most of the logic (DB insert, filter branch) was already pre-implemented in prior iterations (US-062 pass)
+- `getDisplayCategories()` in `src/lib/menu.ts` already seeds Vegetarian row (sort_order 6, active true) with ON CONFLICT DO NOTHING
+- Filter branch for "vegetarian" was already in `menu-grid.tsx` (lines 79-81) — auto-computed from `item.dietary`
+- `badge-vegetarian` CSS class already existed with green OKLCH colors
+
+### Gotchas
+- When adding a new translation key, all 3 message files (en/ms/zh) must be updated
+- Need to Read file before Edit (tool enforces this)
+
+### Result
+- prd.json: US-063 passes = true
+- TypeScript check: PASS (exit 0)

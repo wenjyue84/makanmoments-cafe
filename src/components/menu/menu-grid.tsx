@@ -160,7 +160,11 @@ export function MenuGrid({
 
       {filtered.length === 0 ? (
         <div className="py-20 text-center">
-          <p className="text-lg text-muted-foreground">{t("noResults")}</p>
+          <p className="text-lg text-muted-foreground">
+            {selectedDisplayCat?.toLowerCase().includes("vegetarian")
+              ? t("noVegetarianItems")
+              : t("noResults")}
+          </p>
         </div>
       ) : isFlatView ? (
         /* Search results or display category: flat grid */
