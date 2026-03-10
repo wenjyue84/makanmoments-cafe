@@ -9448,3 +9448,36 @@ Note: The user story describes a feature for a Next.js/React frontend, not a Fra
 ### Gotchas
 - Single change to next.config.ts only — no component or API changes needed
 - TypeScript check passes clean (no new errors introduced)
+## Iteration 4 - Tue, Mar 10, 2026  9:38:53 PM
+Completed: Menu Page — Collapsible Search: Icon by Default, Expands on Tap (ID: US-107) in 8m
+
+
+## Pre-analysis for US-105 (Gemini 2.5 Pro)
+This user story is for a **Next.js/React** application, not Frappe/Python. Here is the technical brief for the frontend implementation:
+
+**Project:** makanmoments.cafe (Next.js/React)
+**User Story:** US-105: Menu Page — Hide Header on Scroll
+
+**1. Files to Modify:**
+*   **Create:** `src/hooks/use-scroll-direction.ts` to encapsulate scroll tracking logic.
+*   **Modify:** The primary Header component, likely located at `src/components/layout/Header.tsx` or a similar path. This component will consume the new hook.
+*   **Modify:** The Menu page layout, likely at `src/app/[locale]/menu/page.tsx`, to ensure the Header is correctly placed and the behavior is scoped to this page.
+
+**2. Key Components & Hooks:**
+*   **React Hook:** A new custom hook, `useScrollDirection`, will be the core logic driver. It will use `useState`, `useEffect`, and `useRef` to track `window.scrollY` changes.
+*   **React Component:** The site's main `Header` component will be made stateful based on the hook's output.
+
+**3. Recommended Implementation:**
+1.  In `use-scroll-direction.ts`, create a hook that attaches a `scroll` event listener to the `window` object.
+2.  It should track the last scroll position and compare it to the current one to determine direction ("up" or "down").
+3.  Return the scroll direction from the hook, only updating state when the direction actually changes.
+4.  In the `Header` component, call `useScrollDirection()`.
+5.  Apply `position: sticky` and `top: 0` to the header.
+6.  Conditionally apply Tailwind CSS classes (`-translate-y-full` for "down", `translate-y-0` for "up") along with `transition-transform` for smooth animation.
+
+**4. Gotchas & Edge Cases:**
+*   **SSR:** All `window` access must be inside a `useEffect` to prevent errors during server-side rendering.
+*   **Performance:** The scroll handler should be lightweight. While throttling isn't essential for this simple logic, it's a consideration if the app has many scroll-linked effects.
+*   **Layout Shift (CLS):** Using `position: sticky` (as noted) is crucial. `position: fixed` would cause the main content to jump up when the header hides.
+*   **Scroll Threshold:** Implement a small (~10px) threshold to prevent the header from flickering on minor scroll adjustments.
+
