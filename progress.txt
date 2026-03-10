@@ -12820,3 +12820,31 @@ Here is the plan for implementing startup validation in the `lhdn_payroll_integr
 ### Gotchas
 - GROQ_API_KEY kept optional (z.string().optional()) since OPENROUTER_API_KEY is an alternative fallback — only DATABASE_URL and ADMIN_JWT_SECRET are strictly required
 - `server-only` must be added to package.json dependencies (npm install server-only --save)
+
+## Iteration [US-141] - Story: Add Environment Variable Validation on Startup
+
+### What was implemented
+- `src/lib/env.ts` — already existed with `import "server-only"`, Zod schema validating DATABASE_URL (required) and ADMIN_JWT_SECRET (required), GROQ_API_KEY/OPENROUTER_API_KEY (optional). Throws clear error messages for missing vars.
+- `src/lib/db.ts` — already imports `env.DATABASE_URL` from env.ts (lazy neon init)
+- `src/lib/auth.ts` — already imports `env.ADMIN_JWT_SECRET` from env.ts (getSecret() function)
+
+### Patterns discovered
+- All three files were already modified in git (shown in session-start gitStatus) — previous work done but not marked complete
+- TypeScript check passes with no errors on these files
+
+### Gotchas
+- prd.json must be opened with UTF-8 encoding in Python on Windows (default cp1252 fails)
+
+## Iteration N - Story: US-141 - Add Environment Variable Validation on Startup
+
+### What was implemented
+- `src/lib/env.ts` already existed and was complete (imported server-only, used Zod schema, exported typed env constants)
+- `src/lib/db.ts` and `src/lib/auth.ts` already imported from `env.ts`
+- Only fix needed: `String(key)` wrap in template literal on line 17 to fix TS2731 (already applied by linter before commit)
+
+### Patterns discovered
+- env.ts uses `safeParse` + throws clear error with `Missing required env var: <key>` messages
+- The linter auto-applies some TS fixes — always re-read after linting
+
+### Gotchas
+- The story was essentially pre-implemented; main work was verifying TypeScript passes cleanly
