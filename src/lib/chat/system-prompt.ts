@@ -33,9 +33,11 @@ type MenuRow = {
 };
 
 function formatMenuRow(row: MenuRow): string {
-  const categories = Array.isArray(row.categories) ? row.categories.join(", ") : (row.categories ?? "");
-  const dietary = Array.isArray(row.dietary) ? row.dietary.join(", ") : (row.dietary ?? "");
-  return `- ${row.code} ${row.name_en} (${row.name_ms} / ${row.name_zh}) — RM ${row.price} | Categories: ${categories} | Dietary: ${dietary}`;
+  const price = typeof row.price === "number" ? row.price.toFixed(2) : row.price;
+  const dietary = Array.isArray(row.dietary) ? row.dietary.filter(Boolean).join(",") : (row.dietary ?? "");
+  const tag = dietary ? ` [${dietary}]` : "";
+  // Compact format: saves ~70% tokens vs verbose format (364 items × 30 tokens → ~10 tokens each)
+  return `${row.code} ${row.name_en} RM${price}${tag}`;
 }
 
 async function fetchMenuFromDB(): Promise<string> {
@@ -130,6 +132,9 @@ export async function getSystemPrompt(): Promise<string> {
 - If they order a main dish, ask if they want any drinks or add-ons (like an egg)
 - Be an active seller! If they say "give me 1 nasi lemak", you add it via tool and reply "Added Nasi Lemak to your tray! Would you like to try our famous Thai Milk Tea with that?"
 - If asked about delivery, mention they can visit the cafe at Taman Impian Emas, Skudai
+
+ORDER STATUS: If the customer mentions their order number or order ID in their message, extract the number immediately and call \`checkOrderStatus(orderId)\`. If they haven't provided a number, ask "What is your order number?" first. NEVER call checkOrderStatus with an empty or missing orderId. After calling the tool ONCE, report the result to the customer immediately — do NOT retry or call the tool again. If the result is an error (e.g. "Order not found"), tell the customer directly. Translate status: not_found=no order found with that ID (customer may have wrong number), pending_approval=waiting for cafe confirmation, approved=confirmed/pay now via T&G, payment_uploaded=payment received, preparing=kitchen working, ready=come collect!, rejected=not accepted, expired=no payment in 30min.
+SUBMIT ORDER: Can submit pre-orders via chat. Collect items+qty, Malaysian phone, arrival time (min 15min from now). Show order summary+total, get confirmation, then call \`submitOrder\`. Share order ID on success.
 
 ${knowledge}`;
 

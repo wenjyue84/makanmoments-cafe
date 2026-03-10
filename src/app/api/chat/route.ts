@@ -1,10 +1,12 @@
-import { streamText, type UIMessage, tool } from "ai";
+import { streamText, stepCountIs, type UIMessage, tool } from "ai";
 import { z } from "zod";
 import { groq, openrouter } from "@/lib/chat/provider";
 import { getSystemPrompt } from "@/lib/chat/system-prompt";
 import { readChatSettings } from "@/lib/chat/settings";
 import { checkRateLimit } from "@/lib/chat/rate-limit";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
+import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
+import { checkOrderStatusHandler, submitOrderHandler } from "@/lib/tools/orders";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -53,8 +55,8 @@ export async function POST(req: Request) {
       ? groq.chat("llama-3.3-70b-versatile")
       : openrouter.chat("meta-llama/llama-3.3-70b-instruct");
 
-  // Truncate to last 20 messages to keep context manageable
-  const truncated = messages.slice(-20);
+  // Truncate to last 10 messages — keeps context while limiting token usage (364-item menu is large)
+  const truncated = messages.slice(-10);
   const systemPrompt = await getSystemPrompt();
 
   // Manually extract text from UIMessage parts — convertToModelMessages
@@ -71,6 +73,12 @@ export async function POST(req: Request) {
 
   console.log("[chat] modelMessages:", JSON.stringify(modelMessages));
 
+  // Admin detection — reads JWT cookie to set isAdmin flag (used for future admin-only tools)
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value ?? "";
+  const isAdmin = token ? await verifyAdminToken(token) : false;
+  void isAdmin; // currently unused — framework for future admin-gated tools
+
   const addToTrayTool = tool({
     description:
       "Adds an item to the customer's tray/order builder. Call this whenever a customer says they want to order or add an item. You MUST provide the exact item ID, name, and price from the menu.",
@@ -82,37 +90,120 @@ export async function POST(req: Request) {
     }),
   });
 
-  try {
-    // Try primary model
-    const result = streamText({
-      model: primaryModel,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const checkOrderStatusTool = tool({
+    description: "Look up a pre-order status by numeric order ID.",
+    parameters: z.object({
+      orderId: z.string().describe("Numeric order ID, e.g. '42'"),
+    }),
+    execute: async ({ orderId }: { orderId: string }) => checkOrderStatusHandler(orderId),
+  } as any);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const submitOrderTool = tool({
+    description: "Submit a pre-order. Only call after confirming items, phone number, and arrival time (min 15 min from now).",
+    parameters: z.object({
+      items: z
+        .array(
+          z.object({
+            id: z.string().describe("Menu item code"),
+            name: z.string().describe("Item name"),
+            price: z.number().positive().describe("Price in RM"),
+            quantity: z.number().int().positive(),
+          })
+        )
+        .min(1),
+      contactNumber: z.string().describe("Malaysian phone number"),
+      estimatedArrival: z.string().describe("ISO 8601 arrival datetime"),
+    }),
+    execute: async ({
+      items,
+      contactNumber,
+      estimatedArrival,
+    }: {
+      items: { id: string; name: string; price: number; quantity: number }[];
+      contactNumber: string;
+      estimatedArrival: string;
+    }) => submitOrderHandler({ items, contactNumber, estimatedArrival }),
+  } as any);
+
+  const toolSet = { addToTray: addToTrayTool, checkOrderStatus: checkOrderStatusTool, submitOrder: submitOrderTool };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  function buildStream(model: any): Response {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (streamText as any)({
+      model,
       system: systemPrompt,
       messages: modelMessages,
       temperature: settings.temperature,
-      tools: { addToTray: addToTrayTool },
-    });
+      stopWhen: stepCountIs(2),
+      tools: toolSet,
+    }).toUIMessageStreamResponse();
+  }
 
-    return result.toUIMessageStreamResponse();
-  } catch (primaryError) {
-    console.error("Primary model failed:", primaryError);
+  // streamText errors come back as {type:"error"} SSE events (e.g. Groq TPM/TPD limits).
+  // We intercept the stream and transparently fall back to the other provider on error.
+  // The server emits ONE authoritative start event, then strips start from both model streams
+  // so the client never sees a duplicate start event regardless of which model responds.
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  const { readable, writable } = new TransformStream<Uint8Array, Uint8Array>();
+  const writer = writable.getWriter();
 
+  // Pipe a model stream to the writer, stripping the top-level start event (already emitted).
+  // Returns true if an error event was encountered (signals: try fallback).
+  async function pipeStream(response: Response): Promise<boolean> {
+    const reader = response.body!.getReader();
     try {
-      // Fallback to other provider
-      const result = streamText({
-        model: fallbackModel,
-        system: systemPrompt,
-        messages: modelMessages,
-        temperature: settings.temperature,
-        tools: { addToTray: addToTrayTool },
-      });
-
-      return result.toUIMessageStreamResponse();
-    } catch (fallbackError) {
-      console.error("Fallback model also failed:", fallbackError);
-      return new Response(
-        JSON.stringify({ error: "AI service temporarily unavailable" }),
-        { status: 503, headers: { "Content-Type": "application/json" } }
-      );
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) return false;
+        const text = decoder.decode(value, { stream: true });
+        if (text.includes('"type":"error"')) {
+          console.warn("[chat] Stream error — switching to fallback");
+          return true;
+        }
+        // Strip the model's own start event (server already emitted one)
+        if (text.includes('"type":"start"') && !text.includes('"type":"start-step"')) {
+          continue;
+        }
+        await writer.write(value);
+      }
+    } finally {
+      reader.releaseLock();
     }
   }
+
+  (async () => {
+    // Emit a single authoritative start event before any model stream begins
+    await writer.write(encoder.encode('data: {"type":"start"}\n\n'));
+
+    let hadError = false;
+    try {
+      hadError = await pipeStream(buildStream(primaryModel));
+    } catch (err) {
+      hadError = true;
+      console.warn("[chat] Primary stream threw:", err);
+    }
+
+    if (hadError) {
+      try {
+        await pipeStream(buildStream(fallbackModel));
+      } catch (err) {
+        console.error("[chat] Fallback also failed:", err);
+        await writer.write(encoder.encode('data: {"type":"error","errorText":"AI service temporarily unavailable"}\n\ndata: [DONE]\n\n'));
+      }
+    }
+
+    await writer.close();
+  })();
+
+  return new Response(readable, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+    },
+  });
 }
