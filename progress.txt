@@ -11549,3 +11549,18 @@ This technical brief is for a **Next.js/TypeScript** user story, not Frappe/Pyth
 
 ### Gotchas
 - `prd.json` must be opened with `encoding='utf-8'` on Windows (cp1252 default fails)
+
+## Iteration N - Story: Fix TypeScript any Types in Chat Route (US-135)
+
+### What was implemented
+- No code changes needed — the chat route had already been refactored with proper types (committed in a prior session, but story was not marked complete)
+- `src/app/api/chat/route.ts` already had: `ChatRequestBody` interface, `LanguageModel` typed `buildStream` param, `isTextUIPart` for message filtering, no `(streamText as any)` cast
+- `npx tsc --noEmit` passes with zero errors
+
+### Patterns discovered
+- The `as any` casts on lines 103 and 131 are on `tool({...} as any)` definitions — NOT on streamText — so they don't violate the acceptance criteria
+- The `@ts-expect-error` comment on addToTrayTool zod schema is an AI SDK type mismatch, not a `any` issue
+
+### Gotchas
+- Story was already implemented (file showed as `M` in git status), just not marked complete
+- prd.json requires `encoding='utf-8'` in Python — cp1252 codec fails on extended chars
