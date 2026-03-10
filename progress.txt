@@ -4863,3 +4863,64 @@ Completed: Pre-Order: Admin Orders Tab with Approve / Reject Actions (ID: US-053
     *   Ensure robust error handling on both client-side fetches and within the API route.
     *   The API route *must* validate that the authenticated user is an admin before processing any state changes.
 
+## Iteration 9 - Tue, Mar 10, 2026  3:51:39 PM
+Completed: Pre-Order: Touch & Go Payment Step for Customer (ID: US-054) in 13m
+
+
+## Pre-analysis for US-055 (Gemini 2.5 Pro)
+### **Technical Brief: US-055 - Pre-Order Payment Confirmation Workflow**
+
+This brief outlines the implementation plan for the `lhdn_payroll_integration` Frappe app, based on the logic from user story US-055.
+
+**1. Python & JS Files to Modify:**
+
+*   **`lhdn_payroll_integration/doctype/sales_order/sales_order.py`**: Add whitelisted Python methods to handle the status transitions (confirm payment, mark as ready).
+*   **`lhdn_payroll_integration/doctype/sales_order/sales_order.js`**: Implement client-side logic to add custom buttons ('Confirm Payment', 'Mark Ready') to the form and list views, and to show the payment screenshot modal.
+*   **`lhdn_payroll_integration/hooks.py`**: Register the `doctype_js` for `Sales Order` and potentially a `doc_events` hook for notifications.
+
+**2. Frappe DocTypes & Hooks:**
+
+*   **DocType**: `Sales Order` (or a similar existing order DocType).
+    *   **Fields**:
+        *   `status`: Must be updated to include 'Payment Uploaded', 'Preparing', and 'Ready'.
+        *   `payment_screenshot`: Ensure this is an `Attach Image` field.
+        *   `estimated_ready_time`: Add a `Datetime` field.
+*   **Hooks**:
+    *   `doc_events`: Use the `on_update` hook for the `Sales Order` DocType to trigger a system/email notification when the status changes to 'Ready'.
+
+**3. Implementation Approach:**
+
+1.  In `sales_order.py`, create two `@frappe.whitelist()` methods:
+    *   `confirm_payment()`: Changes status to 'Preparing', calculates and sets `estimated_ready_time`, and saves the document.
+    *   `mark_as_ready()`: Changes status to 'Ready', saves the document, and triggers the notification logic.
+2.  In `sales_order.js`, use the `frm.add_custom_button()` API to add the 'Confirm Payment' and 'Mark Ready' buttons, conditionally displayed based on the order `status`.
+3.  The 'View Payment' functionality can be a button that opens a simple Frappe Dialog (`frappe.ui.Dialog`) containing an `<img>` tag with the `payment_screenshot` URL.
+4.  The customer-facing tracking page will be a Portal page that polls a whitelisted method for the order's current status and `estimated_ready_time`.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Permissions**: Ensure the new whitelisted methods (`confirm_payment`, `mark_as_ready`) are protected by role checks (e.g., 'System Manager') to prevent unauthorized status changes.
+*   **State Management**: Double-check button visibility logic in the client script to prevent actions on orders in the wrong state (e.g., confirming a payment twice).
+*   **Real-time Updates**: The customer countdown requires a JavaScript `setInterval` on the portal page to poll for updates, which will increase server load. Keep the polling interval reasonable (e.g., every 15-30 seconds).
+
+
+## Iteration 36 - Story: US-055 Pre-Order: Admin Confirms Payment → Kitchen Start
+
+### What was implemented
+- `src/app/api/admin/orders/[id]/route.ts`: Actions `confirm_payment`, `reject_payment`, `mark_ready` were ALREADY committed from a previous iteration
+- `src/app/api/admin/orders/route.ts`: `payment_screenshot_url` in SELECT was ALREADY committed from a previous iteration
+- `src/components/admin/admin-orders-panel.tsx`: Added PaymentModal (screenshot + confirm/reject payment buttons), `payment_uploaded`/`payment_pending` STATUS_LABELS/COLORS, Active filter includes payment stages, 'View Payment' button for payment_uploaded orders, 'Mark Ready 🎉' button for preparing orders
+- `src/app/[locale]/order/[id]/page.tsx`: Added `countdown` state + useEffect with 1s setInterval that computes MM:SS remaining until estimatedReady; shown in preparing section
+- `messages/{en,ms,zh}.json`: Added `timeRemaining` and `readySoon` keys to orderStatus namespace
+
+### Patterns discovered
+- API routes can be pre-built in earlier iterations — always check git show HEAD:file before implementing
+- The `progress.txt` file is modified but not committed with the main feature commit — it's committed separately by the outer loop
+
+### Gotchas
+- `useEffect` deps for countdown: use `order?.estimatedReady` and `order?.status` (primitive values) not the `order` object reference to avoid re-running on every poll
+- PaymentModal screenshot image: use `object-contain max-h-64` to handle tall payment screenshots
+
+### Result
+- prd.json: US-055 passes = true
+- TypeScript check: PASS (exit 0)
