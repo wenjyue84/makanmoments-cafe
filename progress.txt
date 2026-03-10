@@ -744,3 +744,59 @@ This technical brief is based on the provided JSON, which outlines a Next.js/Typ
 - TypeScript check passes clean (`npx tsc --noEmit` exits 0)
 - ESLint passes clean on both changed files
 - `prd.json` must be read with `encoding='utf-8'` on Windows (contains non-ASCII chars in story descriptions)
+## Iteration 1 - Tue, Mar 10, 2026 10:27:13 AM
+Completed: Chef's Pick Item Displayed Bigger at Top of Each Category (ID: US-011) in 6m
+
+
+## Pre-analysis for US-012 (Gemini 2.5 Pro)
+Based on the user story JSON, the request is for a **frontend Next.js/React** implementation, not Frappe/Python. Here is the technical brief based on the provided data:
+
+**Project:** Makan Moments Cafe (Next.js/React)
+**User Story:** US-012 - Mobile-First Bottom Navigation for Menu Filtering
+
+**1. Files to Modify:**
+*   **Primary:** `src/components/menu/menu-filter.tsx` - This component will contain the responsive logic for the bottom bar.
+*   **Secondary:** The parent page component that renders `<MenuFilter />` (likely `src/app/(main)/menu/page.tsx` or a similar layout file) will need its root container's padding adjusted to prevent the new bottom bar from obscuring content.
+
+**2. Framework/Library Concepts Involved:**
+*   **React/Next.js:** Functional components.
+*   **Tailwind CSS:** Responsive variants (`md:`), fixed/sticky positioning, z-index, backdrop-blur for styling, and `pb-*` for padding.
+*   **CSS:** `env(safe-area-inset-bottom)` for handling iPhone home bar notches.
+
+**3. Recommended Implementation Approach:**
+*   In `menu-filter.tsx`, apply conditional Tailwind classes. The main container should have `fixed bottom-0 left-0 right-0 md:relative`.
+*   The actual bar position needs to account for the floating tray widget, so the vertical position will be `bottom-[calc(4rem+env(safe-area-inset-bottom))]` on mobile.
+*   On desktop (`md:`), reset positioning to `md:sticky md:top-0` to keep the original behavior.
+*   Add `overflow-x-auto` to the element containing the category filter chips to enable horizontal scrolling on small screens.
+*   In the parent menu page file, add a dynamic bottom padding (e.g., `pb-32 md:pb-0`) to the main content container to push content up and prevent it from being hidden by the fixed bottom bar.
+
+**4. Edge Cases & Gotchas:**
+*   **Z-Index Stacking:** The bar must have a `z-index` (e.g., `z-40`) lower than the tray and chat widgets (`z-50`) to ensure correct layering.
+*   **Safe Area:** The use of `env(safe-area-inset-bottom)` is critical for a polished look on modern iPhones, preventing the UI from conflicting with the home indicator.
+*   **Content Occlusion:** Forgetting to add `padding-bottom` to the main page container will cause the last few items on the menu to be permanently hidden behind the bar on mobile.
+*   **Horizontal Overflow:** Ensure the category chips container itself allows scrolling, not the entire bar, to keep the search input stationary.
+
+
+## Iteration 13 - Story: Mobile-First Bottom Navigation: Category Filter and Search at Bottom (US-012)
+
+### What was implemented
+- UPDATED `src/components/menu/menu-filter.tsx`:
+  - On mobile: `fixed bottom-16 left-0 right-0 z-40` — positions bar 64px above bottom, leaving room for tray/chat widgets (at bottom-4)
+  - `border-t border-border bg-background/95 backdrop-blur-sm` — backdrop blur with semi-transparent background
+  - Inline style: `paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))"` for iOS safe area support
+  - Category pills changed from `flex flex-wrap` to `flex flex-nowrap overflow-x-auto` on mobile; `md:flex-wrap md:overflow-visible` on desktop
+  - Added `flex-shrink-0` to all category buttons to prevent pill shrinking when scrolling
+  - Count `<p>` hidden on mobile (`hidden md:block`) — not needed in thumb-zone bar
+  - On desktop (md+): `md:relative md:bottom-auto md:left-auto md:right-auto md:border-0 md:bg-transparent md:backdrop-blur-none md:space-y-4` — full reset to inline layout
+- UPDATED `src/app/[locale]/menu/page.tsx`:
+  - Container: `py-12 pb-40 md:pb-12` — 160px bottom padding on mobile (accounts for bar height + gap), reverts to 48px on desktop
+
+### Patterns discovered
+- `bottom-16` (4rem = 64px) cleanly separates the filter bar from the tray/chat widgets area (which sit at bottom-4 = 16px). No z-index conflicts.
+- `md:space-y-4` on the wrapper div handles vertical spacing between search/pills/count on desktop
+- `env(safe-area-inset-bottom)` in inline styles works on both iOS (notch) and non-notch devices; `max(0.75rem, ...)` ensures minimum padding even without safe area
+
+### Gotchas
+- `backdrop-blur-none` on Tailwind v4 correctly removes blur on desktop (md:backdrop-blur-none)
+- Don't use `py-3` when combining with inline paddingBottom — use `pt-3` then let inline style handle bottom
+- The filter is `fixed` on mobile (out of normal flow), so no extra spacer div needed inside MenuGrid; page-level `pb-40` handles the content clearance

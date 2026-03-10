@@ -38,7 +38,7 @@ export default async function MenuPage() {
   return (
     <>
       <MenuPageJsonLd />
-      <div className="mx-auto max-w-6xl px-4 py-12">
+      <div className="mx-auto max-w-6xl px-4 py-12 pb-40 md:pb-12">
         {isAdmin && <AdminEditBanner />}
         <MenuPageHeader />
         <MenuGrid
