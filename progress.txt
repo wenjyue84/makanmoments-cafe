@@ -896,3 +896,26 @@ Here is the technical brief for the frontend developer:
 ### Gotchas
 - `switchLocale()` already calls `setLangOpen(false)` (desktop) — mobile version needs `setMobileLangOpen(false)` separately
 - The mobile lang dropdown uses `z-50` to float above the header border
+## Iteration 3 - Tue, Mar 10, 2026 10:36:05 AM
+Completed: Mobile Header: Language Selector Beside Hamburger, Replace Dark/Light Toggle (ID: US-013) in 3m
+
+
+## Iteration N - Story: US-014 - Language Selector Icons for Each Language
+
+### What was implemented
+- Replaced `LOCALE_LABELS` with `LOCALE_CONFIG` object containing `label`, `flag`, and `ariaLabel` per locale
+- Flag emojis: 🇬🇧 EN (English), 🇲🇾 MY (Bahasa Malaysia), 🇨🇳 中文 (Chinese)
+- Updated all 3 language selector locations: desktop nav dropdown, mobile header compact selector, mobile nav drawer buttons
+- Added `aria-label` on all language buttons for accessibility
+- Flag emoji wrapped in `<span aria-hidden="true">` to prevent screen reader verbosity
+- Active locale indicated with `font-semibold` + `bg-accent` or `bg-primary`
+- Removed unused `Globe` import from lucide-react
+
+### Patterns discovered
+- Flag emojis work cross-platform — no external package needed (country-flag-icons not required)
+- `aria-hidden="true"` on emoji spans + aria-label on button = clean accessibility pattern
+- `LOCALE_CONFIG` with typed record is cleaner than parallel `LOCALE_LABELS` and separate flag maps
+
+### Gotchas
+- TypeScript check passes cleanly (0 errors)
+- `text-base leading-none` on mobile flag emoji for consistent rendering at small sizes
