@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import sql from "@/lib/db";
+import { createErrorResponse } from "@/lib/api-response";
 
 export const runtime = "nodejs";
 
@@ -30,7 +31,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json() as { category?: string; itemId?: string };
   const { category, itemId } = body;
   if (!category || !itemId) {
-    return NextResponse.json({ error: "category and itemId required" }, { status: 400 });
+    return createErrorResponse("category and itemId required", 400);
   }
   await sql`
     INSERT INTO category_highlights (category, item_id)
@@ -46,7 +47,7 @@ export async function DELETE(request: NextRequest) {
   const body = await request.json() as { category?: string };
   const { category } = body;
   if (!category) {
-    return NextResponse.json({ error: "category required" }, { status: 400 });
+    return createErrorResponse("category required", 400);
   }
   await sql`DELETE FROM category_highlights WHERE category = ${category}`;
   return NextResponse.json({ ok: true, category });

@@ -1,5 +1,6 @@
 import { getSiteSettings, writeSiteSettings } from "@/lib/site-settings";
 import type { SiteSettings } from "@/lib/site-settings";
+import { createErrorResponse } from "@/lib/api-response";
 
 export const runtime = "nodejs";
 
@@ -14,7 +15,7 @@ export async function POST(req: Request) {
 
     const VALID_LOCALES = ["en", "ms", "zh"];
     if (body.defaultLocale && !VALID_LOCALES.includes(body.defaultLocale)) {
-      return Response.json({ error: "Invalid defaultLocale" }, { status: 400 });
+      return createErrorResponse("Invalid defaultLocale", 400);
     }
 
     const updated: SiteSettings = {
@@ -30,6 +31,6 @@ export async function POST(req: Request) {
     return Response.json({ ok: true, settings: updated });
   } catch (err) {
     console.error("[settings] Failed to save:", err);
-    return Response.json({ error: "Failed to save settings" }, { status: 500 });
+    return createErrorResponse("Failed to save settings", 500);
   }
 }

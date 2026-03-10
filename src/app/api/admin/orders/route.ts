@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import sql from "@/lib/db";
+import { createErrorResponse } from "@/lib/api-response";
 
 export const runtime = "nodejs";
 
@@ -26,6 +27,6 @@ export async function GET() {
     return NextResponse.json(rows);
   } catch (err) {
     console.error("[GET /api/admin/orders]", err);
-    return NextResponse.json({ error: "Failed to fetch orders" }, { status: 500 });
+    return createErrorResponse("Failed to fetch orders", 500);
   }
 }

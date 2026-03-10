@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import sql from "@/lib/db";
+import { createErrorResponse } from "@/lib/api-response";
 
 export const runtime = "nodejs";
 
@@ -27,10 +28,7 @@ export async function POST(request: NextRequest) {
   } = body;
 
   if (!name || !ruleType || !targetType) {
-    return NextResponse.json(
-      { error: "name, ruleType, and targetType are required" },
-      { status: 400 }
-    );
+    return createErrorResponse("name, ruleType, and targetType are required", 400);
   }
 
   const rows = await sql`

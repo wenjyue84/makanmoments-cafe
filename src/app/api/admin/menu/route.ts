@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import sql from "@/lib/db";
+import { createErrorResponse } from "@/lib/api-response";
 
 export const runtime = "nodejs";
 
@@ -29,10 +30,7 @@ export async function POST(request: NextRequest) {
   } = body;
 
   if (!code || !nameEn || price == null) {
-    return NextResponse.json(
-      { error: "code, nameEn, and price are required" },
-      { status: 400 }
-    );
+    return createErrorResponse("code, nameEn, and price are required", 400);
   }
 
   const rows = await sql`

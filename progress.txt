@@ -10906,3 +10906,72 @@ Here is the technical brief based on the **provided JSON** for the actual Next.j
 - The helper functions must return a full `NextResponse` object, not just a JSON payload.
 - Confirm that all `catch` blocks in the target routes are updated to use the new helper.
 
+## Iteration 1 - Wed, Mar 11, 2026  1:48:38 AM
+Completed: Remove Debug console.log from Production Chat Route (ID: US-130) in 3m
+
+
+## Pre-analysis for US-131 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-131.
+
+**Subject: Technical Brief for US-131: Standardize API Error Responses**
+
+**Objective:**
+Refactor admin API routes to use a shared helper for standardized JSON error and success responses, ensuring predictable error handling.
+
+**1. Primary Files to Modify:**
+*   **Create:** `src/lib/api-response.ts`
+*   **Update:** `src/app/api/admin/menu/route.ts`
+*   **Update:** `src/app/api/admin/orders/route.ts`
+*   **Update:** `src/app/api/admin/settings/route.ts`
+*   **Update:** `src/app/api/admin/highlights/route.ts`
+*   **Update:** `src/app/api/admin/rules/route.ts`
+
+**2. Core Concepts Involved:**
+*   **Next.js API Routes:** The `route.ts` files define server-side API endpoints.
+*   **Shared Library (`lib`):** The new `api-response.ts` will be a shared module for creating consistent responses.
+
+**3. Recommended Implementation Approach:**
+1.  Create the `src/lib/api-response.ts` module.
+2.  Inside, define and export `createErrorResponse(message: string, status = 500)` which returns `NextResponse.json({ error: message }, { status })`.
+3.  Also export `createSuccessResponse<T>(data: T)` which returns `NextResponse.json(data)`.
+4.  Systematically update each of the specified admin API routes to import and use these helpers, replacing all current `NextResponse.json({ message: '...' })` error instances.
+
+**4. Gotchas & Edge Cases:**
+*   The error payload format must be exactly `{ error: string }`.
+*   Ensure correct HTTP status codes are used: `400` for validation, `401` for auth, `404` for not-found, and `500` for general server errors.
+*   Remember to import `NextResponse` from `next/server` within the new helper module.
+
+
+
+## Iteration N - Story: US-131 Standardize API Error Response Format
+
+### What was implemented
+- Created `src/lib/api-response.ts` with `createErrorResponse(message, status=500)` and `createSuccessResponse<T>(data, status=200)`
+- Updated 5 admin routes to use `createErrorResponse`: menu, orders, settings, highlights, rules
+
+### Patterns discovered
+- All admin routes already used `{ error: ... }` format (no `{ message: ... }` to fix) — just swap to helper
+- `NextResponse` still needed in routes that return success responses directly
+- settings route uses `Response.json` (not `NextResponse.json`) for success — that's fine, only errors go through helper
+
+### Gotchas
+- TypeScript passed cleanly with `npx tsc --noEmit`
+- No test failures — purely additive helper with no behavior change
+
+## Iteration N - Story: US-131 - Standardize API Error Response Format with createErrorResponse Helper
+
+### What was implemented
+- `src/lib/api-response.ts` was already created (untracked) with `createErrorResponse(message, status=500)` and `createSuccessResponse<T>(data, status=200)`
+- `src/app/api/admin/menu/route.ts` — already updated (was in git modified state)
+- `src/app/api/admin/orders/route.ts` — already using `createErrorResponse`
+- `src/app/api/admin/settings/route.ts` — already using `createErrorResponse`
+- `src/app/api/admin/highlights/route.ts` — already using `createErrorResponse`
+- `src/app/api/admin/rules/route.ts` — already using `createErrorResponse` (linter had auto-applied it)
+- TypeScript check: clean (zero errors)
+
+### Patterns discovered
+- A previous session had partially implemented this story — api-response.ts existed and most routes were already updated
+- The linter or previous session had also updated rules/route.ts before this iteration ran
+
+### Gotchas
+- prd.json must be read with `encoding='utf-8'` on Windows (cp1252 codec fails on special chars in the file)
