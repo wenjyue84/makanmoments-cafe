@@ -114,4 +114,136 @@ export const e2eTests: TestDefinition[] = [
       };
     },
   },
+  {
+    id: "e2e-menu-language-switcher",
+    name: "Language switcher in header",
+    description: "Menu page HTML contains language flag elements (EN/MY/ZH flags)",
+    category: "e2e",
+    run: async (): Promise<TestResult> => {
+      const start = Date.now();
+      const { ok, html } = await fetchHtml("/en/menu");
+      const duration = Date.now() - start;
+      if (!ok) return { pass: false, log: "Menu page failed to load", duration };
+      // Header language switcher renders flag spans and locale labels
+      const hasFlag = html.includes("🇬🇧") || html.includes("🇲🇾") || html.includes("🇨🇳");
+      const hasLocaleLabel = html.includes("Switch to English") || html.includes("Switch language") || html.includes("EN");
+      const pass = hasFlag && hasLocaleLabel;
+      return {
+        pass,
+        log: pass
+          ? `Language switcher found in menu page HTML (${duration}ms)`
+          : `Language switcher not found — hasFlag: ${hasFlag}, hasLocaleLabel: ${hasLocaleLabel} (${duration}ms)`,
+        duration,
+      };
+    },
+  },
+  {
+    id: "e2e-recipe-modal-close-button",
+    name: "Recipe modal close button in source",
+    description: "recipe-modal.tsx source has an accessible close button with aria-label",
+    category: "e2e",
+    run: async (): Promise<TestResult> => {
+      const start = Date.now();
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+        const modalPath = path.join(
+          process.cwd(),
+          "src",
+          "components",
+          "menu",
+          "recipe-modal.tsx"
+        );
+        const src = fs.existsSync(modalPath) ? fs.readFileSync(modalPath, "utf-8") : "";
+        const duration = Date.now() - start;
+        if (!src) {
+          return { pass: false, log: "recipe-modal.tsx not found", duration };
+        }
+        const hasCloseButton = src.includes("onClose") && src.includes("aria-label");
+        const hasAbsolutePosition = src.includes("absolute") || src.includes("fixed");
+        const pass = hasCloseButton && hasAbsolutePosition;
+        return {
+          pass,
+          log: pass
+            ? "recipe-modal.tsx has accessible close button with aria-label (${duration}ms)"
+            : `recipe-modal.tsx close button check — hasCloseButton: ${hasCloseButton}, hasAbsolutePosition: ${hasAbsolutePosition} (${duration}ms)`,
+          duration,
+        };
+      } catch (err) {
+        return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+      }
+    },
+  },
+  {
+    id: "e2e-bottom-nav-component",
+    name: "Bottom nav component exists",
+    description: "Bottom navigation component file exists in src/components/layout/",
+    category: "e2e",
+    run: async (): Promise<TestResult> => {
+      const start = Date.now();
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+        const candidates = [
+          path.join(process.cwd(), "src", "components", "layout", "bottom-nav.tsx"),
+          path.join(process.cwd(), "src", "components", "layout", "mobile-nav.tsx"),
+          path.join(process.cwd(), "src", "components", "layout", "bottom-navigation.tsx"),
+        ];
+        const found = candidates.find((p) => fs.existsSync(p));
+        const duration = Date.now() - start;
+        if (found) {
+          return { pass: true, log: `Bottom nav component found: ${path.basename(found)} (${duration}ms)`, duration };
+        }
+        // Check if bottom nav is inline in layout or header
+        const layoutPath = path.join(process.cwd(), "src", "components", "layout", "header.tsx");
+        const src = fs.existsSync(layoutPath) ? fs.readFileSync(layoutPath, "utf-8") : "";
+        const hasBottomNav = src.includes("bottom-") || src.includes("fixed bottom") || src.includes("sticky bottom");
+        return {
+          pass: hasBottomNav,
+          log: hasBottomNav
+            ? `Bottom nav found inline in header.tsx (${duration}ms)`
+            : `Bottom nav component not found in layout/ directory (${duration}ms)`,
+          duration,
+        };
+      } catch (err) {
+        return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+      }
+    },
+  },
+  {
+    id: "e2e-chef-pick-card",
+    name: "Chef pick card component exists",
+    description: "chef-pick-card.tsx exists and renders chef pick items on menu page",
+    category: "e2e",
+    run: async (): Promise<TestResult> => {
+      const start = Date.now();
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+        const cardPath = path.join(
+          process.cwd(),
+          "src",
+          "components",
+          "menu",
+          "chef-pick-card.tsx"
+        );
+        const duration = Date.now() - start;
+        const exists = fs.existsSync(cardPath);
+        if (!exists) {
+          return { pass: false, log: "chef-pick-card.tsx not found", duration };
+        }
+        const src = fs.readFileSync(cardPath, "utf-8");
+        const hasChefPickLogic = src.includes("chef") || src.includes("Chef") || src.includes("chefPick");
+        return {
+          pass: hasChefPickLogic,
+          log: hasChefPickLogic
+            ? `chef-pick-card.tsx exists and contains chef pick logic (${duration}ms)`
+            : `chef-pick-card.tsx exists but chef pick logic not found (${duration}ms)`,
+          duration,
+        };
+      } catch (err) {
+        return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+      }
+    },
+  },
 ];

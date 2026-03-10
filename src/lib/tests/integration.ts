@@ -99,4 +99,94 @@ export const integrationTests: TestDefinition[] = [
       }
     },
   },
+  {
+    id: "integration-admin-highlights-route",
+    name: "Admin highlights route exists",
+    description: "src/app/api/admin/highlights/route.ts file exists and exports GET",
+    category: "integration",
+    run: async (): Promise<TestResult> => {
+      const start = Date.now();
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+        const routePath = path.join(process.cwd(), "src", "app", "api", "admin", "highlights", "route.ts");
+        const exists = fs.existsSync(routePath);
+        const duration = Date.now() - start;
+        if (!exists) {
+          return { pass: false, log: `Route file not found: ${routePath}`, duration };
+        }
+        const src = fs.readFileSync(routePath, "utf-8");
+        const hasGet = src.includes("export async function GET") || src.includes("export function GET");
+        return {
+          pass: hasGet,
+          log: hasGet
+            ? "highlights/route.ts exists and exports GET"
+            : "highlights/route.ts exists but GET export not found",
+          duration,
+        };
+      } catch (err) {
+        return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+      }
+    },
+  },
+  {
+    id: "integration-admin-display-categories-route",
+    name: "Admin display-categories route exists",
+    description: "src/app/api/admin/display-categories/route.ts file exists and exports GET",
+    category: "integration",
+    run: async (): Promise<TestResult> => {
+      const start = Date.now();
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+        const routePath = path.join(process.cwd(), "src", "app", "api", "admin", "display-categories", "route.ts");
+        const exists = fs.existsSync(routePath);
+        const duration = Date.now() - start;
+        if (!exists) {
+          return { pass: false, log: `Route file not found: ${routePath}`, duration };
+        }
+        const src = fs.readFileSync(routePath, "utf-8");
+        const hasGet = src.includes("export async function GET") || src.includes("export function GET");
+        return {
+          pass: hasGet,
+          log: hasGet
+            ? "display-categories/route.ts exists and exports GET"
+            : "display-categories/route.ts exists but GET export not found",
+          duration,
+        };
+      } catch (err) {
+        return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+      }
+    },
+  },
+  {
+    id: "integration-admin-time-slots-route",
+    name: "Admin time-slots route exists",
+    description: "src/app/api/admin/time-slots/route.ts file exists and exports GET",
+    category: "integration",
+    run: async (): Promise<TestResult> => {
+      const start = Date.now();
+      try {
+        const fs = await import("fs");
+        const path = await import("path");
+        const routePath = path.join(process.cwd(), "src", "app", "api", "admin", "time-slots", "route.ts");
+        const exists = fs.existsSync(routePath);
+        const duration = Date.now() - start;
+        if (!exists) {
+          return { pass: false, log: `Route file not found: ${routePath}`, duration };
+        }
+        const src = fs.readFileSync(routePath, "utf-8");
+        const hasGet = src.includes("export async function GET") || src.includes("export function GET");
+        return {
+          pass: hasGet,
+          log: hasGet
+            ? "time-slots/route.ts exists and exports GET"
+            : "time-slots/route.ts exists but GET export not found",
+          duration,
+        };
+      } catch (err) {
+        return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+      }
+    },
+  },
 ];

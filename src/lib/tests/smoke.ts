@@ -63,4 +63,36 @@ export const smokeTests: TestDefinition[] = [
     category: "smoke",
     run: () => checkPage("/en/about"),
   },
+  {
+    id: "smoke-blog-detail",
+    name: "Blog detail page loads",
+    description: "GET /en/blog/[slug] returns HTTP 200 for a known local post",
+    category: "smoke",
+    run: () =>
+      checkPage(
+        "/en/blog/operations-Customer-Satisfaction--Service-Improvement-Post"
+      ),
+  },
+  {
+    id: "smoke-admin-login",
+    name: "Admin login page loads",
+    description: "GET /admin/login returns HTTP 200",
+    category: "smoke",
+    run: () => checkPage("/admin/login"),
+  },
+  {
+    id: "smoke-admin-chat-settings",
+    name: "Admin chat-settings redirects to login",
+    description:
+      "GET /admin/chat-settings (unauthenticated) follows redirect to login page — HTTP 200",
+    category: "smoke",
+    run: () => checkPage("/admin/chat-settings"),
+  },
+  {
+    id: "smoke-menu-filter",
+    name: "Menu page with category filter loads",
+    description: "GET /en/menu?category=Must-Try returns HTTP 200",
+    category: "smoke",
+    run: () => checkPage("/en/menu?category=Must-Try"),
+  },
 ];
