@@ -114,6 +114,10 @@ export default async function LocaleLayout({
     <html lang={locale} suppressHydrationWarning>
       <head>
         <RestaurantJsonLd />
+        {/* US-076: No-JS fallback — show all scroll-reveal elements if JS is disabled */}
+        <noscript>
+          <style>{".scroll-reveal{opacity:1!important;transform:none!important;transition:none!important}"}</style>
+        </noscript>
       </head>
       <body
         className={`${playfairDisplay.variable} ${notoSans.variable} ${locale === "zh" ? notoSansSC.variable : ""} font-sans antialiased`}

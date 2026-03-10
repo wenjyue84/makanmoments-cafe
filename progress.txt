@@ -6866,3 +6866,93 @@ Completed: Promo Set Item: Add to Tray + Lazy Description Reveal on Hover/Focus 
 ## Iteration 46 - Tue, Mar 10, 2026  5:56:03 PM
 Completed: Promo Set Item: Add to Tray + Lazy Description Reveal on Hover/Focus (ID: US-075) in 8m
 
+## Iteration 23 - Tue, Mar 10, 2026  5:56:40 PM
+Completed: Promo Set Item: Add to Tray + Lazy Description Reveal on Hover/Focus (ID: US-075) in 8m
+
+
+## Pre-analysis for US-076 (Gemini 2.5 Pro)
+This user story is for a **Next.js/React frontend application**, not a Frappe/Python backend. The technical brief below is based on the actual content of the JSON provided.
+
+***
+
+### **Technical Brief: US-076 Progressive Landing Page Reveal**
+
+**1. Core Objective:**
+Implement a scroll-based, progressive text reveal on the landing page. The initial "above-the-fold" view will be minimal and visual, with other sections fading into view as the user scrolls down.
+
+**2. Python/Frappe Files to Modify:**
+*   None. This is a frontend task using TypeScript, React, and Next.js.
+
+**3. Key Frontend Files & Components:**
+*   **`src/app/[locale]/page.tsx`**: The main landing page file. Existing sections (highlights, about, pre-order banner) will need to be wrapped in the new animation component.
+*   **`src/components/ui/fade-up.tsx` (New File)**: A client-side (`'use client'`) React wrapper component that applies the animation effect to its children.
+*   **`src/hooks/use-intersection-observer.ts` (New File)**: A custom hook to detect when a component enters the viewport.
+*   **Global CSS / Tailwind Config**: To define the core `fade-up` animation and `prefers-reduced-motion` utility classes.
+
+**4. Recommended Implementation Approach:**
+1.  Create the `useIntersectionObserver` hook that takes an element `ref` and returns a boolean indicating if it's in view.
+2.  Build the `<FadeUp>` component. It will use the hook to conditionally add an `in-view` CSS class to its child elements.
+3.  In the main `page.tsx`, wrap static sections intended for scroll-reveal with the `<FadeUp>` component.
+4.  Refactor the hero section in `page.tsx` to be extremely minimal, containing only the elements specified in the acceptance criteria.
+
+**5. Edge Cases & Gotchas:**
+*   **No-JS Fallback:** Content must be visible and correctly laid out when JavaScript is disabled. The animation is a progressive enhancement, so server-rendered content is crucial.
+*   **Accessibility:** The animation must be disabled when `prefers-reduced-motion` is active.
+*   **Layout Shift (CLS):** Ensure elements occupy their final space in the layout even when invisible (`opacity: 0`) to prevent the page from "jumping" as they fade in.
+
+
+## Pre-analysis for US-076 (Gemini 2.5 Pro)
+This is a technical brief for a **Next.js/React** user story, not Frappe/Python. The goal is a progressive text reveal on the landing page.
+
+**1. Python Files to Modify / DocTypes Involved:**
+*   This is a frontend task. No Frappe/Python files, DocTypes, or hooks are involved. The work will be in TypeScript (`.tsx`, `.ts`) and CSS.
+
+**2. Core Files for Implementation:**
+*   **`src/app/[locale]/page.tsx`**: Modify this file to wrap static sections (like "About Us," "Highlights," etc.) with a new animation component. The hero section content will also be stripped down here.
+*   **`src/components/ui/fade-up.tsx` (New File)**: Create this as a `'use client'` component that uses an Intersection Observer hook to conditionally apply animation classes to its children.
+*   **`src/hooks/use-intersection-observer.ts` (New File)**: Create this custom hook to manage the `IntersectionObserver` logic, returning a boolean to indicate if the element is in the viewport.
+*   **`globals.css` / `tailwind.config.ts`**: Add CSS utility classes for the fade-up effect and the `in-view` state, or extend Tailwind's theme directly.
+
+**3. Recommended Approach:**
+1.  Define animation styles (e.g., `.fade-in-up`) that set initial `opacity: 0` and `transform: translateY(1rem)`.
+2.  Create the `useIntersectionObserver` hook to track a component's entry into the viewport.
+3.  Build the `<FadeUp>` wrapper component that uses this hook to toggle an `is-visible` class on its child element.
+4.  In `page.tsx`, wrap each scroll-reveal section with `<FadeUp>`.
+
+**4. Edge Cases & Gotchas:**
+*   **No-JS Fallback:** Content must be visible by default if JavaScript fails or is disabled. The animation is a progressive enhancement.
+*   **Layout Shift (CLS):** Ensure elements occupy space even when invisible (`opacity: 0`) to prevent page content from jumping when they fade in.
+*   **Accessibility:** Use the `@media (prefers-reduced-motion: reduce)` query to disable animations for users with this OS setting enabled.
+
+
+## Pre-analysis for US-076 (Gemini 2.5 Pro)
+### Technical Brief: US-076 Progressive Text Reveal
+
+This is a **frontend-only** story for a Next.js/React application. It does not involve any Python or Frappe backend files, DocTypes, or hooks.
+
+**1. Files to Modify/Create:**
+
+*   **`src/app/[locale]/page.tsx`**: Modify this main landing page file to wrap scroll-triggered sections.
+*   **`src/components/ui/fade-up.tsx`** (New File): A client component (`'use client'`) that wraps content and applies the reveal-on-scroll logic.
+*   **`src/hooks/use-intersection-observer.ts`** (New File): A custom hook to manage the `IntersectionObserver` API logic.
+*   **`src/app/globals.css`** (or equivalent global stylesheet): Add Tailwind utility classes for the animation.
+
+**2. Core Frontend Concepts Involved:**
+
+*   **React Client Components**: The `fade-up.tsx` wrapper must be a client component to use hooks (`useRef`, `useEffect`).
+*   **React Hooks**: Central to the implementation for managing state and side effects.
+*   **Browser `IntersectionObserver` API**: The core mechanism for detecting when an element scrolls into the viewport.
+
+**3. Recommended Implementation Approach:**
+
+1.  **Create the `use-intersection-observer.ts` hook:** This hook should accept a ref to an element and return a boolean indicating if it's currently in the viewport. It should also handle cleanup by disconnecting the observer on unmount.
+2.  **Build the `<FadeUp>` component:** This component will use the hook and conditionally apply a CSS class (e.g., `in-view`) to its child when it becomes visible.
+3.  **Define CSS Animation:** In `globals.css`, define the fade-up animation classes and, crucially, the `@media (prefers-reduced-motion: reduce)` override to disable animations for accessibility.
+4.  **Refactor `page.tsx`:** Wrap the non-hero sections (highlights, preorder banner, about teaser) with the `<FadeUp>` component to apply the effect.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Server-Side Rendering (SSR):** The page must render all content without JavaScript enabled. The animation is a progressive enhancement. The initial `opacity: 0` will hide the content, but it will be in the DOM.
+*   **Layout Shift (CLS):** Ensure the animated sections occupy their space in the layout even when invisible to prevent content from jumping as it fades in.
+*   **Observer Performance:** Use the `triggerOnce` pattern within the hook so the animation only fires once per element, and ensure the observer is disconnected properly to prevent memory leaks.
+

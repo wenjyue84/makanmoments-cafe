@@ -202,6 +202,24 @@
     color: oklch(0.84 0.10 75);
   }
 
+  /* US-076: Scroll-triggered progressive reveal */
+  .scroll-reveal {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+  }
+  .scroll-reveal.in-view {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .scroll-reveal {
+      opacity: 1;
+      transform: none;
+      transition: none;
+    }
+  }
+
   /* /animate: Entrance animations — fade-up and fade-in */
   .animate-fade-up {
     animation: fade-up 0.65s var(--ease-out-expo) both;
@@ -261,6 +279,7 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
+
 
   /* /optimize: Subtle glow pulse for primary CTAs */
   .animate-glow-pulse {

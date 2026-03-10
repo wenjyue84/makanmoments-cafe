@@ -13,6 +13,7 @@ import { HighlightsSkeleton } from "@/components/home/highlights-skeleton";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 import { HomeInlineEditor, type HomeContent } from "@/components/admin/home-inline-editor";
 import { CAFE } from "@/lib/constants";
+import { FadeUp } from "@/components/ui/fade-up";
 
 export const revalidate = 3600;
 export const runtime = "nodejs";
@@ -83,14 +84,20 @@ export default async function HomePage({
         heroTagline={content.heroTagline}
         heroSubtitle={content.heroSubtitle}
       />
-      <PreorderBanner />
-      <InfoStrip />
-      <Suspense fallback={<HighlightsSkeleton />}>
-        <HighlightsLoader
-          highlightsTitle={content.highlightsTitle}
-          highlightsSubtitle={content.highlightsSubtitle}
-        />
-      </Suspense>
+      <FadeUp>
+        <PreorderBanner />
+      </FadeUp>
+      <FadeUp delay={100}>
+        <InfoStrip />
+      </FadeUp>
+      <FadeUp delay={150}>
+        <Suspense fallback={<HighlightsSkeleton />}>
+          <HighlightsLoader
+            highlightsTitle={content.highlightsTitle}
+            highlightsSubtitle={content.highlightsSubtitle}
+          />
+        </Suspense>
+      </FadeUp>
     </>
   );
 }

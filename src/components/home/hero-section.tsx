@@ -70,7 +70,7 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: Hero
             </p>
 
             <p
-              className="mt-2 text-sm leading-6 text-muted-foreground sm:text-lg sm:leading-8 sm:mt-5 animate-fade-up"
+              className="mt-2 hidden text-sm leading-6 text-muted-foreground sm:mt-5 sm:block sm:text-lg sm:leading-8 animate-fade-up"
               style={{ "--delay": "240ms" } as CSSProperties}
             >
               {subtitle}
