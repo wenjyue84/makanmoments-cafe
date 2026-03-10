@@ -6708,3 +6708,22 @@ This is a technical brief for a **Next.js/TypeScript** implementation, not Frapp
 
 ### Verification
 - TypeScript check: zero errors
+## Iteration 45 - Tue, Mar 10, 2026  5:41:59 PM
+Completed: Menu Card: Replace '+Add' with Compact '+' Icon Aligned with Price (ID: US-074) in 7m
+
+
+## Iteration N - Story: US-074 - Menu Card: Replace '+Add' with Compact '+' Icon Aligned with Price
+
+### What was implemented
+- Both `menu-card.tsx` and `chef-pick-card.tsx` already had the compact '+' button implemented in a prior iteration (visible from git diff)
+- Verified all acceptance criteria were met: no text on add button, price+action on same row with justify-between, quantity stepper (- N +) when in tray
+- Updated touch target to h-11 w-11 (44px) on all action buttons (decrement, increment, add) in both components
+- Home highlights component uses MenuCard directly, so no separate changes needed
+
+### Patterns discovered
+- When files show `M` in git status, check git diff first — the story may already be implemented from prior iterations
+- Both chef-pick-card and menu-card already had h-11 w-11 applied; files were in final state
+
+### Gotchas
+- python3 file open needs `encoding='utf-8'` on Windows to handle em-dash characters in prd.json
+- TypeScript check passes clean (npx tsc --noEmit)
