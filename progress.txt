@@ -3528,3 +3528,69 @@ This user story describes a **Next.js PWA implementation**, not a Frappe/Python 
 *   **Service Worker Updates:** `next-pwa` helps, but be mindful of browser caching. Ensure users get the latest service worker after deployments.
 *   **Browser Support:** The Web Push API is not supported in all browsers. The UI should handle this possibility.
 
+## Iteration 27 - Tue, Mar 10, 2026  2:07:12 PM
+Completed: Admin Notification When Customer Clicks 'Show Order to Waiter' (ID: US-044) in 5m
+
+
+## Pre-analysis for US-045 (Gemini 2.5 Pro)
+This is a **Next.js/TypeScript** user story, not Frappe/Python. The implementation will be entirely within the Next.js frontend and backend API routes.
+
+**Technical Brief: US-045 PWA & Push Notifications**
+
+1.  **Primary Files to Modify:**
+    *   `next.config.ts`: Integrate the `next-pwa` library.
+    *   `src/app/layout.tsx`: Add the web app manifest link to the document `<head>`.
+    *   An admin page/component (e.g., `src/components/admin/Settings.tsx`): Add a button to subscribe to push notifications.
+    *   The order submission API route (likely `src/app/api/orders/route.ts`): Modify to trigger the push notification after an order is successfully created.
+
+2.  **Primary Files to Create:**
+    *   `public/manifest.json`: Defines the PWA metadata (name, icons, theme).
+    *   `src/app/api/admin/push-subscribe/route.ts`: An API route to securely receive and store the admin's `PushSubscription` object.
+    *   `.env.local`: To store the generated `VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`.
+
+3.  **DocTypes/Hooks Involved (Next.js Analogs):**
+    *   **API Routes:** The core logic resides in two API routes: the new `/api/admin/push-subscribe` for managing subscriptions and the existing order creation route for triggering events.
+    *   **Service Worker:** A service worker (e.g., `public/sw.js`), managed by `next-pwa`, is crucial. It will listen for the `push` event and display the notification.
+
+4.  **Implementation Approach:**
+    *   Use the `next-pwa` library to handle service worker registration and asset caching.
+    *   On the admin panel, create a client component with a button that uses the browser's `PushManager` API to request permission and create a subscription.
+    *   Send this subscription object to the `/api/admin/push-subscribe` endpoint, where it should be stored (e.g., in a simple JSON file or database).
+    *   In the order submission API, after processing an order, retrieve all stored admin subscriptions and use the `web-push` library to send the notification payload.
+
+5.  **Gotchas & Edge Cases:**
+    *   **Subscription Storage:** Decide on a simple but persistent storage mechanism for admin `PushSubscription` objects.
+    *   **Expired Subscriptions:** The `web-push` library needs error handling to detect and remove expired or invalid subscriptions when a `410 Gone` status is returned.
+    *   **User Experience:** The notification permission request MUST be triggered by a user action (e.g., clicking the "Enable Notifications" button), not on page load.
+
+
+## Iteration 28 - Story: PWA with Push Notifications for Customer Orders (US-045)
+
+### What was implemented
+- Installed `web-push` + `@types/web-push` npm packages
+- Generated VAPID keys; added to `.env.local` and documented in `.env.example`
+- Created `public/manifest.json` with name, short_name, icons (logo.png), theme_color (#b45309 = amber), display: standalone
+- Created `public/sw.js` service worker: handles `push` events (shows notification), `notificationclick` (focuses/opens admin tab), `install`/`activate` (basic shell caching), `fetch` (network-first navigation fallback)
+- Created `src/components/pwa/pwa-init.tsx`: client component that registers `/sw.js` via `navigator.serviceWorker.register` on mount; renders null; added to locale layout inside TrayProvider
+- Added `manifest: "/manifest.json"` to `generateMetadata` return in locale layout (Next.js metadata API emits `<link rel="manifest">` automatically)
+- Created `src/app/api/admin/push-subscribe/route.ts`: admin-protected POST/DELETE endpoints to save/remove PushSubscription objects to `push_subscriptions` table in Neon (endpoint UNIQUE, upsert on conflict)
+- Updated `src/app/api/orders/route.ts`: after saving tray order, calls `sendPushToAllAdmins()` (fire-and-forget via `void`); webpush sends to all rows in `push_subscriptions`; 410 Gone auto-deletes expired subs
+- Created `src/components/admin/admin-push-settings.tsx`: client component with subscribe/unsubscribe UI, permission state detection, error display; added to AdminTabs as "Push Notifications" tab
+
+### Patterns discovered
+- TypeScript narrows `state` type inside ternary branches — if `state === "subscribed"` is the condition, `state === "unsubscribing"` inside that branch is always false and TS errors. Fix: use `(state === "subscribed" || state === "unsubscribing")` as the condition so both states are in scope
+- `urlBase64ToUint8Array(key).buffer as ArrayBuffer` is the correct cast for `PushManager.subscribe({ applicationServerKey })` in strict TypeScript
+- `void sendPushToAllAdmins(...)` pattern for fire-and-forget async in a route handler (avoids floating promise lint warning)
+- `web-push` must be configured with VAPID details before `sendNotification()` calls; guard with `if (vapidPublicKey && vapidPrivateKey)` so dev without .env.local doesn't throw
+- Service worker scope `/` (root) is needed for push notifications to work across all pages
+- `webpush.setVapidDetails` must be called at module level (outside request handler) but only once per process
+
+### Gotchas
+- `next-pwa` package not used — manual SW approach is simpler and more compatible with App Router + next-intl
+- manifest.json in `public/` is served at `/manifest.json`; Next.js `metadata.manifest` property emits the `<link>` tag automatically
+- Push notifications require HTTPS in production (localhost works in Chrome dev mode)
+- The push_subscriptions table is auto-created via `CREATE TABLE IF NOT EXISTS` on first API call
+
+### Result
+- prd.json: US-045 passes = true
+- TypeScript check: PASS (exit 0)

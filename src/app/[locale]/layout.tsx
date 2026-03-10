@@ -17,6 +17,7 @@ import { getOperatingStatus } from "@/lib/availability";
 import "../globals.css";
 import { TrayProvider } from "@/lib/tray-context";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { PwaInit } from "@/components/pwa/pwa-init";
 
 const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
@@ -81,6 +82,7 @@ export function generateMetadata({
         images: [{ url: "/images/og-image.jpg", width: 1200, height: 630 }],
       },
       robots: { index: true, follow: true },
+      manifest: "/manifest.json",
     };
   });
 }
@@ -122,6 +124,7 @@ export default async function LocaleLayout({
             </div>
             <ErrorBoundary fallback={null}><ChatWidget /></ErrorBoundary>
             <ErrorBoundary fallback={null}><TrayWidget /></ErrorBoundary>
+            <PwaInit />
           </TrayProvider>
         </NextIntlClientProvider>
       </body>
