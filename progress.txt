@@ -13462,3 +13462,109 @@ Completed: Add Environment Variable Validation on Startup (ID: US-141) in 17m
 ## Iteration 3 - Wed, Mar 11, 2026  3:27:15 AM
 Completed: Add Performance Benchmark Tests to /admin/tests Panel (ID: US-143) in 19m
 
+## Iteration 6 - Wed, Mar 11, 2026  3:27:21 AM
+Completed: Run All Admin Tests and Fix Any Failing Tests (ID: US-144) in 13m
+
+
+## Pre-analysis for US-145 (Gemini 2.5 Pro)
+This technical brief is based on the provided JSON for story `US-145`.
+
+**Note:** The project is a **Next.js/React** application, not a Frappe/Python app as stated in the prompt. The following guidance is for a Next.js environment.
+
+---
+
+### **Technical Brief: US-145 - Browser Test & Fix**
+
+**1. Key Files & Components to Inspect:**
+*   `src/app/[locale]/page.tsx` (Home page)
+*   `src/app/[locale]/menu/page.tsx` (Menu page)
+*   `src/app/[locale]/about/page.tsx` (About page)
+*   `src/app/[locale]/contact/page.tsx` (Contact page)
+*   `src/app/admin/ai-waiter/page.tsx` (Admin AI Waiter)
+*   `src/components/chat/ChatWidget.tsx` (Or similar for the chat feature)
+*   `src/app/[locale]/layout.tsx` (Shared layout for potential shared errors)
+
+**2. Involved Frameworks & Hooks:**
+*   **Framework:** Next.js (App Router), React.
+*   **Hooks/DocTypes:** No Frappe hooks are involved. Focus on React hooks (`useEffect`, `useState`) within client components (`'use client'`).
+
+**3. Recommended Implementation Approach:**
+*   Use browser DevTools to manually navigate to each specified URL.
+*   Check the Console tab for JavaScript errors and the Network tab for 404s (especially images).
+*   For admin pages, log in first via the `/admin/login` page.
+*   Trace console errors back to the originating React component.
+*   Fix broken image paths by ensuring they correctly reference files in the `/public` directory.
+*   Make one atomic `git commit` for each distinct bug fix.
+
+**4. Edge Cases & Gotchas:**
+*   Watch for **hydration errors** where server and client HTML do not match.
+*   An error might originate in a shared layout, not the page component itself.
+*   Browser caching may hide fixes; use hard reloads (Ctrl+Shift+R).
+*   After fixing, run `npm run build` to confirm no production build errors exist.
+
+
+## Pre-analysis for US-145 (Gemini 2.5 Pro)
+Based on the user story JSON and project context, here is the technical brief.
+
+**Subject:** Technical Brief for US-145: Browser Testing & Error Fixing
+
+**Overview:**
+This story requires running automated or manual browser tests on critical pages to find and resolve JavaScript console errors, broken assets (404s), and component interaction failures. The focus is on frontend stability.
+
+**1. Primary Files/Areas to Modify:**
+*   **Page Components:** `src/app/(en|ms|zh)/{,menu,about,contact}/page.tsx` are the main targets for page-specific bugs.
+*   **Admin UI:** Look within `src/app/admin/...` for issues related to login, dashboard, and the AI waiter display.
+*   **Shared Components:** The source of an error is likely in a shared component under `src/components/`, especially the client-rendered chat widget and the AI Waiter component.
+*   **Static Assets:** Check for missing images in the `public/images/` directory.
+*   **Middleware:** `middleware.ts` could be a factor if redirects or headers are involved in the errors.
+
+**2. Key Framework Concepts Involved:**
+*   **Next.js App Router:** Client Components (`'use client'`) are the most likely source of browser errors.
+*   **`next/image` Component:** Misconfigurations (e.g., incorrect `src` paths) are a common cause of 404s.
+*   **Environment Variables:** The test automation will need to pull `ADMIN_USERNAME` and `ADMIN_PASSWORD` from `.env.local`.
+
+**3. Recommended Implementation Approach:**
+*   Use a browser automation library like Playwright or Puppeteer to script the tests.
+*   First, script the login flow for `/admin/login` to establish an authenticated session for admin pages.
+*   Iterate through each specified URL, wait for the page to be fully loaded, and then check the browser console for errors.
+*   Simultaneously, monitor network requests and assert that no image assets return a 404 status.
+*   Specifically script an interaction to click and open the chat widget on `/en/menu`.
+
+**4. Gotchas & Edge Cases:**
+*   **Authentication State:** The script must handle login and session cookies correctly to access admin pages.
+*   **Asynchronous Loading:** Use explicit waits for lazy-loaded components (like the chat widget or the AI Waiter's iframe) to appear before testing them.
+*   **Production vs. Development:** Errors may only surface in a production build. Run tests against the output of `npm run build && npm run start`.
+
+
+## Iteration 7 - Wed, Mar 11, 2026 - Story: Run All Admin Tests and Fix Any Failing Tests (US-144)
+
+### What was implemented
+- Ran all 51 admin tests via POST /api/admin/tests (no auth required for this endpoint)
+- All 51 tests passed (100%) — no code changes required this iteration
+
+### Test infrastructure findings
+- Test runner endpoint: POST /api/admin/tests — streams NDJSON, no auth required
+- Tests run server-side within Next.js API route — NO Chrome DevTools MCP needed
+- Script to run tests: `node -e "const http=require('http'); ..."` using Node.js http module
+- Avoid piping curl to shell (security hook blocks it) — use plain curl or node http module
+
+### Rate Limiting Issue (for future reference)
+- orders/route.ts rate limit: 5 per hour per IP (in-memory Map, resets on server restart)
+- When tests run multiple times within 1 hour, nf-044 and pre-order-001 (valid order POSTs) hit 429
+- Validation happens BEFORE rate limit check (correct ordering), so invalid-body tests return 400 immediately
+- Fix if needed: increase dev limit (`process.env.NODE_ENV !== 'production' ? 100 : 5`) or export reset fn
+
+### Admin settings auth pattern
+- `/api/admin/settings` has `checkAuth(request)` using `request.cookies.get(COOKIE_NAME)`
+- Middleware also guards /api/admin/* but server-side internal fetches bypass middleware
+- Route handler auth is the real guard for internal fetch contexts
+
+### Test categories and file locations
+- smoke: src/lib/tests/smoke.ts — page load checks via fetch
+- unit: src/lib/tests/unit.ts — pure function tests
+- integration: src/lib/tests/integration.ts — file existence + DB checks
+- e2e: src/lib/tests/e2e.ts — page content verification
+- new-features: src/lib/tests/new-features.ts — US-specific feature checks
+- pre-order: src/lib/tests/pre-order.ts — order flow tests
+- reliability: src/lib/tests/reliability.ts — API behavior tests
+- performance: src/lib/tests/performance.ts — response time checks
