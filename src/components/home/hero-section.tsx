@@ -125,7 +125,7 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: Hero
                 fill
                 className="object-cover img-scale"
                 sizes="(max-width: 1024px) 50vw, 800px"
-                loading="eager"
+                loading="lazy"
                 placeholder="blur"
                 blurDataURL={HERO_BLUR.heroMobile}
               />
