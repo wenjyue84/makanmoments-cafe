@@ -4280,3 +4280,51 @@ Completed: Admin Settings Tab with System-Wide Configuration (ID: US-050) in 10m
 ### Result
 - prd.json: US-049 passes = true (restored)
 - TypeScript check: PASS (exit 0)
+
+## Pre-analysis for US-049 (Gemini 2.5 Pro)
+This is a technical brief for a **React/Next.js** user story, not Frappe/Python. The provided story JSON and project structure point to a frontend task.
+
+**1. Files to Modify:**
+-   The primary focus should be on files within `src/components/admin/`.
+-   Look for a main layout component for the admin section, such as `src/app/(admin)/admin/layout.tsx` or similar.
+-   Inspect individual admin page components that might use modals, e.g., `src/components/admin/RulesTab.tsx` or `src/components/admin/MenuTab.tsx`.
+-   The issue might be in a shared UI component, likely a `Modal` or `Dialog` wrapper located in `src/components/ui/dialog.tsx` (assuming usage of a library like ShadCN, which is suggested by `components.json`).
+
+**2. Framework/Libraries Involved:**
+-   **Framework:** Next.js / React.
+-   **DocTypes/Hooks:** Not applicable. This is not a Frappe project.
+-   **Relevant React Concepts:** State management (`useState`), component lifecycle (`useEffect` for cleanup), and potentially React Context or another global state manager if the overlay state is shared.
+
+**3. Recommended Implementation Approach:**
+-   The root cause is almost certainly a modal/dialog component that is not properly unmounting or hiding its overlay/backdrop.
+-   Start by inspecting the component tree of the `/admin` page in Chrome DevTools to identify the specific element causing the overlay.
+-   Trace that element back to the React component that rendered it.
+-   Analyze the state (`isOpen`, `setIsOpen`) that controls the modal's visibility.
+-   The fix will likely involve ensuring the state is correctly reset to `false` when the modal is intended to be closed (e.g., via an `onClose` callback or a `useEffect` cleanup function).
+
+**4. Edge Cases & Gotchas:**
+-   **Shared Component:** The faulty modal/dialog might be a shared component used elsewhere. Ensure the fix doesn't introduce regressions in other parts of the application.
+-   **Animation:** The overlay's exit animation may be interrupted, leaving it in the DOM. Check `Framer Motion` or CSS transition/animation states.
+-   **Global State:** If a global state manager (Context, Zustand, Redux) controls the overlay, the bug might be in the logic that resets the global state, not the component itself.
+-   **Portals:** The overlay may be rendered into a React Portal. Ensure the portal content is correctly unmounted along with the component that triggered it.
+
+
+## Iteration - Story: US-049 Fix Admin Page Dark Overlay Problem
+
+### What was implemented
+- Fix was already applied in commit 8c1e036: admin layout strips `.dark` class and uses explicit `bg-white text-gray-900`
+- The prd.json was accidentally set back to `passes: false` by a subsequent US-050 commit (8cfe881)
+- This iteration only corrects prd.json to `passes: true`
+
+### Root cause of overlay (from 8c1e036)
+- Admin body used `bg-background text-foreground` (CSS vars)
+- When navigating from dark-mode locale page, `.dark` class persists on `documentElement`
+- This triggered Tailwind v4's custom dark variant, making body background dark charcoal
+
+### Fix (already in admin/layout.tsx)
+- Strip `.dark` from `documentElement` via inline script before first paint
+- Replace CSS variable body classes with explicit `bg-white text-gray-900`
+
+### Gotchas
+- prd.json can be accidentally reverted by later commits that regenerated it from a stale copy
+- Always verify prd.json state against git log when `passes: false` but a fix commit exists
