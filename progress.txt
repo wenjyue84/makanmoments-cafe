@@ -9867,3 +9867,6 @@ This user story is for a **Next.js/TypeScript** application, not Frappe/Python. 
 
 ### Gotchas
 - Edge runtime does NOT support in-memory Map state — always change to `nodejs` before adding module-scope Maps
+## Iteration 8 - Tue, Mar 10, 2026 10:03:15 PM
+Completed: Rate Limiting: Reusable Factory + Apply to Orders + Admin Login Endpoints (ID: US-100) in 4m
+
