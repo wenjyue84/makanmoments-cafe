@@ -4046,3 +4046,69 @@ Based on the Next.js/React project structure, the investigation should focus on:
 ### Result
 - prd.json: US-049 passes = true
 - TypeScript check: PASS (exit 0)
+## Iteration 3 - Tue, Mar 10, 2026  2:51:44 PM
+Completed: Fix Admin Page Dark Overlay Problem (ID: US-049) in 13m
+
+
+## Pre-analysis for US-050 (Gemini 2.5 Pro)
+This user story is for a Next.js/TypeScript project, not a Frappe/Python application. The technical notes reference `.tsx` (React components), `route.ts` (Next.js API routes), and `middleware.ts`, which are all specific to a Next.js environment.
+
+A Frappe/Python implementation would involve DocTypes, Python controllers, and hooks, none of which are mentioned.
+
+Here is the correct technical brief based on the **Next.js/TypeScript** details provided in the story:
+
+***
+
+### **Technical Brief: US-050 Admin Settings (Next.js)**
+
+**1. File Modifications:**
+*   `src/components/admin/admin-tabs.tsx`: To add the "Settings" tab to the navigation.
+*   `src/components/admin/admin-settings-panel.tsx`: **(New File)** UI for the settings form.
+*   `src/app/api/admin/settings/route.ts`: **(New File)** API endpoint for GET/POST operations.
+*   `src/lib/site-settings.ts`: **(New File)** A helper module to read the settings file.
+*   `middleware.ts`: To read the default locale and perform redirects.
+*   `data/site-settings.json`: **(New File)** The data store for all settings.
+
+**2. Core Logic & Data:**
+*   **Data Structure:** A single `data/site-settings.json` file will store a JSON object containing `defaultLocale`, `operatingHours`, `preOrderEnabled`, etc.
+*   **API:** The `route.ts` will handle `GET` to read the JSON file and `POST` to write back to it, protected by admin authentication.
+
+**3. Implementation Approach:**
+1.  Create `getSiteSettings()` in `src/lib/site-settings.ts` to read and parse `data/site-settings.json`, providing a cached or singleton-like access pattern.
+2.  Develop the `admin-settings-panel.tsx` component to fetch initial state via the `GET` API and use React state to manage form inputs.
+3.  Implement the `POST` handler in `route.ts` to receive form data, validate it, and overwrite `data/site-settings.json`.
+4.  Update `middleware.ts` to use `getSiteSettings()` to determine the `defaultLocale` and redirect root traffic accordingly.
+
+**4. Potential Gotchas:**
+*   **File Permissions:** The server process needs write access to the `data/` directory to save `site-settings.json`.
+*   **Data Validation:** The API's `POST` handler must robustly validate incoming data to prevent corruption of the JSON file.
+*   **Build Process:** Ensure `data/site-settings.json` is correctly included in the build output if it's not generated dynamically at startup.
+
+
+## Iteration 31 - Story: Fix Admin Page Dark Overlay Problem (US-049)
+
+### What was implemented
+- `src/app/admin/layout.tsx` was already updated (in a prior pass) with:
+  - Inline `<script>` that runs `document.documentElement.classList.remove('dark')` on load
+  - Body changed from `bg-background text-foreground` to `bg-white text-gray-900`
+- These changes prevent the dark-mode CSS variables from bleeding into the admin panel
+
+### Root cause identified
+- `ThemeToggle` in locale layout runs `document.documentElement.classList.add('dark')` imperatively
+- When navigating to `/admin` (even via hard navigation), the `.dark` class could persist on `<html>`
+- Admin body's `bg-background` resolves to `oklch(0.14 0.015 48)` (very dark) in dark mode
+- Fix: inline script to strip `.dark` before React hydrates + explicit `bg-white` on admin body
+
+### Patterns discovered
+- Admin layout is at `src/app/admin/layout.tsx` — has its own `<html>` and `<body>` elements
+- The fix (inline script + explicit body classes) was confirmed working via `curl` and grep of rendered HTML
+- Chrome DevTools MCP is locked ("browser already running") — cannot take screenshots programmatically
+
+### Gotchas
+- Cannot use Chrome DevTools MCP (locked browser profile) — verified via curl instead
+- `dangerouslySetInnerHTML` on `<script>` in Next.js admin layout is valid and safe for this use case
+- TypeScript check: PASS (0 errors)
+
+### Result
+- prd.json: US-049 passes = true
+- TypeScript check: PASS (exit 0)
