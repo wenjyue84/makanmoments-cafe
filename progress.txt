@@ -11195,3 +11195,19 @@ This user story describes a **Next.js/TypeScript frontend task**, not a Frappe/P
 ### Gotchas
 - TypeScript check: `npx tsc --noEmit` returns clean (no errors for changed files)
 - Admin panel modals use hardcoded English timeout message; order status page uses translation key
+
+## Iteration 4 - Wed, Mar 11, 2026 - Story: Add AbortController Fetch Timeout to Critical Client-Side Calls (US-133)
+
+### What was implemented
+- Added `fetchWithTimeout(url, options, timeoutMs=8000)` to `src/lib/utils.ts` — uses AbortController, clears timer in finally block
+- Added `"timeout"` translation key to all 3 locale files (en/ms/zh) under `orderStatus`
+- `src/app/[locale]/order/[id]/page.tsx`: already uses `fetchWithTimeout`, catch handles `AbortError` with `t("timeout")` (fixed key mismatch from `fetchTimeout` → `timeout`)
+- `src/components/admin/admin-orders-panel.tsx`: all 6 fetch calls updated to `fetchWithTimeout`; AbortError catch shows "Request timed out — please try again"
+
+### Patterns discovered
+- Pre-commit hook/linter auto-adds imports when used — file was already partially updated when we read it back
+- Watch for key mismatch: code used `t("fetchTimeout")` but we added key `"timeout"` — must match exactly
+
+### Gotchas
+- The auto-hook had already partially applied the changes (added imports, updated fetches) before we could edit manually
+- Always re-read files before editing — linter modifies them between reads
