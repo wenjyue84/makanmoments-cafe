@@ -8677,3 +8677,37 @@ FAILED quality gates: AI Waiter: Inject Live DB Menu into System Prompt (Replace
 ## Iteration 3 - Tue, Mar 10, 2026  7:23:15 PM
 Incomplete: AI Waiter: Inject Live DB Menu into System Prompt (Replace Static knowledge/menu-knowledge.md) (ID: US-090) — attempt 2/3
 
+
+## Pre-analysis for US-090 (Gemini 2.5 Pro)
+Here is the technical brief for implementing the AI Waiter user story.
+
+***
+
+**Subject: Technical Brief for US-090: AI Waiter Live Menu Integration**
+
+**Note:** This is a **Next.js/TypeScript** task, not Frappe/Python. All work will be in the `makanmoments.cafe` Next.js frontend project.
+
+**1. Files to Modify:**
+*   `src/lib/chat/system-prompt.ts`: Core logic for fetching and caching the menu.
+*   `src/app/api/chat/route.ts`: To handle the now-asynchronous system prompt.
+*   `src/app/api/admin/menu/[id]/route.ts`: To invalidate the cache upon menu changes.
+
+**2. Core DocTypes / Data Models:**
+*   **Database Table:** `menu_items` (Postgres/Neon DB).
+*   **In-Memory Cache:** A new module-level cache object for menu data.
+
+**3. Implementation Approach:**
+1.  In `system-prompt.ts`, convert `getSystemPrompt` to an `async` function.
+2.  Create a new `async function fetchMenuFromDB()` that queries the `menu_items` table for all available items.
+3.  Format the DB rows into a structured string as specified in the technical notes.
+4.  Implement an in-memory cache (`menuCache`) with a 5-minute Time-to-Live (TTL) for the formatted menu string.
+5.  Update `getSystemPrompt` to use the cached version if valid, otherwise call `fetchMenuFromDB`.
+6.  Modify the existing `invalidateSystemPromptCache` function to also clear this new `menuCache`.
+7.  In the chat API route (`/api/chat/route.ts`), `await` the call to `getSystemPrompt`.
+8.  In the admin API route (`/api/admin/menu/[id]/route.ts`), call `invalidateSystemPromptCache()` after a successful database update to ensure freshness.
+
+**4. Gotchas & Edge Cases:**
+*   The transition of `getSystemPrompt` to `async` will require `await` at all call sites.
+*   Ensure the database query correctly handles empty or null values for fields like `categories` or `dietary` to prevent formatting errors.
+*   The `knowledge/menu-knowledge.md` file should be removed as a dependency for the menu, but `cafe-facts.md` and `faq.md` must still be loaded.
+
