@@ -13,6 +13,7 @@ type TrayContextType = {
     items: TrayItem[];
     addItem: (item: Omit<TrayItem, "quantity">) => void;
     removeItem: (id: string) => void;
+    decrementItem: (id: string) => void;
     clearTray: () => void;
     totalPrice: number;
 };
@@ -40,6 +41,17 @@ export function TrayProvider({ children }: { children: ReactNode }) {
         setItems((prev) => prev.filter((item) => item.id !== id));
     };
 
+    const decrementItem = (id: string) => {
+        setItems((prev) => {
+            const existing = prev.find((item) => item.id === id);
+            if (!existing) return prev;
+            if (existing.quantity <= 1) return prev.filter((item) => item.id !== id);
+            return prev.map((item) =>
+                item.id === id ? { ...item, quantity: item.quantity - 1 } : item
+            );
+        });
+    };
+
     const clearTray = () => setItems([]);
 
     const totalPrice = items.reduce(
@@ -49,7 +61,7 @@ export function TrayProvider({ children }: { children: ReactNode }) {
 
     return (
         <TrayContext.Provider
-            value={{ items, addItem, removeItem, clearTray, totalPrice }}
+            value={{ items, addItem, removeItem, decrementItem, clearTray, totalPrice }}
         >
             {children}
         </TrayContext.Provider>

@@ -6602,3 +6602,35 @@ Here is the technical brief for implementing the UI enhancement on the menu card
 ## Iteration 44 - Tue, Mar 10, 2026  5:33:44 PM
 Completed: AI Waiter: Proactive Greetings and Item Promotion (ID: US-073) in 5m
 
+
+## Pre-analysis for US-074 (Gemini 2.5 Pro)
+### Technical Brief for Claude: US-074
+
+**Project:** Makan Moments Cafe (Next.js/React Frontend)
+**Story:** US-074: Menu Card - Replace '+Add' with Compact '+' Icon
+
+This is a **frontend task** involving React, TypeScript, and Tailwind CSS, not Frappe/Python. The goal is a UI refinement for better mobile ergonomics.
+
+**1. Files to Modify:**
+*   `src/components/menu/menu-card.tsx`
+*   `src/components/home/chef-pick-card.tsx`
+*   Verify `src/components/home/highlights.tsx` to ensure it uses one of the above cards and doesn't have its own unique implementation.
+
+**2. Key React Components & State Management:**
+*   **Components:** `MenuCard`, `ChefPickCard`.
+*   **State:** The change depends on a shared state for the "tray" (shopping cart). You must interface with the existing state management (likely Zustand or React Context) to get item quantity and dispatch `addItem`, `removeItem`, etc.
+
+**3. Recommended Implementation Approach:**
+*   Locate the `div` containing the price and `+Add` button within the cards.
+*   Replace the text button with a compact, icon-only button using `<Plus />` from the `lucide-react` library.
+*   Use Tailwind CSS `flex justify-between items-center` to align the price and new button on a single row.
+*   Implement conditional rendering based on the tray state:
+    *   If item quantity is 0, show the single `+` button.
+    *   If quantity > 0, show a quantity stepper (e.g., `- [qty] +`).
+*   Follow the layout pattern from the technical notes for styling.
+
+**4. Edge Cases & Gotchas:**
+*   **Touch Target:** Ensure the icon buttons have a minimum `44x44px` touch area using padding, even if the icon itself is smaller.
+*   **Accessibility:** Add an `aria-label` (e.g., "Add to tray") to the icon-only buttons for screen readers.
+*   **State Logic:** The core challenge is correctly reading the item quantity from the global state and calling the right increment/decrement functions.
+
