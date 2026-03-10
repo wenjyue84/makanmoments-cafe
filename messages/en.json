@@ -86,6 +86,8 @@
     "empty": "Your tray is empty",
     "total": "Total",
     "checkout": "Show Order to Waiter",
+    "sendOrder": "Send Order",
+    "sendOrderToWaiter": "Send Order to Waiter",
     "checkoutInstructions": "Show this screen to the waiter to place your order."
   },
   "recipe": {

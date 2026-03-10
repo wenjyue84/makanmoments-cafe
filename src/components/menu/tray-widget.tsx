@@ -199,7 +199,12 @@ export function TrayWidget() {
                             className="w-full rounded-full bg-primary py-4 text-primary-foreground font-bold text-lg hover:bg-primary/90 flex justify-center items-center gap-2 shadow-lg transition-transform active:scale-[0.98] disabled:opacity-70"
                         >
                             <ShoppingCart className="h-6 w-6" />
-                            {submitting ? "Sending…" : t("checkout")}
+                            {submitting ? "Sending…" : (
+                                <>
+                                    <span className="hidden md:inline">{t("sendOrderToWaiter")}</span>
+                                    <span className="md:hidden">{t("sendOrder")}</span>
+                                </>
+                            )}
                         </button>
                     </div>
                 )}
