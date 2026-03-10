@@ -19,7 +19,7 @@ export function DietaryBadge({ label }: DietaryBadgeProps) {
       role="img"
       aria-label={`Dietary: ${label}`}
       className={cn(
-        "inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs font-normal",
         BADGE_CLASSES[label] || "bg-muted text-muted-foreground"
       )}
     >

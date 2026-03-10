@@ -8,6 +8,7 @@ import { MenuCard } from "./menu-card";
 import { ChefPickCard } from "./chef-pick-card";
 import { EditableMenuCard } from "./editable-menu-card";
 import { MenuFilter } from "./menu-filter";
+import { FadeUp } from "@/components/ui/fade-up";
 import { cn } from "@/lib/utils";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -256,7 +257,7 @@ export function MenuGrid({
       ) : isFlatView ? (
         /* Search results or display category: flat grid */
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((item) => {
+          {filtered.map((item, index) => {
             const isHighlighted = item.categories.some((cat) => highlights[cat] === item.id);
             const isUnavailableAtPreview =
               isAdmin && hasPreviewTime
@@ -271,13 +272,14 @@ export function MenuGrid({
                 isUnavailableAtPreview={isUnavailableAtPreview}
               />
             ) : (
-              <MenuCard
-                key={item.id}
-                item={item}
-                isHighlighted={isHighlighted}
-                isFavorited={isFavorite(item.code)}
-                onToggleFavorite={() => toggleFavorite(item.code)}
-              />
+              <FadeUp key={item.id} delay={(index % 3) * 50}>
+                <MenuCard
+                  item={item}
+                  isHighlighted={isHighlighted}
+                  isFavorited={isFavorite(item.code)}
+                  onToggleFavorite={() => toggleFavorite(item.code)}
+                />
+              </FadeUp>
             );
           })}
         </div>
@@ -288,7 +290,7 @@ export function MenuGrid({
             <section key={cat} id={`section-${cat}`} aria-labelledby={`cat-${cat}`} className="scroll-mt-[108px]">
               <h2
                 id={`cat-${cat}`}
-                className="sticky top-[108px] md:top-[68px] z-10 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-2 mb-4 text-lg font-bold tracking-tight text-foreground border-b border-border"
+                className="sticky top-[108px] md:top-[68px] z-10 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-3 mb-4 text-xs font-semibold tracking-widest uppercase text-muted-foreground border-b border-dashed border-border"
               >
                 {cat}
               </h2>
@@ -305,13 +307,15 @@ export function MenuGrid({
                   }
                 />
               ) : (
-                <ChefPickCard item={chefPick} priority={sectionIdx === 0} />
+                <FadeUp>
+                  <ChefPickCard item={chefPick} priority={sectionIdx === 0} />
+                </FadeUp>
               )}
 
               {/* Remaining items in standard grid */}
               {rest.length > 0 && (
                 <div className="mt-4 grid gap-4 grid-cols-2 sm:grid-cols-3">
-                  {rest.map((item) => {
+                  {rest.map((item, index) => {
                     const isHighlighted = item.categories.some((c) => highlights[c] === item.id);
                     const isUnavailableAtPreview =
                       hasPreviewTime ? !isAvailableAtTime(item, previewHour!, previewMinute!) : false;
@@ -324,13 +328,14 @@ export function MenuGrid({
                         isUnavailableAtPreview={isUnavailableAtPreview}
                       />
                     ) : (
-                      <MenuCard
-                        key={item.id}
-                        item={item}
-                        isHighlighted={isHighlighted}
-                        isFavorited={isFavorite(item.code)}
-                        onToggleFavorite={() => toggleFavorite(item.code)}
-                      />
+                      <FadeUp key={item.id} delay={(index % 3) * 50}>
+                        <MenuCard
+                          item={item}
+                          isHighlighted={isHighlighted}
+                          isFavorited={isFavorite(item.code)}
+                          onToggleFavorite={() => toggleFavorite(item.code)}
+                        />
+                      </FadeUp>
                     );
                   })}
                 </div>
