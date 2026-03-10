@@ -7755,3 +7755,18 @@ Here is the technical brief for a Next.js implementation:
 ### Gotchas
 - Was already committed (d9699cf, de81195) when this iteration ran — just needed prd.json update
 - TypeScript check: `npx tsc --noEmit` exits 0 cleanly
+
+## Iteration N - Story: US-084 Admin Rules: AI Helper Template Prompts for New Users
+
+### What was implemented
+- Added `TEMPLATE_PROMPTS` array (7 prompts) above the component in `admin-rules-ai-helper.tsx`
+- Added "Try a template:" label + chip row between the description paragraph and textarea
+- Chips use `onClick={() => setDescription(t.prompt)}` to pre-fill the textarea
+
+### Patterns discovered
+- Component opens via toggle header; content expands in `open && (...)` block
+- `description` state is shared between textarea and the chip click handler
+- Template chips styled: `bg-orange-50 border border-orange-200 text-orange-700 hover:bg-orange-100`
+
+### Gotchas
+- None — straightforward UI addition
