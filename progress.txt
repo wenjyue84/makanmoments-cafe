@@ -6544,3 +6544,58 @@ This brief outlines the implementation of US-073 within a Frappe/Python environm
 ### Gotchas
 - File had already been modified before this iteration — verify state before editing
 - The `nudgeText` translation key must exist in all 3 language files before use in the component
+## Iteration 44 - Tue, Mar 10, 2026  5:32:30 PM
+Completed: Mobile Homepage: Prominent 'View Menu' CTA Above Fold (ID: US-072) in 9m
+
+
+## Iteration - Story: US-073 AI Waiter: Proactive Greetings and Item Promotion
+
+### What was implemented
+- Implementation was already present from a previous partial iteration
+- `chat-panel.tsx` already had all nudge logic: `nudgeSentRef`, `nudgeTimerRef`, `nudgeMessage` state, `NUDGE_DELAY_MS` constant
+- Timer resets on each new user message (via `userMessageCount` effect dependency)
+- Nudge fires only once per session (tracked by `nudgeSentRef`)
+- Welcome message (`t("welcome")`) already mentions Thai Basil Chicken Rice + Salted Egg Chicken Chop in all 3 languages
+- `cafe-facts.md` already has "Featured Today" and "Pairing Suggestions" sections for AI context
+- `chat-settings.json` system prompt already instructs AI to suggest pairings proactively
+
+### Patterns discovered
+- When an iteration fails midway, partial changes may already be applied to source files on re-run
+- Always read the file first — don't assume it needs changes just because `passes: false`
+
+### Verification
+- TypeScript check passed with zero errors
+
+## Pre-analysis for US-074 (Gemini 2.5 Pro)
+This user story is for a **Next.js/React** application, not Frappe/Python. The technical brief has been adjusted accordingly for the correct frontend stack.
+
+***
+
+**Subject: Technical Brief for US-074: Compact Menu 'Add' Button**
+
+Here is the technical brief for implementing the UI enhancement on the menu cards.
+
+**1. Core Files to Modify:**
+*   `src/components/menu/menu-card.tsx`: The primary component for individual menu items on the main menu page.
+*   `src/components/menu/chef-pick-card.tsx`: The component for the "Chef's Pick" variant, likely used on the homepage or special sections.
+*   `src/components/home/highlights.tsx`: This component manages the display of featured items on the homepage and will need to ensure the new card style is applied.
+
+**2. Involved React Components & State Management:**
+*   **Components:** `MenuCard`, `ChefPickCard`.
+*   **State:** The card's appearance is conditional on the item's quantity. This state is managed globally, likely via a Zustand store (`useTrayStore`). You will need to use this hook to get the item's quantity and the functions to add, remove, or update items.
+*   **Icons:** `lucide-react` is the designated icon library. Use `Plus` and `Minus` icons.
+
+**3. Recommended Implementation Approach:**
+*   In `menu-card.tsx` and `chef-pick-card.tsx`, locate the `+Add` button.
+*   Replace the existing button structure with a new `div` using Flexbox to align the price and the new action button: `<div className="flex items-center justify-between mt-auto pt-2">`.
+*   **Conditional Rendering:**
+    *   If the item quantity in the tray is 0, render a `button` containing only the `Plus` icon. Style it to be compact (e.g., `w-9 h-9`) but with sufficient padding to meet the `44px` touch-target requirement.
+    *   If the quantity is > 0, render the quantity stepper: a `div` containing a `-` button, the quantity `span`, and a `+` button.
+*   Link the `onClick` events for the new `+` and `-` buttons to the corresponding actions from the `useTrayStore`.
+
+**4. Edge Cases & Gotchas:**
+*   **Touch Target:** Ensure the final button has a minimum clickable area of `44x44px` as per mobile design best practices, even if the visual icon is smaller. Use padding to achieve this.
+*   **Layout Consistency:** The price should always be left-aligned and the action button/stepper right-aligned on the same line. Verify this holds true on small viewports (e.g., 390px width).
+*   **State Updates:** Confirm that interacting with the new stepper correctly updates the global tray state and that the UI reflects the new quantity immediately.
+*   **Component Reuse:** `ChefPickCard` may reuse `MenuCard` or have its own implementation. Ensure the change is applied consistently in either case.
+
