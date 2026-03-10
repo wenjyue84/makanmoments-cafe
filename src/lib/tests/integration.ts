@@ -4,11 +4,11 @@ export const integrationTests: TestDefinition[] = [
   {
     id: "integration-env-vars",
     name: "Required env vars present",
-    description: "NOTION_API_KEY, DATABASE_URL, ADMIN_JWT_SECRET are set",
+    description: "DATABASE_URL and ADMIN_JWT_SECRET are set (project uses Neon Postgres, not Notion)",
     category: "integration",
     run: async (): Promise<TestResult> => {
       const start = Date.now();
-      const required = ["NOTION_API_KEY", "DATABASE_URL", "ADMIN_JWT_SECRET"];
+      const required = ["DATABASE_URL", "ADMIN_JWT_SECRET"];
       const missing = required.filter((k) => !process.env[k]);
       const duration = Date.now() - start;
       if (missing.length === 0) {
