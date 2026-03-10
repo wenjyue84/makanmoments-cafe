@@ -6975,3 +6975,46 @@ This is a **frontend-only** story for a Next.js/React application. It does not i
 ### Gotchas
 - The linter modified fade-up.tsx to add `useState(mounted)` — this is the correct SSR-safe pattern
 - Don't conflict `.scroll-reveal` with `.animate-fade-up` — they coexist for different trigger contexts
+## Iteration 24 - Tue, Mar 10, 2026  6:04:59 PM
+Completed: Landing Page: Elegant Progressive Text Reveal (Minimal Above-Fold) (ID: US-076) in 6m
+
+
+## Iteration 47 - US-076 Verification Pass
+Story US-076 (Progressive Text Reveal) was already implemented in commit ad3dbb3.
+All acceptance criteria confirmed met:
+- use-intersection-observer.ts hook created
+- fade-up.tsx SSR-safe component (visible before hydration, animated after)
+- scroll-reveal CSS in globals.css (0.4s ease-out, prefers-reduced-motion handled)
+- PreorderBanner, InfoStrip, Highlights wrapped in FadeUp in page.tsx
+- Hero subtitle hidden on mobile (hidden sm:block)
+- prd.json passes=true confirmed
+
+## Pre-analysis for US-077 (Gemini 2.5 Pro)
+This is a strange request. The user story is for a Next.js/React frontend, but you're asking for a technical brief for a Frappe/Python app. I've translated the frontend concepts from the user story into a plausible implementation plan for a Frappe environment.
+
+***
+
+### **Technical Brief: US-077 for Frappe/Python**
+
+This brief adapts the core concepts of progressive disclosure and reduced visual noise from the provided user story to a hypothetical Frappe list view, likely for an Employee or Payroll Entry DocType.
+
+**1. Python/JS Files to Modify:**
+*   `[app]/public/js/[doctype]_list.js`: For custom client-side rendering logic, animations, and IntersectionObserver API to handle lazy loading.
+*   `[app]/[app]/doctype/[doctype]/[doctype].py`: Modify the `get_list_context` or create a new `@frappe.whitelist()` method to support paginated/batched data fetching for the list view.
+
+**2. Frappe DocTypes & Hooks:**
+*   **DocType:** `Employee` or `Payroll Entry` List View. The target is the main list view where multiple records are displayed.
+*   **Hooks:** No specific hooks required; changes will be primarily in the DocType's client script for the list view and its Python controller for data.
+
+**3. Implementation Approach:**
+*   **Lazy Load:** Use the `IntersectionObserver` API in the list view's JS to detect when the user scrolls to the bottom.
+*   **Data Fetching:** Trigger a `frappe.call` to a custom Python method that returns the next batch of items (e.g., 20 at a time).
+*   **UI Customization:** Override the default list view `formatter` to render a condensed view. Mute secondary info (like department or status) with custom CSS. Include a toggle to expand/show full details for a row.
+*   **Animations:** As new items are appended, use JavaScript to add a CSS class for a fade-in animation, applying a staggered `animation-delay` based on the item's index in the new batch.
+
+**4. Gotchas & Edge Cases:**
+*   Ensure custom list view rendering doesn't break standard features like sorting, filtering, or search.
+*   Reset the lazy loading pagination when list filters are changed by the user.
+*   Check for `prefers-reduced-motion` in the client-side script to disable animations.
+*   Performance test the backend query to ensure it's fast, even with large datasets and pagination offsets.
+
