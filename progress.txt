@@ -7740,3 +7740,18 @@ Here is the technical brief for a Next.js implementation:
 ### Gotchas
 - Implementation was already complete in the codebase — just needed verification and marking passes: true
 - TypeScript check passed with 0 errors
+
+## Iteration N - Story: US-083 - Admin: Deep-Linkable Sub-URLs for Each Tab
+
+### What was implemented
+- `src/app/admin/[tab]/page.tsx` — dynamic route that validates tab slug against VALID_TABS, auth-gates with verifyAdminToken, redirects to /admin/menu for invalid slugs
+- `src/app/admin/page.tsx` — now simply redirects to /admin/menu
+- `src/components/admin/admin-tabs.tsx` — already uses usePathname() to derive activeTab from URL; handleTabClick uses router.push() for client-side URL updates; TAB_SLUGS and SLUG_TO_TAB maps define the slug<->tab mapping
+
+### Patterns discovered
+- URL-derived state pattern: `const slug = pathname.split("/").pop() ?? ""; const activeTab = SLUG_TO_TAB[slug] ?? "Menu";`
+- The [tab] dynamic route validates slugs server-side and redirects invalid ones to /admin/menu
+
+### Gotchas
+- Was already committed (d9699cf, de81195) when this iteration ran — just needed prd.json update
+- TypeScript check: `npx tsc --noEmit` exits 0 cleanly
