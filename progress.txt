@@ -1011,3 +1011,51 @@ The objective is to replace the current blog content with curated posts from "op
 - CRLF is the critical bug here - Windows file copies preserve CRLF
 - The ## Content block in Notion sync files is a metadata wrapper, not actual content
 - gray-matter treats files without leading --- as content-only (no frontmatter extraction)
+## Iteration 4 - Tue, Mar 10, 2026 10:50:37 AM
+Completed: Language Selector Icons for Each Language (ID: US-014) in 13m
+
+
+## Pre-analysis for US-016 (Gemini 2.5 Pro)
+This user story describes a frontend UI bug fix for a React/Next.js application, not a Frappe/Python task. The following technical brief is based on the actual JSON data provided.
+
+***
+
+**Subject: Technical Brief for US-016: Fix Recipe Modal Close Button**
+
+**1. Primary File to Modify:**
+*   `src/components/menu/recipe-modal.tsx`: This file likely contains the React component for the recipe modal, including its layout (JSX) and styling.
+
+**2. Involved Frameworks/Libraries (Not Frappe):**
+*   **React/Next.js:** For component structure.
+*   **Tailwind CSS:** For styling and layout adjustments (`sticky`, `overflow-y-auto`).
+
+**3. Recommended Implementation Approach:**
+*   Restructure the modal component's JSX to create a distinct header and content area.
+*   The header should contain the close (`X`) button.
+*   Apply `sticky top-0` and a `z-index` to the header to lock it to the top of the modal.
+*   Assign a solid background color to the sticky header to prevent content from scrolling behind it.
+*   Make the content `div` the scrollable container by applying `overflow-y-auto`.
+*   Ensure the parent container has a constrained height (`max-h-screen` or similar) to trigger the scroll.
+
+**4. Edge Cases & Gotchas:**
+*   **Z-Index Conflicts:** Ensure the modal's header `z-index` is sufficient to keep it above the scrolling content but below other page elements if necessary.
+*   **Overlay Clicks:** Double-check that the logic for closing the modal by clicking the backdrop/overlay is not broken by the structural changes.
+*   **Scrollbar Appearance:** Confirm the scrollbar appears on the content area, not the entire modal, preserving the sticky header's position.
+
+
+## Iteration N - Story: US-015 - Blog Content: Operator-Perspective Posts, Remove Metadata
+
+### Status: Already completed in a previous iteration
+- blog-local.ts already has stripMetadataSections() function
+- content/blog/ already has 45 operator posts from stories/operations/promotions
+- Customer-perspective posts (ai-posts) moved to content/blog/_archived/ (134 files)
+- prd.json updated: US-015 passes = true
+- TypeScript check: 0 errors (clean)
+
+### Verification
+- stripMetadataSections() correctly:
+  - Splits by \n---\n horizontal rule delimiters
+  - Strips ## Source, ## Post Type, ## Response Strategy, ## Best Posting Time, ## References
+  - Converts ## Content → extracts AI summary text only
+  - Strips **Type:**, **Created:**, **Tags:** bold metadata lines
+- Each post renders as: # Title + hr + AI summary paragraph (clean, no metadata)
