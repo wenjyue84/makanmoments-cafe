@@ -5909,3 +5909,37 @@ Completed: AI Waiter: Voice Input via Web Speech API (ID: US-066) in 5m
 - [x] Search is debounced 300ms
 - [x] Results ranked by relevance — best matches first (Fuse default)
 - [x] TypeScript check passes (npx tsc --noEmit — 0 errors)
+## Iteration 39 - Tue, Mar 10, 2026  4:55:57 PM
+Completed: AI Waiter: Voice Input via Web Speech API (ID: US-066) in 9m
+
+
+## Pre-analysis for US-068 (Gemini 2.5 Pro)
+This user story (US-068) is a **frontend-only task** and does not involve the Frappe/Python backend. The implementation will be in TypeScript/React, modifying browser-side components.
+
+Here is the correct technical brief for a **React/TypeScript developer**:
+
+**Subject: Technical Brief for US-068: Menu Search Voice Input**
+
+This story adds a voice-to-text feature to the menu search bar. The implementation is confined to the frontend React components.
+
+**1. Files to Modify:**
+*   `src/components/menu/menu-filter.tsx`: This is the primary file. The microphone button and its logic will be added here.
+*   `src/components/menu/menu-grid.tsx`: Review this file to understand how the `searchQuery` state is passed and used to filter the menu items with Fuse.js.
+
+**2. Key Components & Hooks:**
+*   **Component:** `MenuFilter`
+*   **State:** The shared search state (e.g., `searchQuery` and `setSearchQuery`) passed down from `menu-grid.tsx`.
+*   **Browser API:** The Web Speech API (`SpeechRecognition`).
+
+**3. Implementation Approach:**
+1.  In `menu-filter.tsx`, add a `button` for the microphone inside the search `div`. Use `position: absolute` for styling.
+2.  Create a local state, `isListening`, to manage the "Listening..." UI and the pulsing icon animation.
+3.  Implement a handler that uses the Web Speech API. Reuse the pattern from US-066.
+4.  On a successful recognition result, call `setSearchQuery(transcript)`. This will automatically trigger the existing Fuse.js filtering logic in the parent component.
+5.  Conditionally render the microphone button only if `window.SpeechRecognition` is available in the user's browser.
+
+**4. Edge Cases & Gotchas:**
+*   **Browser Support:** Gracefully hide the feature on browsers that do not support the Web Speech API.
+*   **Permissions:** The browser will prompt for microphone access. The UI should handle the listening state correctly whether permission is granted or denied.
+*   **Silence Detection:** Ensure the recognition correctly stops after a 2-second pause as per the acceptance criteria.
+
