@@ -2844,3 +2844,39 @@ The technical notes within the JSON are highly specific and actionable for a Typ
 ### Result
 - prd.json: US-038 passes = true
 - TypeScript check: PASS (no errors)
+## Iteration 21 - Tue, Mar 10, 2026  1:04:23 PM
+Completed: AI Helper in Admin Rules Tab for Complex Rule Configuration (ID: US-037) in 8m
+
+
+## Pre-analysis for US-039 (Gemini 2.5 Pro)
+This technical brief is for a **Next.js/TypeScript** project, not Frappe/Python.
+
+**Project:** makanmoments.cafe
+**User Story:** US-039: Add Tests for All New Features + Fix Errors
+
+### Technical Brief for Implementation
+
+**1. Primary Files to Modify:**
+*   `src/lib/tests/smoke.ts`: Add new page-level smoke tests.
+*   `src/lib/tests/unit.ts`: Add new function-level unit tests.
+*   `src/lib/tests/integration.ts`: Add tests for internal API endpoints.
+*   `src/lib/tests/e2e.ts`: Add user interaction and mobile-specific tests.
+*   `src/app/admin/tests/page.tsx` (or similar): To implement the "Run All" and "Generate Stories" button logic.
+*   `prd.json`: This file will be programmatically appended with new stories for failing tests.
+
+**2. Key Components & APIs Involved:**
+*   **API Routes:** `GET /api/admin/highlights`, `/api/admin/display-categories`, `/api/admin/time-slots`.
+*   **UI Components:** Recipe Modal, Mobile Header/Language Switcher, Admin UI components.
+*   **Functions:** `cleanContent()`, `getMalaysiaTime()`, operating hours logic.
+
+**3. Recommended Approach:**
+1.  Use a test runner (likely Jest or Playwright) to define tests in the files above.
+2.  Implement a handler function for the "Run All" button in the admin panel.
+3.  This function will execute the test suites programmatically, wrapping calls in `try/catch` blocks.
+4.  On test failure, the `catch` block should read `prd.json`, parse it, generate a new sequential `US-XXX` ID, append a new story object containing the error details, and write the updated content back to `prd.json`.
+
+**4. Edge Cases & Gotchas:**
+*   Ensure atomic writes to `prd.json` to prevent race conditions if tests run in parallel.
+*   The logic for generating new sequential User Story IDs (`US-040`, `US-041`, etc.) must be robust.
+*   Error messages from the test runner need to be parsed cleanly to create useful, actionable story descriptions.
+
