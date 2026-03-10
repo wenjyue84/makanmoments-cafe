@@ -11271,3 +11271,6 @@ Here is the plan for implementing the user story.
 *   **Related DocTypes:** If other DocTypes (e.g., `MenuCategory`) also affect the prompt, their controllers must also include the same cache invalidation logic.
 *   **Initial Generation:** The first time the prompt is generated, it could be slow. Ensure the database query to fetch menu items is optimized.
 
+## Iteration 3 - Wed, Mar 11, 2026  2:08:53 AM
+Completed: Add AbortController Fetch Timeout to Critical Client-Side Calls (ID: US-133) in 7m
+
