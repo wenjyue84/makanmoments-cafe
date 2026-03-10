@@ -6727,3 +6727,6 @@ Completed: Menu Card: Replace '+Add' with Compact '+' Icon Aligned with Price (I
 ### Gotchas
 - python3 file open needs `encoding='utf-8'` on Windows to handle em-dash characters in prd.json
 - TypeScript check passes clean (npx tsc --noEmit)
+## Iteration 45 - Tue, Mar 10, 2026  5:43:54 PM
+Completed: Menu Card: Replace '+Add' with Compact '+' Icon Aligned with Price (ID: US-074) in 7m
+
