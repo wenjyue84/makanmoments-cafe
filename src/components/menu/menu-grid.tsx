@@ -17,6 +17,14 @@ import { SPECIAL_DISPLAY_CATEGORIES } from "@/lib/constants";
 
 // Display category values are prefixed with "__dc__" to distinguish from POS categories
 const DC_PREFIX = "__dc__";
+
+// Fuse.js options defined at module level to prevent stale closure re-creation
+const fuseOptions = {
+  keys: ["nameEn", "nameMs", "nameZh", "description", "categories"],
+  threshold: 0.4,
+  minMatchCharLength: 2,
+  includeScore: true,
+};
 // Special filter key for user-favorited items
 const FAVORITES_FILTER = "__favorites__";
 
@@ -99,16 +107,7 @@ export function MenuGrid({
   const selectedPosCat = !isDisplayCategorySelected && !isFavoritesSelected ? category : null;
 
   // Fuse.js instance for fuzzy search across all items (memoized to avoid re-init on every render)
-  const fuse = useMemo(
-    () =>
-      new Fuse(items, {
-        keys: ["nameEn", "nameMs", "nameZh", "description", "categories"],
-        threshold: 0.4,
-        minMatchCharLength: 2,
-        includeScore: true,
-      }),
-    [items]
-  );
+  const fuse = useMemo(() => new Fuse(items, fuseOptions), [items]);
 
   const filtered = useMemo(() => {
     // Fuzzy search takes precedence — search across ALL items regardless of selected category

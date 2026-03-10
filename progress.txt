@@ -11843,3 +11843,48 @@ The goal is to prevent the expensive `Fuse.js` index from being rebuilt on every
 - Verify that `fuseOptions` has no dependencies on component props or state before moving it.
 - The `items` prop passed to the component should be stable; otherwise, the memoization will be ineffective. The `useMemo` will re-run if the parent component unnecessarily re-creates the `items` array on every render.
 
+## Iteration 6 - Wed, Mar 11, 2026  2:28:08 AM
+Completed: Move Hardcoded Display Category Names to Constants (ID: US-136) in 5m
+
+
+## Pre-analysis for US-137 (Gemini 2.5 Pro)
+This user story is for a **React/Next.js** frontend application, not a Frappe/Python one. The file paths, libraries (`Fuse.js`), and hooks (`useMemo`) are specific to a JavaScript environment.
+
+Therefore, a brief for a Frappe/Python implementation is not applicable.
+
+Here is the correct technical brief based on the **actual content** of the story for the React codebase:
+
+**Technical Brief: US-137 Memoize Fuse.js Instance**
+
+*   **File to Modify:**
+    *   `src/components/menu/menu-grid.tsx`
+
+*   **Libraries & React Hooks Involved:**
+    *   React: `useMemo` hook
+    *   JavaScript library: `Fuse.js`
+
+*   **Implementation Approach:**
+    1.  Locate the `fuseOptions` object inside the `MenuGrid` component. Move it outside the component function to define it as a module-level constant. This prevents re-creation on every render.
+    2.  Find the line where the Fuse instance is created: `new Fuse(items, fuseOptions)`.
+    3.  Wrap this instantiation in a `useMemo` hook.
+    4.  The dependency array for `useMemo` must be `[items]`, ensuring the search index is only rebuilt when the underlying menu items change.
+    5.  The new code will look like: `const fuse = useMemo(() => new Fuse(items, fuseOptions), [items]);`
+
+*   **Gotchas & Verification:**
+    *   A common mistake is leaving `fuseOptions` inside the component, which would cause the `useMemo` to re-run on every render, defeating its purpose.
+    *   Verify that searching the menu still functions correctly.
+    *   Confirm through logging or breakpoints that switching between categories (which filters the `items` list) does *not* trigger the `new Fuse()` constructor, as the reference to the `items` prop should remain stable.
+
+
+## Iteration N - Story: Memoize Fuse.js Instance in MenuGrid (US-137)
+
+### What was implemented
+- Extracted `fuseOptions` object to module-level constant (above component definition)
+- Simplified `useMemo` call: `const fuse = useMemo(() => new Fuse(items, fuseOptions), [items])`
+- The `useMemo` with `[items]` dependency was already in place — only the options extraction was needed
+
+### Patterns discovered
+- `as const` on objects with array values causes TypeScript errors when passed to Fuse.js (readonly vs mutable mismatch) — omit `as const` for fuseOptions
+
+### Gotchas
+- Build was already structurally correct; acceptance criteria gap was purely the module-level constant requirement
