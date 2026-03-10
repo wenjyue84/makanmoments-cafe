@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { CAFE } from "@/lib/constants";
 import { Leaf, Users, ShieldCheck } from "lucide-react";
+import Image from "next/image";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 import { AboutInlineEditor, type AboutContent } from "@/components/admin/about-inline-editor";
 
@@ -127,6 +128,18 @@ export default async function AboutPage({
       <div className="mb-12">
         <h1 className="font-display text-3xl font-bold lg:text-4xl">{content.title}</h1>
         <p className="mt-2 text-lg text-muted-foreground">{content.subtitle}</p>
+      </div>
+
+      {/* Cover Page Image */}
+      <div className="mb-16">
+        <Image
+          src="/images/about/cover-page.webp"
+          alt="Makan Moments Cafe menu cover page"
+          width={1400}
+          height={1980}
+          className="w-full rounded-2xl shadow-lg"
+          priority
+        />
       </div>
 
       {/* Story */}
