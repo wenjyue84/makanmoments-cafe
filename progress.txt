@@ -12595,3 +12595,6 @@ This brief outlines the implementation of startup environment variable validatio
 *   The `on_startup` hook runs after a user session is initiated. For pre-boot validation, the logic could be placed in `lhdn_payroll_integration/__init__.py` to run on module import, which is even earlier. Using `hooks.py` is cleaner if post-login validation is sufficient.
 *   Ensure the error halts the `bench start` process and is clearly visible in the terminal log. `frappe.throw` will achieve this.
 
+## Iteration 2 - Wed, Mar 11, 2026  2:56:55 AM
+Completed: Split AdminMenuTable into Row Component and Edit Hook (ID: US-139) in 17m
+
