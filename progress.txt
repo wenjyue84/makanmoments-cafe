@@ -1716,3 +1716,94 @@ Assuming the intent was to get a technical brief for the described frontend task
 ## Iteration 10 - Tue, Mar 10, 2026 11:32:58 AM
 Completed: Menu Add Button: 'Added' State with Background Color Change (ID: US-024) in 4m
 
+## Iteration 11 - Tue, Mar 10, 2026 11:33:21 AM
+Completed: Menu Add Button: 'Added' State with Background Color Change (ID: US-024) in 3m
+
+
+## Pre-analysis for US-025 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** application, not Frappe/Python. The following technical brief is based on the Next.js project structure and the details in the story JSON.
+
+---
+
+### **Technical Brief: US-025 Chat Widget Admin-Only Settings**
+
+**Objective**: Restrict visibility of the chat widget's settings icon to authenticated admin users, preventing it from appearing for regular users.
+
+**1. Primary Files to Modify**:
+*   `src/components/chat/chat-widget.tsx`: The React component where the settings icon is currently rendered.
+*   `src/app/api/admin/verify/route.ts`: The server-side API endpoint that will verify the user's admin status.
+
+**2. Key Hooks & APIs**:
+*   **React Hooks**: `useState` will be used to manage `isAdmin` and `isLoading` states within the component. `useEffect` will be used to trigger the verification API call on component mount.
+*   **Next.js API Route**: A `GET` handler in `.../verify/route.ts` will check the user's session server-side.
+
+**3. Implementation Approach**:
+1.  In `chat-widget.tsx`, add state to track verification status: `const [isAdmin, setIsAdmin] = useState(false);` and `const [isVerifying, setIsVerifying] = useState(true);`.
+2.  Use a `useEffect` hook to `fetch('/api/admin/verify')`.
+3.  In the `then()` block, update `isAdmin` based on the JSON response and always set `isVerifying` to `false`.
+4.  Conditionally render the settings icon only when verification is complete and the user is an admin: `{!isVerifying && isAdmin && <SettingsIconComponent />}`.
+5.  The API route should use server-side session/auth logic (likely from `src/lib/auth.ts`) to return `{ isAdmin: boolean }`.
+
+**4. Gotchas & Edge Cases**:
+*   **Preventing UI Flash**: The `isVerifying` state is critical to prevent the icon from flashing on-screen for non-admins before the API call completes.
+*   **API Failure**: The `fetch` call must include a `.catch()` block to handle network or server errors, ensuring the icon remains hidden by default.
+*   **Security**: The admin check MUST be authoritative from the server via the API route. Do not rely on any client-side state or local storage for the security check itself.
+
+
+## Pre-analysis for US-025 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** application, not a Frappe/Python one. The file paths (`.tsx`, `/api/.../route.ts`) and concepts (`useEffect`) are specific to a React/Next.js environment.
+
+Here is the technical brief for the specified Next.js user story:
+
+**Project:** Next.js Web Application
+**User Story:** US-025 - Chat Widget Settings Button: Admin Only
+
+**1. Files to Modify:**
+*   `src/components/chat/chat-widget.tsx`: The primary React component that renders the chat widget UI.
+*   `src/app/api/admin/verify/route.ts`: The server-side API endpoint that verifies the user's admin status.
+*   `src/lib/auth.ts`: (Potentially) The library file containing session/authentication logic used by the API route.
+
+**2. Key Components & API:**
+*   **Component:** `ChatWidget` (client-side)
+*   **API Endpoint:** `GET /api/admin/verify` (server-side)
+
+**3. Implementation Approach:**
+1.  In `chat-widget.tsx`, introduce state to track admin status and loading state:
+    `const [isAdmin, setIsAdmin] = useState(false);`
+    `const [isLoading, setIsLoading] = useState(true);`
+2.  Use a `useEffect` hook to call the verification API on component mount.
+3.  On successful API response, update `setIsAdmin()` and set `setIsLoading(false)`.
+4.  Wrap the settings button's JSX in a conditional render: `{ !isLoading && isAdmin && <Button>...</Button> }`.
+5.  The `/api/admin/verify` route should check the user's session/token to confirm admin privileges and return a JSON response: `{ "isAdmin": true/false }`.
+
+**4. Edge Cases & Gotchas:**
+*   **Prevent Icon Flash:** The `isLoading` state is critical to prevent the settings icon from appearing briefly for non-admin users while the API call is in-flight.
+*   **API Security:** The admin check must be robustly handled on the server. Do not trust any client-side flags.
+*   **Error Handling:** The `fetch` call should have a `.catch()` block to handle network errors, ensuring `isAdmin` remains `false`.
+
+
+## Iteration N - Story: US-025 Chat Widget Settings Button: Admin Only
+
+### What was implemented
+- NOTHING — story was already fully implemented in chat-widget.tsx
+- `isAdmin` state starts as `false` (no flash), useEffect calls `/api/admin/verify`, gear icon only renders when `isAdmin === true`
+- `/api/admin/verify/route.ts` already existed
+- Marked passes: true with no code changes needed
+
+---
+
+## Iteration N+1 - Story: US-026 Set Appropriate AI Waiter System Prompt
+
+### What was implemented
+- Populated `data/chat-settings.json` `systemPromptPrefix` field with a well-crafted persona prompt
+- The prefix sets: warm/local personality, language rules (reply in customer's language), the 5 main jobs (menu help, dietary, hours, directions, add to tray), pricing rules (never guess), and limitations (no reservations/payments)
+- Works alongside the existing base prompt in `src/lib/chat/system-prompt.ts` — prefix is prepended to base
+
+### Patterns discovered
+- `getSystemPrompt()` in system-prompt.ts already had a comprehensive base prompt; systemPromptPrefix is just prepended when non-empty
+- The admin chat-settings textarea shows `systemPromptPrefix`, not the full system prompt
+- Knowledge files (cafe-facts.md, menu-knowledge.md, faq.md) are loaded into the base prompt automatically
+
+### Gotchas
+- Don't duplicate content from the base prompt in the prefix — they're concatenated
+- The prefix in data/chat-settings.json is committed to the repo (it's not a secret)
