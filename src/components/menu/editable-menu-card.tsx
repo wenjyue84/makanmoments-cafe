@@ -213,12 +213,12 @@ export function EditableMenuCard({
 
         {/* Content */}
         <div className="space-y-1.5">
-          <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold leading-tight">{name}</h3>
+          <div className="space-y-0.5">
+            <h3 className="font-semibold leading-snug">{name}</h3>
 
             {/* Price — click pencil to edit */}
             {editing === "price" ? (
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="flex items-center gap-1">
                 <span className="text-xs text-muted-foreground">RM</span>
                 <input
                   autoFocus
@@ -241,7 +241,7 @@ export function EditableMenuCard({
                 </button>
               </div>
             ) : (
-              <div className="flex shrink-0 items-center gap-1">
+              <div className="flex items-center gap-1">
                 <span className="text-sm font-bold text-primary">
                   {localItem.originalPrice ? (
                     <>

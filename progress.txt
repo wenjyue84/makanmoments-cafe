@@ -2880,3 +2880,60 @@ This technical brief is for a **Next.js/TypeScript** project, not Frappe/Python.
 *   The logic for generating new sequential User Story IDs (`US-040`, `US-041`, etc.) must be robust.
 *   Error messages from the test runner need to be parsed cleanly to create useful, actionable story descriptions.
 
+## Iteration 20 - Tue, Mar 10, 2026  1:06:55 PM
+Completed: Blog Post Content Cleanup: Remove Metadata Sections (ID: US-038) in 8m
+
+
+## Iteration 22 - Story: Menu Card Layout Fix: Name Horizontal, Price Below (US-041)
+
+### What was implemented
+- `src/components/menu/menu-card.tsx`: Changed `flex items-start justify-between gap-2` → `space-y-0.5`, removed `shrink-0` from price span, added `block` to span, changed `leading-tight` → `leading-snug`
+- `src/components/menu/editable-menu-card.tsx`: Same structural fix — name full-width on own line, price+edit-button row below (removed `shrink-0` from price row containers)
+- `src/components/menu/chef-pick-card.tsx`: Same fix — `flex justify-between gap-3` → `space-y-0.5`, price now `block text-base font-bold text-primary` below name
+
+### Patterns discovered
+- All 3 card variants had the same `flex items-start justify-between gap-2/3` causing side-by-side name+price layout
+- `editable-menu-card.tsx` price section already had correct `flex items-center gap-1` for the inner price+pencil row — only the outer wrapper needed restructuring
+
+### Gotchas
+- Must add `block` to `<span>` for price in menu-card.tsx and chef-pick-card.tsx (spans are inline by default, `space-y-0.5` only works between block elements)
+- TypeScript check: PASS
+
+### Result
+- prd.json: US-041 passes = true
+- TypeScript check: PASS
+
+## Pre-analysis for US-039 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** project, not a Frappe/Python one. The file paths (`src/lib/tests/*.ts`), components (bottom nav, recipe modal), and API routes (`/api/admin/*`) all point to a Next.js architecture.
+
+Here is the technical brief tailored for the correct **Next.js/TypeScript** stack:
+
+**Project:** makanmoments.cafe (Next.js)
+**User Story:** US-039
+
+### Technical Implementation Brief
+
+1.  **Files to Modify:**
+    *   `src/lib/tests/smoke.ts`: Add new fetch-based tests for critical page endpoints.
+    *   `src/lib/tests/unit.ts`: Add tests for pure business logic functions (`cleanContent`, `getMalaysiaTime`).
+    *   `src/lib/tests/integration.ts`: Add tests for internal API routes (`/api/admin/...`).
+    *   `src/lib/tests/e2e.ts`: (Likely using Playwright/Cypress) Add browser-level tests for UI interactions.
+    *   `src/app/[locale]/admin/tests/page.tsx`: (Or similar component) Implement the UI, state, and client-side logic for the "Run All" and "Generate Stories" buttons.
+    *   `prd.json`: This file will be read and appended to programmatically.
+
+2.  **Key Next.js/React Constructs Involved:**
+    *   **Client Components:** The admin "Tests" tab will be a client component (`'use client'`) to handle user interaction and state.
+    *   **API Routes:** New `POST` API routes will be needed (e.g., `/api/admin/run-tests`, `/api/admin/generate-stories`) to trigger the backend test execution and file writing logic.
+
+3.  **Recommended Implementation Approach:**
+    *   Create a "test runner" server-side function that dynamically imports and executes all exported test functions from the `src/lib/tests/` files. Use `Promise.allSettled` to run tests concurrently and collect all results, including failures.
+    *   This runner function should be invoked by the `/api/admin/run-tests` API route.
+    *   Create a separate "story generator" function that takes failed test details, reads `prd.json`, calculates the next story ID (e.g., `US-040`), and appends the new story object to the file using Node.js `fs` module.
+    *   The admin page will `fetch` these API routes, display a loading state, and then render the aggregated pass/fail results.
+
+4.  **Edge Cases & Gotchas:**
+    *   **Filesystem Access:** Writing to `prd.json` from a serverless function (like on Vercel) can be tricky. The path must be resolved correctly using `process.cwd()`, and permissions might be an issue. Ensure this works in the target deployment environment.
+    *   **Error Handling:** The JSON writing process must be robust to prevent corrupting `prd.json` if a write fails mid-operation.
+    *   **State Management:** The admin UI needs to handle loading, success, and error states for both running tests and generating stories.
+    *   **Async Tests:** All test functions should be `async` and their results properly awaited in the runner.
+

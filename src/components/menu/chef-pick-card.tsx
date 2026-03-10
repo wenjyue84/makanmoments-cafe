@@ -78,9 +78,9 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
 
         {/* Content */}
         <div className="p-4 sm:p-5">
-          <div className="flex items-start justify-between gap-3">
-            <h3 className="text-xl font-bold leading-tight">{name}</h3>
-            <span className="shrink-0 text-lg font-bold text-primary">
+          <div className="space-y-0.5">
+            <h3 className="text-xl font-bold leading-snug">{name}</h3>
+            <span className="block text-base font-bold text-primary">
               {item.originalPrice ? (
                 <>
                   <s className="mr-1 text-sm font-normal text-muted-foreground">
