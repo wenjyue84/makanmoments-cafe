@@ -275,6 +275,7 @@ export function MenuGrid({
               <FadeUp key={item.id} delay={(index % 3) * 50}>
                 <MenuCard
                   item={item}
+                  priority={index === 0}
                   isHighlighted={isHighlighted}
                   isFavorited={isFavorite(item.code)}
                   onToggleFavorite={() => toggleFavorite(item.code)}

@@ -9056,3 +9056,85 @@ Here is the technical brief for user story US-104.
 ## Iteration 3 - Tue, Mar 10, 2026  9:18:15 PM
 Completed: Menu Page — Equal Card Width in Category Grid (ID: US-104) in 5m
 
+## Iteration 1 - Tue, Mar 10, 2026  9:18:29 PM
+Completed: Lighthouse Mobile Score >= 85 (LCP, CLS, FCP, TBT) (ID: US-093) in 42m
+
+
+## Pre-analysis for US-107 (Gemini 2.5 Pro)
+This user story (US-107) describes a **frontend UI modification** for a React/Next.js application, not a backend Frappe/Python task. The technical notes reference TypeScript files (`.tsx`), React hooks (`useState`, `useEffect`), and Tailwind CSS, which are all frontend technologies.
+
+Here is the technical brief based on the actual requirements in the story:
+
+**Project:** Next.js / React Frontend
+
+**1. Files to Modify:**
+*   `src/components/menu/menu-filter.tsx`: Main component housing the search logic.
+*   `src/components/menu/menu-client-layout.tsx`: Parent component, may need adjustment for positioning the new search icon button relative to other UI elements like the bottom tray.
+*   Possibly `src/app/(main)/menu/page.tsx` if state needs to be lifted.
+
+**2. Key Components & Hooks Involved:**
+*   **React State:** `const [isSearchOpen, setIsSearchOpen] = useState(false);`
+*   **React Refs & Effects:** `useRef` to get a handle on the input element and `useEffect` to trigger `input.focus()` when the bar expands.
+*   **Event Handlers:** `onClick` for the icon, and a global `keydown` listener for the 'Escape' key.
+*   **Icons:** `lucide-react` library for the Search and X icons.
+
+**3. Implementation Approach:**
+*   Introduce an `isSearchOpen` state variable, defaulting to `false`.
+*   Render a circular icon-only button (`<Search />`) fixed to the bottom-right.
+*   On icon click, set `isSearchOpen` to `true`.
+*   Conditionally render the full search bar based on `isSearchOpen`. The bar should contain the text input and a close button (`<X />`).
+*   Use TailwindCSS `transition-all` and `opacity` classes for a smooth fade/slide-in animation.
+*   Use a `useEffect` to attach a ref to the search input and call `.focus()` when `isSearchOpen` becomes `true`.
+
+**4. Edge Cases & Gotchas:**
+*   **Positioning:** The icon must not obstruct the "View Tray" button. Use `fixed` positioning with appropriate z-index and margins.
+*   **Mobile UX:** Ensure the touch target for the icon is at least `44x44px`. The expanded bar should likely be full-width on mobile.
+*   **Accessibility:** The icon button needs an `aria-label`. Focus must be managed correctly when opening/closing the search bar.
+*   **Cleanup:** The 'Escape' key listener should be added and removed within a `useEffect` hook to prevent memory leaks.
+
+
+## Pre-analysis for US-107 (Gemini 2.5 Pro)
+This technical brief is for implementing story US-107 in a **Next.js/React** application, not Frappe/Python as initially referenced. The story details a frontend UI change.
+
+**Project:** Makan Moments Cafe (Next.js/TypeScript)
+**User Story:** US-107 - Menu Page Collapsible Search
+
+**1. Files to Modify:**
+   - `src/components/menu/menu-client-page.tsx`: Likely the top-level client component for the menu, where state should be managed.
+   - `src/components/menu/menu-filter.tsx`: The existing component containing the search bar logic to be refactored.
+   - `src/components/ui/button.tsx`: May need to ensure icon button variants are styled correctly.
+
+**2. Key Components & Hooks:**
+   - **React State:** `useState<boolean>` (e.g., `isSearchOpen`) to toggle visibility.
+   - **React Refs & Effects:** `useRef<HTMLInputElement>` and `useEffect` to auto-focus the input on expansion.
+   - **Event Handlers:** `onClick` for the icon, `onKeyDown` for the 'Escape' key handler.
+   - **UI:** A new, floating circular `Button` with a `Search` icon from `lucide-react`.
+
+**3. Implementation Approach:**
+   - Lift state (`isSearchOpen`) to `menu-client-page.tsx` if `menu-filter.tsx` is too isolated.
+   - Create a new floating search icon button, positioned `fixed` at the bottom-right.
+   - On tap, set `isSearchOpen` to true.
+   - Modify `menu-filter.tsx` to conditionally render: show the full search bar when `isSearchOpen` is true, otherwise render nothing (or be hidden).
+   - Use Tailwind CSS for smooth `transition` and `transform` classes for the expand/collapse animation.
+   - Add a `useEffect` hook to listen for the 'Escape' keydown event to set `isSearchOpen` to false.
+
+**4. Edge Cases & Gotchas:**
+   - Ensure the floating icon button does not obstruct the "View Tray" button on mobile viewports.
+   - The expanded search bar must not cause Cumulative Layout Shift (CLS); use `transform` or `fixed` positioning.
+   - Auto-focusing the input might require a slight delay (`setTimeout`) within the `useEffect` on some mobile browsers.
+   - The touch target for the icon must be at least 44x44px for mobile accessibility.
+
+
+## Iteration N - Story: US-094 - Menu Page: Image Lazy Loading + Explicit sizes Prop on All MenuCards
+
+### What was implemented
+- Added `priority={index === 0}` to the first `MenuCard` in the flat view (display category / search results) in `src/components/menu/menu-grid.tsx`
+
+### Patterns discovered
+- `menu-card.tsx` already had full `sizes`, `priority`, and `loading` props on its `next/image` — no changes needed
+- `image-carousel.tsx` already had default `sizes` prop and `priority`/`loading` logic — no changes needed
+- Only the flat view in `menu-grid.tsx` was missing the `priority={index === 0}` prop on `MenuCard`
+- The grouped/sectioned view (default layout) already passed `priority={sectionIdx === 0}` to `ChefPickCard`
+
+### Gotchas
+- prd.json uses UTF-8 encoding with special chars — must open with `encoding='utf-8'` in Python
