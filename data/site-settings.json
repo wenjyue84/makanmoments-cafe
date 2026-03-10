@@ -11,5 +11,6 @@
   "depositRequired": false,
   "paymentMethods": ["Touch & Go", "Cash on Arrival"],
   "tng_phone": "",
-  "tng_qr_url": ""
+  "tng_qr_url": "",
+  "pushNotificationsEnabled": true
 }

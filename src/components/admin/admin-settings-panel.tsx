@@ -2,6 +2,13 @@
 
 import { useState, useEffect } from "react";
 import type { SiteSettings } from "@/lib/site-settings";
+import { AdminOperatingHours } from "./admin-operating-hours";
+import { AdminTimeSettings } from "./admin-time-settings";
+import { AdminPushSettings } from "./admin-push-settings";
+
+interface AdminSettingsPanelProps {
+  categories: string[];
+}
 
 const DEFAULT_SETTINGS: SiteSettings = {
   defaultLocale: "en",
@@ -15,7 +22,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
   tng_qr_url: "",
 };
 
-export function AdminSettingsPanel() {
+export function AdminSettingsPanel({ categories }: AdminSettingsPanelProps) {
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,13 +43,6 @@ export function AdminSettingsPanel() {
 
   function setField<K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) {
     setSettings((prev) => ({ ...prev, [key]: value }));
-  }
-
-  function setHours(key: keyof SiteSettings["operatingHours"], value: string) {
-    setSettings((prev) => ({
-      ...prev,
-      operatingHours: { ...prev.operatingHours, [key]: value },
-    }));
   }
 
   async function handleSave() {
@@ -127,26 +127,59 @@ export function AdminSettingsPanel() {
 
       {/* Operating Hours */}
       <section className="rounded-xl border border-gray-200 bg-white p-6">
-        <h2 className="mb-1 text-base font-semibold text-gray-900">Operating Hours</h2>
-        <p className="mb-4 text-xs text-gray-500">Malaysia time (UTC+8). Affects the banner shown to customers.</p>
+        <AdminOperatingHours />
+      </section>
+
+      {/* Time Settings */}
+      <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <AdminTimeSettings categories={categories} />
+      </section>
+
+      {/* Touch & Go Payment */}
+      <section className="rounded-xl border border-gray-200 bg-white p-6">
+        <h2 className="mb-1 text-base font-semibold text-gray-900">Touch &amp; Go Payment</h2>
+        <p className="mb-4 text-xs text-gray-500">
+          Shown to customers on the order status page when their order is approved and payment is required.
+        </p>
         <div className="space-y-4">
-          {([
-            { key: "open", label: "Opening time" },
-            { key: "lastOrder", label: "Last order time" },
-            { key: "close", label: "Closing time" },
-          ] as const).map(({ key, label }) => (
-            <div key={key} className="flex items-center gap-4">
-              <label className="w-36 shrink-0 text-sm text-gray-700">{label}</label>
-              <input
-                type="time"
-                value={settings.operatingHours[key]}
-                onChange={(e) => setHours(key, e.target.value)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Touch &amp; Go Phone Number</label>
+            <input
+              type="text"
+              value={settings.tng_phone ?? ""}
+              onChange={(e) => setField("tng_phone", e.target.value)}
+              className="w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+              placeholder="e.g. 012-345 6789"
+            />
+            <p className="mt-1 text-xs text-gray-500">Customer will send payment to this number.</p>
+          </div>
+
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Touch &amp; Go QR Code URL</label>
+            <input
+              type="text"
+              value={settings.tng_qr_url ?? ""}
+              onChange={(e) => setField("tng_qr_url", e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+              placeholder="https://... or /images/tng-qr.png"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Link or path to a QR code image. Leave blank to show phone number only.
+            </p>
+            {settings.tng_qr_url && (
+              <img
+                src={settings.tng_qr_url}
+                alt="TnG QR preview"
+                className="mt-2 h-24 w-24 rounded-lg border border-gray-200 object-contain"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
               />
-            </div>
-          ))}
+            )}
+          </div>
         </div>
       </section>
+
+      {/* Push Notifications */}
+      <AdminPushSettings />
 
       {/* Pre-Order System */}
       <section className="rounded-xl border border-gray-200 bg-white p-6">
@@ -190,49 +223,6 @@ export function AdminSettingsPanel() {
               placeholder="Touch & Go, Cash on Arrival"
             />
             <p className="mt-1 text-xs text-gray-500">Comma-separated list of accepted methods.</p>
-          </div>
-        </div>
-      </section>
-
-      {/* Touch & Go Payment */}
-      <section className="rounded-xl border border-gray-200 bg-white p-6">
-        <h2 className="mb-1 text-base font-semibold text-gray-900">Touch &amp; Go Payment</h2>
-        <p className="mb-4 text-xs text-gray-500">
-          Shown to customers on the order status page when their order is approved and payment is required.
-        </p>
-        <div className="space-y-4">
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Touch &amp; Go Phone Number</label>
-            <input
-              type="text"
-              value={settings.tng_phone ?? ""}
-              onChange={(e) => setField("tng_phone", e.target.value)}
-              className="w-full max-w-xs rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
-              placeholder="e.g. 012-345 6789"
-            />
-            <p className="mt-1 text-xs text-gray-500">Customer will send payment to this number.</p>
-          </div>
-
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Touch &amp; Go QR Code URL</label>
-            <input
-              type="text"
-              value={settings.tng_qr_url ?? ""}
-              onChange={(e) => setField("tng_qr_url", e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
-              placeholder="https://... or /images/tng-qr.png"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Link or path to a QR code image. Leave blank to show phone number only.
-            </p>
-            {settings.tng_qr_url && (
-              <img
-                src={settings.tng_qr_url}
-                alt="TnG QR preview"
-                className="mt-2 h-24 w-24 rounded-lg border border-gray-200 object-contain"
-                onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-              />
-            )}
           </div>
         </div>
       </section>

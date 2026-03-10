@@ -7,11 +7,8 @@ import {
   Shield,
   BookOpen,
   FlaskConical,
-  Clock,
-  Clock3,
   ShoppingBag,
   Settings,
-  Bell,
   Menu,
   X,
 } from "lucide-react";
@@ -22,9 +19,6 @@ import { AdminCategoriesPanel } from "./admin-categories-panel";
 import { AdminBlogTable } from "./admin-blog-table";
 import { AdminRulesPanel } from "./admin-rules-panel";
 import { AdminTestsPanel } from "./admin-tests-panel";
-import { AdminTimeSettings } from "./admin-time-settings";
-import { AdminOperatingHours } from "./admin-operating-hours";
-import { AdminPushSettings } from "./admin-push-settings";
 import { AdminSettingsPanel } from "./admin-settings-panel";
 import { AdminOrdersPanel } from "./admin-orders-panel";
 import { cn } from "@/lib/utils";
@@ -42,9 +36,6 @@ const TABS = [
   "Rules",
   "Blog",
   "Tests",
-  "Time Settings",
-  "Operating Hours",
-  "Push Notifications",
   "Settings",
 ] as const;
 type Tab = (typeof TABS)[number];
@@ -56,9 +47,6 @@ const TAB_ICONS: Record<Tab, React.ReactNode> = {
   Rules: <Shield className="h-4 w-4 shrink-0" />,
   Blog: <BookOpen className="h-4 w-4 shrink-0" />,
   Tests: <FlaskConical className="h-4 w-4 shrink-0" />,
-  "Time Settings": <Clock className="h-4 w-4 shrink-0" />,
-  "Operating Hours": <Clock3 className="h-4 w-4 shrink-0" />,
-  "Push Notifications": <Bell className="h-4 w-4 shrink-0" />,
   Settings: <Settings className="h-4 w-4 shrink-0" />,
 };
 
@@ -146,12 +134,7 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
           {activeTab === "Rules" && <AdminRulesPanel categories={categories} />}
           {activeTab === "Blog" && <AdminBlogTable initialPosts={posts} />}
           {activeTab === "Tests" && <AdminTestsPanel />}
-          {activeTab === "Time Settings" && (
-            <AdminTimeSettings categories={categories} />
-          )}
-          {activeTab === "Operating Hours" && <AdminOperatingHours />}
-          {activeTab === "Push Notifications" && <AdminPushSettings />}
-          {activeTab === "Settings" && <AdminSettingsPanel />}
+          {activeTab === "Settings" && <AdminSettingsPanel categories={categories} />}
         </main>
       </div>
     </div>

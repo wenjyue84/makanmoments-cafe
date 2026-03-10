@@ -7329,3 +7329,79 @@ This brief outlines the Frappe/Python implementation plan for replacing a custom
 ## Iteration 26 - Tue, Mar 10, 2026  6:24:19 PM
 Completed: Site-Wide: Micro-Interactions and Scroll-Triggered Polish (ID: US-078) in 8m
 
+## Iteration 49 - Tue, Mar 10, 2026  6:25:15 PM
+Completed: Admin: Replace Horizontal Tab Bar with Left Sidebar Navigation (ID: US-079) in 4m
+
+
+## Pre-analysis for US-080 (Gemini 2.5 Pro)
+Based on the JSON for US-080, here is the technical brief for implementation. Note that the story pertains to a Next.js/React frontend, not Frappe/Python.
+
+**Objective:** Consolidate 'Time Settings' and 'Operating Hours' into the main 'Settings' admin panel and enable Push Notifications by default.
+
+**1. Python/Frappe Files to Modify:**
+*   None. This is a frontend task involving TypeScript/React files.
+
+**2. Key Components & Files Involved:**
+*   `src/components/admin/admin-tabs.tsx`: To remove the top-level navigation links.
+*   `src/components/admin/admin-settings-panel.tsx`: To embed the new setting sections.
+*   `src/components/admin/AdminTimeSettings.tsx`: Component to be rendered.
+*   `src/components/admin/AdminOperatingHours.tsx`: Component to be rendered.
+*   `data/site-settings.json`: To set the new default for push notifications.
+
+**3. Recommended Implementation Approach:**
+1.  In `admin-tabs.tsx`, remove the 'Time Settings' and 'Operating Hours' entries from the main `TABS` array.
+2.  In `admin-settings-panel.tsx`, import and render the `<AdminTimeSettings />` and `<AdminOperatingHours />` components.
+3.  Wrap each settings section (General, Hours, etc.) in a simple accordion or styled card to visually separate them.
+4.  Modify `data/site-settings.json` by setting `pushNotificationsEnabled` to `true`.
+
+**4. Gotchas to Watch For:**
+*   Ensure the state management for the settings panel correctly handles the newly embedded components.
+*   Verify that the UI for push notifications correctly initializes with the new `enabled: true` default from the JSON data, without being overridden by a local component state.
+
+
+## Pre-analysis for US-080 (Gemini 2.5 Pro)
+**Project:** Makan Moments Cafe (Next.js/TypeScript)
+**User Story:** US-080 - Admin Settings Consolidation
+
+**Technical Brief:**
+
+This user story refactors the admin dashboard UI, not a Frappe/Python app. The goal is to declutter the navigation by moving two sections into the main 'Settings' panel.
+
+**1. Files to Modify:**
+*   `src/components/admin/admin-tabs.tsx`: To remove the top-level navigation links.
+*   `src/components/admin/admin-settings-panel.tsx`: To host the consolidated sections.
+*   `src/components/admin/admin-push-settings.tsx`: To set the default `enabled` state.
+*   `data/site-settings.json`: To update the default site configuration.
+
+**2. Key DocTypes/Hooks (React Equivalent):**
+*   **Components:** `AdminTimeSettings`, `AdminOperatingHours`, `AdminPushSettings`.
+*   **State Management:** React state (`useState`) will be needed in `admin-settings-panel.tsx` to manage the open/closed state of the new accordion sections.
+
+**3. Implementation Approach:**
+1.  In `admin-tabs.tsx`, remove the 'Time Settings' and 'Operating Hours' entries from the `TABS` constant array.
+2.  In `admin-settings-panel.tsx`, import `AdminTimeSettings` and `AdminOperatingHours`.
+3.  Render them within visually separate sections (e.g., cards or an accordion) below the existing 'General' settings.
+4.  In `admin-push-settings.tsx`, find the state initialization for the toggle (e.g., `useState`) and set its default value to `true`.
+5.  Modify `data/site-settings.json` to set `pushNotificationsEnabled: true` as the new baseline.
+
+**4. Gotchas & Edge Cases:**
+*   Ensure the new accordion/card UI in the settings panel matches the existing design language.
+*   The logic for push notifications must prioritize a user's saved setting over the new `true` default. The default should only apply to new or unconfigured instances.
+
+
+## Iteration N - Story: US-080 Admin Settings: Consolidate Time Settings + Operating Hours as Sub-Sections
+
+### What was implemented
+- `admin-tabs.tsx`: Removed "Time Settings", "Operating Hours", "Push Notifications" from TABS array and TAB_ICONS; removed their imports and content renderers; removed unused Lucide icons (Clock, Clock3, Bell); updated `<AdminSettingsPanel>` to accept and pass `categories` prop
+- `admin-settings-panel.tsx`: Added `categories: string[]` prop; imported `AdminOperatingHours`, `AdminTimeSettings`, `AdminPushSettings`; removed simple inline Operating Hours section; added embedded `AdminOperatingHours` + `AdminTimeSettings` (wrapped in section cards) and `AdminPushSettings` (rendered directly — has own border card); reordered sections to: General → Operating Hours → Time Settings → T&G Payment → Push Notifications → Pre-Order System
+- `data/site-settings.json`: Added `"pushNotificationsEnabled": true` as default
+
+### Patterns discovered
+- `AdminPushSettings` already has its own `rounded-lg border` wrapper — render directly without wrapping in another section card to avoid double-border
+- `AdminOperatingHours` and `AdminTimeSettings` have no outer border — wrap in `<section className="rounded-xl border ...">` for visual consistency
+- `AdminTimeSettings` needs `categories` prop passed from parent — settings panel now receives `categories` from `AdminTabs`
+- Removing sidebar items from TABS array automatically removes them from TAB_ICONS type (TypeScript enforces Record<Tab, ...>)
+
+### Gotchas
+- Must also remove removed tab names from TAB_ICONS record (TypeScript fails if TABS and TAB_ICONS are out of sync)
+- The `setHours` function in the old settings panel was exclusively used by the simple Operating Hours section — safe to delete when removing that section
