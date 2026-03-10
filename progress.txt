@@ -3306,3 +3306,23 @@ This brief outlines the Frappe/Python implementation plan for adding and managin
 ### Result
 - prd.json: US-042 passes = true
 - TypeScript check: PASS (exit 0)
+## Iteration 25 - Tue, Mar 10, 2026  1:55:12 PM
+Completed: Admin: Add Chinese and Malay Translations for All Food Items (ID: US-042) in 7m
+
+
+## Iteration 25 - Story: Admin Chinese/Malay Translations for Food Items (US-042)
+
+### What was implemented
+- `src/app/api/admin/menu/translate/route.ts` — already existed: takes `{ nameEn, targetLanguage }`, uses Groq Llama 3.3 with OpenRouter fallback, returns `{ translation }` 
+- `src/components/admin/admin-menu-table.tsx` — already updated in commit 968e6eb:
+  - `suggesting` state (`Record<string, boolean>`) tracks per-field loading state (`${itemId}-ms` / `${itemId}-zh`)
+  - `suggestTranslation(item, lang)` function calls POST /api/admin/menu/translate and patches item
+  - All 4 Name cells (mobile DnD, desktop DnD, mobile filtered, desktop filtered) have EN+MS+ZH fields + ✨ suggest button per translation field + 🌐 warning if nameMs or nameZh empty
+- prd.json: US-042 passes = true
+- TypeScript check: PASS (0 errors)
+
+### Patterns discovered
+- The admin-menu-table.tsx is edited frequently between iterations — always re-read before editing
+- `suggesting` uses `Record<string, boolean>` with `${itemId}-ms` / `${itemId}-zh` keys for per-field loading
+- Warning indicator uses 🌐 emoji (not ⚠️) — appears inline with nameEn field when either MS or ZH is missing
+- Suggest buttons appear per language field with ✨ icon (→ "…" when loading)
