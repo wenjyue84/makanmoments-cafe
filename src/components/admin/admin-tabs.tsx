@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import {
   UtensilsCrossed,
   Tag,
@@ -15,14 +16,40 @@ import {
 } from "lucide-react";
 import type { MenuItemWithRules } from "@/types/menu";
 import type { BlogPost } from "@/types/blog";
-import { AdminMenuTable } from "./admin-menu-table";
-import { AdminCategoriesPanel } from "./admin-categories-panel";
-import { AdminBlogTable } from "./admin-blog-table";
-import { AdminRulesPanel } from "./admin-rules-panel";
-import { AdminTestsPanel } from "./admin-tests-panel";
-import { AdminSettingsPanel } from "./admin-settings-panel";
-import { AdminOrdersPanel } from "./admin-orders-panel";
 import { cn } from "@/lib/utils";
+
+const LoadingPlaceholder = () => (
+  <div className="p-8 text-center text-gray-400">Loading...</div>
+);
+
+const AdminMenuTable = dynamic(
+  () => import("./admin-menu-table").then((m) => m.AdminMenuTable),
+  { ssr: false, loading: LoadingPlaceholder }
+);
+const AdminCategoriesPanel = dynamic(
+  () => import("./admin-categories-panel").then((m) => m.AdminCategoriesPanel),
+  { ssr: false, loading: LoadingPlaceholder }
+);
+const AdminBlogTable = dynamic(
+  () => import("./admin-blog-table").then((m) => m.AdminBlogTable),
+  { ssr: false, loading: LoadingPlaceholder }
+);
+const AdminRulesPanel = dynamic(
+  () => import("./admin-rules-panel").then((m) => m.AdminRulesPanel),
+  { ssr: false, loading: LoadingPlaceholder }
+);
+const AdminTestsPanel = dynamic(
+  () => import("./admin-tests-panel").then((m) => m.AdminTestsPanel),
+  { ssr: false, loading: LoadingPlaceholder }
+);
+const AdminSettingsPanel = dynamic(
+  () => import("./admin-settings-panel").then((m) => m.AdminSettingsPanel),
+  { ssr: false, loading: LoadingPlaceholder }
+);
+const AdminOrdersPanel = dynamic(
+  () => import("./admin-orders-panel").then((m) => m.AdminOrdersPanel),
+  { ssr: false, loading: LoadingPlaceholder }
+);
 
 interface AdminTabsProps {
   items: MenuItemWithRules[];

@@ -9287,3 +9287,88 @@ This is a **React/Next.js** task, not a Frappe/Python one. All changes will be i
 ## Iteration 3 - Tue, Mar 10, 2026  9:29:07 PM
 Incomplete: Menu Page — Collapsible Search: Icon by Default, Expands on Tap (ID: US-107) — attempt 1/3
 
+## Iteration 6 - Tue, Mar 10, 2026  9:29:35 PM
+Incomplete: Menu Page — Collapsible Search: Icon by Default, Expands on Tap (ID: US-107) — attempt 2/3
+
+
+## Pre-analysis for US-107 (Gemini 2.5 Pro)
+### US-107: Technical Brief for Collapsible Menu Search
+
+**Project:** Next.js / React (Not Frappe/Python)
+
+**1. Primary Files to Modify:**
+*   `src/components/menu/MenuFilter.tsx`: Most likely contains the existing search input logic.
+*   `src/components/menu/MenuControls.tsx`: Likely parent component that orchestrates the filters, sorting, and search; the new state might live here.
+*   `src/app/[locale]/menu/page.tsx`: The main page component, to verify component composition.
+
+**2. Key Components & Hooks Involved:**
+*   **React Hooks:**
+    *   `useState` for managing the search bar's visibility (e.g., `isSearchOpen`).
+    *   `useEffect` and `useRef` to auto-focus the input field upon expansion.
+    *   `useEffect` to add/remove a global `keydown` event listener for the 'Escape' key.
+*   **UI Components (Shadcn/Radix & Lucide):**
+    *   `Button` (for the search icon and the close 'X' icon).
+    *   `Input` (the existing search field).
+    *   `<Search />` and `<X />` icons from `lucide-react`.
+
+**3. Recommended Implementation Approach:**
+1.  In `MenuControls.tsx` or `MenuFilter.tsx`, introduce a state variable: `const [isSearchOpen, setIsSearchOpen] = useState(false);`.
+2.  Create a floating `Button` fixed to the bottom-right of the viewport. This button will render the `<Search />` icon.
+3.  On `onClick` of this button, set `isSearchOpen(true)`.
+4.  Conditionally render the search bar component based on `isSearchOpen`. Animate its entry/exit using `framer-motion` or Tailwind CSS transitions.
+5.  When `isSearchOpen` is true, the search bar should appear (e.g., slide up from the bottom or fade in), and the search `Button` icon should change to `<X />`.
+6.  The `onClick` for the `<X />` icon and an 'Escape' keypress should set `isSearchOpen(false)`.
+7.  Use a `useEffect` to call `inputRef.current.focus()` when the search bar opens.
+
+**4. Gotchas & Edge Cases:**
+*   **Layout:** Use `position: fixed` and a high `z-index` to ensure the icon and expanded bar float above all other content without causing layout shift.
+*   **Mobile Ergonomics:** Ensure the button's position respects the safe area (`env(safe-area-inset-bottom)`) and doesn't overlap the "View Order" tray button.
+*   **Accessibility:** The icon buttons must have `aria-label` attributes. Manage focus correctly, returning it to the search icon when the bar is closed.
+
+
+## Pre-analysis for US-107 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-107.
+
+Note: The user story describes a feature for a Next.js/React frontend, not a Frappe/Python backend. The following plan is based on the React/TypeScript context provided in the story's technical notes.
+
+---
+
+### **Technical Brief: US-107 - Collapsible Menu Search**
+
+**1. Files to Modify:**
+- **`src/components/menu/menu-filter.tsx`**: This is the most likely candidate for housing the new state management and conditional rendering logic.
+- **`src/app/**/menu/page.tsx` or a parent layout component**: Might need changes to correctly position the search component, possibly using fixed or absolute positioning to float it at the bottom-right.
+
+**2. Involved Components & Hooks:**
+- **React Hooks**: `useState` will manage the `isSearchOpen` state. `useEffect` and `useRef` will be used to automatically focus the search input upon expansion.
+- **UI Components**: A new circular `IconButton` will be created using a `button` element, rendering a Lucide `Search` or `X` icon based on state.
+
+**3. Implementation Approach:**
+- Introduce a state variable: `const [isSearchOpen, setIsSearchOpen] = useState(false);`.
+- Use this state to conditionally render either the search icon button (when `false`) or the full search bar (when `true`).
+- The search icon's `onClick` handler will toggle `isSearchOpen`.
+- Add a keydown event listener to the document (inside a `useEffect` hook) to listen for the "Escape" key to collapse the search bar.
+- Use Tailwind CSS transition classes for smooth animation on properties like `width` or `opacity`.
+
+**4. Edge Cases & Gotchas:**
+- **Positioning**: The component should likely use `position: fixed` with a bottom and right offset to float above other content, ensuring it doesn't cause layout shifts.
+- **Accessibility**: Ensure the icon button has a proper `aria-label` for screen readers and its touch target is at least `44x44px`.
+- **Focus Management**: The `useEffect` that focuses the input should have `isSearchOpen` in its dependency array to trigger correctly on expansion.
+
+
+## Iteration - Story: US-097 - Bundle Size: Lazy Load Heavy Admin Components via next/dynamic
+
+### What was implemented
+- Installed @next/bundle-analyzer as devDependency
+- Updated next.config.ts: wrapped export with withBundleAnalyzer({ enabled: process.env.ANALYZE === "true" }); wrap order: withBundleAnalyzer(withNextIntl(nextConfig))
+- Replaced all 7 direct admin component imports in admin-tabs.tsx with next/dynamic: AdminMenuTable, AdminCategoriesPanel, AdminBlogTable, AdminRulesPanel, AdminTestsPanel, AdminSettingsPanel, AdminOrdersPanel
+- Shared LoadingPlaceholder component used for all dynamic import loading states
+
+### Patterns discovered
+- next/dynamic with ssr: false and .then(m => m.ComponentName) pattern works for named exports
+- Shared loading component avoids JSX in dynamic() call (cleaner)
+- withBundleAnalyzer wraps outside withNextIntl in next.config.ts
+
+### Gotchas
+- python3 on Windows needs encoding='utf-8' when reading/writing prd.json (cp1252 default fails)
+- Build succeeds cleanly with all dynamic imports — no type errors
