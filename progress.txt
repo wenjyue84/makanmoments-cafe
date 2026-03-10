@@ -13154,3 +13154,16 @@ FAILED quality gates: Add Reliability Tests to /admin/tests Panel (ID: US-142) �
 
 ### Gotchas
 - All test files were already created in prior sessions; only the panel wiring was missing
+
+## Iteration [US-141] - Story: Add Environment Variable Validation on Startup (verified pass)
+
+### What was implemented
+- Verified src/lib/env.ts exists with Zod schema validating DATABASE_URL and ADMIN_JWT_SECRET
+- src/lib/db.ts imports env.DATABASE_URL from env.ts (already done in prior iteration)
+- src/lib/auth.ts imports env.ADMIN_JWT_SECRET from env.ts (already done in prior iteration)
+- TypeScript check passes cleanly (npx tsc --noEmit from project root)
+
+### Gotchas
+- Previous TypeScript check ran from wrong directory — errors shown were not from env.ts files
+- Always run npx tsc --noEmit from the project root (makanmoments.cafe/)
+- admin-tests-panel.tsx already has "performance" category — TypeScript is clean
