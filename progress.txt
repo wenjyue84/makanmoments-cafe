@@ -820,3 +820,30 @@ Based on the user story JSON, the request is for a **frontend Next.js/React** im
 ## Iteration 2 - Tue, Mar 10, 2026 10:31:49 AM
 Completed: Mobile-First Bottom Navigation: Category Filter and Search at Bottom (ID: US-012) in 6m
 
+
+## Pre-analysis for US-013 (Gemini 2.5 Pro)
+Okay, I've analyzed the user story. It looks like this is a **Next.js/React** task, not Frappe/Python. Here is the technical brief based on the provided JSON for the front-end implementation.
+
+**Technical Brief: US-013 - Mobile Header Language Selector**
+
+*   **Primary File to Modify:**
+    *   `src/components/layout/header.tsx`: This file contains the main header structure, including the conditional logic for mobile and desktop layouts.
+
+*   **Key Components Involved:**
+    *   `src/components/theme/theme-toggle.tsx`: The dark/light mode switch that needs to be relocated.
+    *   `src/components/i18n/locale-switcher.tsx`: The language selection component that will be moved into the mobile header.
+    *   `src/components/layout/mobile-nav.tsx`: The likely destination for the `ThemeToggle` component.
+
+*   **Implementation Approach:**
+    1.  Open `src/components/layout/header.tsx`.
+    2.  Locate the flex container for the mobile header (likely styled with `md:hidden`).
+    3.  Remove the `<ThemeToggle />` component from this mobile view.
+    4.  Insert the `<LocaleSwitcher />` component, positioning it just before the mobile menu/hamburger button.
+    5.  Open `src/components/layout/mobile-nav.tsx` (or a similar mobile drawer component) and place the `<ThemeToggle />` inside its main view.
+    6.  Adjust the styling in `locale-switcher.tsx` to ensure it is compact for the mobile header, displaying only the short locale code (e.g., 'EN') as specified.
+
+*   **Edge Cases & Gotchas:**
+    *   **Styling Overrides:** The `LocaleSwitcher` may need specific responsive styles to ensure it renders correctly as a compact element in the header without disrupting the layout.
+    *   **Layout Shift:** Ensure the new element doesn't push the hamburger menu or logo, causing a layout shift, especially on narrow screens (e.g., 390px). Use flexbox properties carefully.
+    *   **State & Interactivity:** The dropdown/modal for the language selector must not conflict with the mobile navigation drawer's state or overlay.
+
