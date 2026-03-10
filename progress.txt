@@ -9635,3 +9635,26 @@ Note: The story describes a frontend change in a Next.js/React application, not 
 ### Gotchas
 - Python script needs `encoding='utf-8'` on Windows for prd.json (has special chars)
 - TypeScript check passes clean (0 errors)
+
+## Iteration N - Story: US-106 + US-108 — Menu Category Filter Bar
+
+### What was implemented
+- US-106 (Single-Row Category Filter Bar):
+  - Category pills container already had `flex-nowrap overflow-x-auto` — already correct
+  - Added `scrollbar-hide` class (already defined in globals.css as `.scrollbar-hide`)
+  - Added `snap-x snap-mandatory` to container + `md:snap-none` to disable on desktop
+  - All pills already had `flex-shrink-0` — added `snap-start` to each pill
+- US-108 (Show Category Bar Only After Scrolling Down):
+  - Added `isBarVisible` state, initialized to `false` (hidden on load)
+  - Added `useEffect` scroll listener: `setIsBarVisible(window.scrollY > 100)`
+  - Applied `translate-y-full` when hidden, `translate-y-0` when visible, `transition-transform duration-300`
+  - Added `md:translate-y-0` to ensure desktop always shows (no slide effect)
+
+### Patterns discovered
+- `globals.css` already had `.scrollbar-hide` CSS utility defined under US-106 comment
+- The category bar was already `fixed bottom-16` — the `translate-y-full` approach works perfectly with fixed positioning
+- Both stories implemented in one iteration since US-106 was already mostly done
+
+### Gotchas
+- TypeScript encoding issue: must use `encoding='utf-8'` when reading prd.json with Python
+- `md:translate-y-0` needed to prevent translate affecting desktop layout (md resets to relative)

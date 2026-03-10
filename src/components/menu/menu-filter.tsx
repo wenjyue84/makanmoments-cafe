@@ -126,11 +126,13 @@ export function MenuFilter({
     <div
       className={cn(
         // Mobile: fixed bottom bar above tray/chat widgets (bottom-16 = 4rem gap)
-        "fixed bottom-16 left-0 right-0 z-40",
+        // US-108: slide up when visible, slide down (off-screen) when at top
+        "fixed bottom-16 left-0 right-0 z-40 transition-transform duration-300",
+        isBarVisible ? "translate-y-0" : "translate-y-full",
         "border-t border-border bg-background/95 backdrop-blur-sm",
         "px-4 pt-3",
-        // Desktop: inline layout at top, full reset
-        "md:relative md:bottom-auto md:left-auto md:right-auto",
+        // Desktop: always visible, no slide animation
+        "md:relative md:bottom-auto md:left-auto md:right-auto md:translate-y-0",
         "md:border-0 md:bg-transparent md:backdrop-blur-none",
         "md:px-0 md:pt-0 md:pb-0 md:mb-6 md:space-y-4"
       )}
