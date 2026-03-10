@@ -2660,3 +2660,59 @@ This is a Next.js/TypeScript project. The "Frappe/Python" context seems incorrec
 ### Gotchas
 - `prd.json` must be read/written with `encoding='utf-8'` in Python (has non-ASCII chars)
 - Menu page has `revalidate = 300` — up to 5 min lag at hour boundaries (acceptable for operating hours)
+## Iteration 18 - Tue, Mar 10, 2026 12:50:00 PM
+Completed: Operating Hours Alert for Non-Admin Users Outside Ordering Time (ID: US-036) in 8m
+
+
+## Pre-analysis for US-037 (Gemini 2.5 Pro)
+Based on the user story JSON, the request pertains to a **Next.js/TypeScript** application, not Frappe/Python. The following technical brief is based on the provided JSON's content.
+
+**Project:** Makan Moments Cafe (Next.js/TypeScript)
+**User Story:** US-037: AI Helper for Rule Configuration
+
+### 1. Key Files to Modify/Create
+
+*   **`src/components/admin/admin-rules-ai-helper.tsx`**: (New File) The core UI component for the AI helper, containing the chat input and a display for the suggested rule.
+*   **`src/app/api/admin/rules/ai-suggest/route.ts`**: (New File) The API endpoint that will process the natural language input and return a structured rule suggestion.
+*   **Component containing the "Rules Tab"**: (Existing, needs modification) This parent component will need to be updated to integrate the new `admin-rules-ai-helper.tsx` and handle the state logic for pre-filling the rule form.
+*   **`src/lib/chat/provider.ts`**: (Existing) This will be leveraged by the new API route to communicate with the AI model.
+
+### 2. Core Components & Data Flow
+
+*   **UI Component**: `admin-rules-ai-helper.tsx` will capture the user's text.
+*   **API Route**: The `ai-suggest` route will receive the text, build a system prompt explaining the `Rule` schema (types, targets, fields), and query the AI.
+*   **State Management**: The parent admin page's state will be updated by the `admin-rules-ai-helper.tsx` component to pre-fill the rule creation form.
+
+### 3. Recommended Implementation Approach
+
+1.  Develop the `admin-rules-ai-helper.tsx` component with a text area and "Generate" button.
+2.  Create the `ai-suggest` API route. This route should fetch dynamic data (e.g., current menu categories) to include in the system prompt.
+3.  The system prompt must explicitly instruct the AI to return a response in a specific JSON format matching the `Rule` schema.
+4.  On the frontend, when the API returns the JSON suggestion, use it to update the state of the main rule form, pre-filling the inputs for the admin to review.
+
+### 4. Edge Cases & Gotchas
+
+*   **Invalid JSON Response**: The AI may return malformed JSON. The API route must have robust error handling and validation to parse the AI's output safely.
+*   **Data Hallucination**: The AI might suggest invalid categories or parameters. The backend should validate the suggested values against the database before returning them to the client.
+*   **Schema Synchronization**: The system prompt defining the `Rule` schema must be kept in sync with the actual data model to avoid generating outdated or incorrect rules.
+
+
+
+## Iteration 20 - Story: Operating Hours Alert for Non-Admin Users (US-036)
+
+### What was implemented
+- Most components were already committed by a prior iteration (availability.ts, operating-hours-alert.tsx, admin-operating-hours.tsx, operating-hours/route.ts, data/operating-hours.json, admin-tabs.tsx)
+- The only missing piece: wired `OperatingHoursAlert` into `src/app/[locale]/layout.tsx` with admin detection via cookie
+- Layout now: reads admin token from cookie, calls `getOperatingStatus()`, passes status to `<OperatingHoursAlert />`
+- Alert renders sticky non-dismissible banner below header on all pages when cafe is closed or after last order
+- Admin users bypass the alert (opStatus forced to 'open')
+
+### Patterns discovered
+- Pre-built components can be already committed but NOT wired into layout - check layout.tsx as the final wiring point
+- `cookies()` from next/headers can be called in server-side layout alongside `params` without issues
+- OperatingStatus type: 'open' | 'after_last_order' | 'closed' (no 'before_open' - combines with 'closed')
+- Alert component is in `src/components/menu/` (not `layout/`) with sticky top-0 z-40 positioning
+
+### Gotchas
+- prd.json was showing US-036 passes:false even though most code was committed - layout wiring was the gap
+- The layout is now dynamic per-request (uses cookies()) which is correct for auth/time-based checks

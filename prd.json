@@ -1646,6 +1646,54 @@
       ],
       "estimatedComplexity": "small",
       "passes": false
+    },
+    {
+      "id": "US-059",
+      "title": "Bug Fix: Admin Image Changes Not Reflected on Public Menu Page",
+      "priority": 59,
+      "description": "When admin uploads or changes an image for a menu item (e.g. MT04, MT01) via the admin panel, the change is not reflected on the public menu page at /en/menu. This is likely a caching issue — Next.js ISR cache or the image optimisation cache is serving the old image. Fix by: revalidating the menu page cache on image update, and ensuring the image URL includes a cache-busting mechanism.",
+      "acceptanceCriteria": [
+        "After admin uploads a new image for any menu item, the public /en/menu page reflects the new image within 1 page reload (no waiting for ISR expiry)",
+        "The fix works for items like MT04 (Seafood Tom Yum) and MT01 (Pineapple Fried Rice)",
+        "No manual server restart required to see the update",
+        "Admin sees a confirmation that the image was saved and the page cache was cleared",
+        "Verify: upload new image for MT04 in admin → open /en/menu in a new tab → new image displayed"
+      ],
+      "technicalNotes": [
+        "Root cause is likely one of: (1) Next.js ISR cache (revalidate = 1800) not purged on image save, (2) next/image optimisation cache serving old image at the same URL, or (3) image file written to disk but menu data (photo field) not updated in DB",
+        "Fix 1 — revalidate on save: after PATCH /api/admin/menu/[id] with new image, call revalidatePath('/[locale]/menu', 'page') for all locales (en, ms, zh)",
+        "Fix 2 — cache-bust image URL: append ?v={updatedAt timestamp} to the image src so next/image treats it as a new URL: src={`/images/menu/${item.code}.jpg?v=${item.updatedAt}`}",
+        "Fix 3 — confirm DB update: ensure the image upload API (POST /api/admin/images or similar) actually updates a field in menu_items (e.g. photo_updated_at = NOW())",
+        "Check src/app/api/admin/images/route.ts — confirm it writes the file AND updates the DB",
+        "Check src/app/[locale]/menu/page.tsx — add revalidatePath call after any menu item update",
+        "Use Chrome DevTools Network tab to verify the image request URL and response headers (Cache-Control)"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-060",
+      "title": "Remove Notion-Specific UI Text from Homepage Highlights",
+      "priority": 60,
+      "description": "The homepage or admin panel displays the text 'Featured items are managed in Notion — mark menu items as featured there to change what appears here.' This is outdated — the system no longer uses Notion for menu management. Remove this text and replace with accurate guidance pointing to the admin panel instead.",
+      "acceptanceCriteria": [
+        "The text 'Featured items are managed in Notion' is completely removed from all pages and components",
+        "If a replacement hint is needed, it says something like: 'Manage featured items in Admin → Menu → toggle the Featured flag'",
+        "Search the entire codebase for 'Notion' references in UI-facing strings and remove/replace any that are no longer accurate",
+        "No other Notion-specific UI text remains visible to users or admins",
+        "Verify: search rendered pages for 'Notion' — no visible references remain"
+      ],
+      "technicalNotes": [
+        "Search codebase: grep -r 'Notion' src/ messages/ --include='*.tsx' --include='*.ts' --include='*.json' to find all occurrences",
+        "The specific string is likely in src/components/home/highlights.tsx or src/components/admin/admin-categories-panel.tsx or a message translation file",
+        "Remove or replace the string in the component and in all 3 messages/*.json files (en, ms, zh)",
+        "Also check knowledge/*.md files — if they mention Notion as the CMS, update to say 'admin panel'",
+        "Do a final grep to confirm no 'Notion' UI strings remain in rendered output"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
     }
   ]
 }
