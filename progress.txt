@@ -3754,3 +3754,20 @@ This brief details the implementation plan for adding programmatic tests for use
 ### Result
 - prd.json: US-046 passes = true
 - TypeScript check: PASS (exit 0)
+
+## Iteration 29 - Story: Rename button to Send Order / Send Order to Waiter (US-047)
+
+### What was implemented
+- Added `tray.sendOrder` and `tray.sendOrderToWaiter` keys to messages/en.json, ms.json, zh.json
+- Updated button in `tray-widget.tsx` (line 202) to use responsive text:
+  - `<span class="hidden md:inline">` for "Send Order to Waiter" (desktop)
+  - `<span class="md:hidden">` for "Send Order" (mobile)
+- Old `tray.checkout` key retained for backwards compat (not removed)
+
+### Patterns discovered
+- i18n files at `messages/{locale}.json` use flat dot-notation namespace `tray.*`
+- next-intl `useTranslations("tray")` resolves keys at runtime
+- Responsive text via Tailwind `hidden md:inline` / `md:hidden` spans inside button
+
+### Gotchas
+- tray-widget.tsx uses `t("checkout")` for the old button label — preserved to avoid breaking anything that might reference it
