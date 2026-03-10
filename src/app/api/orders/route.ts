@@ -44,16 +44,21 @@ async function sendPushToAllAdmins(itemCount: number, total: number) {
   }
 }
 
+// Malaysian phone: allows +60, 60, or 0 prefix, then 1x followed by 8–9 digits
+const MALAYSIAN_PHONE_RE = /^(\+?60|0)1[0-9]{8,9}$/;
+
 export const runtime = "nodejs";
 
 // Public endpoint — no auth required.
-// Called by the tray widget when customer clicks "Show Order to Waiter".
+// Called by order-form-modal when customer submits their pre-order.
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { items, total } = body as {
+    const { items, total, contactNumber, estimatedArrival } = body as {
       items: { id: string; name: string; price: number; quantity: number }[];
       total: number;
+      contactNumber?: string;
+      estimatedArrival?: string;
     };
 
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -63,20 +68,63 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "total is required" }, { status: 400 });
     }
 
-    // Ensure table exists — idempotent, safe to run on every request.
+    // Validate Malaysian contact number
+    const normalizedPhone = (contactNumber ?? "").replace(/[-\s]/g, "");
+    if (!normalizedPhone || !MALAYSIAN_PHONE_RE.test(normalizedPhone)) {
+      return NextResponse.json(
+        { error: "Invalid Malaysian phone number (e.g. 0123456789 or +60123456789)" },
+        { status: 400 }
+      );
+    }
+
+    // Validate estimated arrival — must be at least 15 min from now
+    if (!estimatedArrival) {
+      return NextResponse.json({ error: "estimatedArrival is required" }, { status: 400 });
+    }
+    const arrivalTime = new Date(estimatedArrival);
+    if (isNaN(arrivalTime.getTime())) {
+      return NextResponse.json({ error: "estimatedArrival is not a valid date" }, { status: 400 });
+    }
+    const minArrival = new Date(Date.now() + 14 * 60 * 1000); // 14 min buffer for server clock drift
+    if (arrivalTime < minArrival) {
+      return NextResponse.json(
+        { error: "Arrival time must be at least 15 minutes from now" },
+        { status: 400 }
+      );
+    }
+
+    // Ensure table exists with full schema (idempotent)
     await sql`
       CREATE TABLE IF NOT EXISTS tray_orders (
-        id         SERIAL PRIMARY KEY,
-        items      JSONB NOT NULL,
-        total      NUMERIC(8,2) NOT NULL,
-        status     TEXT NOT NULL DEFAULT 'pending',
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+        id                     SERIAL PRIMARY KEY,
+        items                  JSONB NOT NULL,
+        total                  NUMERIC(8,2) NOT NULL,
+        status                 TEXT NOT NULL DEFAULT 'pending_approval',
+        contact_number         TEXT,
+        estimated_arrival      TIMESTAMPTZ,
+        estimated_ready        TIMESTAMPTZ,
+        rejection_reason       TEXT,
+        payment_screenshot_url TEXT,
+        created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `;
 
+    // Add missing columns to pre-existing tables (idempotent migration)
+    await sql`ALTER TABLE tray_orders ADD COLUMN IF NOT EXISTS contact_number TEXT`;
+    await sql`ALTER TABLE tray_orders ADD COLUMN IF NOT EXISTS estimated_arrival TIMESTAMPTZ`;
+    await sql`ALTER TABLE tray_orders ADD COLUMN IF NOT EXISTS estimated_ready TIMESTAMPTZ`;
+    await sql`ALTER TABLE tray_orders ADD COLUMN IF NOT EXISTS rejection_reason TEXT`;
+    await sql`ALTER TABLE tray_orders ADD COLUMN IF NOT EXISTS payment_screenshot_url TEXT`;
+
     const rows = await sql`
-      INSERT INTO tray_orders (items, total)
-      VALUES (${JSON.stringify(items)}, ${total})
+      INSERT INTO tray_orders (items, total, status, contact_number, estimated_arrival)
+      VALUES (
+        ${JSON.stringify(items)},
+        ${total},
+        'pending_approval',
+        ${normalizedPhone},
+        ${arrivalTime.toISOString()}
+      )
       RETURNING id, created_at
     `;
 

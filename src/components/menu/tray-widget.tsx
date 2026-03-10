@@ -5,6 +5,7 @@ import { ShoppingCart, X, Minus, Plus, ChevronDown, ChevronUp, Clock } from "luc
 import { useTray } from "@/lib/tray-context";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
+import { OrderFormModal } from "./order-form-modal";
 
 const ORDER_HISTORY_KEY = "mm_order_history";
 const MAX_HISTORY = 5;
@@ -67,8 +68,7 @@ function StatusBadge({ status }: { status: OrderHistoryEntry["status"] }) {
 
 export function TrayWidget() {
     const [open, setOpen] = useState(false);
-    const [checkoutMode, setCheckoutMode] = useState(false);
-    const [submitting, setSubmitting] = useState(false);
+    const [showOrderForm, setShowOrderForm] = useState(false);
     const [orderHistory, setOrderHistory] = useState<OrderHistoryEntry[]>([]);
     const [historyOpen, setHistoryOpen] = useState(false);
     const { items, addItem, removeItem, clearTray, totalPrice } = useTray();
@@ -78,7 +78,7 @@ export function TrayWidget() {
 
     const hasTomYum = items.some(i => i.name.toLowerCase().includes('tom yum'));
     const hasOmelette = items.some(i => i.name.toLowerCase().includes('omelette'));
-    const showPairingBanner = hasTomYum && !hasOmelette && !checkoutMode;
+    const showPairingBanner = hasTomYum && !hasOmelette;
 
     // Load history from localStorage on mount
     useEffect(() => {
@@ -131,10 +131,7 @@ export function TrayWidget() {
             {open && (
                 <div
                     className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity"
-                    onClick={() => {
-                        setOpen(false);
-                        setCheckoutMode(false);
-                    }}
+                    onClick={() => setOpen(false)}
                 />
             )}
 
@@ -148,10 +145,7 @@ export function TrayWidget() {
                 <div className="flex items-center justify-between border-b p-4">
                     <h2 className="text-xl font-bold">{t("title")}</h2>
                     <button
-                        onClick={() => {
-                            setOpen(false);
-                            setCheckoutMode(false);
-                        }}
+                        onClick={() => setOpen(false)}
                         className="rounded-full p-2 hover:bg-muted transition-colors"
                     >
                         <X className="h-5 w-5" />
@@ -188,58 +182,6 @@ export function TrayWidget() {
                         <div className="flex h-40 flex-col items-center justify-center text-muted-foreground opacity-60">
                             <ShoppingCart className="h-16 w-16 mb-4" />
                             <p className="text-lg">{t("empty")}</p>
-                        </div>
-                    ) : checkoutMode ? (
-                        <div className="space-y-6">
-                            <div className="bg-yellow-100 dark:bg-yellow-900/30 p-5 rounded-xl text-center shadow-sm">
-                                <p className="font-semibold text-xl md:text-2xl text-yellow-900 dark:text-yellow-100">
-                                    {t("checkoutInstructions")}
-                                </p>
-                            </div>
-
-                            {/* Upsell Banner */}
-                            {!items.find((i) => i.id === "BV01") && (
-                                <div className="bg-orange-50 dark:bg-orange-950/40 border border-orange-200 dark:border-orange-800/60 rounded-xl p-5 overflow-hidden relative shadow-sm">
-                                    <div className="absolute top-0 right-0 bg-orange-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider shadow-sm">
-                                        Wait!
-                                    </div>
-                                    <div className="flex items-start gap-4 mb-4 mt-2">
-                                        <div className="flex-1">
-                                            <h3 className="font-bold text-lg mb-1 text-orange-900 dark:text-orange-100 leading-tight">Complete your meal?</h3>
-                                            <p className="text-sm text-balance text-orange-700 dark:text-orange-300/80">
-                                                Add a Refreshing Lemon Tea for only <strong>RM 4.90</strong>!
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={() => {
-                                            addItem({ id: "BV01", name: "Refreshing Lemon Tea", price: 4.90 });
-                                        }}
-                                        className="w-full py-3 bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-white rounded-xl font-semibold transition-all shadow-sm flex items-center justify-center gap-2"
-                                    >
-                                        <Plus className="h-5 w-5" />
-                                        Add to Order
-                                    </button>
-                                </div>
-                            )}
-
-                            <div className="space-y-4 pt-2">
-                                {items.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="flex items-center justify-between border-b border-border/40 pb-4 last:border-0 text-xl font-bold"
-                                    >
-                                        <div className="flex items-center gap-4">
-                                            <span className="flex items-center justify-center bg-primary/10 text-primary rounded-lg h-9 w-9 text-base">
-                                                {item.quantity}x
-                                            </span>
-                                            <span>
-                                                {item.id} {item.name}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -323,76 +265,19 @@ export function TrayWidget() {
                     )}
                 </div>
 
-                {items.length > 0 && !checkoutMode && (
+                {items.length > 0 && (
                     <div className="border-t p-5 space-y-4 bg-background z-10">
                         <div className="flex justify-between items-center text-xl font-bold">
                             <span>{t("total")}</span>
                             <span className="text-primary">RM {totalPrice.toFixed(2)}</span>
                         </div>
                         <button
-                            onClick={async () => {
-                                setSubmitting(true);
-                                try {
-                                    const res = await fetch("/api/orders", {
-                                        method: "POST",
-                                        headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({ items, total: totalPrice }),
-                                    });
-                                    if (res.ok) {
-                                        const data = await res.json() as { ok: boolean; id?: number };
-                                        if (data.id) {
-                                            const entry: OrderHistoryEntry = {
-                                                id: data.id,
-                                                items: items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
-                                                total: totalPrice,
-                                                timestamp: new Date().toISOString(),
-                                                status: "pending",
-                                            };
-                                            setOrderHistory(prev => {
-                                                const updated = [entry, ...prev].slice(0, MAX_HISTORY);
-                                                saveHistory(updated);
-                                                return updated;
-                                            });
-                                        }
-                                    }
-                                } catch {
-                                    // Non-critical — proceed to checkout regardless
-                                } finally {
-                                    setSubmitting(false);
-                                }
-                                setCheckoutMode(true);
-                            }}
-                            disabled={submitting}
-                            className="w-full rounded-full bg-primary py-4 text-primary-foreground font-bold text-lg hover:bg-primary/90 flex justify-center items-center gap-2 shadow-lg transition-transform active:scale-[0.98] disabled:opacity-70"
+                            onClick={() => setShowOrderForm(true)}
+                            className="w-full rounded-full bg-primary py-4 text-primary-foreground font-bold text-lg hover:bg-primary/90 flex justify-center items-center gap-2 shadow-lg transition-transform active:scale-[0.98]"
                         >
                             <ShoppingCart className="h-6 w-6" />
-                            {submitting ? "Sending…" : (
-                                <>
-                                    <span className="hidden md:inline">{t("sendOrderToWaiter")}</span>
-                                    <span className="md:hidden">{t("sendOrder")}</span>
-                                </>
-                            )}
-                        </button>
-                    </div>
-                )}
-
-                {checkoutMode && (
-                    <div className="p-5 bg-background border-t flex gap-3 z-10">
-                        <button
-                            onClick={() => setCheckoutMode(false)}
-                            className="flex-1 rounded-full border-2 border-muted-foreground/20 py-4 font-semibold text-lg hover:bg-muted transition-colors"
-                        >
-                            Back
-                        </button>
-                        <button
-                            onClick={() => {
-                                clearTray();
-                                setOpen(false);
-                                setCheckoutMode(false);
-                            }}
-                            className="flex-[2] rounded-full bg-green-600 text-white py-4 font-semibold text-lg hover:bg-green-700 transition-colors shadow-lg active:scale-[0.98]"
-                        >
-                            Done
+                            <span className="hidden md:inline">{t("sendOrderToWaiter")}</span>
+                            <span className="md:hidden">{t("sendOrder")}</span>
                         </button>
                     </div>
                 )}
@@ -411,6 +296,30 @@ export function TrayWidget() {
                     <ShoppingCart className="h-6 w-6" />
                     {totalItems > 0 && <span className="font-bold text-lg">{totalItems}</span>}
                 </button>
+            )}
+
+            {/* Pre-order form modal */}
+            {showOrderForm && (
+                <OrderFormModal
+                    items={items}
+                    total={totalPrice}
+                    onSuccess={(orderId) => {
+                        const entry: OrderHistoryEntry = {
+                            id: orderId,
+                            items: items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+                            total: totalPrice,
+                            timestamp: new Date().toISOString(),
+                            status: "pending",
+                        };
+                        setOrderHistory(prev => {
+                            const updated = [entry, ...prev].slice(0, MAX_HISTORY);
+                            saveHistory(updated);
+                            return updated;
+                        });
+                        clearTray();
+                    }}
+                    onClose={() => setShowOrderForm(false)}
+                />
             )}
         </>
     );

@@ -98,5 +98,25 @@
     "ingredients": "Key Ingredients",
     "preparation": "How We Make It",
     "close": "Close"
+  },
+  "orderForm": {
+    "title": "Complete Your Pre-Order",
+    "titleConfirm": "Order Confirmed!",
+    "contactLabel": "Contact Number",
+    "contactPlaceholder": "012-3456789",
+    "contactRequired": "Contact number is required",
+    "contactInvalid": "Please enter a valid Malaysian number (e.g. 012-3456789)",
+    "arrivalLabel": "Estimated Arrival Time",
+    "arrivalMin": "Minimum 15 minutes from now",
+    "arrivalRequired": "Arrival time is required",
+    "arrivalTooSoon": "Arrival time must be at least 15 minutes from now",
+    "submitError": "Failed to submit order. Please try again.",
+    "submit": "Confirm Pre-Order",
+    "submitting": "Submitting\u2026",
+    "done": "Done",
+    "awaitingConfirmation": "Awaiting confirmation",
+    "whatNext": "What happens next?",
+    "whatNextDesc": "Our team will review your order and confirm it shortly. You\u2019ll see the status update in your order history.",
+    "orderNumber": "Order #{id}"
   }
 }

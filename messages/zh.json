@@ -98,5 +98,25 @@
     "ingredients": "主要食材",
     "preparation": "烹饪方式",
     "close": "关闭"
+  },
+  "orderForm": {
+    "title": "完成预订",
+    "titleConfirm": "订单已确认！",
+    "contactLabel": "联系电话",
+    "contactPlaceholder": "012-3456789",
+    "contactRequired": "请填写联系电话",
+    "contactInvalid": "请输入有效的马来西亚电话号码（如 012-3456789）",
+    "arrivalLabel": "预计到达时间",
+    "arrivalMin": "至少需提前15分钟",
+    "arrivalRequired": "请填写到达时间",
+    "arrivalTooSoon": "到达时间必须在15分钟后",
+    "submitError": "提交订单失败，请重试。",
+    "submit": "确认预订",
+    "submitting": "提交中\u2026",
+    "done": "完成",
+    "awaitingConfirmation": "待确认",
+    "whatNext": "接下来会发生什么？",
+    "whatNextDesc": "我们的团队将会审查您的订单并尽快确认。您可以在订单历史中查看状态更新。",
+    "orderNumber": "订单 #{id}"
   }
 }
