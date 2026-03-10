@@ -1448,3 +1448,57 @@ Create a Node.js script to find specific menu item codes from the database, then
 - Source filename "ap01nasi ayam penyet a5.jpg" has no space between "ap01" and "nasi" — check carefully
 - `a5 kl curry mee.png` is in ver-4.5 subfolder, not in "Frequently used"
 - DB item code `Thai-styled_green_cu` is truncated from the full name
+## Iteration 8 - Tue, Mar 10, 2026 11:19:45 AM
+Completed: Add Cafe Logo to Header and Footer (ID: US-019) in 9m
+
+
+## Pre-analysis for US-021 (Gemini 2.5 Pro)
+### Technical Brief: US-021 Theming Update
+
+**Project:** Makan Moments Cafe (Next.js / Tailwind CSS)
+
+**Objective:** Transition the primary theme color from the current red/terracotta to an earthy, natural green derived from the cafe's logo aesthetic.
+
+**Correction:** The user story refers to a Next.js/React frontend project using Tailwind CSS, not a Frappe/Python application. All modifications will be to CSS files.
+
+**1. Primary File for Modification:**
+*   `src/app/globals.css`: This file contains the root CSS variables (`:root` and `.dark`) that control the application's `shadcn/ui` color theme.
+
+**2. Frappe DocTypes / Hooks Involved:**
+*   None. This is a frontend CSS task.
+
+**3. Recommended Implementation Approach:**
+1.  Open `src/app/globals.css`.
+2.  In the `:root` selector, locate the `--primary` CSS variable.
+3.  Change its `oklch()` value from the current red to a dark, natural green (e.g., `oklch(0.42 0.14 145)`).
+4.  Update the `--primary-foreground` variable to an off-white for contrast (e.g., `oklch(0.98 0.01 145)`).
+5.  In the `.dark` selector, set `--primary` to a slightly lighter green to ensure visibility in dark mode (e.g., `oklch(0.55 0.16 145)`).
+6.  Test the application in both light and dark modes to verify that buttons, active links, and other primary accents have adopted the new color.
+
+**4. Edge Cases & Gotchas:**
+*   **Color Contrast:** Ensure the chosen green provides sufficient accessibility contrast against background and foreground colors.
+*   **Color Harmony:** The green should feel natural and complementary to the existing "linen" and neutral tones, not clash.
+*   **Caching:** Use a hard refresh to ensure you are seeing the latest CSS changes during testing.
+
+
+## Iteration - Story: US-021 Green Theme Using Logo Colors
+
+### What was implemented
+- Changed `--primary` in `:root` from terracotta `oklch(0.50 0.19 22)` to forest green `oklch(0.42 0.14 145)`
+- Changed `--primary-foreground` to green-tinted near-white `oklch(0.98 0.01 145)`
+- Changed `--ring` to match green primary
+- Updated `--sidebar-primary` and `--sidebar-ring` in light mode to match
+- In `.dark`: changed `--primary` to `oklch(0.55 0.16 145)` (lighter green for dark mode), `--primary-foreground` to `oklch(0.12 0.015 145)`
+- Updated dark mode sidebar vars to match
+- Updated 3 hardcoded `oklch(0.50 0.19 22 / ...)` references in utility classes (hover-lift shadow, glow-pulse keyframes)
+- Kept `--destructive` as red (semantically correct)
+
+### Patterns discovered
+- Logo color is deep forest green (~`#1a6b45`), OKLCH ≈ `oklch(0.42 0.14 145)` — use this as canonical green
+- Hue 145 = forest green in OKLCH color space
+- Dark mode needs lighter L value (~0.55) for sufficient contrast on dark backgrounds
+- Utility classes have hardcoded color values that also need updating when changing theme color
+
+### Gotchas
+- globals.css has many hardcoded OKLCH values beyond CSS variables — search for the old hue (22) before finishing
+- Both TypeScript check and lint passed with no errors (CSS-only change)
