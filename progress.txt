@@ -6371,3 +6371,58 @@ Completed: Admin: Multiple Images per Menu Item (Up to 3) (ID: US-071) in 8m
 *   **Layout Shift (CLS):** Ensure the hero `next/image` component uses the `priority` prop and has explicit dimensions to prevent layout shift.
 *   **Accessibility:** Confirm the final orange background and white text combination meets WCAG AA contrast ratios.
 
+## Iteration 43 - Tue, Mar 10, 2026  5:22:32 PM
+Completed: Admin: Multiple Images per Menu Item (Up to 3) (ID: US-071) in 11m
+
+
+## Pre-analysis for US-072 (Gemini 2.5 Pro)
+### Technical Brief: US-072 Mobile Homepage CTA
+
+**1. Primary File to Modify:**
+*   `src/components/home/hero-section.tsx`
+
+**2. Framework/Libraries Involved:**
+*   Next.js / React
+*   Tailwind CSS
+
+**3. Implementation Approach:**
+*   Locate the `<Link>` or `<button>` component for the 'View Menu' CTA within `hero-section.tsx`.
+*   Apply Tailwind CSS classes to make it the primary focus on mobile.
+    *   Set width to `w-full` for mobile and `sm:w-auto` for larger screens.
+    *   Enforce a minimum height of `min-h-[52px]` and increase font size (`text-lg`, `font-bold`).
+    *   Use high-contrast brand colors: `bg-orange-500`, `text-white`.
+*   Adjust the hero section's container `div` to have a `max-h-[75vh]` or similar on mobile to ensure the button is visible above the fold.
+*   Use responsive modifiers (`hidden lg:block`) to hide any secondary, decorative elements on small screens to reduce clutter.
+
+**4. Edge Cases & Gotchas:**
+*   Verify the CTA placement is below the main headline for readability, not overlapping the image.
+*   Ensure the larger button size doesn't introduce horizontal overflow on very narrow screens (e.g., iPhone SE at 375px).
+*   Confirm that responsive classes (`sm:`, `lg:`) correctly restore the original desktop layout.
+*   Test on a real device to check for any unexpected behavior related to viewport height units (`vh`).
+
+
+## Iteration 44 - Tue, Mar 10, 2026
+Completed: Mobile Homepage: Prominent 'View Menu' CTA Above Fold (ID: US-072)
+
+### What was implemented
+- `src/components/home/hero-section.tsx`: Multiple changes to ensure CTA is above fold on 390px mobile:
+  1. Section: Added `max-h-[80vh] sm:max-h-none` to limit mobile height
+  2. Section padding: `py-8` → `py-3` on mobile (sm:py-16 unchanged)
+  3. Mobile hero image: `aspect-[4/3]` → `aspect-[2/1]` (293px → 195px at 390px)
+  4. Content gap: `gap-6` → `gap-4`
+  5. H1: `text-5xl` → `text-4xl` on mobile (sm:text-6xl unchanged)
+  6. Tagline/subtitle: Reduced top margins (mt-3 → mt-2, mt-5 → mt-2)
+  7. "View Menu" button: Added `w-full sm:w-auto min-h-[52px] rounded-xl text-lg font-bold bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-md`
+  8. CTA container: `flex-col sm:flex-row` so button is full-width on mobile
+  9. Secondary CTA ("Order Now"): hidden on mobile (`hidden sm:inline-flex`)
+  10. Trust badges: hidden on mobile (`hidden sm:flex`) to reduce space
+
+### Patterns discovered
+- Button component uses CVA variants — className overrides take precedence (no need to modify the component)
+- `bg-orange-500` overrides the `bg-primary` from the default variant via className specificity
+- Mobile layout calculation at 390px: 12 (padding) + 195 (image) + 16 (gap) + 44 (badge) + 44 (h1) + 32 (tagline) + 48 (subtitle) + 76 (CTA mt-6+52px) + 12 (padding) ≈ 479px — well within any mobile viewport
+
+### Gotchas
+- Tailwind `max-h-[80vh]` + `overflow-hidden` on section: safe since content fits within 80vh after layout changes
+- `sm:max-h-none` needed to remove the mobile-only max-height constraint on tablet/desktop
+- TypeScript: 0 errors (no type changes needed — all Tailwind className changes)

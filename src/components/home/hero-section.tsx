@@ -21,12 +21,12 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: Hero
   const subtitle = heroSubtitle || t("heroSubtitle");
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-primary/8 via-background to-accent/15">
-      <div className="mx-auto max-w-6xl px-4 py-8 sm:py-16 lg:py-24">
-        <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-center lg:gap-16">
+    <section className="relative overflow-hidden bg-gradient-to-br from-primary/8 via-background to-accent/15 max-h-[80vh] sm:max-h-none">
+      <div className="mx-auto max-w-6xl px-4 py-3 sm:py-16 lg:py-24">
+        <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-center lg:gap-16">
 
           {/* Mobile hero image — FIRST so food is above the fold on mobile */}
-          <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-2xl lg:hidden animate-fade-in">
+          <div className="relative aspect-[2/1] w-full overflow-hidden rounded-2xl shadow-2xl lg:hidden animate-fade-in">
             <Image
               src="/images/hero/hero-mobile.webp"
               alt="RM55.90 Steamed Fish Promo Set — premium Thai-style steamed fish at Makan Moments Cafe"
@@ -55,7 +55,7 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: Hero
             </div>
 
             <h1
-              className="font-display text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl animate-fade-up"
+              className="font-display text-4xl font-bold tracking-tight sm:text-6xl lg:text-7xl animate-fade-up"
               style={{ "--delay": "80ms" } as CSSProperties}
             >
               <span className="text-primary">{title}</span>
@@ -63,29 +63,32 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: Hero
 
             {/* /bolder: Italic tagline with Playfair Display */}
             <p
-              className="mt-3 font-display text-lg italic text-primary/75 animate-fade-up"
+              className="mt-2 font-display text-base italic text-primary/75 sm:text-lg animate-fade-up"
               style={{ "--delay": "160ms" } as CSSProperties}
             >
               {tagline}
             </p>
 
             <p
-              className="mt-5 text-base leading-8 text-muted-foreground sm:text-lg animate-fade-up"
+              className="mt-2 text-sm leading-6 text-muted-foreground sm:text-lg sm:leading-8 sm:mt-5 animate-fade-up"
               style={{ "--delay": "240ms" } as CSSProperties}
             >
               {subtitle}
             </p>
 
             <div
-              className="mt-8 flex flex-wrap gap-3 animate-fade-up"
+              className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap animate-fade-up"
               style={{ "--delay": "320ms" } as CSSProperties}
             >
-              <Link href="/menu">
-                <Button size="lg" className="min-h-[48px] px-8 text-base font-semibold">
+              <Link href="/menu" className="w-full sm:w-auto">
+                <Button
+                  size="lg"
+                  className="w-full sm:w-auto min-h-[52px] rounded-xl text-lg font-bold bg-orange-500 hover:bg-orange-600 text-white border-0 shadow-md"
+                >
                   {tc("viewMenu")}
                 </Button>
               </Link>
-              <Link href="/contact">
+              <Link href="/contact" className="hidden sm:inline-flex">
                 <Button
                   variant="outline"
                   size="lg"
@@ -96,9 +99,9 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: Hero
               </Link>
             </div>
 
-            {/* /delight: Dietary trust badges */}
+            {/* /delight: Dietary trust badges — hidden on mobile to keep CTA above fold */}
             <div
-              className="mt-6 flex flex-wrap gap-2 animate-fade-in"
+              className="mt-4 hidden flex-wrap gap-2 sm:flex animate-fade-in"
               style={{ "--delay": "400ms" } as CSSProperties}
             >
               {CAFE.dietary.map((d) => (
