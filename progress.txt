@@ -8373,3 +8373,49 @@ Completed: KDS: Kitchen Display System — Login + Order Queue View (ID: US-087)
 
 ### Gotchas
 - Story was already complete — just needed prd.json updated
+
+## Pre-analysis for US-089 (Gemini 2.5 Pro)
+Here is the technical brief for the Claude Code agent:
+
+**Subject: Technical Brief for US-089: KDS Real-Time Order Updates**
+
+This brief outlines the backend implementation for real-time Kitchen Display System (KDS) order updates within the Frappe framework.
+
+**1. Python Files to Modify:**
+*   `[kds_app]/hooks.py`: To identify the whitelisted API method that fetches KDS orders.
+*   `[kds_app]/api.py` or `[kds_app]/utils/orders.py`: The file containing the implementation of the whitelisted function (e.g., `get_preparing_orders`). This is the primary file to edit.
+
+**2. Frappe DocTypes & Hooks:**
+*   **DocType:** A custom DocType, likely named `Kitchen Order` or `Sales Order`, which must contain a `status` field (e.g., 'To Do', 'Preparing', 'Ready').
+*   **Hook:** A `@frappe.whitelist()` decorated Python function that is called via a `frappe.call` from the frontend to fetch the list of active orders.
+
+**3. Recommended Implementation Approach:**
+*   The existing whitelisted function should be optimized to query the Order DocType.
+*   The query must filter for documents where `status` is 'Preparing' (or the equivalent active state).
+*   The function should return a lean JSON response containing only the fields essential for the KDS display (order ID, items, quantities, notes) to ensure fast responses for the 15-second polling interval. The frontend will be responsible for comparing the new list with the old one to identify new orders.
+
+**4. Edge Cases & Gotchas:**
+*   **Performance:** With polling every 15 seconds, the database query must be highly efficient. Ensure the `status` field on the Order DocType is indexed (`"indexed": 1` in the DocType's `.json` file).
+*   **Data Payload:** Avoid returning the full Frappe document (`frappe.get_doc`). Instead, use `frappe.get_all` or a direct `frappe.db.sql` query to select only the necessary fields, minimizing payload size.
+*   **Status Names:** Verify the exact string values for the statuses ('Preparing', 'Ready', etc.) from the DocType definition to ensure the filter is correct.
+
+
+## Iteration 56 - Story: US-088 - KDS: Mark Individual Food Items as Complete
+
+### What was implemented
+- `src/app/api/kds/orders/[id]/ready/route.ts`: POST endpoint (Node runtime) — verifies via middleware (KDS cookie), updates tray_orders status to 'ready' where status='preparing'
+- `src/app/kds/page.tsx`: Updated OrderCard with:
+  - Tap-to-complete buttons per item (CheckCircle/Circle SVG icons, strikethrough + gray when done)
+  - `completedItems: Map<orderId, Set<itemIndex>>` in-memory state (no DB persistence per item)
+  - Green card border (`border-green-500`) when all items done
+  - "Mark as Ready" button only visible when allDone; calls POST /api/kds/orders/[id]/ready
+  - Optimistic removal from order list on success
+
+### Patterns discovered
+- All changes were pre-committed by the previous iteration (US-087 commit already included US-088 work)
+- POST (not PATCH) used for KDS mark-ready to avoid confusion with admin PATCH endpoint
+- Inline SVG icons used instead of lucide-react (avoids import dependency in client component)
+
+### Result
+- prd.json: US-088 passes = true (already set by prior iteration)
+- TypeScript check: PASS (exit 0)
