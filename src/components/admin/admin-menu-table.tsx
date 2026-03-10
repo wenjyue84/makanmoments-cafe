@@ -339,12 +339,12 @@ export function AdminMenuTable({
           {/* Desktop grouped table */}
           <div className="hidden overflow-x-auto rounded-xl border bg-white md:block">
             <table className="min-w-full text-sm">
-              {tableHead(true)}
+              {tableHead(false)}
               <tbody className="divide-y divide-gray-100">
                 {groupedItems.map(({ cat, label, items: groupItems }) => (
                   <Fragment key={cat}>
                     <tr className="border-t border-b border-gray-200 bg-amber-50/60">
-                      <td colSpan={14} className="px-3 py-1.5">
+                      <td colSpan={13} className="px-3 py-1.5">
                         <div className="rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
                           {label} ({groupItems.length})
                         </div>

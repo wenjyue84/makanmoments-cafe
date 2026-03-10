@@ -12336,3 +12336,23 @@ Here is the technical brief for user story US-139.
 - The grouped view and filtered view both use `AdminMenuTableRow` — row handles both scenarios via same props
 - `tableHead(showDisplayCats: boolean)` helper renders the table header with optional Display Cats column
 - TypeScript check passes clean with no errors
+## Iteration 1 - Wed, Mar 11, 2026  2:46:35 AM
+Completed: Extract MenuGrid Filtering and Grouping into useMenuFiltering Hook (ID: US-138) in 9m
+
+
+## Iteration N - Story: US-139 - Split AdminMenuTable into Row Component and Edit Hook
+
+### What was implemented
+- `src/hooks/useMenuTableEdit.ts` — extracts all item state (items, saving, error, suggesting) and handler functions (updateItem, addNewRow, saveItem, deleteItem, toggleDay, toggleDietary, toggleCategory, suggestTranslation) from admin-menu-table.tsx
+- `src/components/admin/admin-menu-table-row.tsx` — renders a single row in both mobile (div card) and desktop (tr) variants; accepts callbacks as props
+- `admin-menu-table.tsx` reduced from 1349 → 394 lines by using the hook and row component
+
+### Patterns discovered
+- Both files (useMenuTableEdit.ts, admin-menu-table-row.tsx) were pre-created but not yet integrated into admin-menu-table.tsx
+- Row component renders 13 `<td>` cells for desktop; grouped view header needs `colSpan={13}` not `colSpan={14}`
+- `tableHead(showDisplayCats)` was renamed/removed in favor of simpler 13-column header (grouping makes Display Cats column redundant in grouped view)
+- TypeScript passes with `npx tsc --noEmit` — no type errors
+
+### Gotchas
+- The file was already partially refactored by a previous agent/tool but left in a broken state (imports present, but old inline row JSX still present)
+- After refactoring, table header must have exactly 13 columns to match row component output
