@@ -150,6 +150,8 @@ export function MenuFilter({
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <input
               ref={searchInputRef}
+              id="menu-search"
+              name="menu-search"
               type="text"
               placeholder={isListening ? t("listening") : t("searchPlaceholder")}
               value={searchQuery}
