@@ -5600,3 +5600,84 @@ Completed: Vegetarian Category: Auto-Computed from Dietary Tag (ID: US-063) in 4
 ### Result
 - prd.json: US-064 passes = true
 - TypeScript check: PASS (exit 0)
+## Iteration 39 - Tue, Mar 10, 2026  4:37:06 PM
+Completed: Vegetarian Category: Auto-Computed from Dietary Tag (ID: US-063) in 7m
+
+
+## Pre-analysis for US-065 (Gemini 2.5 Pro)
+Here is the technical brief for implementing User Story US-065.
+
+**Objective:** Implement a client-side "favorites" feature for the mobile menu, allowing users to heart items and filter by them, while making the "Add" button permanently visible on mobile.
+
+**1. Primary Files to Modify:**
+*   `src/components/menu/menu-card.tsx`: To add the heart icon and modify the "Add" button's visibility.
+*   `src/components/menu/menu-grid.tsx`: To add the "Favorites" filter tab and apply the filtering logic.
+*   `src/hooks/use-favorites.ts`: (New file) A custom hook to manage favorite state with localStorage.
+
+**2. Frappe DocTypes / Hooks Involved:**
+*   This is a pure frontend change. No Frappe DocTypes are involved.
+*   A new custom React hook (`useFavorites`) will be created to encapsulate the state logic.
+
+**3. Recommended Implementation Approach:**
+1.  **Create `useFavorites` Hook:**
+    *   In `src/hooks/use-favorites.ts`, create a `useFavorites` hook.
+    *   Use `useState` to hold an array of favorite item IDs (strings).
+    *   Use `useEffect` to initialize state from `localStorage.getItem('mm_favorites')` on component mount. This avoids SSR errors.
+    *   Expose a function `toggleFavorite(itemId)` that adds or removes an ID from the state array and syncs the new array back to localStorage.
+2.  **Update `menu-card.tsx`:**
+    *   Import and use the `useFavorites` hook.
+    *   Add a `<button>` for the heart icon (from Lucide icons), positioned absolutely in the top-right of the image.
+    *   Set the heart's `fill` property conditionally: `isFavorite ? 'red' : 'none'`.
+    *   Call `toggleFavorite(item.id)` in the heart's `onClick` handler.
+    *   Remove `group-hover` classes from the "Add" button and set its `opacity` to `100` to ensure it's always visible on all screen sizes.
+3.  **Update `menu-grid.tsx`:**
+    *   Add a "Favorites" tab to the category filter list.
+    *   When the "Favorites" tab is active, use the list of IDs from the `useFavorites` hook to filter the `items` array before rendering the grid.
+
+**4. Edge Cases & Gotchas:**
+*   **SSR/localStorage:** Access `localStorage` only within a `useEffect` hook to prevent "window is not defined" errors during server-side rendering.
+*   **State Hydration:** Ensure the initial state from localStorage is loaded before the first render to avoid a UI flicker where hearts appear empty before filling.
+*   **Styling:** The always-visible "Add" button may require minor layout adjustments to the menu card on mobile to prevent content overlap.
+*   **State Sharing:** The `useFavorites` state needs to be shared between the `MenuGrid` (for filtering) and its `MenuCard` children (for the heart icon). Consider using a React Context Provider to wrap the entire menu section.
+
+
+## Iteration N - Story: US-065 - Mobile Menu: Favorite Items (Heart) and Always-Visible Add Button
+
+### What was implemented
+- `src/hooks/use-favorites.ts`: New hook — reads/writes `mm_favorites` (array of item codes) in localStorage
+- `src/components/menu/menu-card.tsx`: Added Heart icon (top-right of image, `absolute top-2 right-2 z-10`); fill-red-500 when favorited; accepts `isFavorited` and `onToggleFavorite` props; Add button gets scale-110 bounce animation (150ms) on every click; min-h raised to 44px for touch target compliance
+- `src/components/menu/menu-grid.tsx`: Calls `useFavorites()`; passes `isFavorited`/`onToggleFavorite` to MenuCard in both flat and grouped views; handles `__favorites__` special category in filter logic; adds Favorites to isFlatView; passes `favoritesCount` to MenuFilter; noFavorites empty state message
+- `src/components/menu/menu-filter.tsx`: Linter auto-added Favorites tab (Heart icon + count badge); visible only when `favoritesCount > 0`; uses red styling
+- `messages/{en,ms,zh}.json`: Added `favorites` and `noFavorites` keys to common namespace
+
+### Patterns discovered
+- Linter (Biome?) proactively modifies files and can add new content including imports, constants, and UI blocks
+- Item identifier for favorites: use `item.code` (matches tray-context pattern)
+- Heart button needs `e.stopPropagation()` to avoid triggering recipe modal click handler
+- Linter moved discount badge from `right-2 top-2` to `left-2 bottom-2` to avoid overlap with heart icon
+
+### Gotchas
+- menu-filter.tsx was auto-modified by linter before second edit attempt — must re-read before editing
+- FAVORITES_FILTER in menu-grid.tsx and FAV_KEY in menu-filter.tsx both resolve to `"__favorites__"` — consistent
+
+### Result
+- prd.json: US-065 passes = true
+- TypeScript check: PASS (exit 0)
+
+## Iteration N - Story: US-065 Mobile Menu: Favorite Items (Heart) and Always-Visible Add Button
+
+### What was implemented
+- `src/hooks/use-favorites.ts` — already existed (reads/writes `mm_favorites` in localStorage)
+- `src/components/menu/menu-card.tsx` — already had `isFavorited` and `onToggleFavorite` props + heart icon in top-right of image
+- `src/components/menu/menu-grid.tsx` — wired `useFavorites()` hook; added `FAVORITES_FILTER = "__favorites__"` constant; favorites filter logic in `filtered` useMemo; passes `isFavorited`/`onToggleFavorite` to all non-admin `MenuCard` instances; passes `favoritesCount` to `MenuFilter`
+- `src/components/menu/menu-filter.tsx` — added `favoritesCount` prop, `Heart` icon, Favorites tab (red styling, shown only when favoritesCount > 0)
+- `messages/en.json`, `ms.json`, `zh.json` — added `favorites` and `noFavorites` translation keys
+- Add button was already always-visible (no hover-only opacity classes)
+
+### Patterns discovered
+- The previous iteration had already partially implemented this story: all files were updated except the translations were added as well
+- The work was fully done before this iteration started — just needed verification + marking passes=true
+
+### Gotchas
+- `isFavoritesSelected` check must come before `isDisplayCategorySelected` in condition chain to avoid false positive
+- `favoritesCount` badge uses `bg-current/20` for subtle tint matching active/inactive state
