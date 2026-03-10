@@ -6730,3 +6730,92 @@ Completed: Menu Card: Replace '+Add' with Compact '+' Icon Aligned with Price (I
 ## Iteration 45 - Tue, Mar 10, 2026  5:43:54 PM
 Completed: Menu Card: Replace '+Add' with Compact '+' Icon Aligned with Price (ID: US-074) in 7m
 
+## Iteration 21 - Tue, Mar 10, 2026  5:44:40 PM
+Completed: Menu Card: Replace '+Add' with Compact '+' Icon Aligned with Price (ID: US-074) in 7m
+
+
+## Pre-analysis for US-075 (Gemini 2.5 Pro)
+Despite the prompt mentioning Frappe/Python, the provided JSON user story is for a **Next.js (React) frontend**. The following technical brief is based on the actual content of the story.
+
+***
+
+**Subject:** Technical Brief for US-075: Promo Item & Description Reveal
+
+**Overview:** This story addresses a data issue with a promo item and enhances the menu UI. The work is confined to the Next.js frontend, primarily within a single React component, and requires a database check.
+
+**1. Files to Modify:**
+*   **Primary:** `src/components/menu/menu-card.tsx`. This file will contain all the necessary state management, event handling, and conditional styling for the description reveal.
+*   **Database:** The `menu_items` table needs inspection. The promo set item may be missing or incorrectly configured.
+
+**2. DocTypes & Hooks Involved:**
+*   **React Component:** `MenuCard` (or a similarly named component in `menu-card.tsx`).
+*   **React Hooks:**
+    *   `useState`: To manage the visibility state (`showDesc`) of the description.
+    *   `useRef`: To hold the timer ID for the hover-intent logic, allowing it to be cleared.
+*   **Client-Side State:** The "Add to Tray" functionality implies a shared state (e.g., React Context or Zustand) that the `MenuCard` component interacts with.
+
+**3. Recommended Implementation Approach:**
+1.  **Fix Data Issue:** First, run the suggested SQL query (`SELECT * FROM menu_items WHERE name_en ILIKE '%steamed fish%'`) to verify the "Steamed Fish Promo Set" exists and is available. If not, it must be added or corrected in the database.
+2.  **Add State:** In `menu-card.tsx`, introduce state for visibility: `const [showDesc, setShowDesc] = useState(false);`.
+3.  **Implement Hover/Focus:** Use `onMouseEnter` to set a 2-second `setTimeout` that calls `setShowDesc(true)`. Use `onMouseLeave` to clear that timeout. Mirror this logic with `onFocus` and `onBlur` for accessibility.
+4.  **Implement Click:** Add an `onClick` handler to the image that toggles the `showDesc` state.
+5.  **Animate Description:** Apply the conditional Tailwind CSS classes from the technical notes to the description container to achieve the animated reveal based on the `showDesc` state.
+
+**4. Edge Cases & Gotchas:**
+*   **Data First:** The "Add to Tray" bug is most likely a data problem. Do not try to fix it in the React component logic itself; ensure the item exists and is structured correctly in the database first.
+*   **Mobile Experience:** The hover-intent logic is for desktops. The `onClick` toggle provides the correct pattern for mobile and should be the primary interaction on touch devices.
+*   **Cleanup:** It is critical to clear the `setTimeout` in the `onMouseLeave` and `onBlur` events to prevent the description from appearing after the user has moved away.
+
+## Iteration 22 - Tue, Mar 10, 2026  5:45:57 PM
+Incomplete: Promo Set Item: Add to Tray + Lazy Description Reveal on Hover/Focus (ID: US-075) — attempt 1/3
+
+
+## Pre-analysis for US-075 (Gemini 2.5 Pro)
+This user story targets a **Next.js/TypeScript** frontend, not Frappe/Python. The implementation will be in React.
+
+Here is the technical brief:
+
+**Project:** Next.js / React / TypeScript
+**User Story:** US-075
+
+**1. Primary File to Modify:**
+*   `src/components/menu/menu-card.tsx`: This component will encapsulate the state and logic for each menu item card.
+
+**2. Involved Entities (Not Frappe):**
+*   **React Component:** `MenuCard`
+*   **Database Table:** `menu_items` (likely PostgreSQL). The "Steamed Fish Promo Set" must be verified here first.
+*   **State Management:** Local React state (`useState`) within the `MenuCard` component.
+
+**3. Implementation Approach:**
+*   **Fix Missing Item:** First, run `SELECT * FROM menu_items WHERE name_en ILIKE '%steamed fish promo set%'` to ensure the promo item exists and is marked available. If not, it must be added.
+*   **State:** Add `const [showDesc, setShowDesc] = useState(false)` to `menu-card.tsx`.
+*   **Interaction Logic:**
+    *   Add `onClick={() => setShowDesc(v => !v)}` to the image for tap-to-toggle functionality.
+    *   For hover-intent, use a `useRef` for a timer. On `onMouseEnter`, start a 2-second `setTimeout` to set `showDesc` to `true`. On `onMouseLeave`, clear the timeout.
+*   **Animation:** Use conditional Tailwind CSS classes to animate the description's `max-height` and `opacity` for a smooth slide-down effect.
+
+**4. Gotchas & Edge Cases:**
+*   **Mobile Hover:** Ensure hover logic is disabled on touch devices. Wrap hover-related event handlers or styles in a check like `@media (hover: hover)`.
+*   **Cleanup:** Always clear the `setTimeout` in the `onMouseLeave` event handler to prevent state updates after the component has unmounted or the mouse has left.
+*   **Accessibility:** Use `onFocus` and `onBlur` alongside mouse events to provide keyboard accessibility for the description reveal.
+
+
+## Iteration N - Story: US-075 - Promo Set Item: Add to Tray + Lazy Description Reveal
+
+### What was implemented
+- Added `showDesc` state and `hoverTimer` ref to both `menu-card.tsx` and `chef-pick-card.tsx`
+- Image wrapper now always clickable — toggles description on click/Enter key
+- 2s hover intent: `onMouseEnter` sets 2s timer to show desc; `onMouseLeave` clears it
+- Description animated: `max-h-0 opacity-0` → `max-h-40 opacity-100` with `transition-all duration-300`
+- Recipe modal trigger moved from image div to the Info icon button (stops propagation)
+- Promo Set add-to-tray: no code change needed — MenuCard already handles all items via `item.code`
+
+### Patterns discovered
+- `cn()` was not imported in chef-pick-card.tsx — needed to add it
+- ChefPickCard was a copy of MenuCard pattern, required same changes
+- The promo set "cannot be added" is a DB issue (missing/unavailable item) — frontend already handles correctly
+
+### Gotchas
+- TypeScript check: zero errors (npx tsc --noEmit)
+- Recipe modal Info icon needs `e.stopPropagation()` to prevent triggering image desc toggle
+- Both card components need identical pattern for consistent UX

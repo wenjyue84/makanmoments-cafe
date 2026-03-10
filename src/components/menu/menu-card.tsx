@@ -29,6 +29,8 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
   const [recipeOpen, setRecipeOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
   const [addScaling, setAddScaling] = useState(false);
+  const [showDesc, setShowDesc] = useState(false);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevQuantityRef = useRef<number>(0);
   const imgVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
   const hasPhoto = !!item.code && !imgError;
@@ -55,14 +57,20 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
   return (
     <>
       <div className={cardClass}>
-        {/* Photo — clickable only when recipe data exists */}
+        {/* Photo — click/hover to reveal description */}
         <div
-          className={`mb-3 relative aspect-[4/3] overflow-hidden rounded-lg bg-muted ${hasRecipe ? "cursor-pointer" : ""}`}
-          onClick={hasRecipe ? () => setRecipeOpen(true) : undefined}
-          role={hasRecipe ? "button" : undefined}
-          aria-label={hasRecipe ? `View ingredients for ${name}` : undefined}
-          tabIndex={hasRecipe ? 0 : undefined}
-          onKeyDown={hasRecipe ? (e) => e.key === "Enter" && setRecipeOpen(true) : undefined}
+          className="mb-3 relative aspect-[4/3] overflow-hidden rounded-lg bg-muted cursor-pointer"
+          onClick={() => setShowDesc((v) => !v)}
+          onMouseEnter={() => {
+            hoverTimer.current = setTimeout(() => setShowDesc(true), 2000);
+          }}
+          onMouseLeave={() => {
+            if (hoverTimer.current) clearTimeout(hoverTimer.current);
+          }}
+          role="button"
+          aria-label={`Toggle description for ${name}`}
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && setShowDesc((v) => !v)}
         >
           {hasPhoto ? (
             item.photos && item.photos.length > 1 ? (
@@ -125,11 +133,19 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
               />
             </button>
           )}
-          {/* Info icon — only shown when recipe exists, appears on hover */}
+          {/* Info icon — clickable to open recipe modal when recipe exists */}
           {hasRecipe && (
-            <span className="absolute bottom-2 right-2 rounded-full bg-black/50 p-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setRecipeOpen(true);
+              }}
+              className="absolute bottom-2 right-2 rounded-full bg-black/50 p-1 opacity-0 transition-opacity group-hover:opacity-100"
+              aria-label={`View ingredients for ${name}`}
+            >
               <Info className="h-3.5 w-3.5 text-white" />
-            </span>
+            </button>
           )}
         </div>
 
@@ -137,9 +153,14 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
         <div className="space-y-1.5">
           <h3 className="font-semibold leading-snug">{name}</h3>
           {item.description && (
-            <p className="line-clamp-2 text-sm text-muted-foreground">
+            <div
+              className={cn(
+                "text-sm text-muted-foreground overflow-hidden transition-all duration-300",
+                showDesc ? "max-h-40 opacity-100 mt-1" : "max-h-0 opacity-0"
+              )}
+            >
               {item.description}
-            </p>
+            </div>
           )}
           {item.dietary.length > 0 && (
             <div className="flex flex-wrap gap-1">

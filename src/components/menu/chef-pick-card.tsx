@@ -1,12 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { Plus, Minus, Info } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import type { MenuItemWithRules } from "@/types/menu";
-import { formatPrice, getLocalizedName } from "@/lib/utils";
+import { formatPrice, getLocalizedName, cn } from "@/lib/utils";
 import { DietaryBadge } from "./dietary-badge";
 import { RecipeModal } from "./recipe-modal";
 import { getRecipeInfo } from "@/data/recipe-info";
@@ -23,6 +23,8 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
   const name = getLocalizedName(item, locale);
   const [imgError, setImgError] = useState(false);
   const [recipeOpen, setRecipeOpen] = useState(false);
+  const [showDesc, setShowDesc] = useState(false);
+  const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const trayItem = items.find((i) => i.id === item.code);
   const isInTray = !!trayItem;
   const hasPhoto = !!item.code && !imgError;
@@ -37,12 +39,18 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
       >
         {/* Full-width landscape image */}
         <div
-          className={`relative aspect-video w-full overflow-hidden bg-muted ${hasRecipe ? "cursor-pointer" : ""}`}
-          onClick={hasRecipe ? () => setRecipeOpen(true) : undefined}
-          role={hasRecipe ? "button" : undefined}
-          aria-label={hasRecipe ? `View ingredients for ${name}` : undefined}
-          tabIndex={hasRecipe ? 0 : undefined}
-          onKeyDown={hasRecipe ? (e) => e.key === "Enter" && setRecipeOpen(true) : undefined}
+          className="relative aspect-video w-full overflow-hidden bg-muted cursor-pointer"
+          onClick={() => setShowDesc((v) => !v)}
+          onMouseEnter={() => {
+            hoverTimer.current = setTimeout(() => setShowDesc(true), 2000);
+          }}
+          onMouseLeave={() => {
+            if (hoverTimer.current) clearTimeout(hoverTimer.current);
+          }}
+          role="button"
+          aria-label={`Toggle description for ${name}`}
+          tabIndex={0}
+          onKeyDown={(e) => e.key === "Enter" && setShowDesc((v) => !v)}
         >
           {hasPhoto ? (
             <Image
@@ -73,11 +81,19 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
             </span>
           )}
 
-          {/* Info icon for recipe */}
+          {/* Info icon — clickable to open recipe modal */}
           {hasRecipe && (
-            <span className="absolute bottom-3 right-3 rounded-full bg-black/50 p-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setRecipeOpen(true);
+              }}
+              className="absolute bottom-3 right-3 rounded-full bg-black/50 p-1.5 opacity-0 transition-opacity group-hover:opacity-100"
+              aria-label={`View ingredients for ${name}`}
+            >
               <Info className="h-4 w-4 text-white" />
-            </span>
+            </button>
           )}
         </div>
 
@@ -86,9 +102,14 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
           <h3 className="text-xl font-bold leading-snug">{name}</h3>
 
           {item.description && (
-            <p className="mt-1.5 line-clamp-3 text-base text-muted-foreground">
+            <div
+              className={cn(
+                "text-base text-muted-foreground overflow-hidden transition-all duration-300",
+                showDesc ? "max-h-48 opacity-100 mt-1.5" : "max-h-0 opacity-0"
+              )}
+            >
               {item.description}
-            </p>
+            </div>
           )}
 
           {item.dietary.length > 0 && (
