@@ -4467,3 +4467,58 @@ Here is the technical brief based on the provided Next.js story:
 *   **Error Handling:** The frontend must gracefully handle scenarios where the order ID is not found (404) or the API fails.
 *   **Performance:** Ensure the `setInterval` is properly cleared in the `useEffect` cleanup function to prevent memory leaks on component unmount.
 
+## Iteration 6 - Tue, Mar 10, 2026  3:23:24 PM
+Completed: Pre-Order: DB Schema + Order Submission Form (Contact + ETA) (ID: US-051) in 10m
+
+
+## Pre-analysis for US-052 (Gemini 2.5 Pro)
+This technical brief is based on the provided user story JSON (US-052). Note that the story specifies a **Next.js/TypeScript** implementation, not Frappe/Python as mentioned in the prompt.
+
+---
+
+### **Technical Brief: US-052 Order Status Page**
+
+1.  **Files to Create/Modify:**
+    *   `src/app/[locale]/order/[id]/page.tsx`: New client-side page for displaying order status.
+    *   `src/app/api/orders/[id]/route.ts`: New public API endpoint to serve order status data.
+    *   `src/components/orders/OrderStatusProgress.tsx`: (Recommended) A new component for the visual progress bar.
+    *   Modify the component related to US-048 (Order History Tray) to link order items to `/order/[id]`.
+
+2.  **API / Data Models Involved:**
+    *   **API Route:** A public `GET /api/orders/[id]` endpoint is required. It will take an order ID and return the current status and related metadata.
+    *   **Data Model:** The endpoint's JSON response should include `status` (e.g., 'pending_approval') and conditional fields like `estimatedReadyTime` or `rejectionReason`.
+
+3.  **Recommended Implementation Approach:**
+    *   The `page.tsx` component must be a client component (`'use client'`).
+    *   Use a `useEffect` hook to manage a `setInterval` function that polls the API every 15 seconds.
+    *   State management (e.g., `useState`) will hold the current order data, loading, and error states.
+    *   The progress bar should be driven by an array of predefined steps, highlighting the one that matches the current status from the API.
+
+4.  **Edge Cases & Gotchas:**
+    *   **Security:** The API endpoint is public. Ensure it ONLY exposes status-related data and not any sensitive customer information (name, contact, etc.).
+    *   **Error Handling:** The page must handle invalid order IDs (404) and API fetch failures gracefully.
+    *   **Performance:** Polling can be inefficient. Implement cleanup for `setInterval` on component unmount. Consider using the Page Visibility API to pause polling when the tab is not active.
+
+
+## Iteration - Story: US-052 Pre-Order: Customer Order Status Tracking Page
+
+### What was implemented
+- `src/app/api/orders/[id]/route.ts`: expanded GET response to return full order fields (items, total, contactNumber, estimatedArrival, estimatedReady, rejectionReason, createdAt)
+- `src/app/[locale]/order/[id]/page.tsx`: NEW client component status tracking page — polls `/api/orders/[id]` every 15s, renders 6-step progress bar (pending_approval → approved → payment_pending → payment_uploaded → preparing → ready), shows stage-specific info cards, full order summary
+- `messages/{en,ms,zh}.json`: added `orderStatus` namespace with 30 keys each
+
+### Patterns discovered
+- `CAFE` constants has no `whatsapp` field — use `CAFE.phone` with a `phoneToWaMe()` helper, or link to contact page
+- Status page lives at `/[locale]/order/[id]/page.tsx` matching the locale-prefixed route pattern
+- `useParams()` gives `{ locale, id }` — both usable in the page
+- Steps styled with Tailwind: amber for completed/current, stone for pending; animate-pulse for active step dot
+- The GET endpoint was already scaffolded (US-051 iteration created it with minimal fields) — only needed expansion
+
+### Gotchas
+- `CAFE` has no `whatsapp` property — `CAFE.whatsapp` would cause a TS error; use phone instead
+- `setInterval` cleanup in `useEffect` via returned cleanup function prevents memory leaks
+- `cache: 'no-store'` on fetch calls ensures fresh data every poll
+
+### Result
+- prd.json: US-052 passes = true
+- TypeScript check: PASS (exit 0)

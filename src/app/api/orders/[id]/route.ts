@@ -17,7 +17,16 @@ export async function GET(
     }
 
     const rows = await sql`
-      SELECT id, status, created_at
+      SELECT
+        id,
+        status,
+        items,
+        total,
+        contact_number,
+        estimated_arrival,
+        estimated_ready,
+        rejection_reason,
+        created_at
       FROM tray_orders
       WHERE id = ${orderId}
       LIMIT 1
@@ -27,7 +36,18 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ id: rows[0].id, status: rows[0].status });
+    const row = rows[0];
+    return NextResponse.json({
+      id: row.id,
+      status: row.status,
+      items: row.items,
+      total: row.total,
+      contactNumber: row.contact_number,
+      estimatedArrival: row.estimated_arrival,
+      estimatedReady: row.estimated_ready,
+      rejectionReason: row.rejection_reason,
+      createdAt: row.created_at,
+    });
   } catch (err) {
     console.error("[GET /api/orders/[id]]", err);
     return NextResponse.json({ error: "Failed to fetch order" }, { status: 500 });
