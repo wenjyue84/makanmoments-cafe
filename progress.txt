@@ -11570,3 +11570,77 @@ Completed: Increase System Prompt Menu Cache TTL to 60 Minutes (ID: US-134) in 6
 ## Iteration 3 - Wed, Mar 11, 2026  2:19:46 AM
 Completed: Fix TypeScript any Types in Chat Route (ID: US-135) in 3m
 
+## Iteration 3 - Wed, Mar 11, 2026  2:19:53 AM
+Completed: Fix TypeScript any Types in Chat Route (ID: US-135) in 3m
+
+
+## Pre-analysis for US-136 (Gemini 2.5 Pro)
+Based on the user story JSON, here is a technical brief for the agent.
+
+***
+
+**Subject:** Technical Brief for US-136: Centralize Display Category Constants
+**Technology Stack:** Next.js / TypeScript / React
+
+**1. Python Files to Modify / Key Files**
+The user story targets a TypeScript/Next.js project, not Python/Frappe. The key files are:
+- `src/lib/constants.ts` (for the new constant)
+- `src/components/menu/menu-grid.tsx`
+- `src/components/menu/menu-card.tsx`
+- `src/components/admin/admin-categories-panel.tsx`
+A global search for the specified strings is required to ensure all instances are updated.
+
+**2. Frappe DocTypes / Involved Concepts**
+- This is not a Frappe application. The core concept is refactoring hardcoded string literals into a shared constant object to improve maintainability.
+- The primary data structure is the `SPECIAL_DISPLAY_CATEGORIES` object to be defined in `constants.ts`.
+
+**3. Implementation Approach**
+1.  In `src/lib/constants.ts`, define and export the `SPECIAL_DISPLAY_CATEGORIES` constant object as specified in the technical notes.
+2.  Search the codebase for the hardcoded string literals: "Chef's Picks", "Under RM15", "Vegetarian", and "Favorites".
+3.  In each file, replace the literal string with a reference to the new constant (e.g., `SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS`).
+4.  Add the corresponding import statement for `SPECIAL_DISPLAY_CATEGORIES` at the top of each modified file.
+5.  Run the build process to verify success.
+
+**4. Edge Cases & Gotchas**
+- The prompt's reference to "Frappe/Python" is incorrect; the story and codebase are TypeScript-based.
+- The story description vaguely mentions "drink category names," but the technical notes are specific. Adhere strictly to the four categories listed in the notes.
+- Ensure find-and-replace operations are precise to avoid accidentally modifying other parts of the code.
+
+
+## Pre-analysis for US-136 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** project, not a Frappe/Python one. The context provided in the JSON is about refactoring a React frontend.
+
+Here is the technical brief based on the actual story content:
+
+**Project:** Next.js / TypeScript
+
+**1. Files to Modify:**
+*   `src/lib/constants.ts` (Create or update)
+*   `src/components/menu/menu-grid.tsx`
+*   `src/components/menu/menu-card.tsx`
+*   `src/components/admin/admin-categories-panel.tsx`
+*   Any other files in `src/` containing the hardcoded strings.
+
+**2. Involved Entities (Not Frappe):**
+*   **Modules:** `src/lib/constants.ts` will export the new constant object.
+*   **React Components:** `menu-grid`, `menu-card`, and `admin-categories-panel` will import and consume the constants.
+
+**3. Implementation Approach:**
+1.  Define and export the `SPECIAL_DISPLAY_CATEGORIES` object in `src/lib/constants.ts` as specified.
+2.  Perform a project-wide search for the hardcoded strings: "Chef's Picks", "Under RM15", "Vegetarian", and "Favorites".
+3.  In each file found, import the `SPECIAL_DISPLAY_CATEGORIES` constant.
+4.  Replace the hardcoded string literals with references to the constant's properties (e.g., `SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS`).
+
+**4. Gotchas to Watch For:**
+*   Ensure the `as const` assertion is used on the constant object for strict type safety.
+*   Verify that imports are correctly added to all modified components.
+*   The search should be case-sensitive to avoid replacing unintended text.
+
+
+## Pre-analysis for US-136 (Gemini 2.5 Pro)
+This user story (US-136) describes a frontend refactoring task for a Next.js/TypeScript application, not a Frappe/Python one. The files referenced (`.tsx`, `.ts`) and technical notes are specific to a React-based architecture.
+
+Therefore, generating a technical brief for a Frappe/Python implementation from this story is not applicable. The concepts of DocTypes, Python controllers, and hooks do not correlate to the provided task of moving frontend display strings into a TypeScript constants file.
+
+To receive an accurate brief, please provide a user story relevant to the target Python/Frappe application.
+
