@@ -155,6 +155,9 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
 
         {/* Content */}
         <div className="space-y-1.5">
+          {item.code && (
+            <span className="text-xs font-mono text-muted-foreground/60">{item.code}</span>
+          )}
           <h3 className="font-semibold leading-snug break-words">{name}</h3>
           {item.description && (
             <div

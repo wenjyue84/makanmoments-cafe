@@ -14,7 +14,10 @@ import {
   Menu,
   X,
   LogOut,
+  Monitor,
 } from "lucide-react";
+
+const KDS_URL = process.env.NEXT_PUBLIC_KDS_URL ?? "/kds";
 import type { MenuItemWithRules } from "@/types/menu";
 import type { BlogPost } from "@/types/blog";
 import { cn } from "@/lib/utils";
@@ -66,6 +69,7 @@ const TABS = [
   "Blog",
   "Tests",
   "Settings",
+  "KDS",
 ] as const;
 type Tab = (typeof TABS)[number];
 
@@ -77,6 +81,7 @@ const TAB_ICONS: Record<Tab, React.ReactNode> = {
   Blog: <BookOpen className="h-4 w-4 shrink-0" />,
   Tests: <FlaskConical className="h-4 w-4 shrink-0" />,
   Settings: <Settings className="h-4 w-4 shrink-0" />,
+  KDS: <Monitor className="h-4 w-4 shrink-0" />,
 };
 
 const TAB_SLUGS: Record<Tab, string> = {
@@ -87,6 +92,7 @@ const TAB_SLUGS: Record<Tab, string> = {
   Blog: "blog",
   Tests: "tests",
   Settings: "settings",
+  KDS: "kds",
 };
 
 const SLUG_TO_TAB: Record<string, Tab> = {
@@ -114,6 +120,11 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
   const activeTab: Tab = SLUG_TO_TAB[slug] ?? "Menu";
 
   const handleTabClick = (tab: Tab) => {
+    if (tab === "KDS") {
+      window.open(KDS_URL, "_blank");
+      setSidebarOpen(false);
+      return;
+    }
     router.push(`/admin/${TAB_SLUGS[tab]}`);
     setSidebarOpen(false);
   };

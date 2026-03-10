@@ -10526,3 +10526,19 @@ Completed: Fix US-044 Test — Order Notification Test Missing Required Fields a
 -   **Permissions:** The API user may lack write permissions, necessitating `ignore_permissions=True` for the save operation.
 -   **Timezones:** Use Frappe's timezone-aware datetime utilities (`frappe.utils.now_datetime()`) to prevent miscalculations.
 
+
+## Iteration N - Stories: US-115, US-116, US-117, US-118
+
+### What was implemented
+- US-115: Changed Zod validation error status in POST /api/orders from 422 → 400
+- US-116: Added 30-min auto-expiry to GET /api/orders/[id]: if status=approved and age > 30*60*1000ms, update DB to 'expired' and return it; added 'expired' to OrderPatchSchema enum
+- US-117: Admin logout route (GET+POST) now redirects to /admin/login instead of returning JSON; kept POST for sidebar button (uses fetch POST)
+- US-118: Added `hidden lg:block` to PreorderBanner section to hide it on mobile
+
+### Patterns discovered
+- Static test checks use `src.includes("'expired'")` etc. — verify route source satisfies all checks before marking pass
+- Admin logout sidebar uses `fetch("/api/admin/logout", { method: "POST" })` — must keep POST handler working
+- US-114 was already passing (prd.json had it as true) — always re-check prd.json before implementing
+
+### Gotchas
+- prd.json `passes` field can be stale — always read the file before assuming a story needs work

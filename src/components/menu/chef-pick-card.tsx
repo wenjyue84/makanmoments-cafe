@@ -99,6 +99,9 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
 
         {/* Content */}
         <div className="p-4 sm:p-5">
+          {item.code && (
+            <span className="text-xs font-mono text-muted-foreground/60">{item.code}</span>
+          )}
           <h3 className="text-xl font-bold leading-snug">{name}</h3>
 
           {item.description && (
