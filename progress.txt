@@ -10715,3 +10715,51 @@ Completed: Admin Can Remove Item from Chef's Pick by Clicking the Badge on /en/m
 ## Iteration 2 - Wed, Mar 11, 2026 12:06:59 AM
 Completed: Limit Chef's Pick Hero Display to 2 Per Category; Show Extra as Regular Items (ID: US-124) in 6m
 
+
+## Pre-analysis for US-125 (Gemini 2.5 Pro)
+**Project Type:** Node.js/TypeScript (Not Frappe/Python as stated in the prompt).
+
+**Objective:** Integrate the "Rainbow AI" WhatsApp service into the `makanmoments.cafe` project.
+
+**Primary Files:**
+-   Create new directory: `rainbow-ai/`
+-   Create new file: `rainbow-ai/.env`
+-   Modify existing file: `.gitignore`
+
+**Implementation Approach:**
+1.  **Copy Files:** Use a shell command (`xcopy` or `robocopy`) to copy the source directory (`C:\...\digiman\RainbowAI\`) to a new `rainbow-ai/` folder. Use the exclude flags to ignore `node_modules`, `dist`, `.env`, and other specified files.
+2.  **Create Environment:** Read `GROQ_API_KEY` and `OPENROUTER_API_KEY` from the root `.env.local` file. Create a new `rainbow-ai/.env` file and write these keys along with `MCP_SERVER_PORT=3002` and other values from the technical notes.
+3.  **Update Gitignore:** Append the specified `rainbow-ai/` paths (`node_modules/`, `dist/`, `.env`, etc.) to the root `.gitignore`.
+4.  **Install & Verify:** Change into the `rainbow-ai/` directory, run `npm install`, then `npm run dev`. Confirm the service is running by making a request to `http://localhost:3002/health`.
+
+**Edge Cases & Gotchas:**
+-   The source path is a hardcoded absolute path; ensure it exists and is accessible.
+-   The process of reading keys from the root `.env.local` must correctly parse the key-value format.
+-   Ensure `npm` commands are executed within the new `rainbow-ai/` subdirectory, not the project root.
+
+
+## Iteration N - Story: US-125 Copy Rainbow AI Service into Project
+
+### What was implemented
+- Copied RainbowAI source from `C:\Users\Jyue\Documents\1-projects\Software Projects\digiman\RainbowAI\` to `rainbow-ai/`
+- Excluded: node_modules/, dist/, whatsapp-auth/, .env, coverage/, logs/, reports/, uploads/, RainbowAI/ (nested)
+- Created `rainbow-ai/.env` with GROQ_API_KEY, OPENROUTER_API_KEY, MCP_SERVER_PORT=3002, BUSINESS_NAME=makan-moments-cafe
+- Added rainbow-ai exclusions to root .gitignore
+- Fixed import issue: copied `digiman/shared/` into `rainbow-ai/src/shared/` and updated all relative imports
+- Installed missing `drizzle-zod` package (was in digiman's shared deps, not in RainbowAI package.json)
+- Verified: `npm install` clean, `npm run dev` starts on port 3002, `/health` returns 200
+
+### Patterns discovered
+- RainbowAI was part of a monorepo — `src/**/*.ts` files imported from `../../../shared/schema.js` (3 levels up = digiman root)
+- Solution: copy shared/ into `rainbow-ai/src/shared/` and update all import paths
+- From `src/assistant/` and `src/lib/`: `'../../../shared/'` → `'../shared/'`
+- From `src/routes/admin/`: `'../../../../shared/'` → `'../../shared/'`
+- `drizzle-zod` needs to be installed separately (not in digiman/RainbowAI/package.json)
+- Service starts cleanly without DATABASE_URL (falls back to JSON-only mode)
+- Health endpoint: `GET /health` returns `{"status":"ok","service":"pelangi-mcp-server",...}`
+
+### Gotchas
+- The service name in health response says "pelangi-mcp-server" — this is configured in the data/ config files, updated in US-127
+- `.rainbow-kb/` not found warning is expected — US-126 seeds the KB
+- No DATABASE_URL needed for basic operation; DB features degrade gracefully
+- `tsconfig.json` has `"rootDir": "./src"` so shared/ needed to go inside src/

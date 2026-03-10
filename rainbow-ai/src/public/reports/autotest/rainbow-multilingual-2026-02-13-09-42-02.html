@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rainbow AI Multilingual Test Report</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:24px;color:#333;background:#fafafa}
+  h1{font-size:24px;margin:0 0 4px}
+  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:20px 0}
+  .summary-card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:16px;text-align:center}
+  .summary-card .num{font-size:28px;font-weight:700}
+  .summary-card .label{font-size:12px;color:#888}
+  .test-card{border:1px solid #e5e5e5;border-radius:12px;margin-bottom:16px;overflow:hidden}
+  .test-header{padding:12px 16px;display:flex;align-items:center;gap:12px}
+  .test-body{padding:16px}
+  .badge{color:#fff;padding:2px 10px;border-radius:8px;font-size:12px;font-weight:700}
+  .pass-badge{background:#16a34a}
+  .warn-badge{background:#ca8a04}
+  .fail-badge{background:#dc2626}
+  .pass-bg{background:#f0fdf4}
+  .warn-bg{background:#fefce8}
+  .fail-bg{background:#fef2f2}
+  .message-bubble{background:#f5f5f5;border:1px solid #e5e5e5;padding:8px 12px;border-radius:12px;font-size:13px;margin:8px 0;white-space:pre-wrap}
+  .metadata{font-size:11px;color:#888;margin:8px 0}
+  .validation{border-top:1px solid #e5e5e5;margin-top:8px;padding-top:8px}
+  .validation-title{font-size:12px;font-weight:600;color:#555;margin-bottom:4px}
+  .validation-rule{font-size:12px;padding:2px 0}
+  .rule-pass{color:#16a34a}
+  .rule-warn{color:#ca8a04}
+  .rule-fail{color:#dc2626}
+  @media print{body{padding:12px} .summary{gap:8px}}
+</style>
+</head>
+<body>
+  <h1>🌈 Rainbow AI Multilingual Test Report</h1>
+  <p style="color:#888;font-size:14px">13/02/2026, 5:42:02 pm | Pass rate: <b>94.4%</b></p>
+
+  <div class="summary">
+    <div class="summary-card"><div class="num" style="color:#333">18</div><div class="label">Total</div></div>
+    <div class="summary-card"><div class="num" style="color:#16a34a">17</div><div class="label">Passed</div></div>
+    <div class="summary-card"><div class="num" style="color:#ca8a04">0</div><div class="label">Warnings</div></div>
+    <div class="summary-card"><div class="num" style="color:#dc2626">1</div><div class="label">Failed</div></div>
+    <div class="summary-card"><div class="num" style="color:#6366f1">0.4s</div><div class="label">Avg Time</div></div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">T2_FUZZY</h2>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Malay WiFi (T2 Fuzzy)</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">MS | 0.0s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">password wifi</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">📶 *WiFi Info*
+Network: *pelangi capsule*
+Password: *ilovestaycapsule*</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>fuzzy</b>
+         | Intent: <b>wifi</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.0s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: wifi, password, pelangi capsule, ilovestaycapsule</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: wifi</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Malay Pricing (T2 Fuzzy)</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">MS | 0.0s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">berapa harga</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">💰 *Our Rates*
+
+🏷️ Daily: *RM45/night*
+🏷️ 7 nights: *RM267* (~RM38/night)
+🏷️ Monthly: *RM650/month* (~RM22/night)
+
+Deposit: RM10 key-card + RM100 security (long-term stays, refundable)
+Payment: DuitNow QR, Bank transfer, Cash (Touch 'n Go, Boost, ShopeePay, GrabPay)
+
+Want to book? Just say *"book"*!</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>fuzzy</b>
+         | Intent: <b>pricing</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.0s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: RM, rm45</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: pricing</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Chinese WiFi (T2 Fuzzy)</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">ZH | 0.0s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">wifi密码</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">📶 *WiFi Info*
+Network: *pelangi capsule*
+Password: *ilovestaycapsule*</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>fuzzy</b>
+         | Intent: <b>wifi</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.0s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: wifi, pelangi, ilovestaycapsule</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: wifi</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Chinese Pricing (T2 Fuzzy)</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">ZH | 0.0s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">多少钱</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">💰 *Our Rates*
+
+🏷️ Daily: *RM45/night*
+🏷️ 7 nights: *RM267* (~RM38/night)
+🏷️ Monthly: *RM650/month* (~RM22/night)
+
+Deposit: RM10 key-card + RM100 security (long-term stays, refundable)
+Payment: DuitNow QR, Bank transfer, Cash (Touch 'n Go, Boost, ShopeePay, GrabPay)
+
+Want to book? Just say *"book"*!</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>fuzzy</b>
+         | Intent: <b>pricing</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.0s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: RM, rm45</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: pricing</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">T3_SEMANTIC</h2>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Malay Greeting (T3 Semantic)</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">MS | 0.0s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">apa khabar</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">Hello, welcome to Pelangi Capsule Hostel</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>fuzzy</b>
+         | Intent: <b>greeting</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.0s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: welcome, Pelangi</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: greeting</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Malay Thanks (T3 Semantic)</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">MS | 0.0s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">terima kasih</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">You're welcome, have a great day</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>fuzzy</b>
+         | Intent: <b>thanks</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.0s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: welcome</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: thanks</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Malay Check-in (T3 Semantic)</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">MS | 0.0s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">bila boleh check in</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">⏰ *Check-in Info*
+
+Check-in time: *2:00 PM*
+Door password: *1270#*
+
+Early check-in is subject to approval. </div>
+      </div>
+      <div class="metadata">
+        Detection: <b>fuzzy</b>
+         | Intent: <b>checkin_info</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.0s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: 2, pm, PM, check-in</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: checkin_info</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Chinese Greeting (T3 Semantic)</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">ZH | 0.0s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">你好</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">Hello, welcome to Pelangi Capsule Hostel</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>fuzzy</b>
+         | Intent: <b>greeting</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.0s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: Pelangi</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: greeting</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Chinese Thanks (T3 Semantic)</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">ZH | 0.0s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">谢谢</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">You're welcome, have a great day</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>fuzzy</b>
+         | Intent: <b>thanks</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.0s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: welcome</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: thanks</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b style="font-size:14px">Chinese Availability (T3 Semantic)</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">ZH | 5.4s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">有没有房</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">I don't have that information. Let me connect you with our team. — Rainbow 🌈</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>fuzzy</b>
+         | Intent: <b>availability</b>
+         | Routed to: <b>llm_reply</b>
+         | Model: <b>Ollama GPT-OSS 20B</b>
+         | Time: <b>5.4s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-fail">✗ <b>contains_any</b>: None of [有, 房, 床位, available, capsule] found</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: availability</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">COMMON_INTENTS</h2>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Malay Booking</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">MS | 0.3s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">nak book bilik</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">I'll help you with your booking or payment. Let me gather some information first.
+
+How many guests will be staying?</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>llm</b>
+         | Intent: <b>booking</b>
+         | Routed to: <b>workflow</b>
+         | Model: <b>none</b>
+         | Time: <b>0.3s</b>
+         | Confidence: <b>80%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: book, booking</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: booking</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Chinese Booking</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">ZH | 0.3s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">我要订房</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">I'll help you with your booking or payment. Let me gather some information first.
+
+How many guests will be staying?</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>llm</b>
+         | Intent: <b>booking</b>
+         | Routed to: <b>workflow</b>
+         | Model: <b>none</b>
+         | Time: <b>0.3s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: book, booking</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: booking</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Malay Directions</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">MS | 0.3s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">di mana lokasi</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">📍 *How to find us*
+26A Jalan Perang, Taman Pelangi, 80400 Johor Bahru
+
+Google Maps: https://maps.app.goo.gl/maLXetUqYS5MtSLD9?g_st=iwb
+
+We're in a quiet residential area in Taman Pelangi, walking distance to cafes and shops.</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>llm</b>
+         | Intent: <b>directions</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.3s</b>
+         | Confidence: <b>80%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: Jalan Perang, Taman Pelangi, map</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: directions</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Chinese Directions</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">ZH | 0.3s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">地址在哪</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">📍 *How to find us*
+26A Jalan Perang, Taman Pelangi, 80400 Johor Bahru
+
+Google Maps: https://maps.app.goo.gl/maLXetUqYS5MtSLD9?g_st=iwb
+
+We're in a quiet residential area in Taman Pelangi, walking distance to cafes and shops.</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>llm</b>
+         | Intent: <b>directions</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.3s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: Jalan Perang, Taman Pelangi</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: directions</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Malay Checkout</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">MS | 0.3s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">masa check out</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">⏰ *Check-out Info*
+
+Check-out time: *12:00 PM (noon)*
+
+Late check-out available (no extra fee, subject to availability).</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>llm</b>
+         | Intent: <b>checkout_info</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.3s</b>
+         | Confidence: <b>80%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: 12, noon, check-out</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: checkout_info</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Chinese Checkout</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">ZH | 0.0s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">几点退房</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">⏰ *Check-out Info*
+
+Check-out time: *12:00 PM (noon)*
+
+Late check-out available (no extra fee, subject to availability).</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>fuzzy</b>
+         | Intent: <b>checkout_info</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.0s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: 12, noon</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: checkout_info</div>
+      </div>
+    </div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">CODE_SWITCHING</h2>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Mixed (MS+EN) WiFi</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">MIXED | 0.2s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">wifi password apa</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">📶 *WiFi Info*
+Network: *pelangi capsule*
+Password: *ilovestaycapsule*</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>llm</b>
+         | Intent: <b>wifi</b>
+         | Routed to: <b>static_reply</b>
+         | Model: <b>none</b>
+         | Time: <b>0.2s</b>
+         | Confidence: <b>100%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: wifi, password, pelangi</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: wifi</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b style="font-size:14px">Mixed (MS+EN) Booking</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">MIXED | 0.2s</span>
+    </div>
+    <div class="test-body">
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Guest Message:</div>
+        <div style="background:#e0f2fe;border:1px solid #bae6fd;padding:6px 12px;border-radius:12px;font-size:13px">nak book untuk 2 nights</div>
+      </div>
+      <div style="margin-bottom:8px">
+        <div style="font-size:11px;color:#888;margin-bottom:4px">Rainbow Response:</div>
+        <div class="message-bubble">I'll help you with your booking or payment. Let me gather some information first.
+
+How many guests will be staying?</div>
+      </div>
+      <div class="metadata">
+        Detection: <b>llm</b>
+         | Intent: <b>booking</b>
+         | Routed to: <b>workflow</b>
+         | Model: <b>none</b>
+         | Time: <b>0.2s</b>
+         | Confidence: <b>80%</b>
+      </div>
+      <div class="validation">
+        <div class="validation-title">Validation Rules</div>
+        <div class="validation-rule rule-pass">✓ <b>not_empty</b>: Response is non-empty</div>
+        <div class="validation-rule rule-pass">✓ <b>contains_any</b>: Matched: book, booking</div>
+        <div class="validation-rule rule-pass">✓ <b>intent_match</b>: Intent matched: booking</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

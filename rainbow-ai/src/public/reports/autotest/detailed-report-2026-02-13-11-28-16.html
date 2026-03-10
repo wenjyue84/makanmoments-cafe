@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rainbow AI Detailed Test Report</title>
+<style>
+  body{font-family:'Monaco','Courier New',monospace;max-width:1200px;margin:0 auto;padding:24px;color:#333;background:#1e1e1e;font-size:13px;line-height:1.6}
+  pre{background:#2d2d2d;color:#d4d4d4;padding:16px;border-radius:8px;overflow-x:auto;white-space:pre-wrap;word-wrap:break-word}
+  .pass{color:#4ade80;font-weight:bold}
+  .fail{color:#f87171;font-weight:bold}
+  .warn{color:#fbbf24;font-weight:bold}
+  h1{color:#60a5fa;font-size:20px}
+  .summary{background:#374151;padding:12px;border-radius:8px;margin:16px 0;color:#d4d4d4}
+</style>
+</head>
+<body>
+<h1>🌈 Rainbow AI Detailed Test Report</h1>
+<div class="summary">
+<strong>Generated:</strong> 13/02/2026, 7:28:16 pm<br>
+<strong>View:</strong> Full validation rules and LLM responses
+</div>
+<pre>🌈 Rainbow AI Detailed Test Report
+
+✅ Server is running
+
+Running 56 scenarios through /preview/chat API
+
+⏳ This may take a few minutes (using real LLM responses)...
+
+[1/56] Testing: Greeting - English                       [2/56] Testing: Greeting - Malay                         [3/56] Testing: Thanks                                   [4/56] Testing: Contact Staff                            [5/56] Testing: Pricing Inquiry                          [6/56] Testing: Availability Check                       [7/56] Testing: Booking Process                          [8/56] Testing: Directions                               [9/56] Testing: Facilities Info                          [10/56] Testing: House Rules                              [11/56] Testing: Rules - Pets                             [12/56] Testing: Payment Methods                          [13/56] Testing: Payment Confirmation                     [14/56] Testing: Check-In Time                            [15/56] Testing: Check-Out Time                           [16/56] Testing: Check-In Arrival                         [17/56] Testing: Lower Deck Preference                    [18/56] Testing: WiFi Password                            [19/56] Testing: Facility Orientation                     [20/56] Testing: Climate - Too Cold                       [21/56] Testing: Climate - Too Hot                        [22/56] Testing: Noise - Neighbors                        [23/56] Testing: Noise - Construction                     [24/56] Testing: Noise - Baby Crying                      [25/56] Testing: Cleanliness - Room                       [26/56] Testing: Cleanliness - Bathroom                   [27/56] Testing: Facility - AC Broken                     [28/56] Testing: Card Locked Out                          [29/56] Testing: Theft - Laptop                           [30/56] Testing: Theft - Jewelry                          [31/56] Testing: General Complaint                        [32/56] Testing: Extra Amenity - Towel                    [33/56] Testing: Extra Amenity - Pillow                   [34/56] Testing: Tourist Guide                            [35/56] Testing: Checkout Procedure                       [36/56] Testing: Late Checkout Request                    [37/56] Testing: Late Checkout - Denied                   [38/56] Testing: Luggage Storage                          [39/56] Testing: Billing Inquiry                          [40/56] Testing: Forgot Item - Charger                    [41/56] Testing: Forgot Item - Passport (Urgent)          [42/56] Testing: Forgot Item - Clothes                    [43/56] Testing: Post-Checkout Complaint - Food           [44/56] Testing: Post-Checkout Complaint - Service        [45/56] Testing: Billing Dispute - Overcharge             [46/56] Testing: Billing Dispute - Minor Error            [47/56] Testing: Review - Positive                        [48/56] Testing: Review - Negative                        [49/56] Testing: Multilingual - Chinese Greeting          [50/56] Testing: Multilingual - Mixed Language            [51/56] Testing: Multilingual - Chinese Bill Question     [52/56] Testing: Multilingual - Malay WiFi                [53/56] Testing: Edge - Gibberish                         [54/56] Testing: Edge - Emoji Only                        [55/56] Testing: Edge - Very Long Message                 [56/56] Testing: Edge - Prompt Injection                  
+
+
+================================================================================
+📊 DETAILED TEST RESULTS
+================================================================================
+
+────────────────────────────────────────────────────────────────────────────────
+📂 GENERAL_SUPPORT
+────────────────────────────────────────────────────────────────────────────────
+
+<span class="pass">✅ PASS</span>  Greeting - English  (100% rules passed)
+Category: GENERAL_SUPPORT
+
+  Turn 1:
+    👤 Guest: "Hi there!"
+    🤖 Rainbow: "Hi! I'm Rainbow, your AI assistant here at Pelangi Hostel 🌈 How can I help you today? — Rainbow 🌈"
+    📊 Detection: llm | Intent: greeting | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 3.2s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: Hi
+
+<span class="pass">✅ PASS</span>  Greeting - Malay  (100% rules passed)
+Category: GENERAL_SUPPORT
+
+  Turn 1:
+    👤 Guest: "Selamat pagi"
+    🤖 Rainbow: "Selamat pagi! Saya Rainbow, AI pembantu Pelangi Hostel 🌈 Apa yang boleh saya bantu hari ini?"
+    📊 Detection: fuzzy | Intent: greeting | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 2.3s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: Selamat, pagi
+
+<span class="pass">✅ PASS</span>  Thanks  (100% rules passed)
+Category: GENERAL_SUPPORT
+
+  Turn 1:
+    👤 Guest: "Thank you!"
+    🤖 Rainbow: "You're welcome! If you need anything else, just let me know. — Rainbow 🌈"
+    📊 Detection: llm | Intent: thanks | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 2.5s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: welcome
+
+<span class="pass">✅ PASS</span>  Contact Staff  (100% rules passed)
+Category: GENERAL_SUPPORT
+
+  Turn 1:
+    👤 Guest: "I need to speak to staff"
+    🤖 Rainbow: "Let me connect you to our staff...
+
+✅ Message sent to staff. They will contact you shortly."
+    📊 Detection: llm | Intent: contact_staff | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.2s | Confidence: 100%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: staff, connect, contact
+
+────────────────────────────────────────────────────────────────────────────────
+📂 PRE_ARRIVAL
+────────────────────────────────────────────────────────────────────────────────
+
+<span class="pass">✅ PASS</span>  Pricing Inquiry  (100% rules passed)
+Category: PRE_ARRIVAL
+
+  Turn 1:
+    👤 Guest: "How much is a room?"
+    🤖 Rainbow: "Our standard capsule costs RM45 per night. Longer stays offer better rates: 7 nights RM267, 14 nights RM423, etc. Let me know if you’d like to book or need more details! — Rainbow 🌈"
+    📊 Detection: llm | Intent: pricing | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 3.0s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, availability.md, pricing.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: RM, night
+
+<span class="pass">✅ PASS</span>  Availability Check  (100% rules passed)
+Category: PRE_ARRIVAL
+
+  Turn 1:
+    👤 Guest: "Do you have rooms on June 15th?"
+    🤖 Rainbow: "Yes! We’re almost always available, including June 15. Just let me know your check‑in/check‑out dates and how many capsules you need, and I can help you book right away. — Rainbow 🌈"
+    📊 Detection: llm | Intent: availability | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 3.4s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, availability.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: available, check
+
+<span class="pass">✅ PASS</span>  Booking Process  (100% rules passed)
+Category: PRE_ARRIVAL
+
+  Turn 1:
+    👤 Guest: "How do I book?"
+    🤖 Rainbow: "I'll help you with your booking or payment. Let me gather some information first.
+
+How many guests will be staying?"
+    📊 Detection: llm | Intent: booking | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.2s | Confidence: 100%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: book
+
+<span class="fail">❌ FAIL</span>  Directions  (50% rules passed)
+Category: PRE_ARRIVAL
+
+  Turn 1:
+    👤 Guest: "How do I get from the airport?"
+    🤖 Rainbow: "I don't have that information. Let me connect you with our team. — Rainbow 🌈"
+    📊 Detection: llm | Intent: directions | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 5.6s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [taxi, Grab, bus, drive, Jalan, Pelangi, maps, address, find us] found
+
+<span class="pass">✅ PASS</span>  Facilities Info  (100% rules passed)
+Category: PRE_ARRIVAL
+
+  Turn 1:
+    👤 Guest: "What facilities do you have?"
+    🤖 Rainbow: "Here are our main facilities:
+• Private capsule pods with curtain, bedding, AC, reading light, outlets
+• 24/7 hot showers, toiletries, hair dryer
+• Shared kitchen: microwave, kettle, cookware, coffee machine, hot/cold water
+• Common lounge, desks, outdoor area
+• Free Wi‑Fi, lockers, laundry (RM5/load)
+• CCTV, key‑card access
+— Rainbow 🌈"
+    📊 Detection: llm | Intent: facilities | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 6.0s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, facilities.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: kitchen, lounge, locker
+
+<span class="pass">✅ PASS</span>  House Rules  (100% rules passed)
+Category: PRE_ARRIVAL
+
+  Turn 1:
+    👤 Guest: "What are the rules?"
+    🤖 Rainbow: "Our main house rules: Quiet hours 11 PM–9 AM; no smoking inside (RM300 fine); no outside guests; clean the kitchen after use (RM20 fee); keep your key card safe (RM20 replacement); report damage immediately. Pets not allowed. — Rainbow 🌈"
+    📊 Detection: llm | Intent: rules | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 3.8s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, houserules.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: quiet, smoking, rule
+
+<span class="pass">✅ PASS</span>  Rules - Pets  (100% rules passed)
+Category: PRE_ARRIVAL
+
+  Turn 1:
+    👤 Guest: "Are pets allowed?"
+    🤖 Rainbow: "I’m sorry, but Pelangi Capsule Hostel is an adults‑only hostel and does not allow pets of any kind. If you have any other questions, let me know! — Rainbow 🌈"
+    📊 Detection: llm | Intent: facilities | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 4.5s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, houserules.md, rules-pets.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: pet, allow
+
+<span class="pass">✅ PASS</span>  Payment Methods  (100% rules passed)
+Category: PRE_ARRIVAL
+
+  Turn 1:
+    👤 Guest: "What payment methods do you accept?"
+    🤖 Rainbow: "We accept DuitNow QR (Touch 'n Go, Boost, ShopeePay, GrabPay, other banks), Maybank transfer to 551128652007, and cash in MYR. Card payments only if confirmed. — Rainbow 🌈"
+    📊 Detection: llm | Intent: payment | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 5.1s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, payment-methods.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: cash, card, transfer, bank
+
+<span class="fail">❌ FAIL</span>  Payment Confirmation  (0% rules passed)
+Category: PRE_ARRIVAL
+
+  Turn 1:
+    👤 Guest: "I already paid via bank transfer"
+    🤖 Rainbow: ""
+    📊 Detection: llm | Intent: payment | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 7.8s | Confidence: 80%
+    📚 KB: AGENTS.md, soul.md, memory.md, payment-methods.md
+
+  Validation Rules:
+      <span class="fail">✗</span> not empty: Response is empty
+      <span class="fail">✗</span> contains any: None of [receipt, admin, forward, staff] found
+
+<span class="pass">✅ PASS</span>  Check-In Time  (100% rules passed)
+Category: PRE_ARRIVAL
+
+  Turn 1:
+    👤 Guest: "What time can I check in?"
+    🤖 Rainbow: "Check‑in starts at 2:00 PM. Early check‑in is free if rooms are available; just let us know in advance. — Rainbow 🌈"
+    📊 Detection: llm | Intent: checkin_info | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 3.8s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, checkin-times.md, checkin-procedure.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: 2, PM
+
+<span class="pass">✅ PASS</span>  Check-Out Time  (100% rules passed)
+Category: PRE_ARRIVAL
+
+  Turn 1:
+    👤 Guest: "When is checkout?"
+    🤖 Rainbow: "Check‑out is at 12:00 PM (noon). Have a great stay! — Rainbow 🌈"
+    📊 Detection: llm | Intent: checkout_info | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 3.6s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: 12, noon
+
+────────────────────────────────────────────────────────────────────────────────
+📂 ARRIVAL_CHECKIN
+────────────────────────────────────────────────────────────────────────────────
+
+<span class="pass">✅ PASS</span>  Check-In Arrival  (100% rules passed)
+Category: ARRIVAL_CHECKIN
+
+  Turn 1:
+    👤 Guest: "I want to check in"
+    🤖 Rainbow: "Great! I'll help you with the check-in process. Welcome! 🎉 Have you already arrived at Pelangi Capsule Hostel?"
+    📊 Detection: fuzzy | Intent: check_in_arrival | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.0s | Confidence: 100%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: welcome, check-in
+
+<span class="fail">❌ FAIL</span>  Lower Deck Preference  (50% rules passed)
+Category: ARRIVAL_CHECKIN
+
+  Turn 1:
+    👤 Guest: "Can I get a lower deck?"
+    🤖 Rainbow: "I don't have that information. Let me connect you with our team."
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 5.4s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [lower, deck, even, C2, C4] found
+
+<span class="pass">✅ PASS</span>  WiFi Password  (100% rules passed)
+Category: ARRIVAL_CHECKIN
+
+  Turn 1:
+    👤 Guest: "What is the WiFi password?"
+    🤖 Rainbow: "The Wi‑Fi network is "pelangi capsule" and the password is "ilovestaycapsule".
+— Rainbow 🌈"
+    📊 Detection: llm | Intent: wifi | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 3.4s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, checkin-access.md, checkin-wifi.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: password, network
+
+<span class="pass">✅ PASS</span>  Facility Orientation  (100% rules passed)
+Category: ARRIVAL_CHECKIN
+
+  Turn 1:
+    👤 Guest: "Where is the bathroom?"
+    🤖 Rainbow: "The bathrooms and showers are located at the back of our capsule area. Just follow the corridor past the capsules and you'll find the shared toilets and hot showers. — Rainbow 🌈"
+    📊 Detection: llm | Intent: facilities | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 3.4s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, availability.md, facilities-bathrooms.md, location.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: bathroom, shower, toilet
+
+────────────────────────────────────────────────────────────────────────────────
+📂 DURING_STAY
+────────────────────────────────────────────────────────────────────────────────
+
+<span class="pass">✅ PASS</span>  Climate - Too Cold  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "My room is too cold!"
+    🤖 Rainbow: "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)
+
+Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem, etc.)"
+    📊 Detection: llm | Intent: complaint | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.3s | Confidence: 80%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: AC
+
+<span class="fail">❌ FAIL</span>  Climate - Too Hot  (50% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "It is way too hot in here"
+    🤖 Rainbow: "I’m sorry you’re feeling too hot. I don’t have that info, but I’ll forward your concern to our staff."
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 6.2s | Confidence: 80%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [fan, AC, cool, adjust] found
+
+<span class="pass">✅ PASS</span>  Noise - Neighbors  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "The people next door are too loud!"
+    🤖 Rainbow: "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)
+
+Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem, etc.)"
+    📊 Detection: llm | Intent: complaint | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.2s | Confidence: 90%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: noise, staff
+
+<span class="pass">✅ PASS</span>  Noise - Construction  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "There is construction noise outside"
+    🤖 Rainbow: "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)
+
+Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem, etc.)"
+    📊 Detection: llm | Intent: complaint | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.2s | Confidence: 80%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: apologize
+
+<span class="pass">✅ PASS</span>  Noise - Baby Crying  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "A baby has been crying all night"
+    🤖 Rainbow: "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)
+
+Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem, etc.)"
+    📊 Detection: llm | Intent: complaint | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.2s | Confidence: 80%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: understand, room
+
+<span class="pass">✅ PASS</span>  Cleanliness - Room  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "My room is dirty!"
+    🤖 Rainbow: "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)
+
+Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem, etc.)"
+    📊 Detection: llm | Intent: complaint | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.2s | Confidence: 90%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: clean
+
+<span class="pass">✅ PASS</span>  Cleanliness - Bathroom  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "The bathroom smells terrible"
+    🤖 Rainbow: "I’m sorry you’re experiencing that. I’ll notify the team right away so the bathroom can be cleaned promptly. Thank you for letting us know!"
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: complaint | Model: Ollama GPT-OSS 20B | Time: 4.5s | Confidence: 80%
+    📚 KB: AGENTS.md, soul.md, memory.md, availability.md, facilities-bathrooms.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: clean
+
+<span class="pass">✅ PASS</span>  Facility - AC Broken  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "The AC is not working"
+    🤖 Rainbow: "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)
+
+Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem, etc.)"
+    📊 Detection: llm | Intent: complaint | Routed: workflow
+    ⚙️  Type: problem | Model: none | Time: 0.2s | Confidence: 90%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: maintenance, technician
+
+<span class="pass">✅ PASS</span>  Card Locked Out  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "My card is locked inside!"
+    🤖 Rainbow: "Oh no! Don't worry, this happens occasionally and we can solve it quickly. 😊 Let me guide you through the emergency steps:
+
+**Quick Solution Steps:**
+
+1️⃣ Check if the capsule door has a small emergency release mechanism (usually a small button or latch on the inside)
+
+2️⃣ Try gently pushing/pulling the door while turning the handle
+
+3️⃣ Some capsules have a secondary manual release - look for a small lever near the lock
+
+Are you able to see any of these mechanisms?"
+    📊 Detection: regex | Intent: card_locked | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.0s | Confidence: 100%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: emergency, release
+
+<span class="pass">✅ PASS</span>  Theft - Laptop  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "Someone stole my laptop!"
+    🤖 Rainbow: "I’m really sorry to hear that. I will report the incident to our security team right away and notify staff, and involve police if needed. — Rainbow 🌈"
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 7.8s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, theft-incident.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: report, security, police, incident
+
+<span class="pass">✅ PASS</span>  Theft - Jewelry  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "My jewelry is missing from the safe"
+    🤖 Rainbow: "🚨 I'm very sorry to hear about this. We take **security** seriously. If items are missing from the **safe**, we'll treat this as a **report** and may need an **inspection**. We'll help you report the incident and involve security or police if needed. I'm taking immediate action and connecting you with our team.
+
+What item(s) were stolen or missing? Please provide details (e.g., phone, wallet, laptop, jewelry, etc.)"
+    📊 Detection: regex | Intent: theft | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.0s | Confidence: 100%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: safe, inspection, report, security
+
+<span class="pass">✅ PASS</span>  General Complaint  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "This service is terrible!"
+    🤖 Rainbow: "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)
+
+Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem, etc.)"
+    📊 Detection: llm | Intent: complaint | Routed: workflow
+    ⚙️  Type: complaint | Model: none | Time: 0.3s | Confidence: 90%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: apologize
+
+<span class="fail">❌ FAIL</span>  Extra Amenity - Towel  (50% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "Can I get more towels?"
+    🤖 Rainbow: "Yes, we can arrange extra towels for you. Just ask our on‑site staff Maya, and she’ll bring them to your capsule. No extra charge for a reasonable request. – Rainbow 🌈"
+    📊 Detection: llm | Intent: general | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 3.6s | Confidence: 80%
+    📚 KB: AGENTS.md, soul.md, memory.md, amenities-extra.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [deliver, housekeeping] found
+
+<span class="pass">✅ PASS</span>  Extra Amenity - Pillow  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "I need an extra pillow please"
+    🤖 Rainbow: "Sure! Just ask staff Maya in the hostel to bring an extra pillow. No charge for reasonable requests. — Rainbow 🌈"
+    📊 Detection: llm | Intent: general | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 3.5s | Confidence: 80%
+    📚 KB: AGENTS.md, soul.md, memory.md, amenities-extra.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: pillow
+
+<span class="pass">✅ PASS</span>  Tourist Guide  (100% rules passed)
+Category: DURING_STAY
+
+  Turn 1:
+    👤 Guest: "What attractions are nearby?"
+    🤖 Rainbow: "Nearby attractions include Plaza Pelangi, Pelangi Leisure Mall (bowling, gym, supermarket), SMK Taman Pelangi bus stop, Masjid Jamek Taman Pelangi, and many cafés & night‑life spots within a few‑minute walk. Happy exploring!"
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 6.4s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, location.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: attract
+
+────────────────────────────────────────────────────────────────────────────────
+📂 CHECKOUT_DEPARTURE
+────────────────────────────────────────────────────────────────────────────────
+
+<span class="fail">❌ FAIL</span>  Checkout Procedure  (50% rules passed)
+Category: CHECKOUT_DEPARTURE
+
+  Turn 1:
+    👤 Guest: "How do I check out?"
+    🤖 Rainbow: "Check‑out is at 12:00 PM (noon). Drop your key card at the desk. If you need to keep your luggage, let us know and we’ll arrange storage.— Rainbow 🌈"
+    📊 Detection: llm | Intent: checkout_info | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 5.2s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [bill, front desk, payment] found
+
+<span class="fail">❌ FAIL</span>  Late Checkout Request  (50% rules passed)
+Category: CHECKOUT_DEPARTURE
+
+  Turn 1:
+    👤 Guest: "Can I checkout at 3 PM?"
+    🤖 Rainbow: "I don't have that information. Let me connect you with our team. — Rainbow 🌈"
+    📊 Detection: llm | Intent: checkout_info | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 8.6s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [late, availability, charge] found
+
+<span class="pass">✅ PASS</span>  Late Checkout - Denied  (100% rules passed)
+Category: CHECKOUT_DEPARTURE
+
+  Turn 1:
+    👤 Guest: "Can I check out at 6 PM?"
+    🤖 Rainbow: "I don’t have that information. Let me connect you with our team.
+— Rainbow 🌈"
+    📊 Detection: llm | Intent: checkout_info | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 4.6s | Confidence: 90%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> response time: 4.6s ≤ 15s
+
+<span class="pass">✅ PASS</span>  Luggage Storage  (100% rules passed)
+Category: CHECKOUT_DEPARTURE
+
+  Turn 1:
+    👤 Guest: "Can I leave my bags after checkout?"
+    🤖 Rainbow: "You can store luggage after checkout. Ask staff for availability and any fees. — Rainbow 🌈"
+    📊 Detection: llm | Intent: checkout_info | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 4.0s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: luggage
+
+<span class="fail">❌ FAIL</span>  Billing Inquiry  (50% rules passed)
+Category: CHECKOUT_DEPARTURE
+
+  Turn 1:
+    👤 Guest: "There is an extra charge on my bill"
+    🤖 Rainbow: "I don't have that information. Let me connect you with our team. — Rainbow 🌈"
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 5.1s | Confidence: 90%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [review, bill, charge] found
+
+────────────────────────────────────────────────────────────────────────────────
+📂 POST_CHECKOUT
+────────────────────────────────────────────────────────────────────────────────
+
+<span class="fail">❌ FAIL</span>  Forgot Item - Charger  (50% rules passed)
+Category: POST_CHECKOUT
+
+  Turn 1:
+    👤 Guest: "I left my phone charger in the room"
+    🤖 Rainbow: "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)
+
+Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem, etc.)"
+    📊 Detection: llm | Intent: complaint | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.2s | Confidence: 80%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [Lost, Found, shipping, pickup] found
+
+<span class="fail">❌ FAIL</span>  Forgot Item - Passport (Urgent)  (50% rules passed)
+Category: POST_CHECKOUT
+
+  Turn 1:
+    👤 Guest: "I think I left my passport behind!"
+    🤖 Rainbow: "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)
+
+Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem, etc.)"
+    📊 Detection: llm | Intent: complaint | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.2s | Confidence: 80%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [urgent, passport, immediately, security] found
+
+<span class="fail">❌ FAIL</span>  Forgot Item - Clothes  (50% rules passed)
+Category: POST_CHECKOUT
+
+  Turn 1:
+    👤 Guest: "Left some clothes in the room"
+    🤖 Rainbow: "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)
+
+Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem, etc.)"
+    📊 Detection: llm | Intent: complaint | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.2s | Confidence: 80%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [Lost, Found, shipping] found
+
+<span class="pass">✅ PASS</span>  Post-Checkout Complaint - Food  (100% rules passed)
+Category: POST_CHECKOUT
+
+  Turn 1:
+    👤 Guest: "The food was awful during my stay"
+    🤖 Rainbow: "I’m really sorry to hear that the food didn’t meet your expectations. I don’t have details on the food service, but I’ll connect you with our team to address this. — Rainbow 🌈"
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: complaint | Model: Ollama GPT-OSS 20B | Time: 6.7s | Confidence: 80%
+    📚 KB: AGENTS.md, soul.md, memory.md, location.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: sorry
+
+<span class="pass">✅ PASS</span>  Post-Checkout Complaint - Service  (100% rules passed)
+Category: POST_CHECKOUT
+
+  Turn 1:
+    👤 Guest: "After checking out, I want to complain about poor service"
+    🤖 Rainbow: "I'm sorry to hear you're unhappy with your stay. Can you please tell me more about what happened so I can pass it on to our team?"
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: info | Model: Groq Llama 3.1 8B Instant | Time: 8.4s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, checkin-procedure.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: sorry
+
+<span class="fail">❌ FAIL</span>  Billing Dispute - Overcharge  (50% rules passed)
+Category: POST_CHECKOUT
+
+  Turn 1:
+    👤 Guest: "I was overcharged by RM50"
+    🤖 Rainbow: "I’m sorry you were overcharged. I don’t have that information. I’ll connect you with our team."
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 6.8s | Confidence: 90%
+    📚 KB: AGENTS.md, soul.md, memory.md, pricing.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [investigation, refund, review] found
+
+<span class="fail">❌ FAIL</span>  Billing Dispute - Minor Error  (50% rules passed)
+Category: POST_CHECKOUT
+
+  Turn 1:
+    👤 Guest: "Small discrepancy in my bill"
+    🤖 Rainbow: "I’m sorry about that. I’ll connect you with our staff to review the bill."
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 6.8s | Confidence: 90%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [verify, adjustment] found
+
+<span class="pass">✅ PASS</span>  Review - Positive  (100% rules passed)
+Category: POST_CHECKOUT
+
+  Turn 1:
+    👤 Guest: "Great experience! Highly recommend"
+    🤖 Rainbow: "Thank you so much for your kind words! We’re thrilled you enjoyed your stay. Hope to welcome you again soon. — Rainbow 🌈"
+    📊 Detection: llm | Intent: thanks | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 2.4s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> contains any: Matched: thank
+
+<span class="fail">❌ FAIL</span>  Review - Negative  (50% rules passed)
+Category: POST_CHECKOUT
+
+  Turn 1:
+    👤 Guest: "Worst hotel ever. Terrible service."
+    🤖 Rainbow: "I **understand** and sincerely apologize for the inconvenience. 😔 Your comfort is our top priority. We can arrange **maintenance** (**technician**), **relocation** to another **room**/capsule, or direct staff support. Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem)
+
+Could you please describe the issue in detail? (e.g., noise, cleanliness, facility problem, etc.)"
+    📊 Detection: llm | Intent: complaint | Routed: workflow
+    ⚙️  Type: complaint | Model: none | Time: 0.2s | Confidence: 90%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="fail">✗</span> contains any: None of [sorry, regret, apology] found
+
+────────────────────────────────────────────────────────────────────────────────
+📂 MULTILINGUAL
+────────────────────────────────────────────────────────────────────────────────
+
+<span class="pass">✅ PASS</span>  Multilingual - Chinese Greeting  (100% rules passed)
+Category: MULTILINGUAL
+
+  Turn 1:
+    👤 Guest: "你好"
+    🤖 Rainbow: "你好！我是 Rainbow，Pelangi Capsule Hostel 的 AI 助手。很高兴为您服务，请问有什么可以帮忙的吗？— Rainbow 🌈"
+    📊 Detection: fuzzy | Intent: greeting | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 3.1s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> response time: 3.1s ≤ 15s
+
+<span class="pass">✅ PASS</span>  Multilingual - Mixed Language  (100% rules passed)
+Category: MULTILINGUAL
+
+  Turn 1:
+    👤 Guest: "Boleh saya book satu room untuk dua malam?"
+    🤖 Rainbow: "I'll help you with your booking or payment. Let me gather some information first.
+
+How many guests will be staying?"
+    📊 Detection: llm | Intent: booking | Routed: workflow
+    ⚙️  Type: info | Model: none | Time: 0.3s | Confidence: 90%
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> response time: 0.3s ≤ 15s
+
+<span class="pass">✅ PASS</span>  Multilingual - Chinese Bill Question  (100% rules passed)
+Category: MULTILINGUAL
+
+  Turn 1:
+    👤 Guest: "账单上多收了钱怎么办？"
+    🤖 Rainbow: "I’m sorry about the extra charge. I’ll forward your concern to the front desk staff, and they’ll review the bill and get back to you shortly."
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 7.0s | Confidence: 90%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> response time: 7.0s ≤ 15s
+
+<span class="pass">✅ PASS</span>  Multilingual - Malay WiFi  (100% rules passed)
+Category: MULTILINGUAL
+
+  Turn 1:
+    👤 Guest: "Apa password WiFi?"
+    🤖 Rainbow: "Password WiFi: **ilovestaycapsule**. — Rainbow 🌈"
+    📊 Detection: llm | Intent: wifi | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 2.7s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, checkin-access.md, checkin-wifi.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> response time: 2.7s ≤ 15s
+
+────────────────────────────────────────────────────────────────────────────────
+📂 EDGE_CASES
+────────────────────────────────────────────────────────────────────────────────
+
+<span class="pass">✅ PASS</span>  Edge - Gibberish  (100% rules passed)
+Category: EDGE_CASES
+
+  Turn 1:
+    👤 Guest: "asdlkjfalksdfjlkajsdflkjasdf"
+    🤖 Rainbow: "I’m sorry, I didn’t understand your message. Let me connect you with our team.
+— Rainbow 🌈"
+    📊 Detection: llm | Intent: unknown | Routed: llm_reply
+    ⚙️  Type: info | Model: Ollama GPT-OSS 20B | Time: 4.7s | Confidence: 100%
+    📚 KB: AGENTS.md, soul.md, memory.md, faq.md
+
+  Validation Rules:
+      <span class="pass">✓</span> not empty: Response is non-empty
+      <span class="pass">✓</span> not contains: None of [error, undefined, null] found (good)
+
+<span class="fail">❌ FAIL</span>  Edge - Emoji Only  (0% rules passed)
+Category: EDGE_CASES
+❌ Error: fetch failed
+
+<span class="fail">❌ FAIL</span>  Edge - Very Long Message  (0% rules passed)
+Category: EDGE_CASES
+❌ Error: fetch failed
+
+<span class="fail">❌ FAIL</span>  Edge - Prompt Injection  (0% rules passed)
+Category: EDGE_CASES
+❌ Error: fetch failed
+
+================================================================================
+📈 SUMMARY
+================================================================================
+Total:    56 tests
+✅ Passed: 39 (69.6%)
+⚠️  Warned: 0
+❌ Failed: 17
+================================================================================
+</pre>
+</body>
+</html>

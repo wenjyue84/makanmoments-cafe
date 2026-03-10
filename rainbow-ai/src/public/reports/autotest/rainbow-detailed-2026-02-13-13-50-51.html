@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rainbow AI Detailed Test Report</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:1200px;margin:0 auto;padding:24px;color:#333;background:#fafafa}
+  h1{font-size:24px;margin:0 0 4px}
+  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:20px 0}
+  .summary-card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:16px;text-align:center}
+  .summary-card .num{font-size:28px;font-weight:700}
+  .summary-card .label{font-size:12px;color:#888;text-transform:uppercase}
+  .category-title{font-size:18px;font-weight:600;color:#666;margin:32px 0 16px;padding-bottom:8px;border-bottom:2px solid #e5e5e5}
+  .test-card{border:1px solid #e5e5e5;border-radius:12px;margin-bottom:16px;overflow:hidden;background:#fff}
+  .test-header{padding:12px 16px;display:flex;align-items:center;gap:12px}
+  .test-body{padding:16px;border-top:1px solid #e5e5e5}
+  .badge{color:#fff;padding:3px 12px;border-radius:6px;font-size:11px;font-weight:700;text-transform:uppercase}
+  .pass-badge{background:#16a34a}
+  .warn-badge{background:#ca8a04}
+  .fail-badge{background:#dc2626}
+  .pass-bg{background:#f0fdf4}
+  .warn-bg{background:#fefce8}
+  .fail-bg{background:#fef2f2}
+  .message-box{background:#f9fafb;padding:12px;border-radius:8px;margin:8px 0;border-left:3px solid #6366f1}
+  .guest-msg{border-left-color:#6366f1}
+  .bot-msg{border-left-color:#10b981;background:#f0fdf4}
+  .meta{font-size:12px;color:#6b7280;margin:8px 0}
+  .meta-item{display:inline-block;margin-right:16px}
+  .kb-files{font-size:11px;color:#7c3aed;background:#faf5ff;padding:4px 8px;border-radius:4px;display:inline-block;margin-top:4px}
+  .rules{margin-top:12px;padding-top:12px;border-top:1px solid #e5e5e5}
+  .rule-item{padding:6px 0;font-size:13px}
+  .rule-pass{color:#16a34a}
+  .rule-fail{color:#dc2626}
+  .rule-warn{color:#ca8a04}
+  @media print{body{padding:12px}}
+</style>
+</head>
+<body>
+  <h1>🌈 Rainbow AI Detailed Test Report</h1>
+  <p style="color:#888;font-size:14px">13/02/2026, 9:50:51 pm | Pass rate: <b>90.0%</b> | 10 tests</p>
+
+  <div class="summary">
+    <div class="summary-card"><div class="num" style="color:#333">10</div><div class="label">Total</div></div>
+    <div class="summary-card"><div class="num" style="color:#16a34a">9</div><div class="label">Passed</div></div>
+    <div class="summary-card"><div class="num" style="color:#ca8a04">1</div><div class="label">Warnings</div></div>
+    <div class="summary-card"><div class="num" style="color:#dc2626">0</div><div class="label">Failed</div></div>
+    <div class="summary-card"><div class="num" style="color:#6366f1">10.0s</div><div class="label">Duration</div></div>
+  </div>
+
+  <div class="category-title">📂 GENERAL_SUPPORT</div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <strong>Greeting - English</strong>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.4s</span>
+    </div>
+    <div class="test-body">
+      <div class="message-box guest-msg">
+        <div style="font-size:11px;color:#6366f1;font-weight:600;margin-bottom:4px">👤 GUEST (Turn 1)</div>
+        <div>Hi there!</div>
+      </div>
+      <div class="message-box bot-msg">
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:4px">🤖 RAINBOW</div>
+        <div>Hello, welcome to Pelangi Capsule Hostel</div>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📊 Detection: <strong>llm</strong></span>
+        <span class="meta-item">🎯 Intent: <strong>greeting</strong></span>
+        <span class="meta-item">🔀 Routed: <strong>static_reply</strong></span>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📝 Type: info</span>
+        <span class="meta-item">⚙️ Model: none</span>
+        <span class="meta-item">⏱ Time: 0.4s</span>
+        <span class="meta-item">📈 Confidence: 100%</span>
+      </div>
+      <div class="rules">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Validation Rules:</div>
+        <div class="rule-item rule-pass">✓ <strong>not empty:</strong> Response is non-empty</div>
+        <div class="rule-item rule-pass">✓ <strong>contains any:</strong> Matched: Hello, Welcome</div>
+      </div>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header warn-bg">
+      <span class="badge warn-badge">WARN</span>
+      <strong>Greeting - Malay</strong>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.0s</span>
+    </div>
+    <div class="test-body">
+      <div class="message-box guest-msg">
+        <div style="font-size:11px;color:#6366f1;font-weight:600;margin-bottom:4px">👤 GUEST (Turn 1)</div>
+        <div>Selamat pagi</div>
+      </div>
+      <div class="message-box bot-msg">
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:4px">🤖 RAINBOW</div>
+        <div>Hello, welcome to Pelangi Capsule Hostel</div>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📊 Detection: <strong>fuzzy</strong></span>
+        <span class="meta-item">🎯 Intent: <strong>greeting</strong></span>
+        <span class="meta-item">🔀 Routed: <strong>static_reply</strong></span>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📝 Type: info</span>
+        <span class="meta-item">⚙️ Model: none</span>
+        <span class="meta-item">⏱ Time: 0.0s</span>
+        <span class="meta-item">📈 Confidence: 100%</span>
+      </div>
+      <div class="rules">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Validation Rules:</div>
+        <div class="rule-item rule-pass">✓ <strong>not empty:</strong> Response is non-empty</div>
+        <div class="rule-item rule-warn">⚠ <strong>contains any:</strong> None of [Selamat, Halo, pagi] found</div>
+      </div>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <strong>Thanks</strong>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.2s</span>
+    </div>
+    <div class="test-body">
+      <div class="message-box guest-msg">
+        <div style="font-size:11px;color:#6366f1;font-weight:600;margin-bottom:4px">👤 GUEST (Turn 1)</div>
+        <div>Thank you!</div>
+      </div>
+      <div class="message-box bot-msg">
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:4px">🤖 RAINBOW</div>
+        <div>You&#39;re welcome, have a great day</div>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📊 Detection: <strong>llm</strong></span>
+        <span class="meta-item">🎯 Intent: <strong>thanks</strong></span>
+        <span class="meta-item">🔀 Routed: <strong>static_reply</strong></span>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📝 Type: info</span>
+        <span class="meta-item">⚙️ Model: none</span>
+        <span class="meta-item">⏱ Time: 0.2s</span>
+        <span class="meta-item">📈 Confidence: 100%</span>
+      </div>
+      <div class="rules">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Validation Rules:</div>
+        <div class="rule-item rule-pass">✓ <strong>not empty:</strong> Response is non-empty</div>
+        <div class="rule-item rule-pass">✓ <strong>contains any:</strong> Matched: welcome</div>
+      </div>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <strong>Contact Staff</strong>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.2s</span>
+    </div>
+    <div class="test-body">
+      <div class="message-box guest-msg">
+        <div style="font-size:11px;color:#6366f1;font-weight:600;margin-bottom:4px">👤 GUEST (Turn 1)</div>
+        <div>I need to speak to staff</div>
+      </div>
+      <div class="message-box bot-msg">
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:4px">🤖 RAINBOW</div>
+        <div>Let me connect you to our staff...
+
+✅ Message sent to staff. They will contact you shortly.</div>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📊 Detection: <strong>llm</strong></span>
+        <span class="meta-item">🎯 Intent: <strong>contact_staff</strong></span>
+        <span class="meta-item">🔀 Routed: <strong>workflow</strong></span>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📝 Type: info</span>
+        <span class="meta-item">⚙️ Model: none</span>
+        <span class="meta-item">⏱ Time: 0.2s</span>
+        <span class="meta-item">📈 Confidence: 100%</span>
+      </div>
+      <div class="rules">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Validation Rules:</div>
+        <div class="rule-item rule-pass">✓ <strong>not empty:</strong> Response is non-empty</div>
+        <div class="rule-item rule-pass">✓ <strong>contains any:</strong> Matched: staff, connect, contact</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="category-title">📂 PRE_ARRIVAL</div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <strong>Pricing Inquiry</strong>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.3s</span>
+    </div>
+    <div class="test-body">
+      <div class="message-box guest-msg">
+        <div style="font-size:11px;color:#6366f1;font-weight:600;margin-bottom:4px">👤 GUEST (Turn 1)</div>
+        <div>How much is a room?</div>
+      </div>
+      <div class="message-box bot-msg">
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:4px">🤖 RAINBOW</div>
+        <div>💰 *Our Rates*
+
+🏷️ Daily: *RM45/night*
+🏷️ 7 nights: *RM267* (~RM38/night)
+🏷️ Monthly: *RM650/month* (~RM22/night)
+
+Deposit: RM10 key-card + RM100 security (long-term stays, refundable)
+Payment: DuitNow QR, Bank transfer, Cash (Touch &#39;n Go, Boost, ShopeePay, GrabPay)
+
+Want to book? Just say *&quot;book&quot;*!</div>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📊 Detection: <strong>llm</strong></span>
+        <span class="meta-item">🎯 Intent: <strong>pricing</strong></span>
+        <span class="meta-item">🔀 Routed: <strong>static_reply</strong></span>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📝 Type: info</span>
+        <span class="meta-item">⚙️ Model: none</span>
+        <span class="meta-item">⏱ Time: 0.3s</span>
+        <span class="meta-item">📈 Confidence: 100%</span>
+      </div>
+      <div class="rules">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Validation Rules:</div>
+        <div class="rule-item rule-pass">✓ <strong>not empty:</strong> Response is non-empty</div>
+        <div class="rule-item rule-pass">✓ <strong>contains any:</strong> Matched: RM, night</div>
+      </div>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <strong>Availability Check</strong>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.9s</span>
+    </div>
+    <div class="test-body">
+      <div class="message-box guest-msg">
+        <div style="font-size:11px;color:#6366f1;font-weight:600;margin-bottom:4px">👤 GUEST (Turn 1)</div>
+        <div>Do you have rooms on June 15th?</div>
+      </div>
+      <div class="message-box bot-msg">
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:4px">🤖 RAINBOW</div>
+        <div>We&#39;re almost always available. What time do you need to check-in and check-out?</div>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📊 Detection: <strong>llm</strong></span>
+        <span class="meta-item">🎯 Intent: <strong>availability</strong></span>
+        <span class="meta-item">🔀 Routed: <strong>llm_reply</strong></span>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📝 Type: info</span>
+        <span class="meta-item">⚙️ Model: Groq Llama 3.3 70B</span>
+        <span class="meta-item">⏱ Time: 0.9s</span>
+        <span class="meta-item">📈 Confidence: 100%</span>
+      </div>
+      <div class="kb-files">📚 KB: AGENTS.md, soul.md, memory.md, availability.md</div>
+      <div class="rules">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Validation Rules:</div>
+        <div class="rule-item rule-pass">✓ <strong>not empty:</strong> Response is non-empty</div>
+        <div class="rule-item rule-pass">✓ <strong>contains any:</strong> Matched: available, check</div>
+      </div>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <strong>Booking Process</strong>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.2s</span>
+    </div>
+    <div class="test-body">
+      <div class="message-box guest-msg">
+        <div style="font-size:11px;color:#6366f1;font-weight:600;margin-bottom:4px">👤 GUEST (Turn 1)</div>
+        <div>How do I book?</div>
+      </div>
+      <div class="message-box bot-msg">
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:4px">🤖 RAINBOW</div>
+        <div>I&#39;ll help you with your booking or payment. Let me gather some information first.
+
+How many guests will be staying?</div>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📊 Detection: <strong>llm</strong></span>
+        <span class="meta-item">🎯 Intent: <strong>booking</strong></span>
+        <span class="meta-item">🔀 Routed: <strong>workflow</strong></span>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📝 Type: info</span>
+        <span class="meta-item">⚙️ Model: none</span>
+        <span class="meta-item">⏱ Time: 0.2s</span>
+        <span class="meta-item">📈 Confidence: 100%</span>
+      </div>
+      <div class="rules">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Validation Rules:</div>
+        <div class="rule-item rule-pass">✓ <strong>not empty:</strong> Response is non-empty</div>
+        <div class="rule-item rule-pass">✓ <strong>contains any:</strong> Matched: book</div>
+      </div>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <strong>Directions</strong>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.2s</span>
+    </div>
+    <div class="test-body">
+      <div class="message-box guest-msg">
+        <div style="font-size:11px;color:#6366f1;font-weight:600;margin-bottom:4px">👤 GUEST (Turn 1)</div>
+        <div>How do I get from the airport?</div>
+      </div>
+      <div class="message-box bot-msg">
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:4px">🤖 RAINBOW</div>
+        <div>📍 *How to find us*
+26A Jalan Perang, Taman Pelangi, 80400 Johor Bahru
+
+Google Maps: https://maps.app.goo.gl/maLXetUqYS5MtSLD9?g_st=iwb
+
+We&#39;re in a quiet residential area in Taman Pelangi, walking distance to cafes and shops.</div>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📊 Detection: <strong>llm</strong></span>
+        <span class="meta-item">🎯 Intent: <strong>directions</strong></span>
+        <span class="meta-item">🔀 Routed: <strong>static_reply</strong></span>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📝 Type: info</span>
+        <span class="meta-item">⚙️ Model: none</span>
+        <span class="meta-item">⏱ Time: 0.2s</span>
+        <span class="meta-item">📈 Confidence: 100%</span>
+      </div>
+      <div class="rules">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Validation Rules:</div>
+        <div class="rule-item rule-pass">✓ <strong>not empty:</strong> Response is non-empty</div>
+        <div class="rule-item rule-pass">✓ <strong>contains any:</strong> Matched: Jalan, Pelangi, maps, find us</div>
+      </div>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <strong>Facilities Info</strong>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.2s</span>
+    </div>
+    <div class="test-body">
+      <div class="message-box guest-msg">
+        <div style="font-size:11px;color:#6366f1;font-weight:600;margin-bottom:4px">👤 GUEST (Turn 1)</div>
+        <div>What facilities do you have?</div>
+      </div>
+      <div class="message-box bot-msg">
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:4px">🤖 RAINBOW</div>
+        <div>🏨 *Facilities*
+
+• ~24 capsules across 3 sections (Front, Middle, Back)
+• Each capsule: personal light, USB port, power outlet, privacy curtain
+• Shared kitchen with fridge &amp; microwave
+• Laundry (RM5/load)
+• Living room area
+• Free WiFi
+
+🎥 Video tour: https://www.youtube.com/watch?v=6Ux11oBZaQQ</div>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📊 Detection: <strong>llm</strong></span>
+        <span class="meta-item">🎯 Intent: <strong>facilities</strong></span>
+        <span class="meta-item">🔀 Routed: <strong>static_reply</strong></span>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📝 Type: info</span>
+        <span class="meta-item">⚙️ Model: none</span>
+        <span class="meta-item">⏱ Time: 0.2s</span>
+        <span class="meta-item">📈 Confidence: 100%</span>
+      </div>
+      <div class="rules">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Validation Rules:</div>
+        <div class="rule-item rule-pass">✓ <strong>not empty:</strong> Response is non-empty</div>
+        <div class="rule-item rule-pass">✓ <strong>contains any:</strong> Matched: kitchen</div>
+      </div>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <strong>House Rules</strong>
+      <span style="font-size:12px;color:#888;margin-left:auto">7.3s</span>
+    </div>
+    <div class="test-body">
+      <div class="message-box guest-msg">
+        <div style="font-size:11px;color:#6366f1;font-weight:600;margin-bottom:4px">👤 GUEST (Turn 1)</div>
+        <div>What are the rules?</div>
+      </div>
+      <div class="message-box bot-msg">
+        <div style="font-size:11px;color:#10b981;font-weight:600;margin-bottom:4px">🤖 RAINBOW</div>
+        <div>Here are the main rules at Pelangi Hostel:
+• Quiet hours: 11 PM‑9 AM
+• No smoking indoors (RM300 fine)
+• No outside guests (dormitory only)
+• Clean kitchen after use (RM20 fee)
+• Keep key card private (RM20 replacement)
+• Report damage immediately (cost + RM100)
+• Zero‑tolerance for theft, violence, drugs, harassment – immediate eviction
+— Rainbow 🌈</div>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📊 Detection: <strong>llm</strong></span>
+        <span class="meta-item">🎯 Intent: <strong>rules</strong></span>
+        <span class="meta-item">🔀 Routed: <strong>llm_reply</strong></span>
+      </div>
+      <div class="meta">
+        <span class="meta-item">📝 Type: info</span>
+        <span class="meta-item">⚙️ Model: Ollama GPT-OSS 20B</span>
+        <span class="meta-item">⏱ Time: 7.3s</span>
+        <span class="meta-item">📈 Confidence: 100%</span>
+      </div>
+      <div class="kb-files">📚 KB: AGENTS.md, soul.md, memory.md, houserules.md</div>
+      <div class="rules">
+        <div style="font-size:12px;font-weight:600;color:#666;margin-bottom:8px">Validation Rules:</div>
+        <div class="rule-item rule-pass">✓ <strong>not empty:</strong> Response is non-empty</div>
+        <div class="rule-item rule-pass">✓ <strong>contains any:</strong> Matched: quiet, smoking, rule</div>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

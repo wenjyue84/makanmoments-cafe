@@ -1,0 +1,1295 @@
+[
+  {
+    "id": "evt-23792-1772185740756",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"general_complaint_in_stay\" (100% via llm)",
+    "timestamp": "2026-02-27T09:49:00.756Z",
+    "metadata": {
+      "intent": "general_complaint_in_stay",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23793-1772185740756",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 5461ms (workflow)",
+    "timestamp": "2026-02-27T09:49:00.756Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 5461
+    }
+  },
+  {
+    "id": "evt-23794-1772185740759",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"Wait, after 10 minutes - another issue: the door i...\"",
+    "timestamp": "2026-02-27T09:49:00.759Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "Wait, after 10 minutes - another issue: the door i..."
+    }
+  },
+  {
+    "id": "evt-23795-1772185746257",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"facility_malfunction\" (100% via llm)",
+    "timestamp": "2026-02-27T09:49:06.257Z",
+    "metadata": {
+      "intent": "facility_malfunction",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23796-1772185746257",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 5498ms (workflow)",
+    "timestamp": "2026-02-27T09:49:06.257Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 5498
+    }
+  },
+  {
+    "id": "evt-23797-1772185746266",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"I need to cancel my booking for this Saturday\"",
+    "timestamp": "2026-02-27T09:49:06.266Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "I need to cancel my booking for this Saturday"
+    }
+  },
+  {
+    "id": "evt-23798-1772185754288",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"unknown\" (100% via llm)",
+    "timestamp": "2026-02-27T09:49:14.288Z",
+    "metadata": {
+      "intent": "unknown",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23799-1772185754288",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 8023ms (llm_reply)",
+    "timestamp": "2026-02-27T09:49:14.288Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "llm_reply",
+      "responseTime": 8023
+    }
+  },
+  {
+    "id": "evt-23800-1772185754294",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"Actually, can I change it to next Saturday instead...\"",
+    "timestamp": "2026-02-27T09:49:14.294Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "Actually, can I change it to next Saturday instead..."
+    }
+  },
+  {
+    "id": "evt-23801-1772185754678",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"booking\" (80% via llm)",
+    "timestamp": "2026-02-27T09:49:14.678Z",
+    "metadata": {
+      "intent": "booking",
+      "confidence": 0.8,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23802-1772185754678",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 384ms (workflow)",
+    "timestamp": "2026-02-27T09:49:14.678Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 384
+    }
+  },
+  {
+    "id": "evt-23803-1772185754679",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"How much would that be for 2 nights?\"",
+    "timestamp": "2026-02-27T09:49:14.679Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "How much would that be for 2 nights?"
+    }
+  },
+  {
+    "id": "evt-23804-1772185758061",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"pricing\" (80% via llm)",
+    "timestamp": "2026-02-27T09:49:18.061Z",
+    "metadata": {
+      "intent": "pricing",
+      "confidence": 0.8,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23805-1772185758061",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 3382ms (static_reply)",
+    "timestamp": "2026-02-27T09:49:18.061Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "static_reply",
+      "responseTime": 3382
+    }
+  },
+  {
+    "id": "evt-23806-1772185758063",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"How much per night?\"",
+    "timestamp": "2026-02-27T09:49:18.063Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "How much per night?"
+    }
+  },
+  {
+    "id": "evt-23807-1772185761394",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"pricing\" (100% via llm)",
+    "timestamp": "2026-02-27T09:49:21.394Z",
+    "metadata": {
+      "intent": "pricing",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23808-1772185761394",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 3331ms (static_reply)",
+    "timestamp": "2026-02-27T09:49:21.394Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "static_reply",
+      "responseTime": 3331
+    }
+  },
+  {
+    "id": "evt-23809-1772185761396",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"OK I want to book for 3 nights starting tomorrow\"",
+    "timestamp": "2026-02-27T09:49:21.396Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "OK I want to book for 3 nights starting tomorrow"
+    }
+  },
+  {
+    "id": "evt-23810-1772185766873",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"booking\" (100% via llm)",
+    "timestamp": "2026-02-27T09:49:26.873Z",
+    "metadata": {
+      "intent": "booking",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23811-1772185766873",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 5477ms (workflow)",
+    "timestamp": "2026-02-27T09:49:26.873Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 5477
+    }
+  },
+  {
+    "id": "evt-23812-1772185766879",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"What payment methods do you accept?\"",
+    "timestamp": "2026-02-27T09:49:26.879Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "What payment methods do you accept?"
+    }
+  },
+  {
+    "id": "evt-23813-1772185773413",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"payment_info\" (100% via llm)",
+    "timestamp": "2026-02-27T09:49:33.413Z",
+    "metadata": {
+      "intent": "payment_info",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23814-1772185773413",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 6534ms (static_reply)",
+    "timestamp": "2026-02-27T09:49:33.413Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "static_reply",
+      "responseTime": 6534
+    }
+  },
+  {
+    "id": "evt-23815-1772185773421",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"I will pay by bank transfer\"",
+    "timestamp": "2026-02-27T09:49:33.421Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "I will pay by bank transfer"
+    }
+  },
+  {
+    "id": "evt-23816-1772185779986",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"payment_made\" (100% via llm)",
+    "timestamp": "2026-02-27T09:49:39.986Z",
+    "metadata": {
+      "intent": "payment_made",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23817-1772185779986",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 6565ms (workflow)",
+    "timestamp": "2026-02-27T09:49:39.986Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 6565
+    }
+  },
+  {
+    "id": "evt-23818-1772185779991",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"Hi, how much is one night?\"",
+    "timestamp": "2026-02-27T09:49:39.991Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "Hi, how much is one night?"
+    }
+  },
+  {
+    "id": "evt-23819-1772185783352",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"pricing\" (100% via llm)",
+    "timestamp": "2026-02-27T09:49:43.352Z",
+    "metadata": {
+      "intent": "pricing",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23820-1772185783352",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 3361ms (static_reply)",
+    "timestamp": "2026-02-27T09:49:43.352Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "static_reply",
+      "responseTime": 3361
+    }
+  },
+  {
+    "id": "evt-23821-1772185783356",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"Boleh book tak untuk esok?\"",
+    "timestamp": "2026-02-27T09:49:43.356Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "Boleh book tak untuk esok?"
+    }
+  },
+  {
+    "id": "evt-23822-1772185788780",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"booking\" (100% via llm)",
+    "timestamp": "2026-02-27T09:49:48.780Z",
+    "metadata": {
+      "intent": "booking",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23823-1772185788780",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 5424ms (workflow)",
+    "timestamp": "2026-02-27T09:49:48.780Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 5424
+    }
+  },
+  {
+    "id": "evt-23824-1772185788785",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"谢谢，我明天到\"",
+    "timestamp": "2026-02-27T09:49:48.785Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "谢谢，我明天到"
+    }
+  },
+  {
+    "id": "evt-23825-1772185794181",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"booking\" (80% via llm)",
+    "timestamp": "2026-02-27T09:49:54.181Z",
+    "metadata": {
+      "intent": "booking",
+      "confidence": 0.8,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23826-1772185794181",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 5396ms (workflow)",
+    "timestamp": "2026-02-27T09:49:54.181Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 5396
+    }
+  },
+  {
+    "id": "evt-23827-1772185794184",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"I want to book for 2 guests\"",
+    "timestamp": "2026-02-27T09:49:54.184Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "I want to book for 2 guests"
+    }
+  },
+  {
+    "id": "evt-23828-1772185797541",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"booking\" (100% via llm)",
+    "timestamp": "2026-02-27T09:49:57.541Z",
+    "metadata": {
+      "intent": "booking",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23829-1772185797541",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 3357ms (workflow)",
+    "timestamp": "2026-02-27T09:49:57.541Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 3357
+    }
+  },
+  {
+    "id": "evt-23830-1772185797543",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"Check in on March 1st\"",
+    "timestamp": "2026-02-27T09:49:57.543Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "Check in on March 1st"
+    }
+  },
+  {
+    "id": "evt-23831-1772185801911",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"booking\" (100% via llm)",
+    "timestamp": "2026-02-27T09:50:01.911Z",
+    "metadata": {
+      "intent": "booking",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23832-1772185801911",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 4368ms (workflow)",
+    "timestamp": "2026-02-27T09:50:01.911Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 4368
+    }
+  },
+  {
+    "id": "evt-23833-1772185801915",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"Sorry, I made a mistake. Actually 3 guests, not 2\"",
+    "timestamp": "2026-02-27T09:50:01.915Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "Sorry, I made a mistake. Actually 3 guests, not 2"
+    }
+  },
+  {
+    "id": "evt-23834-1772185805319",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"booking\" (100% via llm)",
+    "timestamp": "2026-02-27T09:50:05.319Z",
+    "metadata": {
+      "intent": "booking",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23835-1772185805319",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 3404ms (workflow)",
+    "timestamp": "2026-02-27T09:50:05.319Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 3404
+    }
+  },
+  {
+    "id": "evt-23836-1772185805322",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"Help! My friend collapsed and is not responding!\"",
+    "timestamp": "2026-02-27T09:50:05.322Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "Help! My friend collapsed and is not responding!"
+    }
+  },
+  {
+    "id": "evt-23837-1772185805324",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"complaint\" (100% via regex)",
+    "timestamp": "2026-02-27T09:50:05.324Z",
+    "metadata": {
+      "intent": "complaint",
+      "confidence": 1,
+      "source": "regex"
+    }
+  },
+  {
+    "id": "evt-23838-1772185805324",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 2ms (emergency)",
+    "timestamp": "2026-02-27T09:50:05.324Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "emergency",
+      "responseTime": 2
+    }
+  },
+  {
+    "id": "evt-23839-1772185805327",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"We are on the 2nd floor near the bathroom\"",
+    "timestamp": "2026-02-27T09:50:05.327Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "We are on the 2nd floor near the bathroom"
+    }
+  },
+  {
+    "id": "evt-23840-1772185809707",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"general_complaint_in_stay\" (100% via llm)",
+    "timestamp": "2026-02-27T09:50:09.707Z",
+    "metadata": {
+      "intent": "general_complaint_in_stay",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23841-1772185809707",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 4380ms (workflow)",
+    "timestamp": "2026-02-27T09:50:09.707Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 4380
+    }
+  },
+  {
+    "id": "evt-23842-1772185809711",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"He is breathing but unconscious\"",
+    "timestamp": "2026-02-27T09:50:09.711Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "He is breathing but unconscious"
+    }
+  },
+  {
+    "id": "evt-23843-1772185809713",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"complaint\" (100% via regex)",
+    "timestamp": "2026-02-27T09:50:09.713Z",
+    "metadata": {
+      "intent": "complaint",
+      "confidence": 1,
+      "source": "regex"
+    }
+  },
+  {
+    "id": "evt-23844-1772185809713",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 2ms (workflow)",
+    "timestamp": "2026-02-27T09:50:09.713Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "workflow",
+      "responseTime": 2
+    }
+  },
+  {
+    "id": "evt-23845-1772185809715",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"I think I left my laptop charger in my capsule aft...\"",
+    "timestamp": "2026-02-27T09:50:09.715Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "I think I left my laptop charger in my capsule aft..."
+    }
+  },
+  {
+    "id": "evt-23846-1772185813125",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"forgot_item_post_checkout\" (80% via llm)",
+    "timestamp": "2026-02-27T09:50:13.125Z",
+    "metadata": {
+      "intent": "forgot_item_post_checkout",
+      "confidence": 0.8,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23847-1772185813125",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 3410ms (static_reply)",
+    "timestamp": "2026-02-27T09:50:13.125Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "static_reply",
+      "responseTime": 3410
+    }
+  },
+  {
+    "id": "evt-23848-1772185813127",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"I checked out this morning from capsule C5\"",
+    "timestamp": "2026-02-27T09:50:13.127Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "I checked out this morning from capsule C5"
+    }
+  },
+  {
+    "id": "evt-23849-1772185818578",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"forgot_item_post_checkout\" (100% via llm)",
+    "timestamp": "2026-02-27T09:50:18.578Z",
+    "metadata": {
+      "intent": "forgot_item_post_checkout",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23850-1772185818578",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 5451ms (static_reply)",
+    "timestamp": "2026-02-27T09:50:18.578Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "static_reply",
+      "responseTime": 5451
+    }
+  },
+  {
+    "id": "evt-23851-1772185818581",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Live Sim: \"Can someone check if it is still there?\"",
+    "timestamp": "2026-02-27T09:50:18.581Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "textPreview": "Can someone check if it is still there?"
+    }
+  },
+  {
+    "id": "evt-23852-1772185825029",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"forgot_item_post_checkout\" (100% via llm)",
+    "timestamp": "2026-02-27T09:50:25.029Z",
+    "metadata": {
+      "intent": "forgot_item_post_checkout",
+      "confidence": 1,
+      "source": "llm"
+    }
+  },
+  {
+    "id": "evt-23853-1772185825029",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Live Sim in 6448ms (static_reply)",
+    "timestamp": "2026-02-27T09:50:25.029Z",
+    "metadata": {
+      "phone": "simulator@preview",
+      "pushName": "Live Sim",
+      "action": "static_reply",
+      "responseTime": 6448
+    }
+  },
+  {
+    "id": "evt-23854-1772187361596",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 503, reconnecting (1/3)",
+    "timestamp": "2026-02-27T10:16:01.596Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 503, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23855-1772187366177",
+    "type": "whatsapp_connected",
+    "category": "connection",
+    "icon": "📱",
+    "message": "WhatsApp connected: Pelangi Capsule Hostel (60103084289)",
+    "timestamp": "2026-02-27T10:16:06.177Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "name": "Pelangi Capsule Hostel",
+      "phoneNumber": "60103084289"
+    }
+  },
+  {
+    "id": "evt-23856-1772202140086",
+    "type": "whatsapp_connected",
+    "category": "connection",
+    "icon": "📱",
+    "message": "WhatsApp connected: 60103341058 (60103341058)",
+    "timestamp": "2026-02-27T14:22:20.086Z",
+    "metadata": {
+      "instanceId": "60103341058",
+      "name": "60103341058",
+      "phoneNumber": "60103341058"
+    }
+  },
+  {
+    "id": "evt-23857-1772209193200",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103341058 — code 428, reconnecting (1/3)",
+    "timestamp": "2026-02-27T16:19:53.200Z",
+    "metadata": {
+      "instanceId": "60103341058",
+      "reason": "code 428, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23858-1772209197522",
+    "type": "whatsapp_connected",
+    "category": "connection",
+    "icon": "📱",
+    "message": "WhatsApp connected: 60103341058 (60103341058)",
+    "timestamp": "2026-02-27T16:19:57.522Z",
+    "metadata": {
+      "instanceId": "60103341058",
+      "name": "60103341058",
+      "phoneNumber": "60103341058"
+    }
+  },
+  {
+    "id": "evt-23859-1772213313886",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103341058 — code 428, reconnecting (1/3)",
+    "timestamp": "2026-02-27T17:28:33.886Z",
+    "metadata": {
+      "instanceId": "60103341058",
+      "reason": "code 428, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23860-1772213318095",
+    "type": "whatsapp_connected",
+    "category": "connection",
+    "icon": "📱",
+    "message": "WhatsApp connected: 60103341058 (60103341058)",
+    "timestamp": "2026-02-27T17:28:38.096Z",
+    "metadata": {
+      "instanceId": "60103341058",
+      "name": "60103341058",
+      "phoneNumber": "60103341058"
+    }
+  },
+  {
+    "id": "evt-23861-1772216671861",
+    "type": "message_received",
+    "category": "message",
+    "icon": "💬",
+    "message": "Message from Kae Shyong Teo: \"Wow ; fantastic .\"",
+    "timestamp": "2026-02-27T18:24:31.861Z",
+    "metadata": {
+      "phone": "60167166663@s.whatsapp.net",
+      "pushName": "Kae Shyong Teo",
+      "textPreview": "Wow ; fantastic ."
+    }
+  },
+  {
+    "id": "evt-23862-1772216678299",
+    "type": "intent_classified",
+    "category": "classified",
+    "icon": "🤖",
+    "message": "Classified as \"positive_review\" (90% via tiered-llm-fallback+layer2)",
+    "timestamp": "2026-02-27T18:24:38.299Z",
+    "metadata": {
+      "intent": "positive_review",
+      "confidence": 0.9,
+      "source": "tiered-llm-fallback+layer2"
+    }
+  },
+  {
+    "id": "evt-23863-1772216678316",
+    "type": "response_sent",
+    "category": "reply",
+    "icon": "✓",
+    "message": "Reply sent to Kae Shyong Teo in 6226ms (static_reply)",
+    "timestamp": "2026-02-27T18:24:38.316Z",
+    "metadata": {
+      "phone": "60167166663@s.whatsapp.net",
+      "pushName": "Kae Shyong Teo",
+      "action": "static_reply",
+      "responseTime": 6226
+    }
+  },
+  {
+    "id": "evt-23864-1772217347431",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103341058 — code 428, reconnecting (1/3)",
+    "timestamp": "2026-02-27T18:35:47.431Z",
+    "metadata": {
+      "instanceId": "60103341058",
+      "reason": "code 428, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23865-1772217351337",
+    "type": "whatsapp_connected",
+    "category": "connection",
+    "icon": "📱",
+    "message": "WhatsApp connected: 60103341058 (60103341058)",
+    "timestamp": "2026-02-27T18:35:51.337Z",
+    "metadata": {
+      "instanceId": "60103341058",
+      "name": "60103341058",
+      "phoneNumber": "60103341058"
+    }
+  },
+  {
+    "id": "evt-23866-1772240286602",
+    "type": "whatsapp_connected",
+    "category": "connection",
+    "icon": "📱",
+    "message": "WhatsApp connected: Pelangi Capsule Hostel (60103084289)",
+    "timestamp": "2026-02-28T00:58:06.602Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "name": "Pelangi Capsule Hostel",
+      "phoneNumber": "60103084289"
+    }
+  },
+  {
+    "id": "evt-23867-1772936741687",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (1/3)",
+    "timestamp": "2026-03-08T02:25:41.687Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23868-1772936932899",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (2/3)",
+    "timestamp": "2026-03-08T02:28:52.899Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (2/3)"
+    }
+  },
+  {
+    "id": "evt-23869-1772937154161",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (3/3)",
+    "timestamp": "2026-03-08T02:32:34.161Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (3/3)"
+    }
+  },
+  {
+    "id": "evt-23870-1772945615963",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (1/3)",
+    "timestamp": "2026-03-08T04:53:35.963Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23871-1772946176765",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (1/3)",
+    "timestamp": "2026-03-08T05:02:56.765Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23872-1772946368482",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (2/3)",
+    "timestamp": "2026-03-08T05:06:08.482Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (2/3)"
+    }
+  },
+  {
+    "id": "evt-23873-1772946589754",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (3/3)",
+    "timestamp": "2026-03-08T05:09:49.754Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (3/3)"
+    }
+  },
+  {
+    "id": "evt-23874-1772951168652",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (1/3)",
+    "timestamp": "2026-03-08T06:26:08.652Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23875-1772951359798",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (2/3)",
+    "timestamp": "2026-03-08T06:29:19.798Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (2/3)"
+    }
+  },
+  {
+    "id": "evt-23876-1772951581004",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (3/3)",
+    "timestamp": "2026-03-08T06:33:01.004Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (3/3)"
+    }
+  },
+  {
+    "id": "evt-23877-1772952806298",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (1/3)",
+    "timestamp": "2026-03-08T06:53:26.298Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23878-1772952997521",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (2/3)",
+    "timestamp": "2026-03-08T06:56:37.521Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (2/3)"
+    }
+  },
+  {
+    "id": "evt-23879-1772953219219",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (3/3)",
+    "timestamp": "2026-03-08T07:00:19.219Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (3/3)"
+    }
+  },
+  {
+    "id": "evt-23880-1772959686517",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (1/3)",
+    "timestamp": "2026-03-08T08:48:06.517Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23881-1772959878382",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (2/3)",
+    "timestamp": "2026-03-08T08:51:18.382Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (2/3)"
+    }
+  },
+  {
+    "id": "evt-23882-1772960099678",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (3/3)",
+    "timestamp": "2026-03-08T08:54:59.678Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (3/3)"
+    }
+  },
+  {
+    "id": "evt-23883-1773026294200",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (1/3)",
+    "timestamp": "2026-03-09T03:18:14.200Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23884-1773026485432",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (2/3)",
+    "timestamp": "2026-03-09T03:21:25.432Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (2/3)"
+    }
+  },
+  {
+    "id": "evt-23885-1773026706680",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (3/3)",
+    "timestamp": "2026-03-09T03:25:06.680Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (3/3)"
+    }
+  },
+  {
+    "id": "evt-23886-1773030921796",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (1/3)",
+    "timestamp": "2026-03-09T04:35:21.796Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23887-1773031113428",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (2/3)",
+    "timestamp": "2026-03-09T04:38:33.428Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (2/3)"
+    }
+  },
+  {
+    "id": "evt-23888-1773031334576",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (3/3)",
+    "timestamp": "2026-03-09T04:42:14.576Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (3/3)"
+    }
+  },
+  {
+    "id": "evt-23889-1773040342865",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (1/3)",
+    "timestamp": "2026-03-09T07:12:22.865Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (1/3)"
+    }
+  },
+  {
+    "id": "evt-23890-1773040534089",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (2/3)",
+    "timestamp": "2026-03-09T07:15:34.089Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (2/3)"
+    }
+  },
+  {
+    "id": "evt-23891-1773040755227",
+    "type": "whatsapp_disconnected",
+    "category": "connection",
+    "icon": "📴",
+    "message": "WhatsApp disconnected: 60103084289 — code 408, reconnecting (3/3)",
+    "timestamp": "2026-03-09T07:19:15.227Z",
+    "metadata": {
+      "instanceId": "60103084289",
+      "reason": "code 408, reconnecting (3/3)"
+    }
+  }
+]

@@ -51,3 +51,12 @@ Thumbs.db
 
 # Runtime data (admin-configurable settings)
 /data/chat-settings.json
+
+# Rainbow AI service (companion WhatsApp AI)
+rainbow-ai/node_modules/
+rainbow-ai/dist/
+rainbow-ai/.whatsapp-auth/
+rainbow-ai/.env
+rainbow-ai/.rainbow-kb/
+rainbow-ai/logs/
+rainbow-ai/coverage/

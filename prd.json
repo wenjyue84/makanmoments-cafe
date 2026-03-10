@@ -3314,6 +3314,135 @@
       "dependencies": [],
       "estimatedComplexity": "small",
       "passes": true
+    },
+    {
+      "id": "US-125",
+      "title": "Copy Rainbow AI Service into Project",
+      "priority": 125,
+      "description": "Set up Rainbow AI (from digiman) as a companion WhatsApp AI service inside the makanmoments.cafe project. Copy the RainbowAI directory from digiman into a new `rainbow-ai/` folder, create a cafe-specific `.env`, install dependencies, and verify the service starts on port 3002 with `npm run dev` inside the folder.",
+      "acceptanceCriteria": [
+        "A `rainbow-ai/` directory exists at the project root with all RainbowAI source files (src/, package.json, tsconfig.json, etc.)",
+        "A `rainbow-ai/.env` file exists with GROQ_API_KEY, OPENROUTER_API_KEY (sourced from makanmoments .env.local), MCP_SERVER_PORT=3002, BUSINESS_NAME=makan-moments-cafe",
+        "Running `cd rainbow-ai && npm install` completes without errors",
+        "Running `cd rainbow-ai && npm run dev` starts the service and `http://localhost:3002/health` returns 200",
+        "The Rainbow AI dashboard is accessible at `http://localhost:3002/`",
+        "node_modules/, dist/, .whatsapp-auth/, and .env are excluded via .gitignore"
+      ],
+      "technicalNotes": [
+        "Source: C:\\Users\\Jyue\\Documents\\1-projects\\Software Projects\\digiman\\RainbowAI\\",
+        "Copy everything EXCEPT node_modules/, dist/, .whatsapp-auth/, .env, .env.*, .rainbow-kb/",
+        "Create rainbow-ai/.env with: MCP_SERVER_PORT=3002, NODE_ENV=development, GROQ_API_KEY=<same as .env.local>, OPENROUTER_API_KEY=<same as .env.local>, RAINBOW_KB_DIR=.rainbow-kb, WHATSAPP_AUTH_DIR=.whatsapp-auth, BUSINESS_NAME=makan-moments-cafe",
+        "Add to root .gitignore: rainbow-ai/node_modules/, rainbow-ai/dist/, rainbow-ai/.whatsapp-auth/, rainbow-ai/.env",
+        "rainbow-ai/package.json should have: npm run dev (tsx watch src/index.ts), npm run build, npm start"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-126",
+      "title": "Seed Cafe Knowledge Base for Rainbow AI",
+      "priority": 126,
+      "description": "Create the Rainbow AI knowledge base files for Makan Moments Cafe by seeding from the existing `knowledge/` markdown files. The knowledge base lives in `rainbow-ai/.rainbow-kb/` and provides the AI with cafe-specific information (facts, menu, FAQ, ordering process). Remove any hostel-specific KB files that were copied from digiman.",
+      "acceptanceCriteria": [
+        "Directory `rainbow-ai/.rainbow-kb/` exists with at least 4 files: cafe-facts.md, menu.md, faq.md, ordering.md",
+        "cafe-facts.md contains cafe name, address, hours, cuisine, dietary info (sourced from knowledge/cafe-facts.md)",
+        "menu.md contains the full menu with prices (sourced from knowledge/menu-knowledge.md)",
+        "faq.md contains FAQ content (sourced from knowledge/faq.md)",
+        "ordering.md explains the pre-order flow: customer submits via website \u00e2\u2020\u2019 WhatsApp notification to waiter \u00e2\u2020\u2019 waiter enters into FeedMe POS \u00e2\u2020\u2019 T&G deposit",
+        "No hostel-specific files (pricing.md for rooms, checkin.md, facilities.md, etc.) exist in .rainbow-kb/",
+        "`rainbow-ai/.rainbow-kb/` is added to .gitignore (local state)"
+      ],
+      "technicalNotes": [
+        "Copy knowledge/cafe-facts.md \u00e2\u2020\u2019 rainbow-ai/.rainbow-kb/cafe-facts.md",
+        "Copy knowledge/menu-knowledge.md \u00e2\u2020\u2019 rainbow-ai/.rainbow-kb/menu.md",
+        "Copy knowledge/faq.md \u00e2\u2020\u2019 rainbow-ai/.rainbow-kb/faq.md",
+        "Create rainbow-ai/.rainbow-kb/ordering.md with content explaining: pre-order flow (website \u00e2\u2020\u2019 Neon DB \u00e2\u2020\u2019 WhatsApp notification \u00e2\u2020\u2019 waiter enters FeedMe POS), T&G deposit payment, order statuses (pending_approval, approved, payment_uploaded, preparing, ready, rejected)",
+        "Remove any hostel/room-rental KB files if they exist from the copy",
+        "Add rainbow-ai/.rainbow-kb/ to .gitignore"
+      ],
+      "dependencies": [
+        "US-125"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-127",
+      "title": "Update Rainbow AI System Prompt for Cafe Context",
+      "priority": 127,
+      "description": "Rainbow AI's default system prompt is configured for Pelangi Capsule Hostel. Update the AI persona and base system prompt to be the AI Waiter for Makan Moments Cafe \u00e2\u20ac\u201d Thai-Malaysian fusion cafe in Skudai, Johor. Ensure the prompt reflects: cafe context, halal/no-pork policy, trilingual support (EN/MS/ZH), and the pre-order workflow.",
+      "acceptanceCriteria": [
+        "The AI introduces itself as the AI Waiter for Makan Moments Cafe (\u00e9\u00a3\u0178\u00e5\u2026\u2030\u00e8\u00ae\u00b0\u00e5\u00bf\u2020 / Kafe Kenangan Makan)",
+        "All hostel-specific references (room rates, check-in, hostel name) are removed from the base prompt",
+        "The prompt includes: no pork, no lard, halal-friendly; respond in the customer's language (EN/MS/ZH)",
+        "The prompt references the ordering.md KB file for pre-order questions",
+        "Testing via Rainbow AI Chat Simulator with 'ada tomyam?' returns a relevant cafe response in Malay"
+      ],
+      "technicalNotes": [
+        "Find the system prompt in rainbow-ai/src/assistant/ \u00e2\u20ac\u201d look for soul.md, AGENTS.md, or a system-prompt string in index.ts or assistant files",
+        "Update the persona section to: 'You are the AI Waiter for Makan Moments Cafe (\u00e9\u00a3\u0178\u00e5\u2026\u2030\u00e8\u00ae\u00b0\u00e5\u00bf\u2020 / Kafe Kenangan Makan), a Thai-Malaysian fusion cafe in Taman Impian Emas, Skudai, Johor, Malaysia.'",
+        "Add rules: NO PORK, NO LARD, Halal-friendly. Prices in RM. Respond in the same language the customer uses.",
+        "Remove all hostel-specific rules about room numbers, check-in times, swimming pool, etc.",
+        "The rainbow-ai/.rainbow-kb/ files (cafe-facts.md, menu.md, faq.md, ordering.md) will be auto-loaded as context"
+      ],
+      "dependencies": [
+        "US-125",
+        "US-126"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-128",
+      "title": "Add Concurrent Dev Scripts for Both Services",
+      "priority": 128,
+      "description": "Add npm scripts to the root package.json so developers can start both the Next.js app (port 3030) and the Rainbow AI service (port 3002) with a single command: `npm run dev:all`. Also add a standalone `dev:rainbow` script for starting Rainbow AI only.",
+      "acceptanceCriteria": [
+        "`npm run dev:rainbow` starts only Rainbow AI on port 3002",
+        "`npm run dev:all` starts both Next.js (port 3030) AND Rainbow AI (port 3002) concurrently with labeled output",
+        "Running `npm run dev:all` shows two labeled output streams (e.g., [next] and [rainbow])",
+        "Both services start successfully \u00e2\u20ac\u201d `http://localhost:3030/en` and `http://localhost:3002/` are accessible",
+        "`concurrently` is installed as a devDependency in the root package.json"
+      ],
+      "technicalNotes": [
+        "Install: npm install -D concurrently",
+        "Add to root package.json scripts: \"dev:rainbow\": \"cd rainbow-ai && npm run dev\", \"dev:all\": \"concurrently --names \\\"next,rainbow\\\" \\\"npm run dev\\\" \\\"npm run dev:rainbow\\\"\"",
+        "concurrently version should be ^8 (supports --names flag)"
+      ],
+      "dependencies": [
+        "US-125"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-129",
+      "title": "Create /admin/ai-waiter Page \u00e2\u20ac\u201d Rainbow AI Dashboard Wrapper",
+      "priority": 129,
+      "description": "Create a new admin page at `/admin/ai-waiter` that embeds the Rainbow AI admin dashboard in an iframe. The page checks if the Rainbow AI service is running (by pinging http://localhost:3002/health). If running, it shows the full Rainbow AI dashboard. If not, it shows a 'service offline' card with startup instructions. Add an 'AI Waiter' link in the admin sidebar.",
+      "acceptanceCriteria": [
+        "Navigating to http://localhost:3030/admin/ai-waiter while logged in shows the page (redirects to /admin/login if not authenticated)",
+        "When Rainbow AI is running (port 3002), the page shows an iframe with the full Rainbow AI dashboard",
+        "When Rainbow AI is NOT running, the page shows: a status badge 'Offline', startup instructions (`cd rainbow-ai && npm run dev`), and auto-retries every 5s to detect when service comes up",
+        "When the service comes back online, the page automatically shows the iframe (no manual refresh needed)",
+        "The admin sidebar has a new 'AI Waiter' nav item with a Bot icon, positioned below 'Orders'",
+        "The iframe fills the full available height (no double scrollbars)"
+      ],
+      "technicalNotes": [
+        "Create src/app/admin/ai-waiter/page.tsx \u00e2\u20ac\u201d server component, calls verifyAdminToken(), renders dynamic import of AiWaiterPage",
+        "Create src/components/admin/ai-waiter-page.tsx \u00e2\u20ac\u201d client component with useState(status: 'checking'|'online'|'offline') and useEffect polling GET /api/admin/ai-waiter/health every 5s",
+        "Create src/app/api/admin/ai-waiter/health/route.ts \u00e2\u20ac\u201d server-side proxy that fetches http://localhost:3002/health (avoids CORS from browser). Returns { online: boolean }",
+        "When status=online: render <iframe src='http://localhost:3002/' className='w-full border-0' style={{ height: 'calc(100vh - 4rem)' }} />",
+        "When status=offline: render a Card with Bot icon, 'Rainbow AI is offline' title, code block with startup command, spinning retry indicator",
+        "In admin-tabs.tsx: import Bot from lucide-react, add { label: 'AI Waiter', href: '/admin/ai-waiter', icon: Bot } after the Orders entry"
+      ],
+      "dependencies": [
+        "US-125",
+        "US-128"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
     }
   ]
 }

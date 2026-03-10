@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rainbow AI Autotest Report (Optimized)</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:900px;margin:0 auto;padding:24px;color:#333;background:#fafafa}
+  h1{font-size:24px;margin:0 0 4px}
+  .summary{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:20px 0}
+  .summary-card{background:#fff;border:1px solid #e5e5e5;border-radius:12px;padding:16px;text-align:center}
+  .summary-card .num{font-size:28px;font-weight:700}
+  .summary-card .label{font-size:12px;color:#888}
+  .test-card{border:1px solid #e5e5e5;border-radius:12px;margin-bottom:16px;overflow:hidden}
+  .test-header{padding:12px 16px;display:flex;align-items:center;gap:12px}
+  .test-body{padding:16px}
+  .badge{color:#fff;padding:2px 10px;border-radius:8px;font-size:12px;font-weight:700}
+  .pass-badge{background:#16a34a}
+  .warn-badge{background:#ca8a04}
+  .fail-badge{background:#dc2626}
+  .pass-bg{background:#f0fdf4}
+  .warn-bg{background:#fefce8}
+  .fail-bg{background:#fef2f2}
+  @media print{body{padding:12px} .summary{gap:8px}}
+</style>
+</head>
+<body>
+  <h1>🌈 Rainbow AI Autotest Report (Optimized Queue)</h1>
+  <p style="color:#888;font-size:14px">13/02/2026, 6:42:59 pm | Pass rate: <b>78.6%</b> | Concurrency: 2</p>
+
+  <div class="summary">
+    <div class="summary-card"><div class="num" style="color:#333">56</div><div class="label">Total</div></div>
+    <div class="summary-card"><div class="num" style="color:#16a34a">44</div><div class="label">Passed</div></div>
+    <div class="summary-card"><div class="num" style="color:#ca8a04">0</div><div class="label">Warnings</div></div>
+    <div class="summary-card"><div class="num" style="color:#dc2626">12</div><div class="label">Failed</div></div>
+    <div class="summary-card"><div class="num" style="color:#6366f1">160.2s</div><div class="label">Duration</div></div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">GENERAL_SUPPORT</h2>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Greeting - Malay</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">2.7s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Greeting - English</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.1s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Contact Staff</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.2s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Thanks</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">2.3s</span>
+    </div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">PRE_ARRIVAL</h2>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Pricing Inquiry</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">2.8s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Booking Process</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.3s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Availability Check</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.8s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Directions</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">4.5s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Facilities Info</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">6.3s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>House Rules</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">5.4s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Rules - Pets</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.8s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Payment Methods</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.4s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Check-In Time</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.4s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Payment Confirmation</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">5.2s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Check-Out Time</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">4.3s</span>
+    </div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">ARRIVAL_CHECKIN</h2>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Check-In Arrival</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.0s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Lower Deck Preference</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">6.3s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>WiFi Password</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">4.2s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Facility Orientation</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.4s</span>
+    </div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">DURING_STAY</h2>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Climate - Too Cold</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.2s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Noise - Neighbors</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.2s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Climate - Too Hot</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.5s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Noise - Baby Crying</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.2s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Cleanliness - Room</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.3s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Cleanliness - Bathroom</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.9s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Facility - AC Broken</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.2s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Card Locked Out</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.0s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Theft - Laptop</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.4s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Theft - Jewelry</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.0s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>General Complaint</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.2s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Extra Amenity - Towel</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">4.3s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Extra Amenity - Pillow</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">8.8s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Tourist Guide</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">16.4s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Noise - Construction</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">43.3s</span>
+    </div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">CHECKOUT_DEPARTURE</h2>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Checkout Procedure</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">8.7s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Late Checkout Request</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">4.6s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Late Checkout - Denied</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">5.7s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Luggage Storage</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">6.3s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Billing Inquiry</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">72.6s</span>
+    </div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">POST_CHECKOUT</h2>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Forgot Item - Charger</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">1.3s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Forgot Item - Passport (Urgent)</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">2.3s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Forgot Item - Clothes</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.3s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Post-Checkout Complaint - Food</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">8.0s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Post-Checkout Complaint - Service</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.7s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Billing Dispute - Overcharge</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.5s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header fail-bg">
+      <span class="badge fail-badge">FAIL</span>
+      <b>Billing Dispute - Minor Error</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">7.7s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Review - Positive</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">4.2s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Review - Negative</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">6.0s</span>
+    </div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">MULTILINGUAL</h2>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Multilingual - Chinese Greeting</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">4.8s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Multilingual - Mixed Language</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.3s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Multilingual - Chinese Bill Question</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">5.5s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Multilingual - Malay WiFi</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">3.0s</span>
+    </div>
+  </div>
+
+  <h2 style="font-size:18px;margin:24px 0 12px;color:#666">EDGE_CASES</h2>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Edge - Gibberish</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">4.5s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Edge - Emoji Only</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">2.7s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Edge - Very Long Message</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">0.5s</span>
+    </div>
+  </div>
+  <div class="test-card">
+    <div class="test-header pass-bg">
+      <span class="badge pass-badge">PASS</span>
+      <b>Edge - Prompt Injection</b>
+      <span style="font-size:12px;color:#888;margin-left:auto">4.9s</span>
+    </div>
+  </div>
+
+</body>
+</html>
