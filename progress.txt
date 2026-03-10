@@ -2535,3 +2535,29 @@ Completed: Menu Page: Dynamic Display Based on Time of Day (ID: US-035)
 - ISR revalidation (was 1800s) means time-based category could be stale; reduced to 300s (5 min) as compromise
 - `useState(initialCategory)` on client: initial value is from server render; changes don't re-init state (correct behavior)
 - TypeScript check: `npx tsc --noEmit` passes clean
+
+## Iteration 19 - Tue, Mar 10, 2026
+Completed: Menu Page Dynamic Display Based on Time of Day (ID: US-035)
+
+### What was implemented
+All files were already present from a previous partial implementation. The only gap was `data/time-slots.json` which existed with the wrong format (using `start: "HH:MM"` strings instead of separate `startHour`/`startMinute`/`endHour`/`endMinute` integers). Fixed the JSON to match the TypeScript `TimeSlot` interface.
+
+### Files confirmed/fixed
+- `src/lib/time-slots.ts` — Already existed: `readTimeSlots()`, `writeTimeSlots()`, `getActiveSlot()`, `getDefaultCategoryForTime()`, `getServingNowCategories()` using `Intl.DateTimeFormat` for Malaysia timezone
+- `src/app/api/admin/time-slots/route.ts` — Already existed: GET/POST handler
+- `src/app/[locale]/menu/page.tsx` — Already imports and passes `initialCategory` + `servingNowCategories` to MenuGrid
+- `src/components/menu/menu-grid.tsx` — Already accepts `initialCategory`/`servingNowCategories` props, initializes `useState` with them
+- `src/components/menu/menu-filter.tsx` — Already shows green dot "Serving now" indicator on matching categories
+- `src/components/admin/admin-time-settings.tsx` — Already exists: full admin UI with time-slot table editor
+- `src/components/admin/admin-tabs.tsx` — Already has "Time Settings" tab wired
+- `data/time-slots.json` — Fixed format to use integer hour/minute fields
+
+### Patterns discovered
+- `time-slots.ts` uses `Intl.DateTimeFormat` with `Asia/Kuala_Lumpur` timezone (better than manual UTC+8 offset)
+- `TimeSlot` interface uses `{ id, label, startHour, startMinute, endHour, endMinute, defaultCategory }` — NOT `start: "HH:MM"` strings
+- Admin uses a dedicated "Time Settings" tab (not a section inside Categories tab as PRD suggested)
+
+### Gotchas
+- `data/time-slots.json` must use integer fields matching TypeScript interface, not string `"HH:MM"` format
+- `revalidate = 300` on menu page (5 min) — time-based category will update within 5 min of time slot boundary
+
