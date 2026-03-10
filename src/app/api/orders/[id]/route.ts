@@ -28,6 +28,19 @@ export async function GET(
     }
 
     const row = rows[0];
+
+    // Auto-expire approved orders with no payment after 30 minutes
+    if (
+      row.status === 'approved' &&
+      Date.now() - new Date(row.created_at as string).getTime() > 30 * 60 * 1000
+    ) {
+      await sql`UPDATE tray_orders SET status = 'expired' WHERE id = ${orderId}`;
+      return NextResponse.json(
+        { id: row.id, status: 'expired', createdAt: row.created_at },
+        { headers: { "Cache-Control": "no-store" } }
+      );
+    }
+
     return NextResponse.json(
       { id: row.id, status: row.status, createdAt: row.created_at },
       { headers: { "Cache-Control": "no-store" } }
