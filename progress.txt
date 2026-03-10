@@ -9557,3 +9557,28 @@ This user story is for a **Next.js/React frontend**, not Frappe/Python. The tech
 ## Iteration 5 - Tue, Mar 10, 2026  9:43:46 PM
 Completed: Menu Page — Hide Header on Scroll Down, Show on Scroll Up (ID: US-105) in 3m
 
+
+## Pre-analysis for US-106 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-106, tailored for a React/Next.js context.
+
+**US-106 Technical Brief: Single-Row Category Filter**
+
+*   **File to Modify:** `src/components/menu/menu-filter.tsx` is the primary target. The change will be localized to this component.
+
+*   **Key Components & Libraries:**
+    *   **React Component:** This is a client-side component (`'use client'`).
+    *   **Tailwind CSS:** All styling changes will be implemented using Tailwind utility classes.
+    *   **Next.js:** The component is part of a Next.js application.
+
+*   **Implementation Approach:**
+    1.  Target the main container element that wraps the category pills.
+    2.  Apply Tailwind classes to enforce a single-line layout and enable horizontal scrolling: `flex flex-nowrap overflow-x-auto`.
+    3.  Add `flex-shrink-0` to each individual category pill/button to prevent them from being squished.
+    4.  To hide the visual scrollbar while keeping functionality, use the `scrollbar-hide` utility. If not available, add the custom CSS from the technical notes.
+    5.  For a better mobile UX, enhance the container with `snap-x snap-mandatory` and add `snap-start` to each pill.
+
+*   **Edge Cases & Gotchas:**
+    *   Ensure the `scrollbar-hide` Tailwind plugin is installed or add the cross-browser manual CSS fallback.
+    *   Verify that horizontal scrolling works smoothly with both mouse-wheel and touch-swipe gestures.
+    *   Confirm that the existing logic for highlighting the "active" category is not affected by the new flexbox and overflow styles.
+
