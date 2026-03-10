@@ -1,6 +1,6 @@
 # CLAUDE.md — Makan Moments Cafe Website
 
-> **Project:** makanmoments.cafe — Thai-Malaysian fusion cafe website with multilingual support, Notion CMS, and AI waiter chatbot.
+> **Project:** makanmoments.cafe — Thai-Malaysian fusion cafe website with multilingual support, Neon Postgres, and AI waiter chatbot.
 
 ## Project Overview
 
@@ -14,7 +14,7 @@ Public-facing website for **Makan Moments Cafe** (食光记忆 / Kafe Kenangan M
 Customers can pre-order food online before arriving at the cafe. **FeedMe POS has no API** — there is intentionally no direct integration. The workflow is:
 
 1. **Customer** browses menu → adds items → submits pre-order with name, phone, arrival time, pax count, and notes
-2. **System** saves order to Notion (`NOTION_ORDERS_DB_ID`) and sends WhatsApp notification to the waiter's phone
+2. **System** saves order to Neon Postgres (`orders` table) and sends WhatsApp notification to the waiter's phone
 3. **Waiter** receives WhatsApp message with full order details → manually types the order into FeedMe POS before the customer arrives
 4. **Customer** arrives to find their meal being prepared or ready
 
@@ -28,7 +28,7 @@ This human-in-the-loop design is deliberate: FeedMe handles payments and receipt
 | UI | React 19, Tailwind CSS v4, shadcn/ui |
 | Language | TypeScript 5 |
 | i18n | next-intl (EN / MS / ZH, always-prefixed) |
-| CMS | Notion API (`@notionhq/client`) |
+| Database | Neon Serverless Postgres (`src/lib/db.ts`) |
 | AI Chat | Vercel AI SDK + Groq / OpenRouter |
 | Icons | Lucide React |
 | Sitemap | next-sitemap |
@@ -51,7 +51,7 @@ makanmoments.cafe/
 │   │   ├── api/
 │   │   │   ├── chat/route.ts   # AI waiter chat endpoint
 │   │   │   └── orders/
-│   │   │       └── route.ts    # POST /api/orders — save to Notion + notify waiter via WhatsApp
+│   │   │       └── route.ts    # POST /api/orders — save to Neon + notify waiter via WhatsApp
 │   │   ├── layout.tsx          # Root layout
 │   │   └── globals.css         # Global styles (Tailwind)
 │   ├── components/
@@ -69,11 +69,11 @@ makanmoments.cafe/
 │   │   └── request.ts          # next-intl config entrypoint
 │   ├── lib/
 │   │   ├── constants.ts        # CAFE info, MENU_CATEGORIES
-│   │   ├── menu.ts             # Notion menu data fetching
-│   │   ├── blog.ts             # Notion blog data fetching
-│   │   ├── notion.ts           # Notion client singleton
-│   │   ├── orders.ts           # Save pre-order to Notion orders DB
-│   │   ├── whatsapp.ts         # Send WhatsApp notification via Periskope/Baileys
+│   │   ├── db.ts               # Neon Serverless Postgres client singleton
+│   │   ├── menu.ts             # Menu data fetching from Neon Postgres
+│   │   ├── blog.ts             # Blog data fetching from Neon Postgres
+│   │   ├── orders.ts           # Save pre-order to Neon Postgres `orders` table
+│   │   ├── whatsapp.ts         # Send WhatsApp notification to waiter
 │   │   ├── utils.ts            # cn() and helpers
 │   │   └── chat/
 │   │       ├── provider.ts     # AI SDK model config (Groq/OpenRouter)
@@ -119,14 +119,15 @@ See `.env.example` for all required vars:
 
 | Variable | Purpose |
 |----------|---------|
-| `NOTION_API_KEY` | Notion integration token |
-| `NOTION_MENU_DB_ID` | Notion database ID for menu items |
-| `NOTION_BLOG_DB_ID` | Notion database ID for blog posts |
+| `DATABASE_URL` | Neon Serverless Postgres connection string |
+| `ADMIN_USERNAME` | Admin panel login username |
+| `ADMIN_PASSWORD` | Admin panel login password |
+| `ADMIN_JWT_SECRET` | JWT signing secret (≥ 32 chars) |
 | `GROQ_API_KEY` | Groq API key for AI waiter |
 | `OPENROUTER_API_KEY` | OpenRouter fallback for AI waiter |
 | `NEXT_PUBLIC_SITE_URL` | Production URL (https://makanmoments.cafe) |
-| `NOTION_ORDERS_DB_ID` | Notion database ID for pre-orders (separate from menu/blog) |
-| `WAITER_WHATSAPP_NUMBER` | Waiter's WhatsApp number to receive order notifications (e.g. `601XXXXXXXX`) |
+| `NEXT_PUBLIC_WHATSAPP_NUMBER` | Cafe's public WhatsApp CTA number |
+| `WAITER_WHATSAPP_NUMBER` | Waiter's number to receive pre-order notifications (e.g. `601XXXXXXXX`) |
 | `WHATSAPP_API_URL` | WhatsApp send endpoint (Periskope or Baileys) |
 | `WHATSAPP_API_KEY` | API key / token for WhatsApp sender |
 
@@ -139,9 +140,9 @@ See `.env.example` for all required vars:
 - Use `useTranslations()` in client components, `getTranslations()` in server components
 
 ### Data Fetching
-- Menu and blog data fetched from Notion via `src/lib/notion.ts`
-- `src/lib/menu.ts` and `src/lib/blog.ts` wrap Notion queries with typed results
-- All Notion fetches are server-side (RSC or route handlers)
+- Menu and blog data fetched from **Neon Postgres** via `src/lib/db.ts`
+- `src/lib/menu.ts` and `src/lib/blog.ts` wrap SQL queries with typed results
+- All DB fetches are server-side (RSC or route handlers)
 
 ### Pre-Order System
 
@@ -149,7 +150,7 @@ See `.env.example` for all required vars:
 
 ```
 Customer → /order page → selects items + fills form → POST /api/orders
-  → Notion (stores order) + WhatsApp (notifies waiter)
+  → Neon Postgres `orders` table (stores order) + WhatsApp (notifies waiter)
   → Customer sees /order/confirm page with order summary
   → Waiter reads WhatsApp → manually enters into FeedMe POS
   → Customer arrives → food is ready / being prepared
@@ -163,18 +164,21 @@ Customer → /order page → selects items + fills form → POST /api/orders
 - Items with quantity (required — from menu)
 - Special requests / notes (optional — e.g. "no spicy", "extra rice")
 
-**Notion Orders database schema:**
-| Field | Type | Notes |
-|-------|------|-------|
-| Name | Title | Customer name |
-| Phone | Phone | Customer phone |
-| Arrival Time | Date | When they plan to arrive |
-| Pax | Number | Party size |
-| Items | Rich Text | JSON string of [{name, qty, price}] |
-| Total (RM) | Number | Calculated total |
-| Notes | Rich Text | Special requests |
-| Status | Select | Pending / Confirmed / Cancelled |
-| Submitted At | Date | Timestamp of submission |
+**`orders` table schema (Neon Postgres):**
+```sql
+CREATE TABLE orders (
+  id          SERIAL PRIMARY KEY,
+  name        TEXT NOT NULL,
+  phone       TEXT NOT NULL,
+  arrival_at  TIMESTAMPTZ NOT NULL,
+  pax         INTEGER NOT NULL,
+  items       JSONB NOT NULL,   -- [{name, qty, price_rm}]
+  total_rm    NUMERIC(8,2) NOT NULL,
+  notes       TEXT,
+  status      TEXT NOT NULL DEFAULT 'pending', -- pending | confirmed | cancelled
+  submitted_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
 
 **WhatsApp notification format (sent to waiter):**
 ```
@@ -196,8 +200,8 @@ Please enter into FeedMe POS before arrival.
 - FeedMe has **no API** — never attempt programmatic integration
 - Waiter enters order manually after receiving WhatsApp notification
 - Lead time target: customer should arrive to food already in queue
-- If customer calls to modify order: waiter updates FeedMe directly
-- Notion order status is updated manually by staff (Pending → Confirmed / Cancelled)
+- If customer calls to modify: waiter updates FeedMe directly; admin can update `status` in Neon via admin panel
+- Order status in Neon updated by staff via admin panel (pending → confirmed / cancelled)
 
 **Cart state:** Held in `localStorage` (client-side only). No server session needed. Cart is cleared on successful order submission.
 
@@ -271,11 +275,11 @@ User has a logo image file (PNG/SVG). Place at `public/images/logo.png` (or `.sv
 ## Critical Rules
 
 1. **Read before editing** — always read a file before modifying it
-2. **Notion is the CMS** — menu/blog content lives in Notion, not in code
+2. **Neon Postgres is the database** — all persistent data (menu, blog, orders) lives in Neon; Notion is NOT used
 3. **`knowledge/` drives the AI** — updating these files updates what the AI waiter knows
 4. **No pork, no lard, Halal-friendly** — always preserve this dietary info accurately
 5. **3 languages always** — any new user-facing text needs translations in all 3 `messages/` files
 6. **Prices in RM** — all price references use Malaysian Ringgit (RM)
 7. **FeedMe has NO API** — never attempt direct POS integration; all order routing goes through WhatsApp → manual waiter entry
 8. **Pre-orders are intent, not payment** — no payment is collected online; customer pays at the cafe via FeedMe POS as normal
-9. **Orders DB is separate** — use `NOTION_ORDERS_DB_ID`, not the menu or blog DB, for pre-order records
+9. **Orders go into Neon** — use the `orders` table in the existing `DATABASE_URL` connection; no separate service needed

@@ -2183,3 +2183,63 @@ This story involves setting exactly six menu items as "featured" for the homepag
 ### Patterns discovered
 - Linter auto-fixes some TS errors between reads — always re-read before editing
 - When retrying a story, check tsc output first; often the DB/logic work is already done
+## Iteration 14 - Tue, Mar 10, 2026 12:08:43 PM
+Completed: Admin: Set 6 Homepage Highlights (ID: US-029) in 7m
+
+
+## Iteration N - Story: US-031 - Admin: Non-POS Display Categories
+
+### What was implemented
+- `scripts/create-display-categories-tables.ts` — migration to create `display_categories` and `item_display_categories` tables + seed 4 defaults
+- `src/app/api/admin/display-categories/route.ts` — GET (list with item_count) / POST (create)
+- `src/app/api/admin/display-categories/[id]/route.ts` — PATCH / DELETE
+- `src/app/api/admin/display-categories/[id]/items/route.ts` — GET / POST / DELETE (assign/remove items)
+- `src/types/menu.ts` — added `displayCategories: string[]` to MenuItem + `DisplayCategory` interface
+- `src/lib/menu.ts` — `getDisplayCategories()`, `getItemDisplayCategoryMap()`, all item-fetching functions now join display category names onto each item
+- `src/components/admin/admin-categories-panel.tsx` — full rewrite: two sections (POS Categories + Display Categories); display cat section has collapsible per-category panels with item search + assign/remove
+- `src/components/admin/admin-tabs.tsx` — passes `allItems` to AdminCategoriesPanel
+- `src/components/menu/menu-filter.tsx` — `displayCategories` prop; display tabs styled amber, fire `__dc__<name>` as category value
+- `src/components/menu/menu-grid.tsx` — `displayCategories` prop; `__dc__` prefix detection routes to `displayCategories` filter; flat view for display category selections
+- `src/app/[locale]/menu/page.tsx` — fetches `getDisplayCategories()`, passes active names to MenuGrid
+
+### Patterns discovered
+- Display categories use `__dc__` prefix in filter state to distinguish from POS categories
+- DB table `display_categories` uses SERIAL id (not UUID) for simplicity
+- Junction table `item_display_categories` has composite PK (item_id, display_category_id)
+- `getItemDisplayCategoryMap()` builds an id→names[] map for O(1) lookup per item
+- Admin categories panel loads lazily via `onClick` — loadCategories + loadDisplayCategories both called on panel click
+
+### Gotchas
+- `admin-menu-table.tsx` `addNewRow()` needs `displayCategories: []` in the template object (MenuItem now requires this field)
+- Display category filter shows flat grid (no Chef's Pick hero sections) — intentional for website-only curation view
+- `missing-photos/route.ts` has pre-existing TS7006 errors — don't fix them
+
+
+## Pre-analysis for US-032 (Gemini 2.5 Pro)
+Based on the user story JSON, the request is for a **React/TypeScript** frontend feature, not a Frappe/Python one. The technical notes specifically mention `.tsx` files and client-side filtering.
+
+Here is the technical brief for the frontend implementation:
+
+**Subject: Technical Brief for US-032: Admin Category Filter**
+
+**1. Primary Files to Modify:**
+    *   `src/components/admin/admin-menu-table.tsx`: Main component for implementing state management and rendering logic.
+    *   `src/app/[locale]/admin/menu/page.tsx`: The parent page that likely fetches and passes `items` and `categories` props to the table component.
+
+**2. Key DocTypes/Hooks & UI:**
+    *   **React State:** Use the `useState` hook to manage the `activeCategory`.
+    *   **UI Component:** Add a `<select>` dropdown (or a `Tabs` component from `shadcn/ui`) above the items table to serve as the category filter.
+    *   **Data Props:** The component will consume the existing `items` and `categories` props.
+
+**3. Implementation Approach:**
+    *   In `admin-menu-table.tsx`, introduce a state variable: `const [activeCategory, setActiveCategory] = useState<string | null>(null);`.
+    *   Render a filter UI that maps over the `categories` prop. Each option should display the category name and its corresponding item count. An "All Categories" option should be the default.
+    *   Before rendering the item list, create a `filteredItems` array.
+    *   Use client-side logic: `const filteredItems = activeCategory ? items.filter(i => i.categories.includes(activeCategory)) : items;`.
+    *   Render the `filteredItems` array instead of the raw `items` prop.
+
+**4. Edge Cases & Gotchas:**
+    *   **Item Count Calculation:** The item count per category should be pre-calculated to avoid performance issues on large lists.
+    *   **Empty State:** If a category has no items, ensure a clear message is shown rather than an empty table.
+    *   **Responsiveness:** The filter UI must be tested on mobile to ensure it is usable and does not break the layout.
+
