@@ -5,10 +5,10 @@ import sql from "@/lib/db";
 
 // Static file cache — cleared on invalidation only
 let staticKnowledgeCache: { cafeFacts: string; faq: string } | null = null;
-// Menu DB cache — auto-expires after 5 minutes
+// Menu DB cache — auto-expires after 60 minutes
 let menuCache: { text: string; expiresAt: number } | null = null;
 
-const MENU_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+const MENU_CACHE_TTL_MS = 60 * 60 * 1000; // 60 minutes
 
 function loadKnowledge(filename: string): string {
   try {
@@ -88,7 +88,7 @@ async function buildKnowledgeBlock(): Promise<string> {
     };
   }
 
-  // Menu fetched from DB with 5-min TTL
+  // Menu fetched from DB with 60-min TTL
   const menuKnowledge = await fetchMenuFromDB();
 
   return `## Cafe Facts
