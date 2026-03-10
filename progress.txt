@@ -9481,3 +9481,61 @@ This user story is for a **Next.js/React** application, not Frappe/Python. Here 
 *   **Layout Shift (CLS):** Using `position: sticky` (as noted) is crucial. `position: fixed` would cause the main content to jump up when the header hides.
 *   **Scroll Threshold:** Implement a small (~10px) threshold to prevent the header from flickering on minor scroll adjustments.
 
+## Iteration 8 - Tue, Mar 10, 2026  9:39:53 PM
+Completed: Menu Page — Collapsible Search: Icon by Default, Expands on Tap (ID: US-107) in 4m
+
+
+## Pre-analysis for US-105 (Gemini 2.5 Pro)
+This user story is for a **Next.js/React frontend**, not Frappe/Python. The technical brief below is based on the JSON provided.
+
+---
+
+### **Technical Brief: US-105 Hide/Show Header on Scroll**
+
+**1. Files to Modify:**
+*   **Create:** `src/hooks/use-scroll-direction.ts` — A new React hook to detect scroll direction.
+*   **Modify:** `src/components/layout/site-header.tsx` (or a similar primary header component) — This component will consume the new hook to dynamically change its styles.
+*   **Modify:** `src/app/[locale]/menu/page.tsx` — The layout or component wrapping the menu page might need adjustment to apply the behavior specifically here, although modifying the site-wide header is more likely.
+
+**2. Framework/Library Elements Involved:**
+*   **React Hook:** A custom `useScrollDirection` hook is the core logic element.
+*   **State Management:** `useState` and `useEffect` within the hook to manage scroll position, direction, and event listeners.
+*   **Styling:** Tailwind CSS classes (`translate-y-0`, `-translate-y-full`, `transition-transform`, `duration-300`) will be used for positioning and animation. The header will require `position: sticky` and `top-0`.
+
+**3. Recommended Implementation Approach:**
+1.  **Create `useScrollDirection.ts`:**
+    *   Inside a `useEffect`, add a `scroll` event listener to the `window` object.
+    *   Store the last scroll position (e.g., `lastScrollY`) in a `useRef` or `useState`.
+    *   On each scroll event, compare the current `window.scrollY` to `lastScrollY`.
+    *   If `scrollY > lastScrollY` and past a small threshold (e.g., 10px), set direction state to `"down"`.
+    *   If `scrollY < lastScrollY`, set direction state to `"up"`.
+    *   Always update `lastScrollY` with the current `scrollY`.
+    *   Return the current scroll direction string (`"up"` or `"down"`).
+    *   Ensure the event listener is cleaned up on component unmount.
+2.  **Update `site-header.tsx`:**
+    *   Import and call the `useScrollDirection()` hook.
+    *   Conditionally apply Tailwind classes to the header's wrapper `div`:
+        *   `'-translate-y-full'` when scroll direction is `"down"`.
+        *   `'translate-y-0'` when scroll direction is `"up"`.
+    *   Add `transition-transform` and `duration-300` classes to enable the smooth slide animation.
+
+**4. Edge Cases & Gotchas:**
+*   **SSR Compatibility:** The `window` object is undefined during server-side rendering. The `useEffect` hook inherently handles this, as it only runs on the client.
+*   **Scroll Jitter:** A small scroll threshold (`> 10px`) is specified in the ticket to prevent the header from rapidly appearing/disappearing on minor scroll adjustments.
+*   **Initial State:** The header must be visible on page load. The hook's initial state should result in the header being visible.
+*   **Performance:** For this simple implementation, direct event listening is acceptable. If performance issues arise, the scroll handler could be throttled using a library like `lodash-es`.
+*   **Memory Leaks:** The `scroll` event listener must be removed in the `useEffect`'s cleanup function to prevent memory leaks between page navigations.
+
+
+## Iteration N - Story: US-105 Menu Page — Hide Header on Scroll Down, Show on Scroll Up
+
+### What was implemented
+- Created `src/hooks/use-scroll-direction.ts` — tracks scroll direction with rAF throttle and 10px threshold
+- Modified `src/components/layout/header.tsx` — added `useScrollDirection` hook and applied `-translate-y-full` / `translate-y-0` Tailwind classes with `transition-transform duration-300`
+
+### Patterns discovered
+- Hooks dir already existed at `src/hooks/` with use-debounce, use-favorites, use-intersection-observer
+- Header is already `sticky top-0` so hiding via `-translate-y-full` works without layout shift
+
+### Gotchas
+- `useEffect` closure over `lastScrollY` requires including it in deps; used rAF for scroll throttle

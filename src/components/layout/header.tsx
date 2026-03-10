@@ -8,6 +8,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import type { Locale } from "@/i18n/routing";
+import { useScrollDirection } from "@/hooks/use-scroll-direction";
 
 const NAV_ITEMS = [
   { key: "home", href: "/" },
@@ -31,6 +32,7 @@ export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [langOpen, setLangOpen] = useState(false);
   const [mobileLangOpen, setMobileLangOpen] = useState(false);
+  const scrollDirection = useScrollDirection(10);
 
   // /harden: Close mobile menu and lang picker on Escape key
   useEffect(() => {
@@ -51,7 +53,13 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header
+      className={cn(
+        "sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+        "transition-transform duration-300",
+        scrollDirection === "down" ? "-translate-y-full" : "translate-y-0"
+      )}
+    >
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
