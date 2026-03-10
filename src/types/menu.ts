@@ -12,6 +12,7 @@ export interface MenuItem {
   available: boolean;
   featured: boolean;
   photo: string | null;  // derived: /images/menu/{code}.jpg
+  photos: string[];      // all images: primary + up to 2 secondary ({code}-2.jpg, {code}-3.jpg)
   sortOrder: number;
   availableDays: string[];
   timeFrom: string;

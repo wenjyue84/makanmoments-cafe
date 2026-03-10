@@ -10,6 +10,7 @@ import { formatPrice, getLocalizedName, cn } from "@/lib/utils";
 import { DietaryBadge } from "./dietary-badge";
 import { RecipeModal } from "./recipe-modal";
 import { getRecipeInfo } from "@/data/recipe-info";
+import { ImageCarousel } from "./image-carousel";
 
 interface MenuCardProps {
   item: MenuItemWithRules;
@@ -64,17 +65,27 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
           onKeyDown={hasRecipe ? (e) => e.key === "Enter" && setRecipeOpen(true) : undefined}
         >
           {hasPhoto ? (
-            <Image
-              src={`/images/menu/${item.code}.jpg${imgVersion ? `?v=${imgVersion}` : ""}`}
-              alt={name}
-              fill
-              className="object-cover img-scale"
-              style={{ objectPosition: item.imagePosition || "50% 50%" }}
-              sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 50vw, 33vw"
-              priority={priority}
-              loading={priority ? "eager" : "lazy"}
-              onError={() => setImgError(true)}
-            />
+            item.photos && item.photos.length > 1 ? (
+              <ImageCarousel
+                photos={item.photos}
+                alt={name}
+                priority={priority}
+                imagePosition={item.imagePosition}
+                version={imgVersion || undefined}
+              />
+            ) : (
+              <Image
+                src={`/images/menu/${item.code}.jpg${imgVersion ? `?v=${imgVersion}` : ""}`}
+                alt={name}
+                fill
+                className="object-cover img-scale"
+                style={{ objectPosition: item.imagePosition || "50% 50%" }}
+                sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 50vw, 33vw"
+                priority={priority}
+                loading={priority ? "eager" : "lazy"}
+                onError={() => setImgError(true)}
+              />
+            )
           ) : (
             <div className="flex h-full items-center justify-center text-3xl text-muted-foreground/30">
               🍽️

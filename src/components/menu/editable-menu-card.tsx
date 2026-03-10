@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Camera, Pencil, Check, X, Loader2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
+import { Plus, Camera, Pencil, Check, X, Loader2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ImagePlus } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import type { MenuItemWithRules } from "@/types/menu";
 import { formatPrice, getLocalizedName } from "@/lib/utils";
@@ -66,6 +66,14 @@ export function EditableMenuCard({
   const [savingPosition, setSavingPosition] = useState(false);
 
   const fileRef = useRef<HTMLInputElement>(null);
+  const fileRef2 = useRef<HTMLInputElement>(null);
+  const fileRef3 = useRef<HTMLInputElement>(null);
+
+  // Secondary photos: track URLs so we can show previews without a page reload
+  const [secondaryPhotos, setSecondaryPhotos] = useState<(string | null)[]>(() => {
+    const all = item.photos ?? [];
+    return [all[1] ?? null, all[2] ?? null];
+  });
 
   const name = getLocalizedName(localItem, locale);
   const hasPhoto = !imgError;
@@ -177,6 +185,66 @@ export function EditableMenuCard({
     }
   }
 
+  async function handleSecondaryUpload(
+    e: React.ChangeEvent<HTMLInputElement>,
+    imageIndex: 2 | 3
+  ) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSaving(true);
+    setErrorMsg(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("code", localItem.code);
+      fd.append("imageIndex", String(imageIndex));
+      const res = await fetch("/api/admin/images", { method: "POST", body: fd });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error || "Upload failed");
+      }
+      const { path } = (await res.json()) as { path: string };
+      setSecondaryPhotos((prev) => {
+        const next = [...prev];
+        next[imageIndex - 2] = `${path}?v=${Date.now()}`;
+        return next;
+      });
+      setSuccessMsg("Secondary image saved");
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setSaving(false);
+      if (imageIndex === 2 && fileRef2.current) fileRef2.current.value = "";
+      if (imageIndex === 3 && fileRef3.current) fileRef3.current.value = "";
+    }
+  }
+
+  async function handleSecondaryDelete(imageIndex: 2 | 3) {
+    setSaving(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch("/api/admin/images", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: localItem.code, imageIndex }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error || "Delete failed");
+      }
+      setSecondaryPhotos((prev) => {
+        const next = [...prev];
+        next[imageIndex - 2] = null;
+        return next;
+      });
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <>
       <div className={`relative rounded-xl border bg-card p-4 hover-lift group/card ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-amber-400/60"} ${isUnavailableAtPreview ? "opacity-50" : ""}`}>
@@ -216,13 +284,27 @@ export function EditableMenuCard({
           </div>
         )}
 
-        {/* Hidden file input */}
+        {/* Hidden file inputs — primary and secondary */}
         <input
           ref={fileRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
           className="hidden"
           onChange={handleImageUpload}
+        />
+        <input
+          ref={fileRef2}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => void handleSecondaryUpload(e, 2)}
+        />
+        <input
+          ref={fileRef3}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => void handleSecondaryUpload(e, 3)}
         />
 
         {/* Image area */}
@@ -327,6 +409,62 @@ export function EditableMenuCard({
               </div>
             </div>
           )}
+        </div>
+
+        {/* Secondary image slots */}
+        <div className="mb-2 flex gap-2">
+          {([2, 3] as const).map((idx) => {
+            const photo = secondaryPhotos[idx - 2];
+            const fileRefN = idx === 2 ? fileRef2 : fileRef3;
+            return (
+              <div key={idx} className="relative">
+                <div className="relative h-14 w-20 overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
+                  {photo ? (
+                    <>
+                      <Image
+                        src={photo}
+                        alt={`Photo ${idx}`}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                      <button
+                        type="button"
+                        onClick={() => void handleSecondaryDelete(idx)}
+                        className="absolute right-0.5 top-0.5 rounded-full bg-red-500 p-0.5 text-white hover:bg-red-600"
+                        title={`Delete photo ${idx}`}
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => fileRefN.current?.click()}
+                      className="flex h-full w-full flex-col items-center justify-center gap-0.5 text-gray-400 hover:text-orange-500"
+                      title={`Add photo ${idx}`}
+                    >
+                      <ImagePlus className="h-4 w-4" />
+                      <span className="text-[10px]">Photo {idx}</span>
+                    </button>
+                  )}
+                </div>
+                {photo && (
+                  <button
+                    type="button"
+                    onClick={() => fileRefN.current?.click()}
+                    className="absolute -bottom-0.5 left-0 right-0 flex justify-center rounded-b-lg bg-black/60 py-0.5 text-[10px] text-white hover:bg-black/80"
+                    title={`Replace photo ${idx}`}
+                  >
+                    <Camera className="h-2.5 w-2.5" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
+          <p className="self-center text-[10px] text-muted-foreground">
+            Up to 3 photos
+          </p>
         </div>
 
         {/* Save position button — shown when position changed */}

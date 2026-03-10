@@ -184,6 +184,7 @@ export function AdminMenuTable({
         available: true,
         featured: false,
         photo: null,
+        photos: [],
         sortOrder: 0,
         availableDays: [],
         timeFrom: "",

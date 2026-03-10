@@ -2,12 +2,44 @@ import sql from "./db";
 import { filterByAvailability } from "./availability";
 import type { MenuItem, MenuItemWithRules, DisplayCategory } from "@/types/menu";
 import { getActiveRules, applyRules } from "./rules";
+import { readdirSync } from "fs";
+import { join } from "path";
+
+const MENU_IMAGES_DIR = join(process.cwd(), "public", "images", "menu");
+
+/** Read public/images/menu/ and return a map of code → [secondary photo paths] */
+function getSecondaryPhotosMap(): Record<string, string[]> {
+  try {
+    const files = readdirSync(MENU_IMAGES_DIR);
+    const map: Record<string, string[]> = {};
+    for (const file of files) {
+      // Match pattern: {code}-{index}.ext where index is 2 or 3
+      const match = file.match(/^(.+)-(\d+)\.(jpe?g|png|webp)$/i);
+      if (match) {
+        const code = match[1];
+        const index = parseInt(match[2]);
+        if (index >= 2 && index <= 3) {
+          if (!map[code]) map[code] = [];
+          map[code].push(`/images/menu/${file}`);
+        }
+      }
+    }
+    // Sort each list so -2 comes before -3
+    for (const code in map) map[code].sort();
+    return map;
+  } catch {
+    return {};
+  }
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function rowToMenuItem(row: any, displayCatMap: Record<string, string[]> = {}): MenuItem {
+function rowToMenuItem(row: any, displayCatMap: Record<string, string[]> = {}, secondaryPhotosMap: Record<string, string[]> = {}): MenuItem {
+  const code = row.code as string;
+  const primary = `/images/menu/${code}.jpg`;
+  const secondary = secondaryPhotosMap[code] ?? [];
   return {
     id: row.id,
-    code: row.code,
+    code,
     nameEn: row.name_en,
     nameMs: row.name_ms,
     nameZh: row.name_zh,
@@ -18,7 +50,8 @@ function rowToMenuItem(row: any, displayCatMap: Record<string, string[]> = {}): 
     displayCategories: displayCatMap[row.id] ?? [],
     available: row.available,
     featured: row.featured,
-    photo: `/images/menu/${row.code}.jpg`,
+    photo: primary,
+    photos: [primary, ...secondary],
     sortOrder: row.sort_order ?? 0,
     availableDays: row.available_days ?? [],
     timeFrom: row.time_from ?? "",
@@ -68,8 +101,9 @@ export async function getMenuItems(): Promise<MenuItemWithRules[]> {
     getActiveRules(),
     getItemDisplayCategoryMap(),
   ]);
+  const secondaryPhotosMap = getSecondaryPhotosMap();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items = rows.map((r: any) => rowToMenuItem(r, displayCatMap));
+  const items = rows.map((r: any) => rowToMenuItem(r, displayCatMap, secondaryPhotosMap));
   const withRules = applyRules(items, rules);
   return filterByAvailability(withRules.filter((i) => !i.disabledByRule));
 }
@@ -83,8 +117,9 @@ export async function getFeaturedItems(): Promise<MenuItemWithRules[]> {
     getActiveRules(),
     getItemDisplayCategoryMap(),
   ]);
+  const secondaryPhotosMap = getSecondaryPhotosMap();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items = rows.map((r: any) => rowToMenuItem(r, displayCatMap));
+  const items = rows.map((r: any) => rowToMenuItem(r, displayCatMap, secondaryPhotosMap));
   const withRules = applyRules(items, rules);
   const available = filterByAvailability(withRules.filter((i) => !i.disabledByRule));
 
@@ -106,8 +141,9 @@ export async function getAllMenuItemsForAdmin(): Promise<MenuItem[]> {
     sql`SELECT * FROM menu_items ORDER BY sort_order ASC, name_en ASC`,
     getItemDisplayCategoryMap(),
   ]);
+  const secondaryPhotosMap = getSecondaryPhotosMap();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return rows.map((r: any) => rowToMenuItem(r, displayCatMap));
+  return rows.map((r: any) => rowToMenuItem(r, displayCatMap, secondaryPhotosMap));
 }
 
 // Admin — all items with rule effects computed (for admin visibility)
@@ -117,8 +153,9 @@ export async function getAllMenuItemsWithRulesForAdmin(): Promise<MenuItemWithRu
     getActiveRules(),
     getItemDisplayCategoryMap(),
   ]);
+  const secondaryPhotosMap = getSecondaryPhotosMap();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return applyRules(rows.map((r: any) => rowToMenuItem(r, displayCatMap)), rules);
+  return applyRules(rows.map((r: any) => rowToMenuItem(r, displayCatMap, secondaryPhotosMap)), rules);
 }
 
 // Category list for filter bar and admin
