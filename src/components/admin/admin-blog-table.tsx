@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { Pencil } from "lucide-react";
 import type { BlogPost } from "@/types/blog";
 import { AdminBlogEditor } from "./admin-blog-editor";
 
@@ -11,6 +12,46 @@ interface AdminBlogTableProps {
 export function AdminBlogTable({ initialPosts }: AdminBlogTableProps) {
   const [posts, setPosts] = useState<BlogPost[]>(initialPosts);
   const [editingPost, setEditingPost] = useState<BlogPost | "new" | null>(null);
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editingTitleId && titleInputRef.current) {
+      titleInputRef.current.focus();
+      titleInputRef.current.select();
+    }
+  }, [editingTitleId]);
+
+  function startEditTitle(post: BlogPost) {
+    setEditingTitleId(post.id);
+    setEditTitle(post.title);
+  }
+
+  function cancelEditTitle() {
+    setEditingTitleId(null);
+    setEditTitle("");
+  }
+
+  async function saveTitle(postId: string) {
+    const trimmed = editTitle.trim();
+    if (!trimmed) {
+      cancelEditTitle();
+      return;
+    }
+    const res = await fetch(`/api/admin/blog/by-id/${postId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: trimmed }),
+    });
+    if (res.ok) {
+      setPosts((prev) =>
+        prev.map((p) => (p.id === postId ? { ...p, title: trimmed } : p))
+      );
+    }
+    setEditingTitleId(null);
+    setEditTitle("");
+  }
 
   async function togglePublished(post: BlogPost) {
     const res = await fetch(`/api/admin/blog/by-id/${post.id}`, {
