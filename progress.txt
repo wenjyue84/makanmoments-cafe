@@ -2008,3 +2008,69 @@ Completed: Admin Rules Mobile View Fix: Horizontal Rule Name + Buttons (ID: US-0
 *   Gracefully handle the edge case where fewer than 6 items are marked as featured in the database.
 *   Ensure that when an admin updates highlights, the Next.js data cache is revalidated (e.g., using `revalidateTag`) so changes appear on the homepage immediately.
 
+## Iteration 14 - Tue, Mar 10, 2026 11:50:56 AM
+Completed: Admin Rules Mobile View Fix: Horizontal Rule Name + Buttons (ID: US-028) in 4m
+
+
+## Pre-analysis for US-029 (Gemini 2.5 Pro)
+Here is the technical brief for implementing story US-029.
+
+**Project:** Makan Moments Cafe (Next.js/TypeScript)
+**Story:** US-029 - Admin: Set 6 Homepage Highlights
+
+### **1. Relevant Files & Data Source**
+
+*   **Primary Target:** This is a data update task, not a code modification task. The primary interaction is with the PostgreSQL database.
+*   **Database Table:** `menu_items`
+*   **File to Verify:** `src/lib/menu.ts`. Check the `getFeaturedItems()` function to confirm it queries the database for items where `featured = true`.
+*   **Constant to Check:** `src/lib/constants.ts` or `src/lib/menu.ts` for a `MIN_HIGHLIGHTS` or similar constant; ensure it is set to `6`.
+
+### **2. Key Data Structures**
+
+*   **`menu_items` table:** The central data model.
+    *   `featured` (boolean): The flag to control homepage visibility.
+    *   `sort_order` (integer): Determines the display order of highlights.
+    *   `code` (string): The unique identifier for each menu item.
+
+### **3. Recommended Implementation Approach**
+
+1.  **Identify Item Codes:** Query the `menu_items` table to get the exact `code` for the six photogenic signature dishes (e.g., Tom Yum, Fried Rice, Gyudon, etc.).
+2.  **Reset Flags:** Run a blanket SQL update to clear all existing highlights:
+    `UPDATE menu_items SET featured = false;`
+3.  **Set New Highlights:** Run a specific SQL update to set the six chosen items as featured, including their display order.
+    `UPDATE menu_items SET featured = true, sort_order = CASE code WHEN 'MT04' THEN 1 WHEN 'MT01' THEN 2 ... END WHERE code IN ('MT04', 'MT01', 'BF22', ...);`
+4.  **Verification:** Confirm changes with a `SELECT` query and by visually inspecting the `/en` homepage.
+
+### **4. Edge Cases & Gotchas**
+
+*   **Data Caching:** The application may use data caching (`getFeaturedItems`). The cache may need to be cleared or the app may need a redeploy to reflect DB changes.
+*   **Exclusivity Failure:** Failing to reset all `featured = false` first could result in more than six items being displayed.
+*   **Incorrect Sort Order:** If `sort_order` is not set, the highlights may appear in a random or undesirable order.
+*   **UI Mismatch:** The frontend component rendering the highlights might have hardcoded assumptions about the number of items, which should be avoided.
+
+
+## Iteration - Story: US-029 Admin: Set 6 Homepage Highlights
+
+### What was implemented
+- Queried DB: found 0 featured items initially (364 total items)
+- Created `scripts/set-featured-items.mjs` to update DB
+- Reset all featured=false, then set featured=true + sort_order 0-5 for 6 signature dishes:
+  1. MT04 — Seafood Tomyum Soup+Rice with Egg
+  2. MT01 — Pineapple Fried Rice
+  3. TM03 — Beef Gyu-Don
+  4. AP01 — Indonesia Ayam Penyet with rice
+  5. DD02 — Bubur Cha Cha
+  6. Thai-styled_green_cu — Thai-styled green curry rice
+- Verified all 6 are available=true, featured=true in DB
+
+### Patterns discovered
+- Admin star toggle in `admin-menu-table.tsx` was already fully built (both mobile + desktop)
+- PATCH `/api/admin/menu/[id]` already supports updating `featured` field
+- `getFeaturedItems()` already has MIN_HIGHLIGHTS=6 with padding logic
+- DB uses Neon serverless postgres with direct connection string in query-db.mjs
+- 364 total menu items in DB; item codes can be long strings with underscores (e.g. Thai-styled_green_cu)
+
+### Gotchas
+- `Thai-styled_green_cu` is the actual DB code for green curry rice — truncated display in query-db.mjs
+- The `getFeaturedItems()` filters by `available=true` so featured items must also be available
+- TypeScript check clean (no code changes needed — pure DB update)
