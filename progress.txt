@@ -9539,3 +9539,18 @@ This user story is for a **Next.js/React frontend**, not Frappe/Python. The tech
 
 ### Gotchas
 - `useEffect` closure over `lastScrollY` requires including it in deps; used rAF for scroll throttle
+
+## Iteration - Story: US-105 - Menu Page — Hide Header on Scroll Down, Show on Scroll Up
+
+### What was implemented
+- No code changes needed — both files were already fully implemented from a previous iteration:
+  - `src/hooks/use-scroll-direction.ts` — hook with 10px threshold, requestAnimationFrame, passive listener, cleanup
+  - `src/components/layout/header.tsx` — already imports `useScrollDirection`, applies `-translate-y-full`/`translate-y-0` with `transition-transform duration-300`, uses `sticky top-0`
+
+### Patterns discovered
+- Always check if a story is already implemented before coding — the hook and header had been wired in a previous session
+- The scroll-hide behaviour is applied globally (all pages), which satisfies the acceptance criteria since it says "other pages can optionally use the same behaviour"
+
+### Gotchas
+- `useScrollDirection` initial state is `"none"`, which falls into the `else` branch → `translate-y-0` (header visible on page load) ✓
+- TypeScript check: `npx tsc --noEmit` exits 0 with no errors
