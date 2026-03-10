@@ -7021,3 +7021,100 @@ This brief adapts the core concepts of progressive disclosure and reduced visual
 ## Iteration 47 - Tue, Mar 10, 2026  6:07:04 PM
 Completed: Landing Page: Elegant Progressive Text Reveal (Minimal Above-Fold) (ID: US-076) in 9m
 
+## Iteration 47 - Tue, Mar 10, 2026  6:07:58 PM
+Completed: Landing Page: Elegant Progressive Text Reveal (Minimal Above-Fold) (ID: US-076) in 10m
+
+
+## Pre-analysis for US-077 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** frontend application, not a Frappe/Python one. The technical brief below is for the correct stack.
+
+***
+
+### **Technical Brief: US-077 - Menu Page Progressive Reveal**
+
+**1. Primary Files for Modification:**
+*   `src/components/menu/menu-grid.tsx`: Main logic for scroll-triggered animations.
+*   `src/components/menu/dietary-badge.tsx`: Style adjustments for muted appearance.
+*   Component for category headers (likely within `menu-grid.tsx` or a dedicated file): Style updates.
+*   `src/app/globals.css` or similar: To define the `animate-fade-up` keyframes if not already present.
+
+**2. Key Hooks & APIs:**
+*   **Browser API:** `IntersectionObserver` is the core mechanism to trigger animations as items enter the viewport.
+*   **React Hooks:** `useRef` and `useEffect` will be needed to manage the observer instance and attach it to item elements.
+
+**3. Implementation Approach:**
+*   In `menu-grid.tsx`, use `IntersectionObserver` to watch each menu item wrapper.
+*   When an item intersects with the viewport, add a data attribute or class (e.g., `data-state="visible"`) to trigger a CSS fade-up animation.
+*   Apply a staggered animation delay inline: `style={{ animationDelay: \`${(index % 3) * 50}ms\` }}`. The modulus (`% 3`) assumes a three-column grid and should be adjusted if the grid is responsive.
+*   Modify `dietary-badge.tsx` and the category header component to use the specified muted and smaller Tailwind CSS classes from the technical notes.
+*   Ensure animations are disabled if `prefers-reduced-motion` is active.
+
+**4. Gotchas & Edge Cases:**
+*   **Performance:** Instantiate a single `IntersectionObserver` for all items and unobserve items once they have been animated to prevent performance degradation.
+*   **Layout Shift (CLS):** Items should initially have `opacity: 0` but retain their layout space to avoid content jumping as they fade in.
+*   **Responsive Grids:** The staggered delay calculation (`index % 3`) may produce undesirable visual effects if the number of columns changes on different screen sizes. A simpler delay based on `index` might be more robust.
+
+
+## Pre-analysis for US-077 (Gemini 2.5 Pro)
+This user story describes a frontend task for a Next.js/React application, not a Frappe/Python one. The following technical brief is based on the actual file paths and technologies (`.tsx`, Tailwind CSS) mentioned in the story's details.
+
+**Subject: Technical Brief for US-077: Menu Page Progressive Reveal**
+
+**1. Primary Files for Modification:**
+*   `src/components/menu/menu-grid.tsx`: Implement the primary observer and staggered animation logic.
+*   `src/components/menu/MenuItemCard.tsx` (Assumed): The component to be observed and animated.
+*   `src/components/menu/dietary-badge.tsx`: Adjust styling for muted appearance.
+*   Component rendering category headers: Update CSS classes for new typography.
+
+**2. Core Framework Concepts:**
+*   **React Client Components (`'use client'`):** Required for components using hooks like `useEffect` or `useState` to manage the intersection observer and animation states.
+*   **Intersection Observer API:** To efficiently detect when items enter the viewport. A library like `react-intersection-observer` is recommended.
+*   **Tailwind CSS & CSS Animations:** Use `animate-fade-up` with a dynamic `animation-delay` style for the staggered effect.
+
+**3. Recommended Implementation Approach:**
+1.  Convert the `MenuGrid` or a new child component wrapping the item list into a client component.
+2.  On each menu item, use an `IntersectionObserver` hook (`useInView`) to track its visibility.
+3.  Conditionally apply the `animate-fade-up` class when the item is in view.
+4.  Apply a dynamic inline style for `animation-delay` based on the item's index (`(index % columnCount) * 50ms`).
+5.  Update the `className` props in `dietary-badge.tsx` and the category header component per the acceptance criteria.
+
+**4. Edge Cases & Gotchas:**
+*   **Responsive Staggering:** The stagger delay calculation (`index % 3`) is hardcoded. It must adapt to the grid's column count at different breakpoints to work correctly on mobile and tablets.
+*   **`prefers-reduced-motion`:** Ensure animations are disabled for accessibility using Tailwind's `motion-safe` variant.
+*   **Layout Shift (CLS):** Items must occupy their layout space before animating in to prevent content from jumping.
+
+
+## Iteration 48 - Story: US-077 - Menu Page: Progressive Item Reveal and Reduced Visual Noise
+
+### What was implemented
+- `src/components/menu/dietary-badge.tsx`: reduced `px-2→px-1.5` and `font-medium→font-normal` — badges less prominent
+- `src/components/menu/menu-grid.tsx`:
+  - Imported `FadeUp` from `@/components/ui/fade-up`
+  - Flat view: wrapped customer `MenuCard` items in `<FadeUp delay={(index % 3) * 50}>` for staggered entrance
+  - Section view: wrapped `ChefPickCard` hero in `<FadeUp>` and rest grid items in `<FadeUp delay={(index % 3) * 50}>`
+  - Section `<h2>`: changed to `text-xs font-semibold tracking-widest uppercase text-muted-foreground border-dashed` while keeping sticky positioning
+  - Admin views (`EditableMenuCard`) intentionally skip FadeUp — no animation needed in edit mode
+
+### Patterns discovered
+- FadeUp renders a `<div>` — safe to use as a CSS grid item wrapper; inner card fills the div naturally
+- Sticky headers remain functional inside FadeUp because position:sticky depends on DOM flow, not opacity
+- `(index % 3) * 50` stagger works for both 2-col (mobile) and 3-col (desktop) grids — visual effect still readable at both widths
+- Admin conditional is cleanest as early return `if (isAdmin) return <EditableMenuCard .../>` — keep the FadeUp in the else branch
+
+### Gotchas
+- prd.json must be opened with `encoding='utf-8'` in Python — cp1252 fails on em-dashes in description fields
+
+## Iteration 48 - Story: Menu Page: Progressive Item Reveal and Reduced Visual Noise (US-077)
+
+### What was implemented
+- `src/components/menu/menu-grid.tsx`: Added `FadeUp` import; wrapped flat-grid `MenuCard` items in `<FadeUp delay={(index % 3) * 50}>` for staggered entrance; wrapped `ChefPickCard` in `<FadeUp>`; wrapped rest-grid `MenuCard` items in `<FadeUp delay={(index % 3) * 50}>` with index parameter added to the map; updated category `<h2>` headers to `text-xs font-semibold tracking-widest uppercase text-muted-foreground py-3 border-b border-dashed border-border`
+- `src/components/menu/dietary-badge.tsx`: Reduced padding from `px-2` to `px-1.5`; changed `font-medium` to `font-normal` for more muted appearance
+
+### Patterns discovered
+- FadeUp wraps children in a `<div>` — safe to use as grid items since CSS grid auto-sizes
+- Admin-mode paths (EditableMenuCard) are left without FadeUp wrappers intentionally
+- `(index % 3) * 50` stagger: works for 3-col desktop grid; on mobile 2-col the visual stagger is still acceptable
+
+### Gotchas
+- prd.json must be opened with `encoding='utf-8'` on Windows — default CP1252 fails
+- The changes were already applied to the files (uncommitted) before this iteration started
