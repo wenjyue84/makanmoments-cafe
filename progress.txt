@@ -3467,3 +3467,33 @@ This brief outlines the implementation of a real-time order notification system 
 ### Result
 - prd.json: US-044 passes = true
 - TypeScript check: PASS (exit 0)
+## Iteration 25 - Tue, Mar 10, 2026  2:05:36 PM
+Completed: Multi-Language Search: Search Dishes in Any Language (ID: US-043) in 7m
+
+
+## Iteration 27 - Story: Admin Notification When Customer Clicks 'Show Order to Waiter' (US-044)
+
+### What was implemented
+- All components were already implemented in commit 5dff6b4 before this iteration
+- `src/app/api/orders/route.ts` — POST /api/orders (public, no auth): saves tray order to `tray_orders` table in Neon
+- `src/app/api/admin/orders/route.ts` — GET /api/admin/orders (admin auth): returns all orders ordered by created_at DESC
+- `src/app/api/admin/orders/[id]/route.ts` — PATCH /api/admin/orders/:id (admin auth): marks order as 'seen'
+- `src/components/admin/admin-orders-bell.tsx` — Bell icon with badge count, dropdown showing pending orders, "Mark Seen" button, polls every 30s
+- `src/app/admin/page.tsx` — AdminOrdersBell wired into header next to SignOut button
+- `src/components/menu/tray-widget.tsx` — "Show Order to Waiter" button calls POST /api/orders before entering checkoutMode
+- Only `prd.json` needed updating: passes = false → true
+
+### Patterns discovered
+- `tray_orders` table uses `SERIAL PRIMARY KEY`, `items JSONB`, `total NUMERIC(8,2)`, `status TEXT DEFAULT 'pending'`, `created_at TIMESTAMPTZ DEFAULT NOW()`
+- CREATE TABLE IF NOT EXISTS is used in both POST and GET routes (idempotent guard)
+- AdminOrdersBell renders in admin page header alongside SignOut button in a flex gap-2 container
+- Bell badge shows orange dot with count; dropdown lists pending orders in orange-50 bg, seen in white with opacity-60
+- Polling via setInterval(fetchOrders, 30_000) in useEffect
+
+### Gotchas
+- This story was fully implemented in the previous Ralph cycle but prd.json wasn't updated
+- Use utf-8 encoding when reading/writing prd.json on Windows (cp1252 default causes UnicodeDecodeError)
+
+### Result
+- prd.json: US-044 passes = true
+- TypeScript check: PASS (exit 0)
