@@ -800,3 +800,20 @@ Based on the user story JSON, the request is for a **frontend Next.js/React** im
 - `backdrop-blur-none` on Tailwind v4 correctly removes blur on desktop (md:backdrop-blur-none)
 - Don't use `py-3` when combining with inline paddingBottom — use `pt-3` then let inline style handle bottom
 - The filter is `fixed` on mobile (out of normal flow), so no extra spacer div needed inside MenuGrid; page-level `pb-40` handles the content clearance
+
+## Iteration 12 - Story: Mobile-First Bottom Navigation (US-012)
+
+### What was implemented
+- `src/components/menu/menu-filter.tsx`: Already partially updated (fixed bottom bar on mobile with `bottom-16 z-40 bg-background/95 backdrop-blur-sm border-t`, desktop reset with `md:relative md:bottom-auto`; horizontal scroll on mobile, flex-wrap on desktop; item count hidden on mobile)
+- `src/components/menu/menu-grid.tsx`: Added `pb-48 md:pb-0` to root div to prevent content hidden behind fixed bottom bar
+
+### Patterns discovered
+- File was already modified before iteration (possibly by previous partial run or linter) — always re-read before editing
+- `bottom-16` (4rem) positions the bar above tray/chat buttons which are at `bottom-4`
+- `safe-area-inset-bottom` handled via inline style: `paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))"`
+- `[scrollbar-width:none] [&::-webkit-scrollbar]:hidden` used for hidden scrollbar on horizontal scroll
+
+### Gotchas
+- prd.json must be read/written with UTF-8 encoding (has special chars)
+- TypeScript check passes cleanly (0 errors)
+- `pb-48` (192px) used instead of `pb-32` (128px) for safer bottom clearance

@@ -88,7 +88,7 @@ export function MenuGrid({
   const isSearching = search.trim().length > 0;
 
   return (
-    <div>
+    <div className="pb-48 md:pb-0">
       <MenuFilter
         categories={categories}
         selectedCategory={category}
