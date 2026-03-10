@@ -3133,6 +3133,136 @@
       ],
       "estimatedComplexity": "small",
       "passes": false
+    },
+    {
+      "id": "US-117",
+      "title": "Admin Logout Endpoint Should Redirect Instead of Returning JSON",
+      "priority": 117,
+      "description": "Visiting /api/admin/logout directly in a browser returns raw JSON {ok:true}, which is confusing. The logout endpoint should clear the auth cookie and redirect to /admin/login instead of returning a JSON response.",
+      "acceptanceCriteria": [
+        "GET /api/admin/logout redirects to /admin/login after clearing the auth cookie",
+        "The auth cookie is cleared on logout",
+        "No raw JSON visible to the user when logging out via the browser",
+        "Existing logout button in the admin sidebar still works correctly"
+      ],
+      "technicalNotes": [
+        "Find the logout route at src/app/api/admin/logout/route.ts",
+        "Change the response to use NextResponse.redirect(new URL('/admin/login', request.url)) after clearing the cookie",
+        "If the route is POST-only, add a GET handler that also clears the cookie and redirects",
+        "Ensure the cookie is cleared with the same name, path, and domain used when setting it"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-118",
+      "title": "Hide Pre-Order How-It-Works Section on Mobile to Save Space",
+      "priority": 118,
+      "description": "The home page shows a Pre-Order & Skip the Wait section with a 3-step how-it-works explanation and a Browse Menu CTA. On mobile this section takes up significant vertical space. Hide it on mobile viewports and only show it on desktop (lg breakpoint and above).",
+      "acceptanceCriteria": [
+        "The Pre-Order how-it-works section is hidden on mobile (below lg breakpoint)",
+        "The section is visible on desktop (lg and above)",
+        "No layout shift or blank gap left behind on mobile",
+        "The rest of the home page renders normally on mobile"
+      ],
+      "technicalNotes": [
+        "Find the how-it-works / pre-order section component in src/components/home/",
+        "Wrap the section or add Tailwind class hidden lg:block to hide on mobile and show on desktop",
+        "Verify on 390px viewport that no gap or whitespace is left behind"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-119",
+      "title": "Show Item Code (e.g. AP01, MT04) in Menu Item Names on /en/menu",
+      "priority": 119,
+      "description": "Customers want to reference items by code when ordering at the counter. Display the item code (e.g. AP01, MT04) alongside the item name on the public menu page so customers can easily communicate their order to staff.",
+      "acceptanceCriteria": [
+        "Each menu item card on /en/menu shows the item code near the item name",
+        "The code is visually distinct but unobtrusive (e.g. small muted monospace text or badge)",
+        "Code is shown on all menu card variants including Chef Pick cards",
+        "If an item has no code, nothing extra is rendered"
+      ],
+      "technicalNotes": [
+        "The item code field is stored as code on the MenuItem type in src/types/menu.ts",
+        "Update src/components/menu/menu-card.tsx (and chef-pick-card.tsx) to render the code",
+        "Suggested: small muted label above or beside the item name, e.g. <span className='text-xs text-gray-400 font-mono'>{item.code}</span>",
+        "Check editable-menu-card.tsx as well for consistency in admin edit mode"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-120",
+      "title": "Add KDS Tab in Admin Navigation That Links to KDS System",
+      "priority": 120,
+      "description": "Add a KDS (Kitchen Display System) tab to the admin sidebar navigation. Clicking it should open the KDS system in a new tab. This gives kitchen staff and admins quick access directly from the admin panel.",
+      "acceptanceCriteria": [
+        "A KDS tab appears in the admin sidebar navigation",
+        "Clicking the KDS tab opens the KDS system URL in a new browser tab",
+        "The KDS tab has an appropriate icon (e.g. Monitor or ChefHat from lucide-react)",
+        "The tab is clearly labelled KDS"
+      ],
+      "technicalNotes": [
+        "Open src/components/admin/admin-tabs.tsx",
+        "Add KDS to the TABS array and add a corresponding icon in TAB_ICONS using Monitor from lucide-react",
+        "In handleTabClick, detect the KDS tab and call window.open(KDS_URL, '_blank') instead of router.push",
+        "Define KDS_URL using process.env.NEXT_PUBLIC_KDS_URL with a fallback placeholder",
+        "Do not create a /admin/kds page route; the tab opens an external URL directly"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-121",
+      "title": "Show Colorful Placeholder Image for Menu Items Without a Photo",
+      "priority": 121,
+      "description": "Menu items without an uploaded photo currently show a broken image or blank space on /en/menu. Replace this with a colorful, visually appealing placeholder that fits the cafe warm aesthetic, making the menu look complete even for unphotographed items.",
+      "acceptanceCriteria": [
+        "Menu items with no photo show a colorful placeholder on /en/menu",
+        "The placeholder is visually appealing and consistent with the cafe brand (warm, earthy tones)",
+        "The placeholder shows a food-related emoji or icon relevant to the item category",
+        "No broken image icons or blank white boxes are visible",
+        "Items with real photos are unaffected"
+      ],
+      "technicalNotes": [
+        "Update src/components/menu/menu-card.tsx to handle missing image gracefully",
+        "When item.image is null or empty, render a div placeholder instead of Next Image",
+        "Use a warm gradient background (e.g. from-amber-100 to-orange-200) with a centered emoji",
+        "Map each category to a relevant emoji: Rice to rice emoji, Noodles to noodles emoji, Drinks to bubble tea emoji, Desserts to pudding emoji",
+        "Apply the same fix to chef-pick-card.tsx and any other card variants",
+        "Optionally use onError on the Image tag to swap to the placeholder if the image URL 404s"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-122",
+      "title": "Instant Highlight Reflection on /en/menu Without Page Refresh",
+      "priority": 122,
+      "description": "When an admin toggles a menu item as highlighted/featured via the inline edit controls on /en/menu, the change requires a full page refresh to appear. The highlight state should update instantly in the UI without a reload.",
+      "acceptanceCriteria": [
+        "Toggling an item highlight/featured status in admin edit mode on /en/menu updates the UI instantly",
+        "No full page refresh is needed to see the highlight badge or card style change",
+        "The change is persisted to the backend (API call fires)",
+        "If the API call fails, the UI reverts to the previous state (optimistic update with rollback)"
+      ],
+      "technicalNotes": [
+        "Find editable-menu-card.tsx or the component handling the highlight toggle",
+        "Implement optimistic update: immediately update local items state in the parent, then await the PATCH API call",
+        "On API error, revert the local state change and show an error indicator",
+        "The parent component (menu-grid or page) should hold items in useState and pass a callback (e.g. onItemUpdate) down to the card",
+        "Check src/components/menu/menu-grid.tsx and src/app/[locale]/menu/page.tsx for where items state lives"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
     }
   ]
 }
