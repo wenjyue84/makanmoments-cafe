@@ -11274,3 +11274,54 @@ Here is the plan for implementing the user story.
 ## Iteration 3 - Wed, Mar 11, 2026  2:08:53 AM
 Completed: Add AbortController Fetch Timeout to Critical Client-Side Calls (ID: US-133) in 7m
 
+## Iteration 1 - Wed, Mar 11, 2026  2:09:21 AM
+Completed: Add AbortController Fetch Timeout to Critical Client-Side Calls (ID: US-133) in 5m
+
+
+## Pre-analysis for US-134 (Gemini 2.5 Pro)
+**Technical Brief: US-134 - System Prompt Cache Enhancement (Frappe/Python)**
+
+**Objective:** Analogous to the user story, this brief adapts the caching logic for a Frappe/Python context. We will increase a data cache TTL to 60 minutes and implement active invalidation when the source data changes.
+
+**1. Primary Python Files to Modify:**
+*   A utility file responsible for fetching data for the AI, e.g., `lhdn_payroll_integration/utils/prompt_builder.py`.
+*   The `lhdn_payroll_integration/hooks.py` file to trigger cache clearing.
+*   The server-side controller for the source DocType if complex logic is needed, e.g., `.../doctype/payroll_rule/payroll_rule.py`.
+
+**2. Frappe DocTypes & Hooks:**
+*   **DocType:** The core data source, likely a custom DocType like `Payroll Rule` or a standard one like `Salary Component`.
+*   **Hooks:** `on_update` and `on_trash` document events will be used to ensure the cache is cleared when a relevant document is changed or deleted.
+
+**3. Recommended Implementation Approach:**
+*   In the data-fetching function, use `frappe.cache().get_value(key)`.
+*   On a cache miss, query the DocType using `frappe.get_all(...)`, process the data, and store it via `frappe.cache().set_value(key, data, expires_in_sec=3600)`.
+*   In `hooks.py`, define a handler for the `on_update` and `on_trash` events of the source DocType that calls `frappe.cache().delete_value(key)`.
+
+**4. Edge Cases & Gotchas:**
+*   **Cache Key Mismatch:** Use a consistent, centralized constant for the cache key to avoid stale data.
+*   **Multi-DocType Sources:** If the prompt data relies on multiple DocTypes, ensure invalidation hooks are attached to all of them.
+*   **Environment:** The solution depends on a correctly configured Redis instance for `frappe.cache()` to function.
+
+
+## Pre-analysis for US-134 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-134, based on the provided JSON data.
+
+**Subject:** Technical Brief for US-134: Increase AI Menu Cache TTL
+
+**1. Primary Files to Modify:**
+*   `src/lib/chat/system-prompt.ts`: Contains the cache TTL constant and invalidation logic.
+*   `src/app/api/admin/menu/[id]/route.ts`: The API route for handling updates to a menu item.
+
+**2. Key Next.js Components Involved:**
+*   **API Route Handler:** The `PATCH` function within `route.ts` that processes admin updates to menu items.
+*   **Cache Management Module:** The `system-prompt.ts` file, which exports the `MENU_CACHE_TTL_MS` constant and the `invalidateSystemPromptCache` function.
+
+**3. Recommended Implementation Approach:**
+1.  In `src/lib/chat/system-prompt.ts`, update the `MENU_CACHE_TTL_MS` constant to `3600000` (60 minutes).
+2.  In the `src/app/api/admin/menu/[id]/route.ts` file, import the `invalidateSystemPromptCache` function.
+3.  After the database update logic successfully completes within the `PATCH` handler, call `invalidateSystemPromptCache()`.
+
+**4. Edge Cases & Gotchas:**
+*   The acceptance criteria mention toggling item availability. You must verify if this action is handled by the main `PATCH` endpoint or by a separate one. If it's a separate endpoint, that file will also need to be modified to call the cache invalidation function.
+*   The invalidation call must occur only *after* a successful database write to prevent a race condition where the cache is cleared before the new data is persisted.
+
