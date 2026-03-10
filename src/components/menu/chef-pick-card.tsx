@@ -11,6 +11,20 @@ import { DietaryBadge } from "./dietary-badge";
 import { RecipeModal } from "./recipe-modal";
 import { getRecipeInfo } from "@/data/recipe-info";
 
+function getCategoryEmoji(categories: string[]): string {
+  const cat = (categories[0] ?? "").toLowerCase();
+  if (cat.includes("beverage") || cat.includes("drink") || cat.includes("juice")) return "🧋";
+  if (cat.includes("noodle") || cat.includes("fried noodle")) return "🍜";
+  if (cat.includes("soup")) return "🍲";
+  if (cat.includes("rice") || cat.includes("nanyang")) return "🍚";
+  if (cat.includes("toast") || cat.includes("bread")) return "🍞";
+  if (cat.includes("snack")) return "🍟";
+  if (cat.includes("ice cream") || cat.includes("dessert")) return "🍨";
+  if (cat.includes("ayam") || cat.includes("chicken")) return "🍗";
+  if (cat.includes("fish") || cat.includes("thai")) return "🐟";
+  return "🍽️";
+}
+
 interface ChefPickCardProps {
   item: MenuItemWithRules;
   priority?: boolean;
@@ -65,8 +79,8 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-5xl text-muted-foreground/30">
-              🍽️
+            <div className="flex h-full items-center justify-center bg-gradient-to-br from-amber-100 to-orange-200 dark:from-amber-900/40 dark:to-orange-900/30">
+              <span className="text-6xl" aria-hidden="true">{getCategoryEmoji(item.categories)}</span>
             </div>
           )}
 

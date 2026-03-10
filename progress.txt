@@ -10542,3 +10542,48 @@ Completed: Fix US-044 Test — Order Notification Test Missing Required Fields a
 
 ### Gotchas
 - prd.json `passes` field can be stale — always read the file before assuming a story needs work
+## Iteration 4 - Tue, Mar 10, 2026 11:36:37 PM
+Completed: Fix US-044 Test — Order Notification Test Missing Required Fields and Wrong Status Check (ID: US-114) in 7m
+
+
+## Pre-analysis for US-121 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-121.
+
+**Objective:**
+Implement a visually appealing placeholder for menu items that lack a photo, ensuring the menu UI looks complete and professional. This is a frontend-only task.
+
+**Files to Modify:**
+*   `src/components/menu/menu-card.tsx`
+*   `src/components/menu/chef-pick-card.tsx`
+*   Any other components that render a menu item card.
+
+**Implementation Approach:**
+1.  In the card components, conditionally render based on the `item.image` prop.
+2.  If `item.image` is falsy, render a `<div>` element instead of the `next/image` component.
+3.  Style this `div` with a warm, earthy gradient (e.g., `bg-gradient-to-br from-amber-100 to-orange-200`).
+4.  Create a utility function, e.g., `getEmojiForCategory(category: string): string`, to map item categories to corresponding food emojis (Rice -> 🍚, Noodles -> 🍜, etc.).
+5.  Display the returned emoji, centered, and with a large font size inside the placeholder `div`.
+6.  Ensure the placeholder `div` has the same aspect ratio and dimensions as the image to prevent Cumulative Layout Shift (CLS).
+
+**Edge Cases & Gotchas:**
+*   **Broken Links:** To handle cases where `item.image` has a value but the URL is broken (404s), use the `onError` event on the `next/image` component to trigger a state change that swaps it for the placeholder component.
+*   **Missing Categories:** The emoji mapping function should include a default fallback emoji (e.g., 🍽️) for any new or unmapped categories.
+*   **Component Consistency:** Apply the placeholder logic uniformly across all card variants to maintain a consistent user experience.
+
+
+## Iteration N - Stories US-117, US-118, US-119, US-120, US-121 (Batch)
+
+### What was implemented
+- US-117: Already implemented in HEAD (logout route redirects to /admin/login). Marked passes=true.
+- US-118: Already implemented in HEAD (PreorderBanner has `hidden lg:block`). Marked passes=true.
+- US-119: Added item code display (`<span className="text-xs font-mono text-muted-foreground/60">`) above item name in `menu-card.tsx` and `chef-pick-card.tsx`. Only renders when `item.code` exists.
+- US-120: KDS tab already in HEAD (admin-tabs.tsx had Monitor icon, KDS_URL, window.open logic). Marked passes=true.
+- US-121: Replaced muted 🍽️ placeholder in both `menu-card.tsx` and `chef-pick-card.tsx` with warm gradient (from-amber-100 to-orange-200) + category-mapped emoji. Added `getCategoryEmoji()` helper in each card file.
+
+### Patterns discovered
+- Stories that appear "new" in prd.json may already be implemented in HEAD — always check git history before implementing
+- Category values in DB are long strings like "Classic Fried Noodles", "Beverage Cold Drinks" — use lowercase includes() matching
+- admin-tabs.tsx already had KDS tab from a previous session — PRD stories can be committed across sessions
+
+### Gotchas
+- Python json load on Windows requires explicit `encoding='utf-8'` to avoid cp1252 decode errors
