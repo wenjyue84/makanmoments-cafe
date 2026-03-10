@@ -10975,3 +10975,6 @@ Refactor admin API routes to use a shared helper for standardized JSON error and
 
 ### Gotchas
 - prd.json must be read with `encoding='utf-8'` on Windows (cp1252 codec fails on special chars in the file)
+## Iteration 1 - Wed, Mar 11, 2026  1:53:50 AM
+Completed: Standardize API Error Response Format with createErrorResponse Helper (ID: US-131) in 5m
+
