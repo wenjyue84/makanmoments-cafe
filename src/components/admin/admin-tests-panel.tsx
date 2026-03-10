@@ -17,9 +17,10 @@ const CATEGORY_LABELS: Record<TestCategory, string> = {
   unit: "Unit Tests",
   integration: "Integration Tests",
   e2e: "E2E Tests",
+  "new-features": "New Features",
 };
 
-const CATEGORY_ORDER: TestCategory[] = ["smoke", "unit", "integration", "e2e"];
+const CATEGORY_ORDER: TestCategory[] = ["smoke", "unit", "integration", "e2e", "new-features"];
 
 function StatusBadge({ status }: { status: TestStatus }) {
   const styles: Record<TestStatus, string> = {
@@ -179,7 +180,7 @@ export function AdminTestsPanel() {
       acc[cat] = tests.filter((t) => t.category === cat);
       return acc;
     },
-    { smoke: [], unit: [], integration: [], e2e: [] }
+    { smoke: [], unit: [], integration: [], e2e: [], "new-features": [] }
   );
 
   if (!loaded) {

@@ -3,11 +3,13 @@ export { smokeTests } from "./smoke";
 export { unitTests } from "./unit";
 export { integrationTests } from "./integration";
 export { e2eTests } from "./e2e";
+export { newFeaturesTests } from "./new-features";
 
 import { smokeTests } from "./smoke";
 import { unitTests } from "./unit";
 import { integrationTests } from "./integration";
 import { e2eTests } from "./e2e";
+import { newFeaturesTests } from "./new-features";
 import type { TestDefinition, TestMeta } from "./types";
 
 export const ALL_TESTS: TestDefinition[] = [
@@ -15,6 +17,7 @@ export const ALL_TESTS: TestDefinition[] = [
   ...unitTests,
   ...integrationTests,
   ...e2eTests,
+  ...newFeaturesTests,
 ];
 
 export function getTestMeta(): TestMeta[] {
