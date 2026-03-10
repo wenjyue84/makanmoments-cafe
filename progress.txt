@@ -5093,3 +5093,66 @@ Here is the technical brief for implementing US-057.
 *   **Coordinate Clamping:** The calculated `object-position` percentages must be clamped between `0%` and `100%`.
 *   **Data Keys:** Use a consistent, unique key (like the image's `src` path) for entries in `image-positions.json`.
 
+## Iteration 34 - Tue, Mar 10, 2026  4:06:59 PM
+Completed: Pre-Order: End-to-End Flow Tests + Edge Cases (ID: US-056) in 7m
+
+
+## Pre-analysis for US-057 (Gemini 2.5 Pro)
+Based on the user story, this is a **Next.js/TypeScript** feature, not a Frappe/Python one. Here is the technical brief for the development agent:
+
+### **Technical Brief: US-057 Image Focal Point Adjustment**
+
+**1. Primary Files & Components to Modify:**
+
+*   **API Routes:**
+    *   `src/app/api/admin/menu/[id]/route.ts`: Enhance the existing `PATCH` handler to process and save the `imagePosition` field.
+    *   `src/app/api/admin/image-positions/route.ts`: Create this new route to handle `PATCH` requests for updating blog and static image positions stored in Markdown and JSON files.
+*   **UI Components:**
+    *   Create a new client component, e.g., `src/components/admin/ImagePositionEditor.tsx`, to contain the drag-and-drop logic, controls (arrows, save button), and live preview.
+    *   Update existing components that render images (e.g., `MenuCard.tsx`, `Hero.tsx`, `BlogCard.tsx`) to apply the `object-position` style and conditionally render the `ImagePositionEditor` for admins.
+*   **Data Models:**
+    *   A database migration script to add an `imagePosition` (TEXT, default '50% 50%') column to the `menu_items` table.
+    *   `data/image-positions.json`: A new file to store position values for static site images.
+
+**2. Involved Data Structures (Not Frappe DocTypes):**
+
+*   **PostgreSQL Table:** `menu_items` requires a new `imagePosition` column.
+*   **Markdown Frontmatter:** Files in `content/blog/` will need an `imagePosition` attribute (e.g., `imagePosition: '50% 30%'`).
+*   **JSON File:** `data/image-positions.json` will map image source paths to their position strings (e.g., `{"/images/hero.jpg": "50% 20%"}`).
+
+**3. Recommended Implementation Approach:**
+
+1.  **Backend:** First, add the `imagePosition` field to the `menu_items` Prisma schema and run a migration. Then, update the `/api/admin/menu/[id]` PATCH route logic. Implement the new `/api/admin/image-positions` route to read/write from both Markdown frontmatter and the JSON file.
+2.  **Frontend (Display):** Modify the primary image components to accept an `imagePosition` prop and apply it as an inline style: `<Image style={{ objectPosition: imagePosition || '50% 50%' }} />`.
+3.  **Frontend (Admin UI):** Build the `ImagePositionEditor` component. It should wrap the `next/image` component.
+    *   On hover, display arrow buttons and a drag handle.
+    *   Use `onMouseDown` and `onMouseMove` events to calculate the drag delta and update a local state for live preview. Clamp the resulting X/Y percentages between 0 and 100.
+    *   The "Save" button will call the appropriate `PATCH` API.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Authentication:** The admin API routes *must* be strictly protected to prevent unauthorized modifications.
+*   **UX:** The drag interaction can be jerky. Ensure calculations are relative to the container dimensions. A semi-transparent overlay during drag can improve usability. Arrow buttons are crucial for mobile-friendliness.
+*   **Data Cohesion:** Ensure a default `'50% 50%'` is applied everywhere if a specific position is not set.
+*   **Component Composition:** Pass the `imagePosition` down to the final `next/image` component, but render the interactive editor UI in a higher-level admin-only wrapper to keep display components clean.
+
+
+## Iteration N - Story: US-057 - Admin: Adjust Image Focal Point
+
+### What was implemented
+- Added `imagePosition: string` to `MenuItem` type in `src/types/menu.ts`
+- Updated `rowToMenuItem` in `src/lib/menu.ts` to read `image_position` from DB row (fallback: "50% 50%")
+- Updated `PATCH /api/admin/menu/[id]/route.ts` to accept `imagePosition`, add idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS image_position TEXT DEFAULT '50% 50%'`, and include it in the UPDATE query
+- Updated `src/components/menu/menu-card.tsx` (public): applies `objectPosition: item.imagePosition || "50% 50%"` via inline style on the Image component
+- Updated `src/components/menu/editable-menu-card.tsx` (admin): added arrow button focal point controls (↑↓←→), live preview via state, "Save Position" button that PATCHes the new position, and Reset button
+- Fixed `src/components/admin/admin-menu-table.tsx`: added `imagePosition: "50% 50%"` to the `addNewRow()` object literal (TypeScript required all MenuItem fields)
+
+### Patterns discovered
+- When adding a required field to the `MenuItem` interface, you must also update all inline object literals that construct `MenuItem`-shaped objects (check `admin-menu-table.tsx` `addNewRow()`)
+- DB migration pattern: add `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` inside the PATCH route handler (idempotent, safe to call on every PATCH)
+- Focal point is stored as CSS `object-position` string e.g. "60% 30%"; parsed by splitting on space and reading integers
+
+### Gotchas
+- `editable-menu-card.tsx` is always in admin edit mode — no need for additional auth check; just add controls unconditionally
+- Arrow controls appear on hover via `group-hover/card:opacity-100` pattern, matching existing button patterns in the card
+- The `recipeOpen` state was unused in the original (no trigger) but kept for consistency; left as-is to minimize diff

@@ -189,6 +189,7 @@ export function AdminMenuTable({
         timeFrom: "",
         timeUntil: "",
         specialDates: [],
+        imagePosition: "50% 50%",
         _new: true,
         _dirty: true,
       },
