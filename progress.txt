@@ -6029,3 +6029,82 @@ Based on the user story `US-068`, here is a concise technical brief for implemen
 ## Iteration 41 - Tue, Mar 10, 2026  5:02:00 PM
 Completed: AI Waiter: Voice Input via Web Speech API (ID: US-066) in 15m
 
+## Iteration 40 - Tue, Mar 10, 2026  5:02:33 PM
+Completed: Menu Search Bar: Voice-to-Text Input Button (ID: US-068) in 5m
+
+
+## Pre-analysis for US-069 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** frontend project, not Frappe/Python. Here is the technical brief based on the actual story content:
+
+**Technical Brief: US-069 Favicon Implementation**
+
+**1. Files to Modify/Create:**
+- `src/app/layout.tsx`: To add the `metadata.icons` configuration.
+- `public/manifest.json`: To update PWA icon paths.
+- `scripts/generate-favicon.ts` (New): A script using the `sharp` library to generate icon files.
+- `app/icon.svg` (Fallback): Create this if the primary logo is missing.
+
+**2. Key Next.js/React Concepts Involved:**
+- **Next.js App Router Metadata API:** The core mechanism for injecting `<link>` tags for favicons and Apple touch icons into the `<head>`.
+- **Next.js File-based Conventions:** Using `app/icon.svg` or `app/favicon.ico` for automatic icon generation.
+- **PWA Manifest:** The `manifest.json` file configures the app's appearance when installed on a device.
+
+**3. Recommended Implementation Approach:**
+- Create a script (`scripts/generate-favicon.ts`) that uses `sharp` to read `public/images/logo.png` (or `public/logo.png`).
+- The script should output multiple sizes (`16x16`, `32x32`, `180x180`, `192x192`, `512x512`) into the `/public` directory.
+- In `src/app/layout.tsx`, update the `metadata` object to specify `icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' }`.
+- Update the `icons` array in `public/manifest.json` to reference the new PWA-sized icons.
+
+**4. Edge Cases & Gotchas:**
+- **Favicon Caching:** Browsers cache favicons aggressively. A hard refresh or clearing browser data is often needed to see changes.
+- **Pathing:** All icon paths in metadata and the manifest must be absolute from the public root (e.g., `/apple-touch-icon.png`).
+- **Missing Logo:** If no logo exists, the fallback is to create an orange SVG with the letter 'M' at `app/icon.svg`. Next.js can use this to automatically generate basic icons.
+- **Dependency:** The `sharp` library will need to be installed as a development dependency (`npm install -D sharp`).
+
+
+## Pre-analysis for US-069 (Gemini 2.5 Pro)
+This is a Next.js/TypeScript user story, not Frappe/Python.
+
+Here is the technical brief for the frontend task:
+
+**Subject: Technical Brief: US-069 Favicon Implementation**
+
+**1. Primary Files to Modify:**
+*   `src/app/layout.tsx`: To define the `metadata` object for icons.
+*   `public/manifest.json`: To update the icon paths for PWA support.
+
+**2. New Files to Create:**
+*   `scripts/generate-favicon.ts`: A new script using the `sharp` library to generate various icon sizes from the source logo.
+*   `src/app/icon.svg`: As a fallback if the primary logo asset is not found.
+*   Generated icons will be placed in the `/public` directory (e.g., `favicon.ico`, `apple-touch-icon.png`).
+
+**3. Recommended Implementation Approach:**
+*   The `generate-favicon.ts` script should first look for `public/images/logo.png` or `public/logo.png`.
+*   Using `sharp`, it will resize the found logo into standard favicon sizes (32x32), Apple Touch Icon (180x180), and PWA icons (192x192, 512x512), outputting them to `/public`.
+*   The `metadata` export in `src/app/layout.tsx` should be updated with `icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' }`.
+*   The `icons` array in `public/manifest.json` must be updated to reference the new PWA-sized icons.
+
+**4. Edge Cases & Gotchas:**
+*   **Fallback:** If no logo is found, the script must create `src/app/icon.svg` containing a simple orange square with a centered "M", allowing Next.js to auto-generate the necessary icons.
+*   **Dependency:** Ensure `sharp` is installed as a dev dependency (`npm install -D sharp`).
+*   **Verification:** Test in a browser's incognito mode to bypass aggressive favicon caching.
+
+
+## Iteration 41 - Story: Favicon: Cafe Logo as Browser Tab Icon (US-069)
+
+### What was implemented
+- Verified `src/app/favicon.ico` already existed (25KB custom ICO with 4 size images) from initial commit
+- Used `sharp` to generate `public/apple-touch-icon.png` at 180x180 (contain fit, cream bg #fff9f0)
+- Added `icons: { icon: '/favicon.ico', apple: '/apple-touch-icon.png' }` to `generateMetadata` in `src/app/[locale]/layout.tsx`
+- Updated `public/manifest.json` icons: added 180x180 apple-touch-icon entry, kept 512x512 logo.png
+
+### Patterns discovered
+- `sharp` is available in this project (`node -e "require('sharp')"` works)
+- Next.js auto-wires `src/app/favicon.ico` but explicit `icons` in metadata still needed for apple-touch-icon
+- `fit: 'contain'` + cream `background` ensures logo doesn't get clipped in apple touch icon
+
+### Acceptance Criteria Met
+- [x] Browser tab shows cafe logo (favicon.ico already custom, 25KB ICO)
+- [x] Apple touch icon (180x180) set for iOS home screen
+- [x] PWA manifest icons use cafe logo paths
+- [x] TypeScript check passes (0 errors)
