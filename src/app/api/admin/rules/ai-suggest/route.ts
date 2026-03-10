@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       system: RULE_SYSTEM_PROMPT,
       messages: [{ role: "user", content: userPrompt }],
       temperature: 0.1,
-      maxTokens: 400,
+      maxOutputTokens: 400,
     });
     text = result.text;
   } catch {
@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
         system: RULE_SYSTEM_PROMPT,
         messages: [{ role: "user", content: userPrompt }],
         temperature: 0.1,
-        maxTokens: 400,
+        maxOutputTokens: 400,
       });
       text = result.text;
     } catch (fallbackErr) {

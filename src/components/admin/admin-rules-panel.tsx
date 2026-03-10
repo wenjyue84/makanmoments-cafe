@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import type { Rule, RuleType, TargetType } from "@/types/menu";
 import { cn } from "@/lib/utils";
+import { AdminRulesAiHelper } from "./admin-rules-ai-helper";
 
 interface AdminRulesPanelProps {
   categories: string[];
@@ -153,6 +154,35 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
     setExcludeSearch("");
   }
 
+  function handleAiSuggestion(s: {
+    name: string;
+    ruleType: RuleType;
+    targetType: TargetType;
+    targetCategories: string[];
+    value: number;
+    timeFrom: string;
+    timeUntil: string;
+    active: boolean;
+  }) {
+    setForm({
+      ...EMPTY_FORM,
+      name: s.name,
+      ruleType: s.ruleType,
+      targetType: s.targetType,
+      targetCategories: s.targetCategories,
+      value: s.value,
+      timeFrom: s.timeFrom,
+      timeUntil: s.timeUntil,
+      active: s.active,
+    });
+    setEditingId(null);
+    setShowForm(true);
+    setShowExclusions(false);
+    setPreview(null);
+    setItemSearch("");
+    setExcludeSearch("");
+  }
+
   function openEdit(rule: RuleRow) {
     const hasExclusions = (rule.exclude_item_ids?.length ?? 0) > 0;
     setForm({
@@ -291,6 +321,9 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
       {error && (
         <div className="rounded-md bg-red-50 p-3 text-sm text-red-600">{error}</div>
       )}
+
+      {/* AI Helper */}
+      <AdminRulesAiHelper categories={categories} onApply={handleAiSuggestion} />
 
       {/* Header */}
       <div className="flex items-center justify-between">
