@@ -1247,6 +1247,174 @@
       ],
       "estimatedComplexity": "large",
       "passes": false
+    },
+    {
+      "id": "US-046",
+      "title": "Tests for US-041 to US-045 in Admin Tests Tab",
+      "priority": 46,
+      "description": "Add programmatic tests for all features introduced in US-041 through US-045 into the admin Tests tab (/admin > Tests). Tests should cover: menu card name/price layout, multi-language search, admin translation fields, order notification bell, and PWA manifest. Tests must be runnable via 'Run All' and report pass/fail with logs.",
+      "acceptanceCriteria": [
+        "New test cases appear in /admin > Tests for each of US-041 to US-045",
+        "US-041 test: renders a menu card with long name ('BIG Hot Cham-C') and verifies name and price are in separate DOM elements (not inline)",
+        "US-042 test: admin item edit form contains nameMs and nameZh input fields; POST /api/admin/menu/translate returns a non-empty string",
+        "US-043 test: search 'tomyam' returns items containing 'tom yum' in any language field; search '炒饭' returns fried rice items",
+        "US-044 test: POST /api/orders creates an order; GET /api/admin/orders returns it with status=pending; PATCH /api/admin/orders/[id] marks it seen",
+        "US-045 test: GET /manifest.json returns valid PWA manifest with name, icons, display fields; service worker file exists at /sw.js",
+        "All new tests appear under a 'New Features' category in the Tests tab",
+        "Verify: Run All in /admin > Tests — new tests show pass/fail status"
+      ],
+      "technicalNotes": [
+        "Add new test group to src/lib/tests/smoke.ts or create src/lib/tests/new-features.ts",
+        "US-041 test: render MenuCard with item { nameEn: 'BIG Hot Cham-C', price: 4.20 }, assert name and price are in separate elements",
+        "US-042 test: fetch POST /api/admin/menu/translate with { nameEn: 'Tom Yum Soup', targetLanguage: 'zh' }, assert response.translation is non-empty",
+        "US-043 test: filter menu items array with query '炒饭', assert at least one result contains '炒饭' in nameZh",
+        "US-044 test: POST /api/orders with test order, assert 201 response; GET /api/admin/orders, assert order present",
+        "US-045 test: fetch /manifest.json, assert JSON has name/icons/display fields; fetch /sw.js, assert 200 response",
+        "Register test group in src/app/api/admin/tests/route.ts test registry"
+      ],
+      "dependencies": ["US-009", "US-041", "US-042", "US-043", "US-044", "US-045"],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-047",
+      "title": "Rename 'Show Order to Waiter' to 'Send Order to Waiter' / 'Send Order' on Mobile",
+      "priority": 47,
+      "description": "The tray panel button currently says 'Show Order to Waiter'. Rename it to 'Send Order to Waiter' on desktop/tablet, and 'Send Order' on mobile (to save space). This better reflects the new pre-ordering flow where the order is actually sent to the system, not just shown. Update all i18n translations in EN/MS/ZH.",
+      "acceptanceCriteria": [
+        "On desktop (md+): tray panel primary button shows 'Send Order to Waiter'",
+        "On mobile (< md): same button shows 'Send Order' (shorter, saves space)",
+        "The change is reflected in all 3 languages: EN/MS/ZH",
+        "The button still triggers the same order submission action (POST /api/orders from US-044)",
+        "Verify at 390px: button shows 'Send Order'; at 768px+: shows 'Send Order to Waiter'"
+      ],
+      "technicalNotes": [
+        "Find the button in src/components/menu/tray-widget.tsx",
+        "Use responsive Tailwind: <span class='hidden md:inline'>Send Order to Waiter</span><span class='md:hidden'>Send Order</span>",
+        "Update i18n keys in messages/en.json: tray.sendOrder = 'Send Order' and tray.sendOrderToWaiter = 'Send Order to Waiter'",
+        "Update messages/ms.json: tray.sendOrder = 'Hantar Pesanan', tray.sendOrderToWaiter = 'Hantar Pesanan ke Pelayan'",
+        "Update messages/zh.json: tray.sendOrder = '发送订单', tray.sendOrderToWaiter = '发送订单给服务员'"
+      ],
+      "dependencies": ["US-044"],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-048",
+      "title": "Customer Can View Previous Order History After Sending",
+      "priority": 48,
+      "description": "After a customer submits an order via 'Send Order to Waiter', their order should be saved in the browser (localStorage or sessionStorage) so they can still see what they ordered even after the tray is cleared. The tray panel should show a 'View Last Order' section or a separate 'Order History' tab showing previous orders sent during the session.",
+      "acceptanceCriteria": [
+        "After clicking 'Send Order', the submitted order is saved to localStorage with timestamp",
+        "The tray panel (or a dedicated 'My Orders' section) shows the last submitted order",
+        "If multiple orders were sent in the session, all are visible in a scrollable history list",
+        "Each past order shows: items, quantities, total, timestamp, and status (Pending/Approved/Ready)",
+        "Order history persists across page refreshes (localStorage, not sessionStorage)",
+        "The tray is cleared after sending but the history section is not",
+        "Verify: send order → tray clears → 'My Orders' section shows the submitted order with timestamp"
+      ],
+      "technicalNotes": [
+        "In src/components/menu/tray-widget.tsx: after POST /api/orders succeeds, save order to localStorage key 'mm_order_history'",
+        "Order history format: [{ id, items, total, timestamp, status }]",
+        "Add an 'Order History' collapsible section at the bottom of the tray panel",
+        "Poll GET /api/orders/[id] every 30s to update status (pending → approved → ready) — or use the order ID returned from POST",
+        "Create public API GET /api/orders/[id] (no auth) to let customer check their own order status by ID",
+        "Show status badges: 🟡 Pending | 🟢 Approved | ✅ Ready",
+        "Keep history for last 5 orders max in localStorage"
+      ],
+      "dependencies": ["US-044", "US-047"],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-049",
+      "title": "Fix Admin Page Dark Overlay Problem",
+      "priority": 49,
+      "description": "The admin page at http://localhost:3030/admin has a dark overlay problem that makes content hard to read or interact with. Use the agent-browser skill and Chrome DevTools to diagnose the exact cause (z-index stacking, backdrop, modal overlay not closing, etc.) and fix it.",
+      "acceptanceCriteria": [
+        "No dark/semi-transparent overlay covering admin page content during normal use",
+        "All admin tabs (Menu, Categories, Rules, Blog, Tests, Settings) are fully interactive without any blocking overlay",
+        "Modals and dialogs close properly and do not leave orphaned backdrops",
+        "The fix is verified with Chrome DevTools screenshot showing clean admin UI",
+        "No z-index conflicts between the overlay and page content",
+        "Verify with agent-browser: navigate to /admin → take screenshot → no dark overlay visible"
+      ],
+      "technicalNotes": [
+        "Use mcp__chrome-devtools__navigate_page to go to http://localhost:3030/admin",
+        "Use mcp__chrome-devtools__take_screenshot to capture current state",
+        "Use mcp__chrome-devtools__evaluate_script to inspect: document.querySelectorAll('[class*=overlay],[class*=backdrop],[style*=opacity]') and find the culprit element",
+        "Common causes: a modal component with backdrop that did not unmount, a ThemeProvider overlay, or a portal element stuck in the DOM",
+        "Inspect z-index stacking with: [...document.querySelectorAll('*')].filter(el => getComputedStyle(el).zIndex > 0 && getComputedStyle(el).opacity < 1)",
+        "Fix by ensuring all modal/dialog components properly clean up their backdrop on unmount",
+        "Check src/components/admin/*.tsx for any Dialog/Modal components missing cleanup"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-050",
+      "title": "Admin Settings Tab with System-Wide Configuration",
+      "priority": 50,
+      "description": "Add a 'Settings' tab to the admin panel (/admin > Settings) with system-wide configuration options. Initial settings to include: default language for the website, operating hours, currency symbol, cafe name display, and a 'Pre-Order System' toggle to enable/disable the pre-ordering workflow (US-051). Settings are saved to data/site-settings.json and applied globally.",
+      "acceptanceCriteria": [
+        "A 'Settings' tab appears in /admin alongside Menu/Categories/Rules/Blog/Tests",
+        "Settings tab shows sections: General, Operating Hours, Pre-Order System",
+        "General section: default language selector (EN/MS/ZH), cafe display name, currency symbol",
+        "Operating Hours section: open time, last order time, close time (editable, used by US-036)",
+        "Pre-Order System section: toggle on/off, deposit required toggle, payment methods accepted",
+        "A 'Save Settings' button persists changes to data/site-settings.json via POST /api/admin/settings",
+        "Settings are read at app startup and applied globally",
+        "Verify: change default language to 'zh' → save → new visitors land on /zh by default"
+      ],
+      "technicalNotes": [
+        "Add 'Settings' to TABS array in src/components/admin/admin-tabs.tsx",
+        "Create src/components/admin/admin-settings-panel.tsx",
+        "Create src/app/api/admin/settings/route.ts (GET + POST, admin-auth required)",
+        "Store in data/site-settings.json: { defaultLocale, operatingHours: { open, lastOrder, close }, preOrderEnabled, currency, cafeName }",
+        "Read site-settings.json in middleware.ts to apply default locale redirect",
+        "Export getSiteSettings() helper in src/lib/site-settings.ts for server components to consume",
+        "Operating hours here replace the hardcoded values used in US-036"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-051",
+      "title": "Pre-Ordering System: Contact, ETA, Approval, and Touch & Go Payment",
+      "priority": 51,
+      "description": "Transform the order submission into a full pre-ordering workflow: (1) Customer adds items to tray and clicks 'Send Order' → a form asks for their contact number and estimated arrival time. (2) Order is submitted and customer sees a 'Pending Approval' screen. (3) Admin sees the order notification, reviews it, and approves it with an estimated food-ready time. (4) Customer is notified of approval and sees the estimated ready time. (5) Customer accepts → prompted to pay via Touch & Go (upload a screenshot/receipt). (6) Admin confirms payment → Kitchen starts preparing. This full flow is tracked via order status stages.",
+      "acceptanceCriteria": [
+        "Step 1 — Order Form: After clicking 'Send Order', a modal/sheet asks for: contact number (Malaysian format 01X-XXXXXXX), estimated arrival time (time picker, min 15 min from now)",
+        "Step 2 — Submission: Order saved with status='pending_approval', customer sees 'Order Received — Waiting for confirmation' screen with order ID",
+        "Step 3 — Admin Review: Admin sees new order in notification bell and /admin > Orders tab with: items, total, customer contact, ETA. Admin can Approve (with estimated ready time) or Reject (with reason)",
+        "Step 4 — Customer Notification: Customer polling their order status sees status change to 'approved' with estimated ready time displayed. Customer gets a clear 'Your order is confirmed! Ready by [time]' message",
+        "Step 5 — Payment: Customer sees a 'Proceed to Payment' button showing: order total, payment instructions, Touch & Go QR code (or phone number for TnG transfer). Customer uploads a payment screenshot",
+        "Step 6 — Kitchen Start: Admin sees payment upload, clicks 'Confirm Payment' → order status changes to 'preparing'. Customer sees 'Kitchen is preparing your order!'",
+        "All status transitions are visible to both customer (via order status page) and admin (via Orders tab)",
+        "Contact number is validated (Malaysian format)",
+        "Arrival time must be at least 15 minutes in the future",
+        "Verify: full happy-path flow from customer tray → admin approval → payment → kitchen"
+      ],
+      "technicalNotes": [
+        "Order status flow: pending_approval → approved → payment_pending → payment_uploaded → preparing → ready",
+        "Extend orders DB table: add columns contact_number TEXT, estimated_arrival TIMESTAMP, estimated_ready TIMESTAMP, rejection_reason TEXT, payment_screenshot_url TEXT, status TEXT",
+        "Create src/components/menu/order-form-modal.tsx — modal shown after 'Send Order' click: contact input + time picker",
+        "Create src/app/[locale]/order/[id]/page.tsx — customer order status tracking page (public, no auth, access by order ID)",
+        "Order status page polls GET /api/orders/[id] every 15s to show live status",
+        "Create src/components/admin/admin-orders-panel.tsx — new 'Orders' tab in admin showing all orders",
+        "Add admin actions: Approve (sets estimated_ready, changes status), Reject (sets rejection_reason), Confirm Payment (changes status to preparing)",
+        "For Touch & Go payment upload: create POST /api/orders/[id]/payment — accepts multipart form with image, saves to public/uploads/payments/ or cloud storage",
+        "Display Touch & Go QR/phone in payment step — read from site-settings.json (add tng_phone and tng_qr_url to settings in US-050)",
+        "Customer order status page uses localStorage order history (US-048) to find order IDs",
+        "Add 'Orders' tab to admin alongside Settings tab",
+        "Malaysian phone validation: /^(\\+?60|0)1[0-9]{8,9}$/",
+        "Time picker: use HTML <input type='time'> with min attribute set to now+15min"
+      ],
+      "dependencies": ["US-044", "US-047", "US-048", "US-050"],
+      "estimatedComplexity": "large",
+      "passes": false
     }
   ]
 }

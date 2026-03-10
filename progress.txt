@@ -1983,3 +1983,28 @@ Here is the technical brief based on the JSON for ticket US-028:
 ## Iteration 12 - Tue, Mar 10, 2026 11:49:19 AM
 Completed: Admin Rules Mobile View Fix: Horizontal Rule Name + Buttons (ID: US-028) in 4m
 
+
+## Pre-analysis for US-029 (Gemini 2.5 Pro)
+**Subject: Technical Brief for US-029: Homepage Highlights**
+
+**Project Stack Correction:** This user story pertains to the Next.js/TypeScript frontend and its PostgreSQL database, not a Frappe/Python application. The implementation should be done within the `makanmoments.cafe` repository.
+
+**1. Files to Modify / Key Areas:**
+*   **`src/lib/menu.ts`**: This file contains the core data fetching logic. The `getFeaturedItems()` function is the primary method to review and ensure it correctly queries for items where `featured = true`.
+*   **Database (`menu_items` table)**: The core of the task is a one-time data update via SQL, not a major code change.
+*   **Admin UI Component**: A component, likely under `src/components/admin/menu/`, needs to provide a toggle to update the `featured` boolean for each menu item.
+
+**2. DocTypes / Hooks Involved:**
+*   **N/A (Not a Frappe project)**. The relevant data entity is the `menu_items` SQL table. The key fields are `code`, `name_en`, and `featured`.
+
+**3. Recommended Implementation Approach:**
+1.  Execute SQL `UPDATE` statements to set `featured = true` for the 6 selected menu items and `featured = false` for all others.
+2.  Verify the `getFeaturedItems()` function in `src/lib/menu.ts` efficiently fetches these 6 items.
+3.  Ensure the homepage component (`src/app/[locale]/page.tsx` or a child component) calls this function and renders the results.
+4.  Confirm the admin panel UI has a mechanism to toggle the `featured` flag, triggering an API route to update the database record.
+
+**4. Edge Cases & Gotchas:**
+*   The system should enforce that *exactly* 6 items are featured. The admin UI should prevent a 7th item from being marked as featured unless another is unmarked first.
+*   Gracefully handle the edge case where fewer than 6 items are marked as featured in the database.
+*   Ensure that when an admin updates highlights, the Next.js data cache is revalidated (e.g., using `revalidateTag`) so changes appear on the homepage immediately.
+
