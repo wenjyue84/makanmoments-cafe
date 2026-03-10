@@ -557,9 +557,7 @@ export function AdminMenuTable({
                               className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
                               placeholder="English name"
                             />
-                            {(!item.nameMs || !item.nameZh) && (
-                              <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
-                            )}
+                            <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
                           </div>
                           <div className="flex items-center gap-1">
                             <input
@@ -788,9 +786,7 @@ export function AdminMenuTable({
                                 className="w-40 rounded border border-gray-300 px-2 py-1 text-xs"
                                 placeholder="English"
                               />
-                              {(!item.nameMs || !item.nameZh) && (
-                                <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
-                              )}
+                              <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <input
@@ -1102,9 +1098,7 @@ export function AdminMenuTable({
                         className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
                         placeholder="English name"
                       />
-                      {(!item.nameMs || !item.nameZh) && (
-                        <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
-                      )}
+                      <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
                     </div>
                     <div className="flex items-center gap-1">
                       <input
@@ -1302,9 +1296,7 @@ export function AdminMenuTable({
                             className="w-40 rounded border border-gray-300 px-2 py-1 text-xs"
                             placeholder="English"
                           />
-                          {(!item.nameMs || !item.nameZh) && (
-                            <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
-                          )}
+                          <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
                         </div>
                         <div className="flex items-center gap-1">
                           <input

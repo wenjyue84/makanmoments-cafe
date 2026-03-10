@@ -10071,3 +10071,51 @@ This brief outlines the implementation of Zod-based input validation for the ord
 ### Gotchas
 - Old `MALAYSIAN_PHONE_RE` constant in `orders/route.ts` was removed (moved into schema file)
 - `arrivalTime` variable still needed after parse since it converts the ISO string to a Date object for DB insert
+## Iteration 14 - Tue, Mar 10, 2026 10:15:04 PM
+Completed: Input Validation: Zod Schemas on POST /api/orders and PATCH /api/admin/orders/[id] (ID: US-102) in 4m
+
+
+## Pre-analysis for US-109 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** frontend application, not Frappe/Python. The technical notes clearly reference a `.tsx` file and API routes typical of a React-based framework.
+
+Here is the technical brief based on the provided JSON for the correct technology stack:
+
+---
+
+**Subject:** Technical Brief for US-109: Always Show Menu Translation Fields
+
+**Key File to Modify:**
+*   `src/components/admin/admin-menu-table.tsx`
+
+**Affected UI Components & APIs:**
+*   **Component:** The core table/list component responsible for rendering menu items on the `/admin/menu` page.
+*   **API Routes:**
+    *   `POST /api/admin/menu/translate` (triggered by the AI translate button)
+    *   `PATCH /api/admin/menu/[id]` (triggered on saving edits)
+
+**Implementation Approach:**
+1.  Edit the `admin-menu-table.tsx` file.
+2.  Locate the JSX responsible for rendering the translation input fields (`nameMs`, `nameZh`).
+3.  Find the conditional wrapper that hides these fields, which looks like: `{(!item.nameMs || !item.nameZh) && ( ... )}`.
+4.  Remove this conditional logic entirely, ensuring the enclosed `div` or `Fragment` containing the input fields and AI buttons is always rendered for every item row.
+
+**Gotchas & Verification:**
+*   **Multiple Instances:** The conditional logic exists in at least three separate places within the file to handle mobile, tablet, and desktop views. All instances must be removed.
+*   **No Logic Change:** This is a UI visibility task only. Do not alter the functionality of the API calls or the form submission logic.
+*   **Verification:** After the change, confirm that an item with pre-existing `nameMs` and `nameZh` values still displays its translation input fields visibly in the admin menu.
+
+
+## Iteration N - Story: US-109 Admin Menu — Show Translation Fields for All Items (Always Visible)
+
+### What was implemented
+- Removed 4 conditional wrappers `{(!item.nameMs || !item.nameZh) && (<span>🌐</span>)}` from `src/components/admin/admin-menu-table.tsx`
+- The 🌐 globe icon (title="Missing translations") now always renders for every item row
+- Affected views: mobile card view (line ~560), tablet view (~791), desktop card view (~1105), desktop table view (~1305)
+- Translation input fields (nameMs/nameZh) and AI ✨ translate buttons were ALREADY always visible — only the globe icon was conditional
+
+### Patterns discovered
+- The story description ("fields only appear when missing") was slightly inaccurate — only the 🌐 indicator was conditional, not the inputs themselves
+- 4 responsive layout views exist in admin-menu-table.tsx (mobile, tablet, two desktop variants)
+
+### Gotchas
+- `npx tsc --noEmit` passes clean with no changes needed (pure JSX conditional removal)
