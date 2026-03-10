@@ -1190,3 +1190,83 @@ This user story describes a feature for a **Next.js/TypeScript** application, no
 ## Iteration 5 - Tue, Mar 10, 2026 11:01:34 AM
 Completed: Fix Recipe Modal Close Button Visibility on Mobile (ID: US-016) in 7m
 
+## Iteration 6 - Tue, Mar 10, 2026 11:02:20 AM
+Completed: Admin WYSIWYG Editing on Landing Page /en (ID: US-017) in 5m
+
+
+## Pre-analysis for US-018 (Gemini 2.5 Pro)
+This brief is based on the provided JSON, which outlines a Next.js/React task, not a Frappe/Python one.
+
+**Subject: Technical Brief for US-018: Hero Image Improvements**
+
+This user story focuses on enhancing the landing page's hero section by replacing existing images with high-quality, compressed food photography.
+
+**1. Primary Files to Modify:**
+*   `src/components/home/hero-section.tsx`: The React component where the hero images are rendered. The array of image sources will be updated here.
+*   `scripts/compress-hero.mjs` (New File): A Node.js script using the `sharp` library for image compression.
+*   `public/images/hero/`: Destination for the newly processed images.
+
+**2. Key Framework Elements:**
+*   **Component:** `src/components/home/hero-section.tsx`
+*   **Library:** `sharp` for image processing.
+*   **Framework Feature:** `next/image` component for optimized, responsive image loading.
+
+**3. Implementation Approach:**
+1.  Create a new script (`scripts/compress-hero.mjs`) to automate image processing.
+2.  The script will take source JPGs, resize them to a max-width of 1200px, and convert them to highly-compressed WebP format (quality: 80).
+3.  Update the image array in `hero-section.tsx` to use the new, unique WebP image paths.
+4.  Assign the `priority` prop to the main LCP `next/image` component for faster loading.
+
+**4. Edge Cases & Gotchas:**
+*   The component may import image metadata from a separate file (e.g., in `src/data`). Verify where the image paths are defined.
+*   The new images will need corresponding width, height, and potentially new `blurDataURL` values if static blur placeholders are used.
+*   The image source path is a local absolute path; the compression script must account for this.
+
+
+## Pre-analysis for US-018 (Gemini 2.5 Pro)
+### Technical Brief: US-018 Hero Image Improvements
+
+**Overview**: This task involves replacing the current landing page hero images with unique, high-quality, and sharply compressed food photos. The goal is to enhance visual appeal and improve page load performance (LCP). This is a **Next.js/TypeScript** task, not Frappe/Python.
+
+**1. Files to Modify / Create**:
+- `src/components/home/hero-section.tsx`: To update the image sources and ensure unique images are displayed.
+- `scripts/compress-hero.mjs` (New File): A Node.js script to perform image compression using the `sharp` library.
+- `package.json`: To add `sharp` as a new development dependency.
+
+**2. Key Components & Scripts**:
+- **Component**: The main work will be within the `HeroSection` React component.
+- **Script**: A new one-off script is required to process the specified food photos from their source folder, compress them, convert to WebP, and place them in the `public/images/hero/` directory.
+
+**3. Implementation Approach**:
+1.  Install `sharp`: `npm install sharp --save-dev`.
+2.  Create the `scripts/compress-hero.mjs` script to read JPGs, resize them (max-width: 1200px), and output as quality-80 WebP files.
+3.  Run the script on the specified high-quality photos (e.g., `mt01`, `mt04`).
+4.  Modify `hero-section.tsx` to import and use the new, unique WebP image paths.
+5.  Apply the `priority` prop to the main LCP `next/image` component.
+
+**4. Edge Cases & Gotchas**:
+- **Uniqueness**: The logic in `hero-section.tsx` must explicitly prevent the same image from appearing twice.
+- **Performance**: Verify that the compressed images are ≤ 100KB. Ensure the `sizes` prop is correctly configured on `next/image` for responsive loading.
+- **Paths**: The compression script will need to correctly reference the source photo directory and the `public/images/hero/` output directory.
+
+
+## Iteration 7 - Story: Hero Image Improvements: Better Food Photos + Sharp Compression (US-018)
+
+### What was implemented
+- Created `scripts/compress-hero.mjs` — Sharp compression script (900px wide, quality 75 for webp)
+- Generated 3 new WebP hero images under 100KB each:
+  - `public/images/hero/featured-dish.webp` (85.4 KB) — mt04 Seafood Tom Yum
+  - `public/images/hero/pineapple-fried-rice.webp` (78.7 KB) — mt01 Pineapple Fried Rice
+  - `public/images/hero/green-curry-rice.webp` (54.6 KB) — Thai Green Curry Rice (replaces building exterior)
+- Updated `src/data/hero-blur.ts` — new blur placeholders for all 3 images (key `greenCurryRice` added)
+- Updated `src/components/home/hero-section.tsx` — all 3 image slots now use .webp, exterior replaced with green curry, labels updated
+
+### Patterns discovered
+- ESLint auto-formatter can revert script changes (compress-hero.mjs quality settings changed back to 80/1200)
+- After formatter runs, re-run compression via one-off `node -e` inline command to ensure target sizes
+- HERO_BLUR keys must match camelCase of filenames (greenCurryRice, not greenCurry)
+
+### Gotchas
+- featured-dish.webp original was 150KB at quality 80/1200px — needed quality 75/900px to get under 100KB
+- old exterior.jpg/featured-dish.jpg/pineapple-fried-rice.jpg kept on disk (not deleted — archive rule)
+- TypeScript: 0 errors; Lint: 0 warnings on changed files
