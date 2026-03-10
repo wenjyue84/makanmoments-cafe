@@ -1,15 +1,76 @@
 "use client";
 
-import { useState } from "react";
-import { ShoppingCart, X, Minus, Plus } from "lucide-react";
+import { useState, useEffect, useCallback } from "react";
+import { ShoppingCart, X, Minus, Plus, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
+
+const ORDER_HISTORY_KEY = "mm_order_history";
+const MAX_HISTORY = 5;
+const POLL_INTERVAL_MS = 30_000;
+
+interface HistoryItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+interface OrderHistoryEntry {
+  id: number;
+  items: HistoryItem[];
+  total: number;
+  timestamp: string;
+  status: "pending" | "approved" | "ready";
+}
+
+function loadHistory(): OrderHistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(ORDER_HISTORY_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw) as OrderHistoryEntry[];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(history: OrderHistoryEntry[]) {
+  try {
+    localStorage.setItem(ORDER_HISTORY_KEY, JSON.stringify(history.slice(0, MAX_HISTORY)));
+  } catch {
+    // localStorage may be unavailable (private browsing, storage full)
+  }
+}
+
+function StatusBadge({ status }: { status: OrderHistoryEntry["status"] }) {
+  if (status === "ready") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-200 px-2 py-0.5 text-xs font-semibold">
+        ✓ Ready
+      </span>
+    );
+  }
+  if (status === "approved") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-200 px-2 py-0.5 text-xs font-semibold">
+        👍 Approved
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200 px-2 py-0.5 text-xs font-semibold">
+      🕓 Pending
+    </span>
+  );
+}
 
 export function TrayWidget() {
     const [open, setOpen] = useState(false);
     const [checkoutMode, setCheckoutMode] = useState(false);
     const [submitting, setSubmitting] = useState(false);
+    const [orderHistory, setOrderHistory] = useState<OrderHistoryEntry[]>([]);
+    const [historyOpen, setHistoryOpen] = useState(false);
     const { items, addItem, removeItem, clearTray, totalPrice } = useTray();
     const t = useTranslations("tray");
 
@@ -19,7 +80,50 @@ export function TrayWidget() {
     const hasOmelette = items.some(i => i.name.toLowerCase().includes('omelette'));
     const showPairingBanner = hasTomYum && !hasOmelette && !checkoutMode;
 
-    if (totalItems === 0 && !open) return null;
+    // Load history from localStorage on mount
+    useEffect(() => {
+        setOrderHistory(loadHistory());
+    }, []);
+
+    // Poll for status updates on non-final orders
+    const pollStatuses = useCallback(async (history: OrderHistoryEntry[]) => {
+        const nonFinal = history.filter(o => o.status !== "ready");
+        if (nonFinal.length === 0) return;
+
+        const updates = await Promise.allSettled(
+            nonFinal.map(async (order) => {
+                const res = await fetch(`/api/orders/${order.id}`);
+                if (!res.ok) return null;
+                const data = await res.json() as { id: number; status: string };
+                return { id: data.id, status: data.status as OrderHistoryEntry["status"] };
+            })
+        );
+
+        setOrderHistory(prev => {
+            const updated = prev.map(order => {
+                const match = updates.find(
+                    r => r.status === "fulfilled" && r.value && r.value.id === order.id
+                );
+                if (match && match.status === "fulfilled" && match.value) {
+                    return { ...order, status: match.value.status };
+                }
+                return order;
+            });
+            saveHistory(updated);
+            return updated;
+        });
+    }, []);
+
+    useEffect(() => {
+        if (orderHistory.length === 0) return;
+        const interval = setInterval(() => pollStatuses(orderHistory), POLL_INTERVAL_MS);
+        return () => clearInterval(interval);
+    }, [orderHistory, pollStatuses]);
+
+    if (totalItems === 0 && !open && orderHistory.length === 0) return null;
+
+    // Show floating button if there are items OR history (so history is accessible)
+    const showFloatingButton = totalItems > 0 || orderHistory.length > 0;
 
     return (
         <>
@@ -81,7 +185,7 @@ export function TrayWidget() {
                     </div>
 
                     {items.length === 0 ? (
-                        <div className="flex h-full flex-col items-center justify-center text-muted-foreground opacity-60">
+                        <div className="flex h-40 flex-col items-center justify-center text-muted-foreground opacity-60">
                             <ShoppingCart className="h-16 w-16 mb-4" />
                             <p className="text-lg">{t("empty")}</p>
                         </div>
@@ -171,6 +275,52 @@ export function TrayWidget() {
                             ))}
                         </div>
                     )}
+
+                    {/* Order History Section */}
+                    {orderHistory.length > 0 && (
+                        <div className="mt-6 border-t pt-4">
+                            <button
+                                onClick={() => setHistoryOpen(h => !h)}
+                                className="w-full flex items-center justify-between text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors py-1"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <Clock className="h-4 w-4" />
+                                    {t("orderHistory")} ({orderHistory.length})
+                                </span>
+                                {historyOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                            </button>
+
+                            {historyOpen && (
+                                <div className="mt-3 space-y-4">
+                                    {orderHistory.map((order) => (
+                                        <div
+                                            key={order.id}
+                                            className="rounded-xl border bg-muted/30 p-3 space-y-2"
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-xs text-muted-foreground">
+                                                    {new Date(order.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                                                </span>
+                                                <StatusBadge status={order.status} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                {order.items.map((item, idx) => (
+                                                    <div key={idx} className="flex justify-between text-sm">
+                                                        <span>{item.quantity}× {item.name}</span>
+                                                        <span className="text-muted-foreground">RM {(item.price * item.quantity).toFixed(2)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            <div className="flex justify-between text-sm font-bold pt-1 border-t border-border/40">
+                                                <span>Total</span>
+                                                <span>RM {order.total.toFixed(2)}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
                 {items.length > 0 && !checkoutMode && (
@@ -183,11 +333,28 @@ export function TrayWidget() {
                             onClick={async () => {
                                 setSubmitting(true);
                                 try {
-                                    await fetch("/api/orders", {
+                                    const res = await fetch("/api/orders", {
                                         method: "POST",
                                         headers: { "Content-Type": "application/json" },
                                         body: JSON.stringify({ items, total: totalPrice }),
                                     });
+                                    if (res.ok) {
+                                        const data = await res.json() as { ok: boolean; id?: number };
+                                        if (data.id) {
+                                            const entry: OrderHistoryEntry = {
+                                                id: data.id,
+                                                items: items.map(i => ({ id: i.id, name: i.name, price: i.price, quantity: i.quantity })),
+                                                total: totalPrice,
+                                                timestamp: new Date().toISOString(),
+                                                status: "pending",
+                                            };
+                                            setOrderHistory(prev => {
+                                                const updated = [entry, ...prev].slice(0, MAX_HISTORY);
+                                                saveHistory(updated);
+                                                return updated;
+                                            });
+                                        }
+                                    }
                                 } catch {
                                     // Non-critical — proceed to checkout regardless
                                 } finally {
@@ -232,17 +399,19 @@ export function TrayWidget() {
             </div>
 
             {/* Floating button */}
-            <button
-                onClick={() => setOpen(true)}
-                className={cn(
-                    "fixed bottom-4 right-20 z-40 flex h-14 items-center justify-center rounded-full bg-orange-500 px-4 text-white shadow-lg transition-transform hover:scale-105 gap-2",
-                    open && "hidden"
-                )}
-                aria-label="View Tray"
-            >
-                <ShoppingCart className="h-6 w-6" />
-                <span className="font-bold text-lg">{totalItems}</span>
-            </button>
+            {showFloatingButton && (
+                <button
+                    onClick={() => setOpen(true)}
+                    className={cn(
+                        "fixed bottom-4 right-20 z-40 flex h-14 items-center justify-center rounded-full bg-orange-500 px-4 text-white shadow-lg transition-transform hover:scale-105 gap-2",
+                        open && "hidden"
+                    )}
+                    aria-label="View Tray"
+                >
+                    <ShoppingCart className="h-6 w-6" />
+                    {totalItems > 0 && <span className="font-bold text-lg">{totalItems}</span>}
+                </button>
+            )}
         </>
     );
 }

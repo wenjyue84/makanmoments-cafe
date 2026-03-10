@@ -88,7 +88,11 @@
     "checkout": "向服务员展示订单",
     "sendOrder": "发送订单",
     "sendOrderToWaiter": "发送订单给服务员",
-    "checkoutInstructions": "请向服务员展示此屏幕以完成下单。"
+    "checkoutInstructions": "请向服务员展示此屏幕以完成下单。",
+    "orderHistory": "我的订单",
+    "statusPending": "待处理",
+    "statusApproved": "已确认",
+    "statusReady": "好了！"
   },
   "recipe": {
     "ingredients": "主要食材",

@@ -88,7 +88,11 @@
     "checkout": "Tunjuk Pesanan kepada Pelayan",
     "sendOrder": "Hantar Pesanan",
     "sendOrderToWaiter": "Hantar Pesanan ke Pelayan",
-    "checkoutInstructions": "Tunjukkan skrin ini kepada pelayan untuk membuat pesanan anda."
+    "checkoutInstructions": "Tunjukkan skrin ini kepada pelayan untuk membuat pesanan anda.",
+    "orderHistory": "Pesanan Saya",
+    "statusPending": "Menunggu",
+    "statusApproved": "Diluluskan",
+    "statusReady": "Siap!"
   },
   "recipe": {
     "ingredients": "Bahan-Bahan Utama",
