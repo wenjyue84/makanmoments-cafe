@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 export function TrayWidget() {
     const [open, setOpen] = useState(false);
     const [checkoutMode, setCheckoutMode] = useState(false);
+    const [submitting, setSubmitting] = useState(false);
     const { items, addItem, removeItem, clearTray, totalPrice } = useTray();
     const t = useTranslations("tray");
 
@@ -179,11 +180,26 @@ export function TrayWidget() {
                             <span className="text-primary">RM {totalPrice.toFixed(2)}</span>
                         </div>
                         <button
-                            onClick={() => setCheckoutMode(true)}
-                            className="w-full rounded-full bg-primary py-4 text-primary-foreground font-bold text-lg hover:bg-primary/90 flex justify-center items-center gap-2 shadow-lg transition-transform active:scale-[0.98]"
+                            onClick={async () => {
+                                setSubmitting(true);
+                                try {
+                                    await fetch("/api/orders", {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ items, total: totalPrice }),
+                                    });
+                                } catch {
+                                    // Non-critical — proceed to checkout regardless
+                                } finally {
+                                    setSubmitting(false);
+                                }
+                                setCheckoutMode(true);
+                            }}
+                            disabled={submitting}
+                            className="w-full rounded-full bg-primary py-4 text-primary-foreground font-bold text-lg hover:bg-primary/90 flex justify-center items-center gap-2 shadow-lg transition-transform active:scale-[0.98] disabled:opacity-70"
                         >
                             <ShoppingCart className="h-6 w-6" />
-                            {t("checkout")}
+                            {submitting ? "Sending…" : t("checkout")}
                         </button>
                     </div>
                 )}

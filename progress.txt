@@ -3404,3 +3404,66 @@ This brief covers the implementation of a client-side, multi-language search enh
 ### Result
 - prd.json: US-043 passes = true
 - TypeScript check: PASS (exit 0)
+## Iteration 26 - Tue, Mar 10, 2026  2:00:31 PM
+Completed: Multi-Language Search: Search Dishes in Any Language (ID: US-043) in 4m
+
+
+## Pre-analysis for US-044 (Gemini 2.5 Pro)
+Here is the technical brief for implementing US-044 in a Frappe/Python environment.
+
+***
+
+### **Technical Brief: US-044 Waiter Order Notification (Frappe/Python)**
+
+This brief outlines the implementation of a real-time order notification system within the Frappe framework, translating the Next.js user story for a Python backend.
+
+**1. Python Files to Modify:**
+*   `lhdn_payroll_integration/hooks.py`: To define the new DocType and include custom client-side JavaScript for notifications.
+*   `lhdn_payroll_integration/api.py` (new file): To house the server-side API logic for submitting and retrieving orders.
+*   `lhdn_payroll_integration/public/js/waiter_notifications.js` (new file): For client-side real-time event handling in the admin desk.
+
+**2. Frappe DocTypes & Hooks:**
+*   **New DocType**: `Waiter Order`
+    *   Fields: `table_area` (Data), `total` (Currency), `status` (Select: Pending, Seen).
+    *   Child Table: `Waiter Order Item` with fields `item_name` (Data), `quantity` (Int), `price` (Currency).
+*   **Hooks (`hooks.py`):**
+    *   `app_include_js = "/assets/lhdn_payroll_integration/js/waiter_notifications.js"` to load the script in the Desk UI.
+
+**3. Implementation Approach:**
+1.  **Backend (api.py):**
+    *   Create a public method `@frappe.whitelist(allow_guest=True) def submit_order()` that creates and saves a new `Waiter Order` document with `status='Pending'`.
+    *   On successful creation, use `frappe.publish_realtime()` to emit an event (e.g., `new_waiter_order`) only to users with the 'System Manager' role.
+    *   Create admin-only methods `get_pending_orders()` and `mark_order_seen(order_name)`.
+2.  **Frontend (waiter_notifications.js):**
+    *   On page load, call `get_pending_orders()` to fetch the initial count for the notification badge.
+    *   Subscribe to the `new_waiter_order` socket event. The callback will increment the badge count and refresh the order list.
+    *   Implement a UI element (e.g., navbar dropdown) to display pending orders and a button to call `mark_order_seen()`.
+
+**4. Edge Cases & Gotchas:**
+*   **Permissions**: The `Waiter Order` DocType must grant 'Create' permissions to the 'Guest' role and full access to 'System Manager'.
+*   **Security**: The public `submit_order` endpoint should be monitored for abuse. Consider implementing IP-based rate limiting if spam becomes an issue.
+*   **App Context**: This feature is unrelated to "Payroll Integration." It's highly recommended to create a new, more appropriately named custom app (e.g., `cafe_management`) for this functionality to maintain logical separation.
+
+
+## Iteration 27 - Story: Admin Notification When Customer Clicks 'Show Order to Waiter' (US-044)
+
+### What was implemented
+- Created `src/app/api/orders/route.ts`: public POST endpoint, auto-creates `tray_orders` table (`CREATE TABLE IF NOT EXISTS`), saves items+total to Neon DB
+- Created `src/app/api/admin/orders/route.ts`: admin GET endpoint (protected by middleware), lists all tray_orders ordered by created_at DESC
+- Created `src/app/api/admin/orders/[id]/route.ts`: admin PATCH endpoint, marks order status as 'seen'
+- Created `src/components/admin/admin-orders-bell.tsx`: client component with bell icon + badge count, dropdown showing pending orders with "Mark Seen" button, polls every 30s, closes on outside click
+- Modified `src/components/menu/tray-widget.tsx`: added `submitting` state, checkout button now calls POST /api/orders before entering checkoutMode, shows "Sending…" during submit, fails gracefully
+- Modified `src/app/admin/page.tsx`: imported AdminOrdersBell, added it to header alongside SignOutButton
+
+### Patterns discovered
+- Admin API routes are protected entirely by middleware (no per-route auth check needed — middleware handles all `/api/admin/*`)
+- `CREATE TABLE IF NOT EXISTS` in API route is a safe idempotent pattern for auto-provisioning tables
+- `params` in Next.js 15 App Router PATCH routes must be `await`ed: `const { id } = await params`
+- AdminOrdersBell is a "use client" component added directly into the RSC admin page.tsx — works fine
+
+### Gotchas
+- Python json.load needs `encoding='utf-8'` on Windows or gets cp1252 UnicodeDecodeError on prd.json
+
+### Result
+- prd.json: US-044 passes = true
+- TypeScript check: PASS (exit 0)

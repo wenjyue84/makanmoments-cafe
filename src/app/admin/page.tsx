@@ -1,6 +1,7 @@
 import { getAllMenuItemsWithRulesForAdmin, getCategories } from "@/lib/menu";
 import { getAllBlogPostsForAdmin } from "@/lib/blog";
 import { AdminTabs } from "@/components/admin/admin-tabs";
+import { AdminOrdersBell } from "@/components/admin/admin-orders-bell";
 import { verifyAdminToken, COOKIE_NAME } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -23,7 +24,10 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="border-b bg-white px-4 py-3 flex items-center justify-between gap-2">
         <h1 className="truncate text-lg font-bold text-gray-900 sm:text-xl">Makan Moments Admin</h1>
-        <SignOutButton />
+        <div className="flex items-center gap-2">
+          <AdminOrdersBell />
+          <SignOutButton />
+        </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-8">
         <AdminTabs items={items} categories={categories} posts={posts} />
