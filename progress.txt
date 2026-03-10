@@ -1167,3 +1167,23 @@ This user story describes a feature for a **Next.js/TypeScript** application, no
 - HeroSection and Highlights stay async (getTranslations still needed for CTA buttons in HeroSection)
 - TypeScript check: 0 errors (clean)
 - Featured items (highlights grid) come from Notion — admin sees read-only grid with note to manage via Notion
+
+## Iteration 6 - Story: Admin WYSIWYG Editing on Landing Page /en (US-017)
+
+### What was implemented
+- All three files were already in place from a previous partial implementation:
+  - `src/app/[locale]/page.tsx` — already had admin check, `readHomeContent()`, and `HomeInlineEditor` wiring
+  - `src/components/admin/home-inline-editor.tsx` — fully built WYSIWYG editor
+  - `src/app/api/admin/content/home/route.ts` — save API with gray-matter + revalidatePath
+  - `content/home.md` — frontmatter file with all 5 editable fields
+
+### Pattern
+- Admin check: `cookies()` → `verifyAdminToken()` → return editor component instead of public page
+- HomeInlineEditor shows sticky amber banner + inline input/textarea fields in edit mode
+- `featuredItems: MenuItem[]` passed directly (not via children) for highlights preview
+- `router.refresh()` after successful save triggers ISR revalidation
+
+### Gotchas
+- `runtime = "nodejs"` required on page.tsx for `fs` + `cookies()` to work together
+- prd.json needs `encoding='utf-8'` when writing with Python on Windows (cp1252 fails on em-dash etc.)
+- TypeScript: 0 errors; Lint: 0 warnings on changed files
