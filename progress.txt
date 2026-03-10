@@ -5394,3 +5394,6 @@ This user story describes a bug fix for a **Next.js/React** frontend, not a Frap
 *   **Data Integrity:** Avoid using the `INSERT` query mentioned in the notes as a permanent solution. It's better as a one-time script for data consistency, but the application logic should be the source of truth.
 *   **Hardcoded Strings:** Be cautious of hardcoding "Chef's Picks". If possible, use an ID or a constant to identify this special category.
 
+## Iteration 36 - Tue, Mar 10, 2026  4:27:44 PM
+Completed: Bug Fix: Admin Image Changes Not Reflected on Public Menu Page (ID: US-059) in 7m
+
