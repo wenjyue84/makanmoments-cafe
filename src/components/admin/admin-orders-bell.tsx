@@ -14,7 +14,7 @@ interface TrayOrder {
   id: number;
   items: TrayOrderItem[];
   total: string;
-  status: "pending" | "seen";
+  status: string;
   created_at: string;
 }
 
@@ -22,6 +22,7 @@ export function AdminOrdersBell() {
   const [orders, setOrders] = useState<TrayOrder[]>([]);
   const [open, setOpen] = useState(false);
   const [marking, setMarking] = useState<number | null>(null);
+  const [muted, setMuted] = useState(false); // true when admin is viewing Orders tab
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchOrders = useCallback(async () => {
@@ -42,6 +43,13 @@ export function AdminOrdersBell() {
     return () => clearInterval(interval);
   }, [fetchOrders]);
 
+  // Listen for admin:orders-viewed event — mute badge while Orders tab is active
+  useEffect(() => {
+    function handleOrdersViewed() { setMuted(true); }
+    window.addEventListener("admin:orders-viewed", handleOrdersViewed);
+    return () => window.removeEventListener("admin:orders-viewed", handleOrdersViewed);
+  }, []);
+
   // Close dropdown when clicking outside
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -53,8 +61,10 @@ export function AdminOrdersBell() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
-  const pendingOrders = orders.filter((o) => o.status === "pending");
-  const pendingCount = pendingOrders.length;
+  const pendingOrders = orders.filter(
+    (o) => o.status === "pending" || o.status === "pending_approval"
+  );
+  const pendingCount = muted ? 0 : pendingOrders.length;
 
   async function markSeen(id: number) {
     setMarking(id);

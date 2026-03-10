@@ -4583,3 +4583,63 @@ This brief outlines the Frappe/Python implementation plan for the Pre-Order Admi
 *   **State Integrity**: Use the Frappe Workflow to manage state transitions. Ensure buttons are hidden/disabled after an action is taken to prevent re-approving a rejected order.
 *   **API Failure**: The `on_update` hook function must have robust error handling in case the external notification API fails. Log failures for later inspection.
 
+## Iteration 31 - Tue, Mar 10, 2026  3:33:22 PM
+Completed: Pre-Order: DB Schema + Order Submission Form (Contact + ETA) (ID: US-051) in 20m
+
+
+## Pre-analysis for US-053 (Gemini 2.5 Pro)
+This technical brief translates user story US-053 from its original Next.js/React context into a viable Frappe/Python implementation plan for the `lhdn_payroll_integration` app.
+
+**1. Primary Python Files to Modify/Create:**
+
+*   `.../doctype/pre_order/pre_order.py`: Server-side logic for the Pre-Order DocType.
+*   `.../doctype/pre_order/pre_order.js`: Client-side script for DocType events.
+*   `.../page/admin_orders/admin_orders.py`: Controller to fetch and list orders for the admin page.
+*   `.../page/admin_orders/admin_orders.js`: Client-side JS to handle approve/reject actions and polling.
+*   `.../api.py`: A new or existing file to hold the whitelisted `approve_order` and `reject_order` methods.
+
+**2. Frappe DocTypes & Hooks:**
+
+*   **New DocType:** `Pre-Order`.
+    *   Fields: `status` (Select: Pending, Approved, Rejected), `customer_contact`, `items` (Table), `total`, `estimated_ready_time`, `rejection_reason`.
+*   **Workspace/Desktop:** Modify `lhdn_payroll_integration/config/desktop.py` to add a new "Admin Orders" page/workspace for users with the correct role (e.g., System Manager).
+
+**3. Recommended Implementation Approach:**
+
+1.  Create the `Pre-Order` DocType to store all order details.
+2.  Create a new Page "Admin Orders". The page's Python controller will use `frappe.get_list('Pre-Order', ...)` to fetch orders.
+3.  The page's Jinja template will loop through the orders, displaying details and "Approve"/"Reject" buttons if `status == 'Pending'`.
+4.  Implement two `@frappe.whitelist()` methods in `api.py`.
+    *   `approve_order(order_id, ready_time)`: Updates the Doc status to 'Approved' using `frappe.db.set_value`.
+    *   `reject_order(order_id, reason)`: Updates status to 'Rejected' and saves the reason.
+5.  The page's `.js` file will use `frappe.call` to invoke these methods and will poll for new orders using `setInterval`.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Permissions:** Ensure the "Admin Orders" Page and `Pre-Order` DocType are only accessible to authorized roles.
+*   **State Management:** The API methods should first verify the order is still in 'Pending' state before processing to avoid race conditions.
+*   **Real-time:** For a better UX than polling, consider using `frappe.publish_realtime` on new order creation to notify the admin page.
+
+
+## Iteration - Story: US-053 Pre-Order: Admin Orders Tab with Approve / Reject Actions
+
+### What was implemented
+- `src/components/admin/admin-orders-panel.tsx`: NEW panel — filter tabs (All/Pending/Active/Done), order cards showing ID, contact, ETA, items, total, status; Approve modal (datetime-local picker, default = now+30m) and Reject modal (textarea for reason). Polls every 30s. Dispatches `admin:orders-viewed` CustomEvent on mount.
+- `src/components/admin/admin-tabs.tsx`: Added "Orders" as first tab; imported AdminOrdersPanel; added `{activeTab === "Orders" && <AdminOrdersPanel />}` render
+- `src/components/admin/admin-orders-bell.tsx`: Updated to count both `pending` and `pending_approval` as pending; added `muted` state that sets badge to 0 when `admin:orders-viewed` event fires
+- `src/app/api/admin/orders/[id]/route.ts`: Already had approve/reject support (previous iteration built it)
+- `src/app/api/admin/orders/route.ts`: Already returned full fields (previous iteration built it)
+
+### Patterns discovered
+- The PATCH and GET admin orders API routes were already complete from a previous iteration
+- `window.dispatchEvent(new CustomEvent('admin:orders-viewed'))` pattern for cross-component signaling without lifting state
+- Bell's `muted` state clears badge count without removing the underlying data
+- ApproveModal uses `datetime-local` input with ISO string conversion for `estimated_ready`
+
+### Gotchas
+- Bell originally typed `status` as `"pending" | "seen"` union — widened to `string` to handle `pending_approval` and other statuses
+- `defaultReadyTime()` helper rounds up to nearest 5 minutes for UX polish
+
+### Result
+- prd.json: US-053 passes = true
+- TypeScript check: PASS (exit 0)
