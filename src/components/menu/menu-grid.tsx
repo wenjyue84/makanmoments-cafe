@@ -73,6 +73,9 @@ export function MenuGrid({
         // Chef's Picks: use junction table rows, fall back to featured=true items if empty
         const fromJunction = items.filter((item) => item.displayCategories.includes(selectedDisplayCat));
         result = fromJunction.length > 0 ? fromJunction : items.filter((i) => i.featured);
+      } else if (lc.includes("rm15")) {
+        // Under RM15: auto-computed from price, no junction table needed
+        result = items.filter((i) => i.price < 15);
       } else {
         result = result.filter((item) => item.displayCategories.includes(selectedDisplayCat));
       }
