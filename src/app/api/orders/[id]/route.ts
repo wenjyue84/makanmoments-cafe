@@ -28,11 +28,10 @@ export async function GET(
     }
 
     const row = rows[0];
-    return NextResponse.json({
-      id: row.id,
-      status: row.status,
-      createdAt: row.created_at,
-    });
+    return NextResponse.json(
+      { id: row.id, status: row.status, createdAt: row.created_at },
+      { headers: { "Cache-Control": "no-store" } }
+    );
   } catch (err) {
     console.error("[GET /api/orders/[id]]", err);
     return NextResponse.json({ error: "Failed to fetch order" }, { status: 500 });

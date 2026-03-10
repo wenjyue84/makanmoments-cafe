@@ -9230,3 +9230,57 @@ This is a **React/Next.js** task, not a Frappe/Python one. All changes will be i
 
 ### Gotchas
 - TypeScript check passes clean (no errors in changed files)
+
+
+## Pre-analysis for US-107 (Gemini 2.5 Pro)
+### Technical Brief: US-107 - Collapsible Menu Search
+
+**1. Files to Modify:**
+*   `src/app/[locale]/menu/page.tsx`: To manage state and conditionally render the search component.
+*   `src/components/menu/menu-client-layout.tsx`: (if it exists) is a more likely candidate for state management to keep the page itself a Server Component.
+*   `src/components/menu/menu-filter.tsx` (or similar): To adapt the existing search bar into a collapsible component.
+*   `src/components/layout/bottom-bar.tsx` (or similar): For positioning the search icon relative to other bottom-of-screen UI elements like the tray.
+
+**2. Frappe DocTypes & Hooks:**
+*   None. This is a pure frontend change within the Next.js application. No Python or Frappe backend modifications are required.
+
+**3. Implementation Approach:**
+*   Introduce a client-side state `const [isSearchOpen, setIsSearchOpen] = useState(false)` in the main menu client component (`menu-client-layout.tsx` or `page.tsx`).
+*   Create a new component, e.g., `menu-search-toggle.tsx`, to render a circular button with a Lucide "Search" icon. This button will toggle `isSearchOpen`.
+*   Modify `menu-filter.tsx` to be conditionally rendered based on `isSearchOpen`.
+*   When expanded, the component should contain the input field and a "Close" (X) icon button that sets `isSearchOpen` to `false`.
+*   Use a `ref` and `useEffect` to automatically focus the search input when it becomes visible.
+*   Implement a `useEffect` hook to add a global keydown listener for the "Escape" key to collapse the search bar.
+
+**4. Edge Cases & Gotchas:**
+*   **Focus Management:** Ensure the input is reliably focused upon expansion for a seamless user experience.
+*   **Layout & Positioning:** The search icon/bar should use `position: fixed` to avoid disrupting the main menu grid and to remain visible while scrolling. Mind the `z-index` to ensure it appears above other content but below any modals.
+*   **Mobile Ergonomics:** The touch target for the icon must be at least `44x44px`.
+*   **Animation:** Use Tailwind's transition classes for a smooth slide/fade animation to prevent abrupt UI changes.
+
+
+## Iteration N - Story: US-096 ISR + Cache-Control Headers
+
+### What was implemented
+- `src/app/[locale]/menu/page.tsx`: changed `revalidate = 300` → `revalidate = 3600`
+- `src/app/api/orders/[id]/route.ts`: added `Cache-Control: no-store` header to GET response
+
+### Patterns discovered
+- Order status endpoint uses `tray_orders` table (not `orders` as mentioned in CLAUDE.md)
+- NextResponse.json accepts second arg `{ headers: {...} }` for custom headers
+
+### Gotchas
+- None
+
+## Iteration N - Story: US-096 - ISR + Cache-Control Headers
+
+### What was implemented
+- Changed `export const revalidate = 300` to `export const revalidate = 3600` in `src/app/[locale]/menu/page.tsx`
+- Added `{ headers: { "Cache-Control": "no-store" } }` to GET /api/orders/[id] response in `src/app/api/orders/[id]/route.ts`
+
+### Patterns discovered
+- The orders route already had runtime = "nodejs" set
+- Files may be modified by linter between read and edit — always re-read if edit fails
+
+### Gotchas
+- prd.json must be read/written with utf-8 encoding (has non-ASCII chars in description fields)

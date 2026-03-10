@@ -11,7 +11,7 @@ import { getOperatingStatus } from "@/lib/availability";
 import { OperatingHoursAlert } from "@/components/menu/operating-hours-alert";
 import { AdminPreviewBanner } from "@/components/menu/admin-preview-banner";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 
 export async function generateMetadata({
   params,
