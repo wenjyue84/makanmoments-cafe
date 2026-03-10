@@ -3218,3 +3218,91 @@ This user story is for a **Next.js/TypeScript frontend** application, not a Frap
 ## Iteration 24 - Tue, Mar 10, 2026  1:47:02 PM
 Completed: Chrome DevTools + Agent Browser Verification for All New Features (ID: US-040) in 24m
 
+## Iteration 23 - Tue, Mar 10, 2026  1:48:05 PM
+Completed: Chrome DevTools + Agent Browser Verification for All New Features (ID: US-040) in 14m
+
+
+## Pre-analysis for US-042 (Gemini 2.5 Pro)
+**Technical Brief: US-042 - Menu Item Translations**
+
+This analysis is based on the provided JSON, which describes a Next.js/TypeScript feature, not a Frappe/Python one as mentioned in the prompt.
+
+**1. Primary Files for Modification:**
+*   `src/components/admin/admin-menu-table.tsx`: For UI changes to the item list and edit modal.
+*   `src/app/api/admin/menu/translate/route.ts`: **(New File)** To house the serverless AI translation logic.
+*   `src/app/api/admin/menu/[id]/route.ts`: To verify the existing `PATCH` handler saves the new translation fields.
+*   `src/types/menu.ts` (or similar): To ensure the TypeScript type for menu items includes `nameMs` and `nameZh`.
+
+**2. Key Next.js Constructs (Analogous to Frappe DocTypes/Hooks):**
+*   **Data Model (DocType):** The `MenuItem` type definition, which needs to be confirmed or updated to include `nameMs: string;` and `nameZh: string;`.
+*   **API Routes (Hooks):**
+    *   `POST /api/admin/menu/translate`: A new route function to handle translation lookups.
+    *   `PATCH /api/admin/menu/[id]`: The existing route function for updating an item.
+
+**3. Recommended Implementation Approach:**
+*   **Frontend:** In `admin-menu-table.tsx`, enhance the edit form with two new controlled input fields for Malay and Chinese names. Add a "Suggest" button for each that triggers a `fetch` call to the new `translate` API endpoint and populates the input on success. In the item list, render a warning icon if `nameMs` or `nameZh` are falsy.
+*   **Backend:** Create the `translate` API route that takes `{ nameEn, targetLanguage }`, calls the AI SDK, and returns the translated text. Ensure the `[id]` route's `PATCH` logic correctly persists `nameMs` and `nameZh` to the database.
+
+**4. Gotchas & Edge Cases:**
+*   **Security:** Ensure all admin API routes are protected by authentication middleware.
+*   **State Management:** The edit modal's state must handle asynchronous AI suggestions without conflicting with user input.
+*   **Error Handling:** Gracefully handle failures from the AI translation API call.
+*   **UX:** The UI should clearly indicate that AI suggestions are editable and require admin approval before saving.
+
+
+## Pre-analysis for US-042 (Gemini 2.5 Pro)
+Here is the technical brief for implementing user story US-042 in a Frappe/Python environment.
+
+***
+
+**Subject: Technical Brief: US-042 - Food Item Translations**
+
+This brief outlines the Frappe/Python implementation plan for adding and managing Chinese (Malay/nameMs) and Malay (Chinese/nameZh) translations for food items.
+
+**1. Python Files to Modify:**
+*   `[app_name]/doctype/menu_item/menu_item.py`: The controller for the `Menu Item` DocType. Use this to add server-side validation or logic for the list view indicator.
+*   `[app_name]/doctype/menu_item/menu_item.js`: A client script to add the "Suggest Translations" button to the form and handle the API call to the backend.
+*   `[app_name]/api.py`: A new or existing file to define the whitelisted (`@frappe.whitelist()`) Python function that will interface with the AI translation service.
+
+**2. Frappe DocTypes & Hooks:**
+*   **DocType: `Menu Item`** (Verify name, could be `Food Item`). This DocType requires schema modification to ensure it has two `Data` fields: `name_ms` and `name_zh`.
+*   **List View Settings**: Use the DocType's list view settings to add an indicator for items missing translations.
+
+**3. Implementation Approach:**
+1.  Add `name_ms` and `name_zh` fields to the `Menu Item` DocType.
+2.  In `api.py`, create a whitelisted function `suggest_translation(item_name, target_language)` that calls the AI service and returns the translated string.
+3.  In `menu_item.js`, add a custom button to the form. On click, this script will call the `suggest_translation` function via `frappe.call`.
+4.  The list view indicator can be configured in `menu_item.py` by checking for empty `name_ms` or `name_zh` fields.
+
+**4. Edge Cases & Gotchas:**
+*   **App Mismatch:** The request mentions `lhdn_payroll_integration`, but the story is for a restaurant menu. The developer must identify the correct Frappe app containing the food menu data.
+*   **AI API Failure:** The `suggest_translation` function must include error handling (e.g., try/except blocks) for AI API timeouts or failures.
+*   **Data Integrity:** Ensure that saving an empty translation suggestion from the AI does not overwrite an existing, valid translation.
+
+
+## Iteration 25 - Story: Admin: Add Chinese and Malay Translations for All Food Items (US-042)
+
+### What was implemented
+- Created `src/app/api/admin/menu/translate/route.ts`: POST endpoint taking `{nameEn, targetLanguage: "ms"|"zh"}`, calls Groq (primary) with llama-3.3-70b-versatile or OpenRouter (fallback), returns `{translation: string}`. Strips surrounding quotes from AI response.
+- Updated `src/components/admin/admin-menu-table.tsx`:
+  - Added `suggesting: Record<string, boolean>` state (key = `${itemId}-ms` or `${itemId}-zh`)
+  - Added `suggestTranslation(item, lang)` async function calling `/api/admin/menu/translate`
+  - All 4 Name sections (mobile grouped, desktop grouped, mobile filtered, desktop filtered) now have:
+    - MS input with ✨ suggest button (disabled when nameEn empty or loading)
+    - ZH input with ✨ suggest button
+    - 🌐 warning icon next to EN input when nameMs or nameZh is empty
+  - Mobile cards previously had only EN input — MS and ZH inputs added
+
+### Patterns discovered
+- `src/app/api/admin/rules/ai-suggest/route.ts` is the reference for AI generateText pattern in this project
+- Translation API uses `maxOutputTokens: 60` (single dish name is short)
+- Quote stripping regex: `/^["'「」『』""]|["'「」『』""]$/g`
+- PATCH /api/admin/menu/[id] already handled nameMs/nameZh — no backend changes needed
+
+### Gotchas
+- The admin-menu-table.tsx has 4 duplicate "Names" sections (2 mobile + 2 desktop) — all 4 must be updated
+- Mobile card sections only had EN name; MS/ZH were missing from mobile view entirely
+
+### Result
+- prd.json: US-042 passes = true
+- TypeScript check: PASS (exit 0)

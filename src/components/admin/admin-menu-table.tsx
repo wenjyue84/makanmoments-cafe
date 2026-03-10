@@ -126,6 +126,7 @@ export function AdminMenuTable({
   const [photoAlertDismissed, setPhotoAlertDismissed] = useState(false);
   const [highlightedCode, setHighlightedCode] = useState<string | null>(null);
   const [activeDrag, setActiveDrag] = useState<{ itemId: string; nameEn: string } | null>(null);
+  const [suggesting, setSuggesting] = useState<Record<string, boolean>>({});
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -271,6 +272,27 @@ export function AdminMenuTable({
       ? item.dietary.filter((x) => x !== d)
       : [...item.dietary, d];
     updateItem(item.id, { dietary });
+  }
+
+  async function suggestTranslation(item: EditableItem, lang: "ms" | "zh") {
+    if (!item.nameEn) return;
+    const key = `${item.id}-${lang}`;
+    setSuggesting((prev) => ({ ...prev, [key]: true }));
+    try {
+      const res = await fetch("/api/admin/menu/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nameEn: item.nameEn, targetLanguage: lang }),
+      });
+      const data = await res.json();
+      if (res.ok && data.translation) {
+        updateItem(item.id, lang === "ms" ? { nameMs: data.translation } : { nameZh: data.translation });
+      }
+    } catch {
+      // silently fail — user can retry
+    } finally {
+      setSuggesting((prev) => ({ ...prev, [key]: false }));
+    }
   }
 
   function toggleCategory(item: EditableItem, cat: string) {
@@ -487,12 +509,49 @@ export function AdminMenuTable({
                             className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
                             placeholder="CODE"
                           />
-                          <input
-                            value={item.nameEn}
-                            onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
-                            className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
-                            placeholder="English name"
-                          />
+                          <div className="flex items-center gap-1">
+                            <input
+                              value={item.nameEn}
+                              onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
+                              className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
+                              placeholder="English name"
+                            />
+                            {(!item.nameMs || !item.nameZh) && (
+                              <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <input
+                              value={item.nameMs}
+                              onChange={(e) => updateItem(item.id, { nameMs: e.target.value })}
+                              className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs"
+                              placeholder="Malay name"
+                            />
+                            <button
+                              onClick={() => suggestTranslation(item, "ms")}
+                              disabled={!item.nameEn || suggesting[`${item.id}-ms`]}
+                              className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
+                              title="Suggest Malay translation"
+                            >
+                              {suggesting[`${item.id}-ms`] ? "…" : "✨"}
+                            </button>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <input
+                              value={item.nameZh}
+                              onChange={(e) => updateItem(item.id, { nameZh: e.target.value })}
+                              className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs"
+                              placeholder="Chinese name"
+                            />
+                            <button
+                              onClick={() => suggestTranslation(item, "zh")}
+                              disabled={!item.nameEn || suggesting[`${item.id}-zh`]}
+                              className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
+                              title="Suggest Chinese translation"
+                            >
+                              {suggesting[`${item.id}-zh`] ? "…" : "✨"}
+                            </button>
+                          </div>
                           <div className="flex items-center gap-1.5">
                             <span className="text-xs text-gray-500">RM</span>
                             <input
@@ -681,24 +740,49 @@ export function AdminMenuTable({
                         {/* Names */}
                         <td className="px-3 py-2">
                           <div className="flex flex-col gap-1">
-                            <input
-                              value={item.nameEn}
-                              onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
-                              className="w-44 rounded border border-gray-300 px-2 py-1 text-xs"
-                              placeholder="English"
-                            />
-                            <input
-                              value={item.nameMs}
-                              onChange={(e) => updateItem(item.id, { nameMs: e.target.value })}
-                              className="w-44 rounded border border-gray-300 px-2 py-1 text-xs"
-                              placeholder="Melayu"
-                            />
-                            <input
-                              value={item.nameZh}
-                              onChange={(e) => updateItem(item.id, { nameZh: e.target.value })}
-                              className="w-44 rounded border border-gray-300 px-2 py-1 text-xs"
-                              placeholder="中文"
-                            />
+                            <div className="flex items-center gap-1">
+                              <input
+                                value={item.nameEn}
+                                onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
+                                className="w-40 rounded border border-gray-300 px-2 py-1 text-xs"
+                                placeholder="English"
+                              />
+                              {(!item.nameMs || !item.nameZh) && (
+                                <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <input
+                                value={item.nameMs}
+                                onChange={(e) => updateItem(item.id, { nameMs: e.target.value })}
+                                className="w-36 rounded border border-gray-300 px-2 py-1 text-xs"
+                                placeholder="Melayu"
+                              />
+                              <button
+                                onClick={() => suggestTranslation(item, "ms")}
+                                disabled={!item.nameEn || suggesting[`${item.id}-ms`]}
+                                className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
+                                title="Suggest Malay translation"
+                              >
+                                {suggesting[`${item.id}-ms`] ? "…" : "✨"}
+                              </button>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <input
+                                value={item.nameZh}
+                                onChange={(e) => updateItem(item.id, { nameZh: e.target.value })}
+                                className="w-36 rounded border border-gray-300 px-2 py-1 text-xs"
+                                placeholder="中文"
+                              />
+                              <button
+                                onClick={() => suggestTranslation(item, "zh")}
+                                disabled={!item.nameEn || suggesting[`${item.id}-zh`]}
+                                className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
+                                title="Suggest Chinese translation"
+                              >
+                                {suggesting[`${item.id}-zh`] ? "…" : "✨"}
+                              </button>
+                            </div>
                           </div>
                         </td>
 
@@ -970,12 +1054,49 @@ export function AdminMenuTable({
                       className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
                       placeholder="CODE"
                     />
-                    <input
-                      value={item.nameEn}
-                      onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
-                      className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
-                      placeholder="English name"
-                    />
+                    <div className="flex items-center gap-1">
+                      <input
+                        value={item.nameEn}
+                        onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
+                        className="flex-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
+                        placeholder="English name"
+                      />
+                      {(!item.nameMs || !item.nameZh) && (
+                        <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <input
+                        value={item.nameMs}
+                        onChange={(e) => updateItem(item.id, { nameMs: e.target.value })}
+                        className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs"
+                        placeholder="Malay name"
+                      />
+                      <button
+                        onClick={() => suggestTranslation(item, "ms")}
+                        disabled={!item.nameEn || suggesting[`${item.id}-ms`]}
+                        className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
+                        title="Suggest Malay translation"
+                      >
+                        {suggesting[`${item.id}-ms`] ? "…" : "✨"}
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <input
+                        value={item.nameZh}
+                        onChange={(e) => updateItem(item.id, { nameZh: e.target.value })}
+                        className="flex-1 rounded border border-gray-300 px-2 py-1 text-xs"
+                        placeholder="Chinese name"
+                      />
+                      <button
+                        onClick={() => suggestTranslation(item, "zh")}
+                        disabled={!item.nameEn || suggesting[`${item.id}-zh`]}
+                        className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
+                        title="Suggest Chinese translation"
+                      >
+                        {suggesting[`${item.id}-zh`] ? "…" : "✨"}
+                      </button>
+                    </div>
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs text-gray-500">RM</span>
                       <input
@@ -1133,24 +1254,49 @@ export function AdminMenuTable({
                     {/* Names */}
                     <td className="px-3 py-2">
                       <div className="flex flex-col gap-1">
-                        <input
-                          value={item.nameEn}
-                          onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
-                          className="w-44 rounded border border-gray-300 px-2 py-1 text-xs"
-                          placeholder="English"
-                        />
-                        <input
-                          value={item.nameMs}
-                          onChange={(e) => updateItem(item.id, { nameMs: e.target.value })}
-                          className="w-44 rounded border border-gray-300 px-2 py-1 text-xs"
-                          placeholder="Melayu"
-                        />
-                        <input
-                          value={item.nameZh}
-                          onChange={(e) => updateItem(item.id, { nameZh: e.target.value })}
-                          className="w-44 rounded border border-gray-300 px-2 py-1 text-xs"
-                          placeholder="中文"
-                        />
+                        <div className="flex items-center gap-1">
+                          <input
+                            value={item.nameEn}
+                            onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
+                            className="w-40 rounded border border-gray-300 px-2 py-1 text-xs"
+                            placeholder="English"
+                          />
+                          {(!item.nameMs || !item.nameZh) && (
+                            <span title="Missing translations" className="shrink-0 text-sm">🌐</span>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <input
+                            value={item.nameMs}
+                            onChange={(e) => updateItem(item.id, { nameMs: e.target.value })}
+                            className="w-36 rounded border border-gray-300 px-2 py-1 text-xs"
+                            placeholder="Melayu"
+                          />
+                          <button
+                            onClick={() => suggestTranslation(item, "ms")}
+                            disabled={!item.nameEn || suggesting[`${item.id}-ms`]}
+                            className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
+                            title="Suggest Malay translation"
+                          >
+                            {suggesting[`${item.id}-ms`] ? "…" : "✨"}
+                          </button>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <input
+                            value={item.nameZh}
+                            onChange={(e) => updateItem(item.id, { nameZh: e.target.value })}
+                            className="w-36 rounded border border-gray-300 px-2 py-1 text-xs"
+                            placeholder="中文"
+                          />
+                          <button
+                            onClick={() => suggestTranslation(item, "zh")}
+                            disabled={!item.nameEn || suggesting[`${item.id}-zh`]}
+                            className="shrink-0 rounded border border-blue-200 bg-blue-50 px-1.5 py-1 text-xs text-blue-600 hover:bg-blue-100 disabled:opacity-40"
+                            title="Suggest Chinese translation"
+                          >
+                            {suggesting[`${item.id}-zh`] ? "…" : "✨"}
+                          </button>
+                        </div>
                       </div>
                     </td>
 
