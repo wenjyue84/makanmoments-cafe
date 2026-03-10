@@ -2640,3 +2640,23 @@ This is a Next.js/TypeScript project. The "Frappe/Python" context seems incorrec
 *   **Admin Role:** Ensure the `isAdmin` check is robust, as it's the sole bypass for the alert.
 *   **Caching:** The operating hours rule will be fetched on every page load for every user. Ensure it is aggressively cached to minimize database/network overhead.
 
+
+## Iteration - Story: Operating Hours Alert for Non-Admin Users (ID: US-036)
+
+### What was implemented
+- `data/operating-hours.json` — configurable hours (openHour/Minute, lastOrderHour/Minute, closeHour/Minute)
+- Added `getOperatingStatus()`, `readOperatingHours()`, `writeOperatingHours()` to `src/lib/availability.ts`
+- Created `src/components/menu/operating-hours-alert.tsx` — RSC banner (no client JS needed)
+- Updated `src/app/[locale]/menu/page.tsx` — computes status (admin bypass: always 'open'), renders alert above menu
+- `src/app/api/admin/operating-hours/route.ts` — GET/POST using shared lib functions
+- `src/components/admin/admin-operating-hours.tsx` — admin UI with HTML time pickers
+- `src/components/admin/admin-tabs.tsx` — added 'Operating Hours' tab
+
+### Patterns discovered
+- `availability.ts` linter auto-exported `readOperatingHours`/`writeOperatingHours` — API route should import from lib rather than re-implement file I/O
+- OperatingHoursAlert is a pure RSC (no 'use client') — status computed server-side in menu page and passed as prop
+- Menu page already had `isAdmin` from cookie — reuse for bypass: `const operatingStatus = isAdmin ? "open" : getOperatingStatus()`
+
+### Gotchas
+- `prd.json` must be read/written with `encoding='utf-8'` in Python (has non-ASCII chars)
+- Menu page has `revalidate = 300` — up to 5 min lag at hour boundaries (acceptable for operating hours)
