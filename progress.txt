@@ -8208,3 +8208,77 @@ All components were already implemented in a prior iteration (likely done alongs
 ### Result
 - prd.json: US-048 passes = true
 - TypeScript check: PASS (exit 0)
+## Iteration 55 - Tue, Mar 10, 2026  7:06:11 PM
+Incomplete: KDS: Kitchen Display System — Login + Order Queue View (ID: US-087) — attempt 1/3
+
+
+## Pre-analysis for US-087 (Gemini 2.5 Pro)
+Here is the technical brief for the KDS implementation based on the provided user story.
+
+**Project:** Kitchen Display System (KDS)
+**Framework:** Next.js / TypeScript
+
+**1. Files to Modify/Create:**
+*   `src/app/kds/page.tsx`: Main KDS view. Will handle conditional rendering for the login form or the order queue.
+*   `src/app/api/kds/login/route.ts`: Backend API route to handle authentication for the KDS.
+*   `src/app/api/kds/orders/route.ts`: Secured API route to fetch and return orders with `status='preparing'`.
+*   `.env.example` & `.env.local`: Add `KITCHEN_USERNAME` and `KITCHEN_PASSWORD`.
+
+**2. Involved DocTypes/Hooks (Data Models & APIs):**
+*   **Data Model:** Interacts with the `orders` table.
+*   **API Routes:** Utilizes two new API endpoints for KDS-specific login and data fetching, separate from main application APIs.
+
+**3. Recommended Implementation Approach:**
+*   Implement a separate session/JWT for KDS authentication to keep it isolated from admin users.
+*   The `/kds` page should first check for the KDS auth cookie. If absent, render a login form; if present, render the order queue.
+*   The login API will validate credentials against environment variables and set the secure, HTTP-only cookie upon success.
+*   The orders API will verify the cookie, then query the database for orders where `status = 'preparing'`, sorting by ETA.
+*   The frontend should use `useEffect` with `setInterval` to poll the orders API every 30 seconds for updates.
+
+**4. Edge Cases & Gotchas:**
+*   **Security:** Ensure the KDS password from `.env` is compared using a secure, constant-time comparison method to prevent timing attacks. Do not expose credentials to the client.
+*   **UI/UX:** Design for a tablet interface with high contrast, large font sizes, and clear touch targets.
+*   **State Management:** Properly handle loading and error states for both login and order fetching.
+*   **Performance:** Ensure the `setInterval` is correctly cleaned up on component unmount to prevent memory leaks.
+
+
+## Iteration N - Story: US-087 - KDS: Kitchen Display System — Login + Order Queue View
+
+### What was implemented
+- `src/lib/auth.ts`: Added `signKdsToken()` and `verifyKdsToken()` — uses same ADMIN_JWT_SECRET but role='kds'
+- `src/app/api/kds/login/route.ts`: Edge runtime POST login; validates KITCHEN_USERNAME/KITCHEN_PASSWORD env vars (defaults: kitchen/kitchen123)
+- `src/app/api/kds/orders/route.ts`: Node runtime GET; returns tray_orders WHERE status='preparing' ORDER BY estimated_arrival ASC
+- `src/app/kds/login/page.tsx`: High-contrast dark-theme login form
+- `src/app/kds/page.tsx`: Client component with auto-refresh (setInterval 30s), urgency highlight at 20+ min elapsed, responsive grid
+- `middleware.ts`: Added KDS protection block — /kds and /api/kds protected (except /kds/login and /api/kds/login); added matcher entries
+- `.env.example`: Added KITCHEN_USERNAME=kitchen and KITCHEN_PASSWORD=kitchen123
+
+### Patterns discovered
+- `tray_orders` is the correct orders table (not `orders`) — status field: 'pending_approval' | 'preparing' | 'approved' | 'rejected' etc.
+- KDS uses same ADMIN_JWT_SECRET but different role claim ('kds') — no new env var needed for signing secret
+- Middleware pattern: early return `NextResponse.next()` after auth check; add both `/kds` and `/api/kds/:path*` to matcher
+
+### Gotchas
+- prd.json has non-ASCII chars (emoji) — must open with `encoding='utf-8'` in Python
+- TypeScript check passed cleanly with zero errors on new files
+
+## Iteration N - Story: US-087 - KDS: Kitchen Display System — Login + Order Queue View
+
+### What was implemented
+- Most of US-087 was already implemented from a prior partial iteration:
+  - `src/app/api/kds/login/route.ts` — POST handler validating KITCHEN_USERNAME/KITCHEN_PASSWORD env vars, issues KDS JWT via `signKdsToken()`
+  - `src/app/api/kds/orders/route.ts` — GET handler querying `tray_orders WHERE status='preparing' ORDER BY estimated_arrival ASC`
+  - `src/app/kds/login/page.tsx` — dark-themed login form, redirects to /kds on success
+  - `src/app/kds/page.tsx` — auto-refreshing (30s) order queue with `OrderCard` components, elapsed timer, urgency highlight at 20min
+  - `src/lib/auth.ts` — `signKdsToken()`, `verifyKdsToken()`, `KDS_COOKIE_NAME` already present
+  - `middleware.ts` — KDS section already partially added
+- **This iteration fixed:** middleware was redirecting `/api/kds/*` routes to `/kds/login` instead of returning HTTP 401. Fixed to return `NextResponse.json({ error: "Unauthorized" }, { status: 401 })` for API paths.
+- `.env.example` and middleware matcher already had KDS vars and `/kds` paths.
+
+### Patterns discovered
+- Table name in production is `tray_orders` (not `orders` as stated in CLAUDE.md) — check actual SQL in admin routes to confirm table name
+- KDS is NOT locale-prefixed — handled before `intlMiddleware` in middleware, same pattern as `/admin`
+
+### Gotchas
+- API routes under `/api/kds/*` need to return 401 JSON, not redirect, on unauthorized access
+- `/kds` page handles unauthenticated state by detecting 401 from `/api/kds/orders` and calling `window.location.href = '/kds/login'`
