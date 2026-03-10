@@ -2291,3 +2291,63 @@ Completed: Admin Alerts: Notify About Items Without Photos (ID: US-030) in 12m
 ### Gotchas
 - `items.length` (not `filteredItems.length`) should remain the source for category counts in the dropdown, since counts should reflect total items, not the current filtered set
 - TypeScript check passes cleanly — no errors introduced
+## Iteration 15 - Tue, Mar 10, 2026 12:15:11 PM
+Completed: Admin: List All Items for a Particular Category (ID: US-032) in 4m
+
+
+## Pre-analysis for US-033 (Gemini 2.5 Pro)
+This user story is for the Next.js frontend and Node.js backend, not a Frappe/Python application. The implementation will be in TypeScript and React.
+
+Here is the technical brief:
+
+**Project:** Makan Moments Cafe (Next.js)
+**Story:** US-033 - Admin: Drag and Drop Items Between Categories
+
+**1. Primary Files to Modify:**
+*   **Frontend (UI):** A new component like `src/components/admin/menu/DndMenu.tsx` should be created to encapsulate the drag-and-drop logic. This will be integrated into the main admin menu page, likely located at or near `src/app/[locale]/admin/menu/page.tsx`.
+*   **Backend (API):** The API route handler at `src/app/api/admin/menu/[id]/route.ts` must be created or updated to handle `PATCH` requests for updating an item's category.
+
+**2. Involved DocTypes/Hooks (Next.js Equivalents):**
+*   **Data Type:** The `MenuItem` type defined in `src/types/menu.ts` will be the central data model.
+*   **API Route:** The `PATCH` handler in `.../api/admin/menu/[id]/route.ts` is the server-side "hook" that persists the change.
+
+**3. Recommended Implementation Approach:**
+*   Utilize `@dnd-kit/core` and `@dnd-kit/sortable` for the drag-and-drop functionality.
+*   Wrap the list of menu items in a `<DndContext>` provider with `PointerSensor` and `TouchSensor`.
+*   Make individual menu item components draggable using the `useDraggable` hook.
+*   Make the category containers droppable areas using the `useDroppable` hook.
+*   On drop (`onDragEnd` event), trigger an API call (`PATCH`) to the backend endpoint with the item's ID and the new category ID.
+*   Implement an optimistic UI update to move the item immediately on the client, reverting only if the API call fails.
+
+**4. Edge Cases & Gotchas:**
+*   The `PATCH` API handler must be robust, validating the input and ensuring the user has permission to perform the action.
+*   Consider mobile/touch interactions carefully; drop zones need to be large enough and visual feedback must be clear on small screens.
+*   Provide an alternative, non-DND method for changing categories to ensure accessibility for keyboard-only users.
+*   Ensure state management correctly reflects the change across the UI, possibly by re-fetching data or using a state management library's mutation features.
+
+
+## Iteration N - Story: Admin: Drag and Drop Items Between Categories (US-033)
+
+### What was implemented
+- Installed `@dnd-kit/core` and `@dnd-kit/sortable`
+- Added 4 dnd-kit sub-components outside `AdminMenuTable`: `DroppableTbody`, `DroppableMobileSection`, `DraggableTableRow`, `DraggableMobileItemWrapper`
+- When `activeCategory === null` (All Categories): shows grouped view with DnD enabled
+  - Desktop: multiple `<tbody>` sections per category (DroppableTbody); each item row wrapped in DraggableTableRow with drag handle ⠿ as first column
+  - Mobile: per-category sections (DroppableMobileSection) with DraggableMobileItemWrapper adding a grip handle above each card
+- When `activeCategory !== null`: shows flat filtered list (existing behavior, no DnD)
+- `handleDragEnd`: removes item from source category, adds to target, PATCH /api/admin/menu/[id]
+- Optimistic update + revert on error
+- `DragOverlay`: floating chip showing item name during drag
+- Sensors: PointerSensor (distance:8) + TouchSensor (delay:250, tolerance:5)
+
+### Patterns discovered
+- Render functions (not inner components) avoid identity/remount issues: call as `{renderMobileCard(item)}` not `<MobileCardBody item={item} />`
+- Multiple `<tbody>` elements per `<table>` is valid HTML — clean way to make droppable table sections
+- `useDraggable` id format: `${item.id}::${fromCategory}` allows recovering both in onDragEnd
+- `DragOverlay` must be inside the `DndContext`
+
+### Gotchas
+- Items appear in their FIRST matching category in grouped view (placed set prevents duplicates)
+- Items with no categories don't appear in grouped view (no Uncategorized section)
+- `outline` on `<tbody>` doesn't render well in all browsers — used `bg-orange-50/60` as the over indicator instead
+- prd.json must be read/written with utf-8 encoding (has multi-byte chars)
