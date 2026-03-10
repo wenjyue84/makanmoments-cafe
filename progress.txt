@@ -7770,3 +7770,35 @@ Here is the technical brief for a Next.js implementation:
 
 ### Gotchas
 - None — straightforward UI addition
+## Iteration 52 - Tue, Mar 10, 2026  6:43:33 PM
+Completed: Admin Blog: Click Title to Enter Edit Mode (ID: US-082) in 6m
+
+
+## Pre-analysis for US-085 (Gemini 2.5 Pro)
+Based on the user story JSON, the request is for a **Next.js/React** frontend implementation, not Frappe/Python. Here is the technical brief based on the actual story content.
+
+***
+
+### Technical Brief: US-085 Admin Menu Search
+
+**Note:** The story specifies a client-side implementation in a React (`.tsx`) component. The plan below is for that stack, not Frappe/Python.
+
+*   **Primary File to Modify:**
+    *   `src/components/admin/admin-menu-table.tsx`
+
+*   **Core React Constructs:**
+    *   **Component:** `AdminMenuTable`
+    *   **Hook:** `useState` to manage the search query state.
+
+*   **Implementation Approach:**
+    1.  In `AdminMenuTable`, declare a state for the search term: `const [search, setSearch] = useState('');`
+    2.  Add an `<input>` element above the table, binding it to the `search` state.
+    3.  Filter the `items` array using the `search` term. This new filter should run before the existing category filter.
+    4.  The filter logic must be case-insensitive and check the `search` term against `item.code`, `item.nameEn`, `item.nameMs`, and `item.nameZh`.
+    5.  Display a "0 results" message if the filtered list is empty.
+
+*   **Edge Cases & Gotchas:**
+    *   Ensure the new search filter composes correctly with the existing category filter.
+    *   The filter logic must handle `null` or `undefined` name fields gracefully (e.g., using optional chaining `?.`).
+    *   Confirm that clearing the search input restores the original, unfiltered item list (respecting any active category filter).
+
