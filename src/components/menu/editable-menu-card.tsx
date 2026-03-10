@@ -3,10 +3,10 @@
 import Image from "next/image";
 import { useState, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Camera, Pencil, Check, X, Loader2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ImagePlus } from "lucide-react";
+import { Plus, Camera, Pencil, Check, X, Loader2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ImagePlus, Eye, EyeOff } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import type { MenuItemWithRules } from "@/types/menu";
-import { formatPrice, getLocalizedName } from "@/lib/utils";
+import { formatPrice, getLocalizedName, cn } from "@/lib/utils";
 import { DietaryBadge } from "./dietary-badge";
 import { RecipeModal } from "./recipe-modal";
 import { getRecipeInfo } from "@/data/recipe-info";
@@ -97,6 +97,7 @@ export function EditableMenuCard({
         ...prev,
         price: row.price !== undefined ? Number(row.price) : prev.price,
         description: row.description ?? prev.description,
+        available: row.available !== undefined ? Boolean(row.available) : prev.available,
       }));
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Save failed");
@@ -127,6 +128,10 @@ export function EditableMenuCard({
   function cancelEdit() {
     setEditing(null);
     setErrorMsg(null);
+  }
+
+  async function toggleAvailable() {
+    await patchItem({ available: !localItem.available });
   }
 
   function adjustPosition(dx: number, dy: number) {
@@ -247,9 +252,18 @@ export function EditableMenuCard({
 
   return (
     <>
-      <div className={`relative rounded-xl border bg-card p-4 hover-lift group/card ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-amber-400/60"} ${isUnavailableAtPreview ? "opacity-50" : ""}`}>
+      <div className={`relative rounded-xl border bg-card p-4 hover-lift group/card ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-amber-400/60"} ${isUnavailableAtPreview || !localItem.available ? "opacity-60" : ""}`}>
+        {/* Hidden from menu badge */}
+        {!localItem.available && (
+          <div className="absolute inset-x-3 top-2 z-20 flex items-center justify-center">
+            <span className="rounded-full bg-red-600/80 px-2.5 py-0.5 text-xs font-medium text-white">
+              Hidden from menu
+            </span>
+          </div>
+        )}
+
         {/* Preview-unavailable overlay */}
-        {isUnavailableAtPreview && (
+        {isUnavailableAtPreview && localItem.available && (
           <div className="absolute inset-x-3 top-2 z-20 flex items-center justify-center">
             <span className="rounded-full bg-slate-700/80 px-2.5 py-0.5 text-xs font-medium text-white">
               Not serving at preview time
@@ -344,7 +358,7 @@ export function EditableMenuCard({
             </span>
           )}
 
-          {/* Set as Highlight button — visible on hover in admin mode */}
+          {/* Set as Chef's Pick button — visible on hover in admin mode */}
           {!isHighlighted && onSetHighlight && (
             <button
               type="button"
@@ -352,7 +366,7 @@ export function EditableMenuCard({
               className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-amber-400/90 px-2.5 py-1.5 text-xs font-bold text-amber-900 opacity-0 transition-opacity group-hover/card:opacity-100 hover:bg-amber-400"
               title="Set as Chef's Pick for this category"
             >
-              ★ Set as Highlight
+              ★ Chef&apos;s Pick
             </button>
           )}
 
@@ -591,7 +605,26 @@ export function EditableMenuCard({
           )}
         </div>
 
-        <div className="mt-3 flex items-center justify-end border-t pt-3">
+        <div className="mt-3 flex items-center justify-between border-t pt-3">
+          {/* Availability toggle */}
+          <button
+            type="button"
+            onClick={() => void toggleAvailable()}
+            className={cn(
+              "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold border transition-colors",
+              localItem.available
+                ? "text-green-700 bg-green-50 border-green-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                : "text-red-700 bg-red-100 border-red-300 hover:bg-red-200"
+            )}
+            title={localItem.available ? "Click to hide from menu" : "Click to show on menu"}
+          >
+            {localItem.available ? (
+              <><Eye className="h-3 w-3" /> Live</>
+            ) : (
+              <><EyeOff className="h-3 w-3" /> Hidden</>
+            )}
+          </button>
+
           <button
             type="button"
             onClick={() => addItem({ id: localItem.code, name, price: localItem.price })}

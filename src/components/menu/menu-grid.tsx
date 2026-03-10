@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
+import { Eye, EyeOff } from "lucide-react";
 import Fuse from "fuse.js";
 import type { MenuItem } from "@/types/menu";
 import { MenuCard } from "./menu-card";
@@ -64,6 +65,7 @@ export function MenuGrid({
     if (dcPrefixed.includes(initialCategory)) return initialCategory;
     return null;
   });
+  const [isEditMode, setIsEditMode] = useState(true);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
@@ -161,8 +163,20 @@ export function MenuGrid({
   }, [filtered, categories, selectedPosCat, selectedDisplayCat, highlights]);
 
   const isSearching = debouncedSearch.trim().length > 0;
-  // When a display category or favorites is selected, show flat grid (no grouping)
-  const isFlatView = isSearching || isDisplayCategorySelected || isFavoritesSelected;
+  // Flat grid when: searching, display category selected, favorites, or no POS categories (all-display-category setup)
+  const isFlatView = isSearching || isDisplayCategorySelected || isFavoritesSelected || categories.length === 0;
+
+  // In flat view (customer mode): items tagged as Chef's Picks float to top as hero cards (max 2)
+  const heroItems = useMemo(() => {
+    if (!isFlatView || isSearching || isFavoritesSelected) return [];
+    if (selectedDisplayCat?.toLowerCase().includes("chef")) return filtered.slice(0, 2);
+    return filtered.filter((i) => i.displayCategories.includes("Chef's Picks")).slice(0, 2);
+  }, [filtered, isFlatView, isSearching, isFavoritesSelected, selectedDisplayCat]);
+
+  const regularFlatItems = useMemo(() => {
+    const heroIds = new Set(heroItems.map((i) => i.id));
+    return filtered.filter((i) => !heroIds.has(i.id));
+  }, [filtered, heroItems]);
 
   // IntersectionObserver: update active chip as user scrolls through sections
   useEffect(() => {
@@ -218,6 +232,28 @@ export function MenuGrid({
         favoritesCount={favorites.length}
       />
 
+      {/* Admin edit/customer mode toggle */}
+      {isAdmin && (
+        <div className="flex justify-end mb-1">
+          <button
+            type="button"
+            onClick={() => setIsEditMode((v) => !v)}
+            className={cn(
+              "flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold border transition-colors",
+              isEditMode
+                ? "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-700"
+                : "bg-green-50 text-green-800 border-green-300 hover:bg-green-100 dark:bg-green-950/40 dark:text-green-300 dark:border-green-700"
+            )}
+          >
+            {isEditMode ? (
+              <><Eye className="h-3.5 w-3.5" /> Customer View</>
+            ) : (
+              <><EyeOff className="h-3.5 w-3.5" /> Edit Mode</>
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Quick-jump chip bar — mobile only, shown when browsing all sections */}
       {!isFlatView && categorySections.length > 1 && (
         <div className="sticky top-16 z-30 md:hidden bg-background/95 backdrop-blur-sm border-b border-border -mx-4 px-4 py-2 mb-2">
@@ -255,34 +291,50 @@ export function MenuGrid({
           </p>
         </div>
       ) : isFlatView ? (
-        /* Search results or display category: flat grid */
-        <div className="mt-6 grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {filtered.map((item, index) => {
-            const isHighlighted = item.categories.some((cat) => highlights[cat] === item.id);
-            const isUnavailableAtPreview =
-              isAdmin && hasPreviewTime
-                ? !isAvailableAtTime(item, previewHour!, previewMinute!)
-                : false;
-            return isAdmin ? (
-              <EditableMenuCard
-                key={item.id}
-                item={item}
-                isHighlighted={isHighlighted}
-                onSetHighlight={() => handleSetHighlight(item.id, item.categories)}
-                isUnavailableAtPreview={isUnavailableAtPreview}
-              />
-            ) : (
-              <FadeUp key={item.id} delay={(index % 3) * 50}>
-                <MenuCard
+        /* Search results or display category: hero cards + flat grid */
+        <div className="mt-6">
+          {/* Chef's Pick hero cards — customer mode only, not while searching */}
+          {(!isAdmin || !isEditMode) && heroItems.length > 0 && (
+            <div className="space-y-4 mb-6">
+              {heroItems.map((item, idx) => (
+                <FadeUp key={item.id} delay={idx * 50}>
+                  <ChefPickCard item={item} priority={idx === 0} />
+                </FadeUp>
+              ))}
+            </div>
+          )}
+
+          {/* Regular grid */}
+          <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {(isAdmin && isEditMode ? filtered : regularFlatItems).map((item, index) => {
+              const isHighlighted =
+                item.categories.some((cat) => highlights[cat] === item.id) ||
+                item.displayCategories.includes("Chef's Picks");
+              const isUnavailableAtPreview =
+                isAdmin && hasPreviewTime
+                  ? !isAvailableAtTime(item, previewHour!, previewMinute!)
+                  : false;
+              return isAdmin && isEditMode ? (
+                <EditableMenuCard
+                  key={item.id}
                   item={item}
-                  priority={index === 0}
                   isHighlighted={isHighlighted}
-                  isFavorited={isFavorite(item.code)}
-                  onToggleFavorite={() => toggleFavorite(item.code)}
+                  onSetHighlight={() => handleSetHighlight(item.id, item.categories)}
+                  isUnavailableAtPreview={isUnavailableAtPreview}
                 />
-              </FadeUp>
-            );
-          })}
+              ) : (
+                <FadeUp key={item.id} delay={(index % 3) * 50}>
+                  <MenuCard
+                    item={item}
+                    priority={index === 0}
+                    isHighlighted={isHighlighted}
+                    isFavorited={isFavorite(item.code)}
+                    onToggleFavorite={() => toggleFavorite(item.code)}
+                  />
+                </FadeUp>
+              );
+            })}
+          </div>
         </div>
       ) : (
         /* Category sections: Chef's Pick hero + regular grid */
@@ -297,7 +349,7 @@ export function MenuGrid({
               </h2>
 
               {/* Chef's Pick hero card — full-width */}
-              {isAdmin ? (
+              {isAdmin && isEditMode ? (
                 <EditableMenuCard
                   item={chefPick}
                   isHighlighted={true}
@@ -320,7 +372,7 @@ export function MenuGrid({
                     const isHighlighted = item.categories.some((c) => highlights[c] === item.id);
                     const isUnavailableAtPreview =
                       hasPreviewTime ? !isAvailableAtTime(item, previewHour!, previewMinute!) : false;
-                    return isAdmin ? (
+                    return isAdmin && isEditMode ? (
                       <EditableMenuCard
                         key={item.id}
                         item={item}

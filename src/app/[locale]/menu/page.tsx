@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
-import { getMenuItems, getDisplayCategories } from "@/lib/menu";
+import { getMenuItems, getAllMenuItemsWithRulesForAdmin, getDisplayCategories } from "@/lib/menu";
 import { getHighlightsFromDB, computeEffectiveHighlights } from "@/lib/highlights";
 import { MenuGrid } from "@/components/menu/menu-grid";
 import { MenuPageJsonLd } from "@/components/seo/json-ld";
@@ -40,7 +40,7 @@ export default async function MenuPage({
   const previewTime = isAdmin ? (resolvedParams.previewTime ?? null) : null;
 
   const [items, displayCats, persistedHighlights] = await Promise.all([
-    getMenuItems(),
+    isAdmin ? getAllMenuItemsWithRulesForAdmin() : getMenuItems(),
     getDisplayCategories(),
     getHighlightsFromDB(),
   ]);
