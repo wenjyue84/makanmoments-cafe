@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
+import Fuse from "fuse.js";
 import type { MenuItem } from "@/types/menu";
 import { MenuCard } from "./menu-card";
 import { ChefPickCard } from "./chef-pick-card";
@@ -9,6 +10,7 @@ import { EditableMenuCard } from "./editable-menu-card";
 import { MenuFilter } from "./menu-filter";
 import { cn } from "@/lib/utils";
 import { useFavorites } from "@/hooks/use-favorites";
+import { useDebounce } from "@/hooks/use-debounce";
 
 // Display category values are prefixed with "__dc__" to distinguish from POS categories
 const DC_PREFIX = "__dc__";
@@ -62,6 +64,7 @@ export function MenuGrid({
     return null;
   });
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 300);
   const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const chipBarScrollRef = useRef<HTMLDivElement>(null);
@@ -72,7 +75,24 @@ export function MenuGrid({
   const selectedDisplayCat = isDisplayCategorySelected ? category!.slice(DC_PREFIX.length) : null;
   const selectedPosCat = !isDisplayCategorySelected && !isFavoritesSelected ? category : null;
 
+  // Fuse.js instance for fuzzy search across all items (memoized to avoid re-init on every render)
+  const fuse = useMemo(
+    () =>
+      new Fuse(items, {
+        keys: ["nameEn", "nameMs", "nameZh", "description", "categories"],
+        threshold: 0.4,
+        minMatchCharLength: 2,
+        includeScore: true,
+      }),
+    [items]
+  );
+
   const filtered = useMemo(() => {
+    // Fuzzy search takes precedence — search across ALL items regardless of selected category
+    if (debouncedSearch.trim().length >= 2) {
+      return fuse.search(debouncedSearch).map((r) => r.item);
+    }
+
     let result = items;
 
     if (isFavoritesSelected) {
@@ -96,21 +116,8 @@ export function MenuGrid({
       result = result.filter((item) => item.categories.includes(selectedPosCat));
     }
 
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter((item) => {
-        return (
-          item.nameEn.toLowerCase().includes(q) ||
-          item.nameMs.toLowerCase().includes(q) ||
-          item.nameZh.toLowerCase().includes(q) ||
-          item.code.toLowerCase().includes(q) ||
-          item.description.toLowerCase().includes(q)
-        );
-      });
-    }
-
     return result;
-  }, [items, selectedPosCat, selectedDisplayCat, isFavoritesSelected, favorites, search]);
+  }, [items, selectedPosCat, selectedDisplayCat, isFavoritesSelected, favorites, debouncedSearch, fuse]);
 
   const handleSetHighlight = useCallback(async (itemId: string, itemCategories: string[]) => {
     // Optimistic update
@@ -152,7 +159,7 @@ export function MenuGrid({
       .filter((s): s is NonNullable<typeof s> => s !== null);
   }, [filtered, categories, selectedPosCat, selectedDisplayCat, highlights]);
 
-  const isSearching = search.trim().length > 0;
+  const isSearching = debouncedSearch.trim().length > 0;
   // When a display category or favorites is selected, show flat grid (no grouping)
   const isFlatView = isSearching || isDisplayCategorySelected || isFavoritesSelected;
 

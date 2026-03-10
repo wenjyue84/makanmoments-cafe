@@ -5883,3 +5883,29 @@ Completed: AI Waiter: Voice Input via Web Speech API (ID: US-066) in 5m
 ### Gotchas
 - Do NOT use `setState` inside `useEffect` just for browser feature detection — causes lint error "Calling setState synchronously within an effect". Use module-level constant instead (safe since component is ssr:false)
 - The `submitInputRef.current = value` pattern during render causes "Cannot update ref during render" lint error — use session-local objects for capturing values in event handlers instead
+
+
+## Iteration N - Story: Menu Search: Fuzzy Matching with Fuse.js (US-067)
+
+### What was implemented
+- Installed `fuse.js` npm package
+- Created `src/hooks/use-debounce.ts` — generic `useDebounce<T>(value, delay)` hook
+- Updated `src/components/menu/menu-grid.tsx`:
+  - Added `Fuse` import and `useDebounce` import
+  - `debouncedSearch = useDebounce(search, 300)` — debounces input by 300ms
+  - `fuse` useMemo instance with keys: nameEn, nameMs, nameZh, description, categories; threshold: 0.4, minMatchCharLength: 2
+  - Search now uses `fuse.search(debouncedSearch).map(r => r.item)` when query >= 2 chars
+  - Results ranked by Fuse relevance score (best matches first) — Fuse returns sorted by score by default
+  - When query empty or < 2 chars: falls back to normal category-filtered view
+
+### Patterns discovered
+- Fuse.js search returns `{item, refIndex, score}[]` — must map `.item` to get MenuItem[]
+- Fuzzy search should search across ALL items (not just category-filtered) for best UX — category filter skipped when searching
+- minMatchCharLength: 2 prevents false positives on single characters
+
+### Acceptance Criteria Met
+- [x] Searching 'tom yam' finds 'Tom Yum Seafood' (fuzzy match, typo tolerance)
+- [x] Searching in Chinese finds items by nameZh; Malay finds by nameMs
+- [x] Search is debounced 300ms
+- [x] Results ranked by relevance — best matches first (Fuse default)
+- [x] TypeScript check passes (npx tsc --noEmit — 0 errors)
