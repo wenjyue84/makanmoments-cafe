@@ -8837,3 +8837,146 @@ This is a technical brief for a TypeScript/Next.js project, based on the `techni
 ## Iteration 58 - Tue, Mar 10, 2026  7:28:19 PM
 Completed: AI Waiter: Inject Live DB Menu into System Prompt (Replace Static knowledge/menu-knowledge.md) (ID: US-090) in 3m
 
+
+## Pre-analysis for US-093 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-093, based on the provided JSON.
+
+### Technical Brief: US-093 - Lighthouse Mobile Performance Optimization
+
+**Objective:** Achieve a Lighthouse mobile score of 85+ for the `/en` and `/en/menu` pages by optimizing Core Web Vitals (LCP, CLS, FCP, TBT).
+
+**1. Key Files to Modify:**
+*   `src/app/[locale]/layout.tsx`: For font loading (`next/font`) and to check for any blocking scripts/styles in `<head>`.
+*   `src/components/home/hero-section.tsx`: To verify the hero image (LCP) still uses `next/image` with `priority` and a blur placeholder.
+*   `src/app/[locale]/menu/page.tsx` (and its child components): Analyze for client-side bottlenecks, un-optimized images, or layout shifts.
+*   `src/app/globals.css`: To add media queries for `prefers-reduced-motion` to disable animations.
+*   `tailwind.config.ts`: To ensure the `content` property correctly covers all files for efficient purging.
+
+**2. Core Concepts & Features:**
+*   **Next.js App Router:** Leverage Server Components for static content.
+*   **`next/image`:** Critical for optimizing the LCP hero image and preventing CLS.
+*   **`next/font`:** The primary tool for managing font loading and avoiding FOUT/CLS.
+*   **`next/dynamic`:** Use to defer loading of non-critical, below-the-fold components (e.g., footer, modals).
+*   **Tailwind CSS:** Use responsive prefixes (`lg:`, `md:`) to hide decorative, non-essential elements on mobile.
+
+**3. Implementation Approach:**
+1.  Establish a baseline by running Lighthouse on `/en` and `/en/menu`.
+2.  Confirm the home page hero image uses `<Image priority ... />`.
+3.  On the menu page, ensure images are lazy-loaded by default and have explicit `width`/`height` or `aspect-ratio` to prevent CLS.
+4.  In `globals.css`, add a `@media (prefers-reduced-motion: reduce)` block to disable costly CSS animations.
+5.  Identify purely decorative elements (e.g., background gradients) and hide them on mobile with responsive classes like `hidden lg:block`.
+
+**4. Edge Cases & Gotchas:**
+*   **Font Loading:** Verify that the `Noto Sans SC` font is not being downloaded on non-Chinese locales (`/en`, `/ms`).
+*   **Total Blocking Time (TBT):** The `ChatWidget` is a known issue that hurts TBT. Per technical notes, deferring this is part of US-095, so focus on other TBT wins.
+*   **Cumulative Layout Shift (CLS):** Be vigilant. CLS can be triggered by web fonts, ads, or images without dimensions. Check that aspect ratios are maintained during load.
+
+
+## Pre-analysis for US-093 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** project, not a Frappe/Python one. The file paths and technical notes in the JSON clearly indicate a React-based frontend.
+
+Here is the technical brief based on the actual story content:
+
+**Technical Brief: US-093 Lighthouse Mobile Performance**
+
+**1. Objective:**
+Achieve a Lighthouse mobile score of 85+ for the `/en` and `/en/menu` pages by optimizing Core Web Vitals (LCP, CLS, FCP, TBT).
+
+**2. Key Files & Components:**
+*   `src/app/[locale]/layout.tsx`: For font loading strategy and root layout structure.
+*   `src/components/home/hero-section.tsx`: For the LCP element (hero image).
+*   `src/app/globals.css`: For global animation styles and media queries.
+*   `ChatWidget` component (and its parent): A primary target for deferring JS.
+*   Any components rendering decorative "gradient orbs" or similar cosmetic elements.
+
+**3. Implementation Approach:**
+*   **Fonts:** In `layout.tsx`, ensure all fonts are loaded via `next/font` to enforce `font-display: swap` and prevent FOUT/CLS. Conditionally load `Noto Sans SC` only for the 'zh' locale.
+*   **Hero Image (LCP):** In `hero-section.tsx`, verify the `next/image` component still uses the `priority` prop and has a fixed aspect ratio to eliminate layout shift.
+*   **Reduce JS/TBT:** Find where `ChatWidget` is rendered and wrap it with a `next/dynamic` import to lazy-load it, reducing the initial Total Blocking Time.
+*   **Reduce Paint Cost:** On mobile, hide decorative elements (e.g., gradients) using Tailwind's responsive `hidden lg:block` utility classes.
+*   **Animations:** Add a `@media (prefers-reduced-motion: reduce)` query to `globals.css` to disable CSS animations for accessibility and performance.
+
+**4. Gotchas & Verification:**
+*   Run Lighthouse using the mobile preset frequently to measure the impact of changes.
+*   Pay close attention to any minor CLS caused by client-side rendered components or banners; ensure space is reserved in the layout.
+*   Confirm that the TailwindCSS purge configuration is correctly removing all unused styles in the production build.
+
+
+## Pre-analysis for US-103 (Gemini 2.5 Pro)
+Based on the user story, the request is for a **Next.js/TypeScript** feature, not Frappe/Python. The technical brief below is for the correct stack.
+
+---
+
+### **US-103: Technical Implementation Brief**
+
+**Objective:** Implement a client-side, one-time splash screen for first-time visitors.
+
+**1. Files to Create/Modify:**
+*   **Create:** `src/components/home/splash-onboarding.tsx` (as a `'use client'` component).
+*   **Modify:** `src/app/[locale]/page.tsx` (the main home page) to include the new splash component.
+
+**2. Core Logic & Hooks:**
+*   The splash component will manage its own visibility using `useState` and `useEffect`.
+*   On mount (`useEffect`), it must check `localStorage` for a `mm_splash_seen` flag.
+*   If the flag is present, the component should render `null` or immediately hide itself.
+*   The "Dismiss" button's `onClick` handler will set `localStorage.setItem('mm_splash_seen', '1')` and update the component's state to trigger a CSS-based exit animation.
+
+**3. Recommended Implementation:**
+*   In `splash-onboarding.tsx`, create a state `const [isVisible, setIsVisible] = useState(false)`.
+*   The `useEffect` hook will check `localStorage` and set `setIsVisible(true)` only if the flag is *not* found.
+*   Use Tailwind CSS for a `fixed inset-0 z-50` overlay.
+*   Use Lucide React (`lucide-react`) for icons like `Utensils`, `Send`, and `Smile`.
+*   Render `<SplashOnboarding />` unconditionally in `page.tsx`; the component's internal logic will control its appearance.
+
+**4. Edge Cases to Watch For:**
+*   **SSR Flash:** The component must default to a hidden state to avoid a flash of content during Server-Side Rendering, as `localStorage` is only available on the client. The `useEffect` hook correctly handles this.
+*   **No Translation:** Per notes, hardcode English text; no i18n is needed for this component.
+
+## Iteration 1 - Tue, Mar 10, 2026  9:05:42 PM
+Incomplete: Lighthouse Mobile Score >= 85 (LCP, CLS, FCP, TBT) (ID: US-093) — attempt 1/3
+
+
+## Pre-analysis for US-103 (Gemini 2.5 Pro)
+### Technical Brief: US-103 First-Time Visitor Splash Page
+
+**Project Technology:** Next.js / React / TypeScript (Not Frappe/Python)
+
+**1. Files to Create / Modify:**
+*   **Create:** `src/components/home/splash-onboarding.tsx`. This new client component (`'use client'`) will contain all logic and UI for the splash screen.
+*   **Modify:** `src/app/[locale]/page.tsx` (the homepage). Import and render the `<SplashOnboarding />` component here.
+
+**2. Key APIs and Hooks:**
+*   **React Hooks:** `useState` to manage the splash's visibility state; `useEffect` to safely access browser APIs on component mount.
+*   **Browser API:** `window.localStorage` to check for and set the `mm_splash_seen` flag, ensuring persistence.
+
+**3. Recommended Implementation Approach:**
+1.  In `splash-onboarding.tsx`, use a `useEffect` hook with an empty dependency array (`[]`) to run a check on mount.
+2.  Inside the effect, read `localStorage.getItem('mm_splash_seen')`.
+3.  If the key is `null`, use a state setter (e.g., `setShowSplash(true)`) to trigger the rendering of the splash modal.
+4.  The dismiss button's `onClick` handler will set `localStorage.setItem('mm_splash_seen', '1')` and then set state to hide the modal.
+5.  Render the component unconditionally in the homepage; its internal logic will control its visibility.
+
+**4. Edge Cases & Gotchas:**
+*   **SSR Compatibility:** Accessing `localStorage` must be wrapped in `useEffect` to prevent "localStorage is not defined" errors during server-side rendering.
+*   **No Flash of Content:** The component should render `null` by default until the `useEffect` check confirms the splash needs to be shown, preventing unwanted layout shifts.
+*   **Styling:** Use a high `z-index` (e.g., `z-50`) with a `fixed inset-0` class to ensure the splash covers the entire viewport.
+
+
+## Iteration N - Story: US-103 - First-Time Visitor Splash Page
+
+### What was implemented
+- Created `src/components/home/splash-onboarding.tsx` — client component with full-screen overlay
+- Checks localStorage `mm_splash_seen` on mount; renders nothing if set
+- Dismiss sets `mm_splash_seen=1` and hides the component
+- Backdrop click also dismisses
+- Shows 3 steps: Browse Menu (Utensils icon), Pre-Order Online (Send icon), Arrive & Enjoy (Smile icon)
+- Warm earthy design: amber-100 icon squares, amber-700 CTA button, cream background (oklch)
+- Added import + `<SplashOnboarding />` to `src/app/[locale]/layout.tsx` inside TrayProvider
+
+### Patterns discovered
+- localStorage access must be inside useEffect (not on render) to avoid SSR errors
+- Existing layout uses `<ErrorBoundary fallback={null}>` for widgets — splash not wrapped since it has its own null-return guard
+- No translations needed for MVP per story spec
+
+### Gotchas
+- prd.json must be opened with `encoding='utf-8'` on Windows (cp1252 default fails)

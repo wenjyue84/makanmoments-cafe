@@ -18,6 +18,7 @@ import "../globals.css";
 import { TrayProvider } from "@/lib/tray-context";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { PwaInit } from "@/components/pwa/pwa-init";
+import { SplashOnboarding } from "@/components/home/splash-onboarding";
 
 const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
@@ -133,6 +134,7 @@ export default async function LocaleLayout({
             <ErrorBoundary fallback={null}><ChatWidget /></ErrorBoundary>
             <ErrorBoundary fallback={null}><TrayWidget /></ErrorBoundary>
             <PwaInit />
+            <SplashOnboarding />
           </TrayProvider>
         </NextIntlClientProvider>
       </body>

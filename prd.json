@@ -2539,6 +2539,415 @@
       ],
       "estimatedComplexity": "small",
       "passes": true
+    },
+    {
+      "id": "US-093",
+      "title": "Lighthouse Mobile Score >= 85 (LCP, CLS, FCP, TBT)",
+      "priority": 93,
+      "description": "Run Lighthouse in mobile simulation against /en and /en/menu and verify all Core Web Vital targets are met: LCP < 2.5s, CLS < 0.1, FCP < 1.8s, TBT < 200ms. Fix any regressions — hero image already has priority and blur placeholder; focus is on paint cost of decorative elements, font loading, animation jank, and Tailwind purge completeness.",
+      "acceptanceCriteria": [
+        "Lighthouse mobile score >= 85 on /en (Chrome DevTools > Lighthouse tab, Mobile device, simulated throttling)",
+        "Lighthouse mobile score >= 85 on /en/menu",
+        "LCP < 2.5s on both pages",
+        "CLS < 0.1 on both pages (no layout shift from images, fonts, or banners)",
+        "FCP < 1.8s on both pages",
+        "TBT < 200ms on both pages",
+        "Hero image on mobile renders with no layout shift — aspect-ratio container holds space before image loads",
+        "All fonts load with display: swap (verified in Lighthouse > Font display opportunity)",
+        "Decorative gradient orbs and non-critical desktop elements are hidden on mobile via hidden lg:block",
+        "No render-blocking resources flagged in Lighthouse diagnostics"
+      ],
+      "technicalNotes": [
+        "Hero image already has priority={true} and placeholder='blur' in src/components/home/hero-section.tsx — verify not regressed",
+        "Check src/app/[locale]/layout.tsx for any synchronous scripts or stylesheets in <head>",
+        "FadeUp animation components must honour prefers-reduced-motion — add @media (prefers-reduced-motion: reduce) { animation: none } in globals.css",
+        "Noto Sans SC already has preload: false — confirm not loaded for en/ms locales via Network tab",
+        "Admin verify fetch in ChatWidget fires on mount for every visitor — deferring ChatWidget (US-095) will reduce TBT",
+        "Run: npx lighthouse http://localhost:3030/en --preset=mobile --output=json | jq '.categories.performance.score'",
+        "Target files: src/components/home/hero-section.tsx, src/app/[locale]/layout.tsx, src/app/globals.css"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-094",
+      "title": "Menu Page: Image Lazy Loading + Explicit sizes Prop on All MenuCards",
+      "priority": 94,
+      "description": "Ensure every next/image on the menu page has an explicit sizes prop matching its responsive layout, uses loading='lazy' for below-fold cards, and that the first visible card (LCP candidate on mobile) uses priority={true}. ImageCarousel component must also carry these props.",
+      "acceptanceCriteria": [
+        "In Chrome DevTools Network tab (throttled to Fast 3G), images below the fold on /en/menu do NOT appear in the waterfall until the user scrolls to them",
+        "The first menu card image in the visible grid has loading='eager' and priority={true} (verified in DevTools Elements)",
+        "All other menu card images have loading='lazy' in the rendered HTML",
+        "Every next/image in MenuCard and ImageCarousel has a sizes prop — no console warning about missing sizes prop",
+        "sizes value for menu cards: '(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 50vw, 33vw'",
+        "Lighthouse shows 0 images flagged under 'Properly size images' for the menu page",
+        "WebP format is served for all menu images (Network tab Content-Type: image/webp)"
+      ],
+      "technicalNotes": [
+        "Check src/components/menu/menu-grid.tsx — confirm it passes priority={index === 0} to the first MenuCard; add if missing",
+        "Check src/components/menu/image-carousel.tsx — add sizes prop on its internal next/image if missing",
+        "next.config.ts already includes formats: ['image/avif', 'image/webp'] — WebP fallback is automatic",
+        "loading prop on next/image is automatically 'lazy' unless priority={true} — verify no explicit loading='eager' overrides on non-priority cards",
+        "Target files: src/components/menu/menu-card.tsx, src/components/menu/menu-grid.tsx, src/components/menu/image-carousel.tsx"
+      ],
+      "dependencies": [
+        "US-093"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-095",
+      "title": "Chat Widget: Defer Entire Widget Until First User Interaction",
+      "priority": 95,
+      "description": "The ChatWidget shell is eagerly imported in the locale layout and immediately fires an admin verify fetch on mount, adding a network waterfall to every page load for all visitors. Defer the entire ChatWidget using next/dynamic so it is not included in the initial page bundle or rendered until the user interacts (scroll or click).",
+      "acceptanceCriteria": [
+        "On initial page load of /en, the ChatWidget button is NOT in the DOM until a user scroll or click event fires (verified in DevTools Elements)",
+        "After first scroll (> 100px) or first click anywhere, the chat button appears within 300ms",
+        "Chrome DevTools Network tab shows no request to /api/admin/verify on initial page load — only fires after widget mounts",
+        "Lighthouse > Unused JavaScript diagnostic does NOT list chat-widget or chat-panel chunks in the critical path",
+        "Chat widget still opens and functions correctly after deferred load — send a message and receive a streaming AI response",
+        "No hydration mismatch errors in the browser console",
+        "The floating tray button (TrayWidget) is unaffected and still renders on initial load"
+      ],
+      "technicalNotes": [
+        "Current: src/app/[locale]/layout.tsx imports ChatWidget directly",
+        "Create src/components/chat/chat-widget-loader.tsx: a client component that listens for first 'scroll' or 'click' window event, sets mounted=true, then renders dynamically imported ChatWidget",
+        "Use: const ChatWidget = dynamic(() => import('./chat-widget').then(m => m.ChatWidget), { ssr: false, loading: () => null })",
+        "Use useState(false) + useEffect to attach event listeners — remove them after first trigger",
+        "ChatPanel inside chat-widget.tsx is already lazy-loaded — this adds a second outer deferral layer",
+        "Target files: src/app/[locale]/layout.tsx, src/components/chat/chat-widget-loader.tsx (new)"
+      ],
+      "dependencies": [
+        "US-093"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-096",
+      "title": "ISR + Cache-Control Headers: Fix Menu revalidate and Add no-store on Order Status",
+      "priority": 96,
+      "description": "Menu page uses revalidate=300 (5 min) but the spec calls for 3600 (1h). Order status endpoint GET /api/orders/[id] has no Cache-Control header and could be cached by a CDN, serving stale order status to customers.",
+      "acceptanceCriteria": [
+        "src/app/[locale]/menu/page.tsx exports export const revalidate = 3600 (changed from 300)",
+        "src/app/[locale]/page.tsx still exports export const revalidate = 3600 (not regressed)",
+        "GET /api/orders/[id] response includes Cache-Control: no-store (verified with: curl -I http://localhost:3030/api/orders/test | grep -i cache-control)",
+        "GET /api/orders/[id] does NOT include s-maxage or max-age directive",
+        "No public unauthenticated menu JSON API endpoint exists that needs separate Cache-Control treatment"
+      ],
+      "technicalNotes": [
+        "Edit src/app/[locale]/menu/page.tsx: change export const revalidate = 300 to export const revalidate = 3600",
+        "Edit src/app/api/orders/[id]/route.ts GET handler: return NextResponse.json(data, { headers: { 'Cache-Control': 'no-store' } })",
+        "Admin routes under /api/admin/* are auth-protected — no Cache-Control change needed",
+        "Target files: src/app/[locale]/menu/page.tsx, src/app/api/orders/[id]/route.ts"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-097",
+      "title": "Bundle Size: Lazy Load Heavy Admin Components via next/dynamic",
+      "priority": 97,
+      "description": "Admin panel components (menu table, orders panel, blog editor, chat settings, image picker modal) are large interactive components that should never appear in the public-facing JS bundle. Switch all heavy admin tab components to next/dynamic imports in admin-tabs.tsx.",
+      "acceptanceCriteria": [
+        "npm run build completes without errors after all dynamic import changes",
+        "Chrome DevTools > Network tab on /en shows no chunk named admin-tabs, admin-menu-table, admin-orders-panel, admin-blog-editor, chat-settings-panel, or image-picker-modal",
+        "All admin tabs still load and function correctly when logged in — no broken tabs",
+        "Each admin tab component only loads its JS chunk when that tab is first clicked (verified in Network tab)",
+        "The main public route JS bundle is smaller after the changes (@next/bundle-analyzer report)",
+        "@next/bundle-analyzer report (ANALYZE=true npm run build) shows no admin component in the 'Initial JS' treemap node"
+      ],
+      "technicalNotes": [
+        "Install @next/bundle-analyzer as devDependency: npm install -D @next/bundle-analyzer",
+        "Add to next.config.ts: wrap with withBundleAnalyzer({ enabled: process.env.ANALYZE === 'true' })",
+        "In src/components/admin/admin-tabs.tsx, replace direct imports with next/dynamic for: AdminMenuTable, AdminOrdersPanel, AdminBlogEditor, ChatSettingsPanel, ImagePickerModal, AdminRulesAiHelper",
+        "Pattern: const AdminMenuTable = dynamic(() => import('./admin-menu-table').then(m => m.AdminMenuTable), { ssr: false, loading: () => <div className='p-8 text-center text-gray-400'>Loading...</div> })",
+        "Verify EditableMenuCard in src/components/menu/editable-menu-card.tsx is tree-shaken from public bundle",
+        "Target files: src/components/admin/admin-tabs.tsx, next.config.ts"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-098",
+      "title": "Security Headers via next.config.ts headers() Function",
+      "priority": 98,
+      "description": "Add a headers() async function to next.config.ts that applies HTTP security headers to all responses: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, and a baseline Content Security Policy. Headers must not break Vercel Blob image URLs, Google Fonts, or the admin panel.",
+      "acceptanceCriteria": [
+        "curl -I http://localhost:3030/en returns X-Frame-Options: DENY",
+        "curl -I http://localhost:3030/en returns X-Content-Type-Options: nosniff",
+        "curl -I http://localhost:3030/en returns Referrer-Policy: strict-origin-when-cross-origin",
+        "curl -I http://localhost:3030/en returns Permissions-Policy: camera=(), microphone=(), geolocation=()",
+        "curl -I http://localhost:3030/en returns a Content-Security-Policy header with at minimum: default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com",
+        "No browser console CSP violations when browsing /en, /en/menu, /en/order/* in normal operation",
+        "Admin panel at /admin loads without CSP violations",
+        "Headers are applied to all routes (source: '/(.*)')"
+      ],
+      "technicalNotes": [
+        "Add async headers() function to next.config.ts returning: [{ source: '/(.*)', headers: [ {key:'X-Frame-Options',value:'DENY'}, {key:'X-Content-Type-Options',value:'nosniff'}, {key:'Referrer-Policy',value:'strict-origin-when-cross-origin'}, {key:'Permissions-Policy',value:'camera=(), microphone=(), geolocation=()'}, {key:'Content-Security-Policy',value:\"default-src 'self'; img-src 'self' data: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; font-src 'self' https://fonts.gstatic.com\"} ] }]",
+        "Admin layout uses dangerouslySetInnerHTML for dark-mode script and locale layout for noscript style — both require 'unsafe-inline' in script-src and style-src",
+        "Neon DATABASE_URL and AI API calls are server-to-server — no connect-src entry needed in CSP",
+        "If US-097 is implemented first, the withBundleAnalyzer wrapper must come before withNextIntl: export default withBundleAnalyzer(withNextIntl(nextConfig))",
+        "Target file: next.config.ts"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-099",
+      "title": "Admin Cookie Security: Verify Flags, Add Logout Endpoint, Gate Demo Credential",
+      "priority": 99,
+      "description": "Audit the admin JWT cookie for HttpOnly, Secure, SameSite, and maxAge flags. Create a POST /api/admin/logout endpoint that properly clears the cookie. Gate the hardcoded demo credential (admin/admin123) behind an environment variable so it cannot be used in production.",
+      "acceptanceCriteria": [
+        "POST /api/admin/login response sets a cookie with HttpOnly=true (DevTools > Application > Cookies — HttpOnly column checked)",
+        "In production, cookie has Secure=true",
+        "Cookie has SameSite=Lax",
+        "Cookie maxAge is set to 28800 seconds (8 hours) — confirmed in Set-Cookie response header",
+        "POST /api/admin/logout returns 200 and clears the admin_session cookie (maxAge=0, same flags)",
+        "After calling /api/admin/logout, a subsequent GET /api/admin/orders returns 401",
+        "The demo credential (admin/admin123) is gated behind process.env.ENABLE_DEMO_LOGIN === 'true' — login fails with 401 when env var is not set",
+        "A logout button in the admin panel calls POST /api/admin/logout and redirects to /admin/login"
+      ],
+      "technicalNotes": [
+        "Read src/app/api/admin/login/route.ts first — current cookie flags may already be correct; the story requires verification + logout + demo gate",
+        "Create src/app/api/admin/logout/route.ts as a POST handler: set cookie with maxAge=0 and same flags as login, return NextResponse.json({ ok: true })",
+        "Gate demo credential: const isDemo = process.env.ENABLE_DEMO_LOGIN === 'true' && username === 'admin' && password === 'admin123'",
+        "JWT expiry is already 8h via signAdminToken() in src/lib/auth.ts — cookie maxAge should match (28800)",
+        "Add logout button to src/components/admin/admin-tabs.tsx header area",
+        "Target files: src/app/api/admin/login/route.ts, src/app/api/admin/logout/route.ts (new), src/components/admin/admin-tabs.tsx"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-100",
+      "title": "Rate Limiting: Reusable Factory + Apply to Orders + Admin Login Endpoints",
+      "priority": 100,
+      "description": "The current rate limiter in src/lib/chat/rate-limit.ts is hardcoded for chat. Refactor into a generic createRateLimiter(options) factory. Apply a separate instance to POST /api/orders (5/hour per IP) and POST /api/admin/login (10 attempts per 15 min per IP) to prevent order spam and brute-force attacks.",
+      "acceptanceCriteria": [
+        "POST /api/orders: 6th submission from same IP within 60 minutes returns HTTP 429",
+        "429 response from /api/orders includes Retry-After header (positive integer seconds)",
+        "POST /api/admin/login: 11th attempt from same IP within 15 minutes returns HTTP 429",
+        "429 response from /api/admin/login includes Retry-After header",
+        "console.warn logged on each exceeded event with the offending IP: '[rate-limit] POST /api/admin/login exceeded for IP: x.x.x.x'",
+        "Chat endpoint at /api/chat still rate-limits at 10/min, 100/day (not regressed)",
+        "Rate limiter store is in-memory (Map) — no Redis dependency",
+        "After window expires, requests from same IP are accepted again"
+      ],
+      "technicalNotes": [
+        "Refactor src/lib/chat/rate-limit.ts: export createRateLimiter({ windowMs, max, name? }) factory returning (ip: string) => { allowed: boolean; retryAfter?: number }",
+        "Keep existing checkRateLimit export as a default instance for backwards compatibility",
+        "In src/app/api/orders/route.ts: const ordersRateLimiter = createRateLimiter({ windowMs: 60 * 60 * 1000, max: 5, name: 'POST /api/orders' }) at module scope",
+        "CRITICAL: Admin login route uses runtime = 'edge' — edge runtime does NOT support in-memory state. Change to runtime = 'nodejs' before adding the in-memory rate limiter",
+        "In src/app/api/admin/login/route.ts: const loginRateLimiter = createRateLimiter({ windowMs: 15 * 60 * 1000, max: 10, name: 'POST /api/admin/login' }) — apply before credential validation",
+        "Target files: src/lib/chat/rate-limit.ts, src/app/api/orders/route.ts, src/app/api/admin/login/route.ts"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-101",
+      "title": "File Upload Validation: Fix WebP Extension Bug + Add Magic Byte Check",
+      "priority": 101,
+      "description": "The T&G payment screenshot upload has a bug: image/webp is in ALLOWED_TYPES but the extension logic saves .webp files as .jpg. The MIME error message also says 'JPEG and PNG' but WebP is allowed. Fix the extension logic, update error messages, and add a magic byte check to prevent MIME spoofing.",
+      "acceptanceCriteria": [
+        "POST /api/orders/[id]/payment with a .exe file returns 400 with body: { error: 'Only JPEG, PNG, and WebP images are accepted' }",
+        "POST with a file larger than 5MB returns 400 with body: { error: 'File must be smaller than 5MB' }",
+        "Uploading an image/webp file succeeds and is saved with .webp extension (not .jpg)",
+        "POST with a valid JPEG under 5MB returns 200 and the screenshotUrl field",
+        "An image/jpeg file with its first bytes replaced to look like an EXE is rejected (magic byte check fails)",
+        "Saved filename contains only alphanumeric characters, hyphens, and the correct extension (no path traversal)"
+      ],
+      "technicalNotes": [
+        "Bug fix: const ext = { 'image/png': 'png', 'image/webp': 'webp' }[file.type] ?? 'jpg' (replaces current ternary on line ~72 of payment/route.ts)",
+        "Update MIME error message: 'Only JPEG, PNG, and WebP images are accepted'",
+        "Add magic byte check helper: read first 12 bytes of ArrayBuffer; JPEG: FF D8 FF; PNG: 89 50 4E 47; WebP: 52 49 46 46 ... 57 45 42 50 (bytes 8-11). Reject if bytes don't match declared MIME type.",
+        "Filename safety: orderId-based name already prevents path traversal; add explicit: const safeId = String(orderId).replace(/[^a-zA-Z0-9-]/g, '')",
+        "Target file: src/app/api/orders/[id]/payment/route.ts"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-102",
+      "title": "Input Validation: Zod Schemas on POST /api/orders and PATCH /api/admin/orders/[id]",
+      "priority": 102,
+      "description": "Replace manual field-by-field validation in POST /api/orders with a Zod schema. Add a Zod schema to PATCH /api/admin/orders/[id] to enforce the status enum and rejection_reason length. Zod v4.3.6 is already in package.json — no install needed.",
+      "acceptanceCriteria": [
+        "POST /api/orders with missing items returns 422: { error: 'Validation failed', fields: { items: 'Required' } }",
+        "POST with contactNumber='not-a-phone' returns 422: { error: 'Validation failed', fields: { contactNumber: 'Invalid Malaysian phone number' } }",
+        "POST with estimatedArrival 5 minutes from now returns 422: { error: 'Validation failed', fields: { estimatedArrival: 'Arrival must be at least 15 minutes from now' } }",
+        "POST with total as a string returns 422 (Zod rejects non-number)",
+        "PATCH /api/admin/orders/[id] with status='invalid_status' returns 422: { error: 'Validation failed', fields: { status: 'Invalid status value' } }",
+        "PATCH with rejection_reason > 500 characters returns 422",
+        "All existing valid order submissions still return 201 (no regression)",
+        "All sql template literal calls use parameterized interpolation — no string concatenation in DB queries (audit pass)"
+      ],
+      "technicalNotes": [
+        "Create src/lib/schemas/order.ts with OrderSubmitSchema and OrderPatchSchema",
+        "OrderSubmitSchema: z.object({ items: z.array(z.object({ id: z.string(), name: z.string().max(200), price: z.number().positive(), quantity: z.number().int().positive() })).min(1), total: z.number().positive(), contactNumber: z.string().regex(/^(\\+?60|0)1[0-9]{8,9}$/, 'Invalid Malaysian phone number'), estimatedArrival: z.string().datetime().refine(val => new Date(val) > new Date(Date.now() + 14 * 60 * 1000), { message: 'Arrival must be at least 15 minutes from now' }) })",
+        "OrderPatchSchema: z.object({ status: z.enum(['pending_approval','approved','payment_pending','payment_uploaded','preparing','ready','rejected']).optional(), rejection_reason: z.string().max(500).optional(), estimated_ready: z.string().datetime().optional() })",
+        "In orders/route.ts POST: const parsed = OrderSubmitSchema.safeParse(body); if (!parsed.success) return NextResponse.json({ error: 'Validation failed', fields: Object.fromEntries(Object.entries(parsed.error.flatten().fieldErrors).map(([k,v]) => [k, v?.[0] ?? 'Invalid'])) }, { status: 422 })",
+        "Read src/app/api/admin/orders/[id]/route.ts before editing — understand existing PATCH structure",
+        "Zod is already imported in other routes — import z from 'zod'",
+        "Target files: src/lib/schemas/order.ts (new), src/app/api/orders/route.ts, src/app/api/admin/orders/[id]/route.ts"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-103",
+      "title": "First-Time Visitor Splash Page: Pre-Order & Skip the Wait",
+      "priority": 1,
+      "description": "When a first-time visitor lands on the site, show a full-screen splash/modal explaining the pre-order concept: 'Pre-Order & Skip the Wait — Browse our menu, send your order online, and arrive to find your food ready.' with three steps: Browse Menu, Pre-Order Online, Arrive & Enjoy. Once dismissed, never show again (localStorage flag). This replaces any in-page hero callout for this information. The design should match the provided reference image: warm cream background, terracotta icon buttons, large bold headline, step list.",
+      "acceptanceCriteria": [
+        "On first visit (no localStorage flag), a full-screen overlay or bottom-sheet splash appears automatically on page load",
+        "Splash shows: headline 'Pre-Order & Skip the Wait', subtitle 'Browse our menu, send your order online, and arrive to find your food ready.', three steps with icons and descriptions (Browse Menu / Pre-Order Online / Arrive & Enjoy)",
+        "Dismiss button (X or 'Got it') closes the splash and sets localStorage key `mm_splash_seen=1`",
+        "On subsequent visits, splash never appears again",
+        "Splash is mobile-first (fits 390px), uses existing earthy/warm design tokens",
+        "Verify in Chrome DevTools: first load shows splash; reload does NOT show splash"
+      ],
+      "technicalNotes": [
+        "Create src/components/home/splash-onboarding.tsx — client component",
+        "Check localStorage on mount: if `mm_splash_seen` is set, render nothing",
+        "On dismiss: set localStorage `mm_splash_seen=1`, hide component",
+        "Inject into src/app/[locale]/layout.tsx or home page.tsx",
+        "Use Tailwind fixed inset-0 overlay (z-50) with backdrop-blur or semi-transparent dark bg",
+        "Icons: use Lucide (Utensils, Send, Smile or similar); wrap in square rounded amber/terracotta bg",
+        "No translation required for MVP — English only is fine for this splash"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-104",
+      "title": "Menu Page — Equal Card Width in Category Grid",
+      "priority": 2,
+      "description": "On /en/menu, menu cards in the same row should have equal width regardless of how long the item name is. Currently the left and right cards have unequal widths because the grid expands to fit text. All cards in a row must be the same fixed width.",
+      "acceptanceCriteria": [
+        "All menu cards in a row have identical widths on mobile and desktop",
+        "Card width does not change based on item name length — long names wrap to multiple lines within the card",
+        "Grid layout verified at 390px (2-column), 768px (3-column), and 1024px+ (4-column)",
+        "No horizontal scroll introduced"
+      ],
+      "technicalNotes": [
+        "Locate menu grid in src/components/menu/menu-grid.tsx (or equivalent)",
+        "Ensure the grid uses equal-width columns: `grid-cols-2` with `w-full` on each card, NOT auto-fit/minmax that allows unequal widths",
+        "Card container should use `w-full` and `overflow-hidden`; text should use `break-words` or `line-clamp`",
+        "Do not rely on card min/max-width that varies with content — fix column count and let cards fill equally"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-105",
+      "title": "Menu Page — Hide Header on Scroll Down, Show on Scroll Up",
+      "priority": 3,
+      "description": "On /en/menu, the site header (navbar) should auto-hide when the user scrolls down, and reappear when the user scrolls up (hide-on-scroll-down, show-on-scroll-up pattern). This maximises menu browsing space on mobile.",
+      "acceptanceCriteria": [
+        "Scrolling down on /en/menu hides the header with a smooth upward slide animation",
+        "Scrolling up (even a small amount) brings the header back with a smooth downward slide",
+        "Header is always visible on page load (scroll position = 0)",
+        "Works on mobile (390px) without causing layout shift",
+        "Behaviour is on /en/menu specifically; other pages can optionally use the same behaviour"
+      ],
+      "technicalNotes": [
+        "Implement a `useScrollDirection` hook in src/hooks/use-scroll-direction.ts that tracks scroll direction",
+        "Apply `translate-y-0` / `-translate-y-full` Tailwind class to header based on scroll direction",
+        "Add `transition-transform duration-300` for smooth animation",
+        "Use `position: sticky top-0` on header so it participates in document flow when visible",
+        "Threshold: only trigger hide after scrolling down >10px to avoid jitter on tiny scrolls"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-106",
+      "title": "Menu Page — Single-Row Category Filter Bar",
+      "priority": 4,
+      "description": "On /en/menu, the bottom category filter bar currently wraps onto 2 rows when there are many categories. It should always display in a single horizontal scrollable row — no wrapping. User swipes horizontally to reveal more categories.",
+      "acceptanceCriteria": [
+        "Category filter bar renders as a single row at all viewport widths (no wrapping to 2+ rows)",
+        "User can swipe/scroll horizontally to see all categories",
+        "Horizontal scrollbar is hidden (no visible scrollbar) but scrolling is functional",
+        "Active category is visually highlighted (existing behaviour preserved)",
+        "Verified at 390px: all categories accessible via swipe, single row"
+      ],
+      "technicalNotes": [
+        "Locate category filter in src/components/menu/menu-filter.tsx (or equivalent bottom bar component)",
+        "Set the category container to `flex flex-nowrap overflow-x-auto` — remove any `flex-wrap`",
+        "Hide scrollbar with `scrollbar-hide` (Tailwind plugin) or custom CSS: `&::-webkit-scrollbar { display: none }` + `-ms-overflow-style: none; scrollbar-width: none`",
+        "Add `snap-x snap-mandatory` with `snap-start` on each tab for smooth swipe on mobile",
+        "Each category pill should have `flex-shrink-0` to prevent squishing"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-107",
+      "title": "Menu Page — Collapsible Search: Icon by Default, Expands on Tap",
+      "priority": 2,
+      "description": "On /en/menu, the 'Search dishes' input bar should not be visible by default. Instead, show a search icon button (magnifier) at the bottom-right area. Tapping it expands the search bar into view. Tapping the icon again (or pressing Escape / tapping X) collapses it back to icon-only. This keeps the menu UI clean and uncluttered.",
+      "acceptanceCriteria": [
+        "On page load, no search bar is visible — only a circular search icon button",
+        "Tapping the search icon expands a search input bar (slides in or fades in) with focus placed automatically on the input",
+        "While expanded, the search icon transforms to a close/X icon (or the bar has an X to dismiss)",
+        "Tapping the close/X icon collapses the bar back to icon-only",
+        "Pressing Escape on keyboard also collapses the bar",
+        "Search functionality (filtering menu items) is preserved when expanded",
+        "Verified at 390px: icon visible, tap to expand shows full-width input, tap X collapses"
+      ],
+      "technicalNotes": [
+        "Locate search bar in src/components/menu/ (likely menu-filter.tsx or a dedicated search component)",
+        "Add `isSearchOpen` boolean state; toggle on icon click",
+        "When collapsed: render only a circular icon button (Search icon from Lucide, 44px touch target)",
+        "When expanded: render full-width input with X button; auto-focus the input via useEffect/ref",
+        "Use Tailwind transition classes (e.g. `transition-all duration-200 overflow-hidden`) for smooth expand/collapse",
+        "Position: integrate with the bottom bar area or float near bottom-right (above tray button)",
+        "On Escape keydown, call setIsSearchOpen(false)"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-108",
+      "title": "Menu Page — Show Category Bar Only After Scrolling Down",
+      "priority": 3,
+      "description": "On /en/menu, the bottom category filter bar should be hidden on page load and only appear once the user has scrolled down past the top section. This keeps the initial view clean and gives the category bar contextual relevance once the user is browsing through menu items.",
+      "acceptanceCriteria": [
+        "On page load (scroll position = 0), the bottom category bar is NOT visible",
+        "Once the user scrolls down past a threshold (e.g. 100px), the category bar slides up into view",
+        "If user scrolls back to the very top (scroll < 100px), the bar disappears again",
+        "Appearance/disappearance uses a smooth slide-up/slide-down animation",
+        "Verified at 390px: load page — no bar; scroll down — bar appears; scroll to top — bar hides"
+      ],
+      "technicalNotes": [
+        "Track scroll position via a `useScrollPosition` hook or extend the existing `useScrollDirection` hook from US-105",
+        "Show bar when `scrollY > 100`; hide when `scrollY <= 100`",
+        "Use Tailwind `translate-y-0` / `translate-y-full` with `transition-transform duration-300` on the bar container",
+        "Ensure `position: fixed bottom-0` on the bar so it sticks to the bottom when visible",
+        "Coordinate with US-106 (single-row bar) — this story adds the show/hide scroll trigger on top of that layout fix"
+      ],
+      "dependencies": [
+        "US-106"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
     }
   ]
 }
