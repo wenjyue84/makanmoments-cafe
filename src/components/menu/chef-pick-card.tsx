@@ -46,6 +46,7 @@ export function ChefPickCard({ item, priority = false }: ChefPickCardProps) {
               alt={name}
               fill
               className="object-cover img-scale"
+              style={{ objectPosition: item.imagePosition || "50% 50%" }}
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 800px"
               priority={priority}
               loading={priority ? "eager" : "lazy"}
