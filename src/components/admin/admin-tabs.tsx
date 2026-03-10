@@ -24,13 +24,13 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
 
   return (
     <div>
-      <div className="mb-6 flex gap-1 border-b">
+      <div className="mb-6 flex overflow-x-auto border-b">
         {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={cn(
-              "px-4 py-2.5 text-sm font-medium transition-colors",
+              "min-h-[44px] shrink-0 px-4 py-2.5 text-sm font-medium transition-colors",
               activeTab === tab
                 ? "border-b-2 border-orange-500 text-orange-600"
                 : "text-gray-600 hover:text-gray-900"

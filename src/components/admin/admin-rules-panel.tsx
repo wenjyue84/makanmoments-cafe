@@ -596,9 +596,9 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
                 !rule.active && "opacity-60"
               )}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <span className="font-medium">{rule.name}</span>
                     <span
                       className={cn(
@@ -641,11 +641,11 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
                   )}
                 </div>
 
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="flex flex-wrap gap-2 sm:shrink-0 sm:flex-nowrap">
                   <button
                     onClick={() => toggleActive(rule)}
                     className={cn(
-                      "rounded-full px-3 py-1 text-xs font-medium transition-colors",
+                      "min-h-[44px] rounded-full px-3 py-1 text-xs font-medium transition-colors",
                       rule.active
                         ? "bg-green-100 text-green-700 hover:bg-green-200"
                         : "bg-gray-100 text-gray-500 hover:bg-gray-200"
@@ -655,13 +655,13 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
                   </button>
                   <button
                     onClick={() => openEdit(rule)}
-                    className="rounded-md border px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                    className="min-h-[44px] rounded-md border px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => deleteRule(rule.id)}
-                    className="rounded-md border border-red-200 px-2.5 py-1 text-xs text-red-600 hover:bg-red-50"
+                    className="min-h-[44px] rounded-md border border-red-200 px-2.5 py-1 text-xs text-red-600 hover:bg-red-50"
                   >
                     Delete
                   </button>

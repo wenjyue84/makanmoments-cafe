@@ -1807,3 +1807,38 @@ Here is the technical brief for the specified Next.js user story:
 ### Gotchas
 - Don't duplicate content from the base prompt in the prefix — they're concatenated
 - The prefix in data/chat-settings.json is committed to the repo (it's not a secret)
+## Iteration 12 - Tue, Mar 10, 2026 11:38:51 AM
+Completed: Chat Widget Settings Button: Admin Only (ID: US-025) in 4m
+
+
+## Pre-analysis for US-027 (Gemini 2.5 Pro)
+This user story describes a **Next.js/React frontend task**, not a Frappe/Python one. The following technical brief is based on the actual content of the story (React, Tailwind CSS).
+
+---
+
+**Objective:** Redesign all `/admin` panel tabs to be mobile-first, eliminating horizontal scroll at a 390px viewport. This involves converting wide tables into stacked card lists and ensuring all controls are touch-friendly.
+
+**Key Files to Modify:**
+*   `src/app/[locale]/admin/page.tsx`: The main layout for the admin section, including the tab navigation.
+*   `src/components/admin/admin-header.tsx`: The header containing the title and sign-out button.
+*   `src/components/admin/admin-menu-table.tsx`: The table for the "Menu" tab.
+*   `src/components/admin/admin-rules-panel.tsx`: The component for the "Rules" tab.
+*   *Likely other components for "Categories", "Blog", and "Tests" tabs need to be identified and modified similarly (e.g., `admin-blog-panel.tsx`, `admin-categories-table.tsx`).*
+
+**Data Structures / Components (Analogous to DocTypes):**
+*   The primary data structures are the props passed into the table components (e.g., `MenuItem`, `Rule`).
+*   The core components to change are server-side React components that currently render `<table>` elements.
+
+**Recommended Implementation Approach:**
+1.  **Layout Strategy:** Implement a dual layout for tables. Use Tailwind's responsive variants: keep the existing `<table>` for desktop (`hidden md:table`) and create a new card-based list for mobile (`md:hidden`).
+2.  **Mobile Cards:** For each row in the original table, create a `<div>`-based card that stacks the data vertically.
+3.  **Header:** Modify `admin-header.tsx`. Apply `flex items-center justify-between` and ensure the title truncates if necessary to prevent wrapping.
+4.  **Tab Navigation:** In `admin/page.tsx`, wrap the tab links in a flex container with `overflow-x-auto` to allow horizontal scrolling for just the tabs, without causing page overflow. Use `scroll-snap` for a better UX.
+5.  **Touch Targets:** Ensure all `<button>` and interactive elements have a minimum size of 44x44px using classes like `min-h-[44px] min-w-[44px] p-2`.
+
+**Gotchas to Watch For:**
+*   **CLS on Mobile:** Ensure card layouts do not cause Cumulative Layout Shift.
+*   **State Management:** Actions (like edit/delete buttons) must be correctly wired in both the table and the new card layouts.
+*   **Wrapping Tabs:** Verify the tab navigation bar scrolls cleanly and doesn't push other content down or cause a page-level scrollbar.
+*   **Comprehensive Testing:** Apply and verify the responsive changes across all admin tabs, not just the examples in the technical notes.
+

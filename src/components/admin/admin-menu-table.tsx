@@ -164,7 +164,121 @@ export function AdminMenuTable({
         </button>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border bg-white">
+      {/* Mobile card list */}
+      <div className="md:hidden space-y-3">
+        {items.map((item) => (
+          <div
+            key={item.id}
+            className={cn(
+              "rounded-xl border p-4",
+              item.disabledByRule
+                ? "bg-red-50/60"
+                : item._dirty
+                  ? "bg-amber-50"
+                  : "bg-white"
+            )}
+          >
+            <div className="flex gap-3">
+              {/* Image */}
+              <button
+                onClick={() => item.code && setImagePickerCode(item.code)}
+                disabled={!item.code}
+                className="group relative h-16 w-20 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50"
+                title={item.code ? `Change image for ${item.code}` : "Set code first"}
+              >
+                {item.code && (
+                  <Image
+                    src={`/images/menu/${item.code}.jpg?v=${imgVersion}`}
+                    alt={item.code}
+                    fill
+                    className="object-cover"
+                    sizes="80px"
+                    unoptimized
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                )}
+              </button>
+
+              {/* Key fields */}
+              <div className="min-w-0 flex-1 space-y-1.5">
+                <input
+                  value={item.code}
+                  onChange={(e) => updateItem(item.id, { code: e.target.value })}
+                  className="w-full rounded border border-gray-300 px-2 py-1 text-xs"
+                  placeholder="CODE"
+                />
+                <input
+                  value={item.nameEn}
+                  onChange={(e) => updateItem(item.id, { nameEn: e.target.value })}
+                  className="w-full rounded border border-gray-300 px-2 py-1.5 text-sm"
+                  placeholder="English name"
+                />
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs text-gray-500">RM</span>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={item.originalPrice ?? item.price}
+                    onChange={(e) =>
+                      updateItem(item.id, { price: parseFloat(e.target.value) || 0 })
+                    }
+                    className="w-20 rounded border border-gray-300 px-2 py-1 text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Toggles */}
+              <div className="flex shrink-0 flex-col items-center gap-2">
+                <button
+                  onClick={() => updateItem(item.id, { available: !item.available })}
+                  className={cn(
+                    "h-7 w-12 rounded-full transition-colors",
+                    item.available ? "bg-green-500" : "bg-gray-300"
+                  )}
+                  aria-label={item.available ? "Available" : "Unavailable"}
+                >
+                  <span
+                    className={cn(
+                      "block h-5 w-5 translate-x-1 rounded-full bg-white shadow transition-transform",
+                      item.available && "translate-x-6"
+                    )}
+                  />
+                </button>
+                <button
+                  onClick={() => updateItem(item.id, { featured: !item.featured })}
+                  className={cn("text-xl leading-none", item.featured ? "text-yellow-400" : "text-gray-300")}
+                  aria-label="Toggle featured"
+                >
+                  ★
+                </button>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="mt-3 flex gap-2">
+              <button
+                onClick={() => saveItem(item)}
+                disabled={saving === item.id || !item._dirty}
+                className="min-h-[44px] flex-1 rounded-lg bg-orange-500 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-40"
+              >
+                {saving === item.id ? "Saving…" : "Save"}
+              </button>
+              <button
+                onClick={() => deleteItem(item.id)}
+                className="min-h-[44px] min-w-[44px] rounded-lg border border-red-200 px-3 text-sm text-red-600 hover:bg-red-50"
+              >
+                Del
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table */}
+      <div className="hidden overflow-x-auto rounded-xl border bg-white md:block">
         <table className="min-w-full text-sm">
           <thead>
             <tr className="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
