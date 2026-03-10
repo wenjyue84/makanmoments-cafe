@@ -10311,3 +10311,46 @@ This user story is for a **React/TypeScript** frontend task, not a Frappe/Python
     *   Do **not** use the array index from the `.map((item, index) => ...)` as the key, as it is unstable and can cause rendering bugs.
     *   Ensure the key is applied to the top-level element returned from the map callback.
 
+## Iteration 3 - Tue, Mar 10, 2026 11:19:23 PM
+Completed: Admin Categories — Seed Chef's Picks with Curated Food Items (ID: US-111) in 6m
+
+
+## Pre-analysis for US-112 (Gemini 2.5 Pro)
+This user story describes a frontend issue in a React/TypeScript file, not a Frappe/Python task. The following technical brief is for the React issue described in the JSON.
+
+**File to Modify:**
+*   `src/components/admin/admin-menu-table.tsx`
+
+**Key React Concepts:**
+*   React functional components
+*   JSX list rendering with `.map()`
+*   The `key` prop for list item identity
+
+**Implementation Approach:**
+1.  Open `src/components/admin/admin-menu-table.tsx`.
+2.  Search for all occurrences of `.map()` that render JSX elements.
+3.  For each `map` loop, identify a unique and stable property on the iterated object (e.g., `item.id`, `item.code`, `category.id`).
+4.  Add a `key` prop to the outermost JSX element returned by the map function.
+    *   Example: `items.map(item => <div key={item.id}>...</div>)`
+5.  Verify this is done for all list rendering sections mentioned in the technical notes: mobile view cards, desktop table rows, and any loops for badges (category, dietary).
+
+**Edge Cases & Gotchas:**
+*   **Do not use the array index** for the key (`items.map((item, index) => <div key={index}>...</div>)`). This is an anti-pattern and can cause incorrect rendering behavior if the list order changes.
+*   Ensure the `key` is applied to the top-level element of the fragment. If using `<React.Fragment>`, it must be `<React.Fragment key={item.id}>`.
+*   A single list of data may be rendered in multiple places (e.g., once for mobile, once for desktop). Both `.map()` calls must be fixed.
+
+
+## Iteration N - Story: Fix React Key Prop Warning in AdminMenuTable (US-112)
+
+### What was implemented
+- Added `Fragment` to the React import in `src/components/admin/admin-menu-table.tsx`
+- Replaced the keyless `<>` fragment wrapper (line ~714) in the desktop DnD grouped view's `groupedItems.map()` with `<Fragment key={cat}>`
+- Replaced the closing `</>` with `</Fragment>`
+- The `<tr key={`header-${cat}`}>` inside retained its key (harmless, non-conflicting)
+
+### Patterns discovered
+- The only missing key was on the outer fragment in the desktop grouped DnD table body; all other .map() calls already had correct keys
+- React key warning: direct child of .map() must have a key — shorthand `<>` fragment can't take key props, must use `<Fragment key=...>`
+
+### Gotchas
+- prd.json uses utf-8 encoding — read/write with `encoding='utf-8'` in Python

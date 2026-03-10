@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import Image from "next/image";
 import type { MenuItemWithRules } from "@/types/menu";
 import { cn } from "@/lib/utils";
@@ -712,9 +712,9 @@ export function AdminMenuTable({
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {groupedItems.map(({ cat, label, items: groupItems }) => (
-                  <>
+                  <Fragment key={cat}>
                     {/* Droppable category header row */}
-                    <tr key={`header-${cat}`} className="border-t border-b border-gray-200 bg-gray-50/80">
+                    <tr className="border-t border-b border-gray-200 bg-gray-50/80">
                       <td colSpan={14} className="px-3 py-1.5">
                         <DroppableCategoryLabel
                           category={cat}
@@ -1039,7 +1039,7 @@ export function AdminMenuTable({
                         </td>
                       </tr>
                     ))}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
