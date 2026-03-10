@@ -53,6 +53,9 @@ function stripMetadataSections(content: string): string {
   let result = kept.join("\n\n---\n\n");
   result = result.replace(/^\*\*(?:Type|Created|Tags):\*\*[^\n]*\n?/gim, "");
 
+  // Strip leading # title + orphaned --- separator artifact (title shown in page header)
+  result = result.replace(/^#{1,3}[^\n]+\n+---\n+/, "");
+
   return result.replace(/\n{3,}/g, "\n\n").trim();
 }
 
@@ -170,7 +173,7 @@ function parsePost(filename: string): BlogPost | null {
   const title =
     (data.title as string) ||
     (data.Title as string) ||
-    extractTitle(content, filename);
+    extractTitle(rawContent, filename); // use rawContent before stripping to find # heading
 
   const tags: string[] =
     Array.isArray(data.tags)
