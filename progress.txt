@@ -10492,3 +10492,37 @@ Fix the automated test `nf-044-order-notification`, which is failing due to an i
 
 ### Gotchas
 - prd.json requires `encoding='utf-8'` for Python json operations on Windows
+## Iteration 5 - Tue, Mar 10, 2026 11:31:45 PM
+Completed: Fix US-044 Test — Order Notification Test Missing Required Fields and Wrong Status Check (ID: US-114) in 3m
+
+
+## Pre-analysis for US-116 (Gemini 2.5 Pro)
+**Note:** The provided user story targets a TypeScript/Next.js environment. This brief translates the required logic into a hypothetical Frappe/Python context, as requested for the `lhdn_payroll_integration` app.
+
+### Technical Brief for US-116 (Frappe/Python)
+
+**1. Target Files:**
+-   Primary: `lhdn_payroll_integration/api.py`. The logic should be placed within the whitelisted function that serves `GET /api/orders/[id]`.
+-   Secondary: `lhdn_payroll_integration/doctype/order/order.py`. If the API method is defined in the DocType controller.
+
+**2. Frappe Entities Involved:**
+-   **DocType:** `Order` (hypothesized name).
+-   **DocType Fields:**
+    -   The `status` field (Select type) must be modified to include 'expired' as a valid option.
+    -   A field indicating payment status (e.g., `payment_uploaded` flag or a Link to a payment doctype).
+
+**3. Recommended Implementation Approach:**
+-   In the API function, after fetching the order document (`doc = frappe.get_doc("Order", id)`).
+-   Check if the order is eligible for expiry: `if doc.status == 'approved' and not doc.payment_uploaded:`.
+-   Calculate time elapsed: `elapsed = frappe.utils.now_datetime() - doc.creation`.
+-   If `elapsed.total_seconds() > 1800` (30 mins), update the doc:
+    -   `doc.status = 'expired'`
+    -   `doc.save(ignore_permissions=True)`
+    -   `frappe.db.commit()`
+    -   Return a custom response like `{'status': 'expired'}`.
+
+**4. Gotchas & Edge Cases:**
+-   **Idempotency:** Placing a write operation (`doc.save`) in a GET request is non-standard. A more robust solution is a background `Scheduled Job` to handle expirations, though the story specifies this on-demand check.
+-   **Permissions:** The API user may lack write permissions, necessitating `ignore_permissions=True` for the save operation.
+-   **Timezones:** Use Frappe's timezone-aware datetime utilities (`frappe.utils.now_datetime()`) to prevent miscalculations.
+
