@@ -8499,3 +8499,32 @@ This brief outlines the implementation plan for enhancing the Kitchen Display Sy
 *   **Polling Performance:** The backend Python method must be efficient and the DocType fields indexed to avoid performance degradation from the 15-second polling interval.
 *   **Asset Management:** A new sound file (`new-order.mp3`) must be added to the `public/sounds/` directory.
 
+
+## Pre-analysis for US-090 (Gemini 2.5 Pro)
+This technical brief is for a **Next.js/TypeScript** project, not a Frappe/Python one as mentioned in the prompt. The following plan is based on the details in the provided JSON user story.
+
+**Project:** Next.js AI Waiter
+**Objective:** Replace static menu file with a live, cached database query for the AI's system prompt.
+
+**1. Files to Modify:**
+*   `src/lib/chat/system-prompt.ts`: Core logic for building the prompt. This is where the new DB fetching, caching, and formatting logic will reside.
+*   `src/app/api/chat/route.ts`: Main chat endpoint. Needs modification to `await` the now-asynchronous `getSystemPrompt()` function.
+*   `src/app/api/admin/menu/[id]/route.ts`: Menu update endpoint. Will be modified to call the cache invalidation function after a successful item update.
+
+**2. Involved Components (Next.js context):**
+*   **Database Table:** `menu_items` in the Neon DB is the source of truth.
+*   **API Routes:** `POST /api/chat` (consumes the prompt) and `PATCH /api/admin/menu/[id]` (triggers cache invalidation).
+
+**3. Implementation Approach:**
+*   In `system-prompt.ts`, make `getSystemPrompt()` an `async` function.
+*   Create a new `async function fetchMenuFromDB()` that queries the `menu_items` table.
+*   Implement an in-memory variable to cache the formatted menu string with a 5-minute Time-to-Live (TTL).
+*   The `fetchMenuFromDB` function should first check the cache before hitting the database.
+*   Update the `invalidateSystemPromptCache()` function to also clear this new menu cache.
+
+**4. Edge Cases & Gotchas:**
+*   **DB Connection:** Ensure the Neon DB client is properly instantiated and accessible within `system-prompt.ts`.
+*   **Error Handling:** If the database query fails, the system should gracefully fall back to using the existing `knowledge/menu-knowledge.md` file to prevent downtime.
+*   **Data Formatting:** Handle potential `null` or empty values for optional fields like `categories` and `dietary` to avoid formatting errors.
+*   **Asynchronous Cascade:** All functions that call `getSystemPrompt()` must now use `await`, which could have effects beyond the specified `chat/route.ts`.
+
