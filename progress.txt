@@ -2561,3 +2561,6 @@ All files were already present from a previous partial implementation. The only 
 - `data/time-slots.json` must use integer fields matching TypeScript interface, not string `"HH:MM"` format
 - `revalidate = 300` on menu page (5 min) — time-based category will update within 5 min of time slot boundary
 
+## Iteration 17 - Tue, Mar 10, 2026 12:40:47 PM
+Completed: Menu Page: Dynamic Display Based on Time of Day (ID: US-035) in 8m
+
