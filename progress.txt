@@ -7603,3 +7603,33 @@ Completed: Admin Tests: Auto-Load Tests on Tab Open (Remove 'Load Tests' Button)
 ### Gotchas
 - File was modified by linter between reads — always re-read before editing
 - The `useEffect` focus approach works despite multiple inputs because only one can be in edit mode at a time
+
+## Pre-analysis for US-082 (Gemini 2.5 Pro)
+This user story is for a **Next.js/React** frontend, not a Frappe/Python app. The technical brief below is based on the Next.js/TypeScript details in the story JSON.
+
+---
+
+### **Technical Brief: US-082 Inline Editable Blog Titles**
+
+**1. Files to Modify:**
+- `src/components/admin/admin-blog-table.tsx`: To implement the front-end UI and stateful logic for inline editing.
+- `src/app/api/admin/blog/[id]/route.ts` (or similar): To create or verify the back-end endpoint that handles the `PATCH` request.
+
+**2. Key Components & APIs:**
+- **React Component:** `AdminBlogTable` is the primary component.
+- **React Hooks:** `useState` is needed to manage `editingId` (which post is being edited) and `editTitle` (the temporary value in the input).
+- **API Endpoint:** A `PATCH` route at `/api/admin/blog/[id]` will receive and save the updated title.
+
+**3. Implementation Approach:**
+- In the title cell of the table row, use a conditional render based on `editingId`.
+- **Display Mode:** A `<span>` that, on click, sets the `editingId` to the current post's ID and populates `editTitle`.
+- **Edit Mode:** An `<input>` field that is auto-focused.
+- Handlers: `onKeyDown` will check for "Enter" (to save) or "Escape" (to cancel). `onBlur` will also trigger a save.
+- The save handler will call the `PATCH` API and, upon success, reset `editingId` to `null` and refresh the local state.
+
+**4. Edge Cases & Gotchas:**
+- **Optimistic UI:** For a smoother experience, update the UI immediately and revert only if the API call fails.
+- **Error Handling:** If the `PATCH` request fails, inform the user with a toast/message and restore the original title.
+- **Focus Management:** Ensure the input is immediately focused (`autoFocus`) once it appears for a seamless user experience.
+- **Styling:** Use `cursor: text` and a subtle hover effect (e.g., underline or a faint pencil icon) on the `<span>` to indicate interactivity.
+
