@@ -5702,3 +5702,6 @@ Here is the technical brief for implementing User Story US-065.
 - `bg-current/20` in Tailwind is valid (current text color at 20% opacity as background)
 - File "modified since read" error happens when a linter auto-formats — always re-read before editing
 - Key constant mismatch between menu-grid (`__favorites__`) and menu-filter (`__fav__`) needed to be unified
+## Iteration 40 - Tue, Mar 10, 2026  4:44:38 PM
+Completed: Mobile Menu: Favorite Items (Heart) and Always-Visible Add Button (ID: US-065) in 5m
+
