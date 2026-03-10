@@ -4522,3 +4522,24 @@ This technical brief is based on the provided user story JSON (US-052). Note tha
 ### Result
 - prd.json: US-052 passes = true
 - TypeScript check: PASS (exit 0)
+
+## Iteration - Story: US-052 Pre-Order: Customer Order Status Tracking Page
+
+### What was implemented
+- `src/app/[locale]/order/[id]/page.tsx`: Client component with 15s polling (setInterval in useEffect), 6-step progress bar (StepBar component), status-specific info cards (rejected/approved/payment_pending/preparing/ready), order summary, back-home link
+- `src/app/api/orders/[id]/route.ts`: Updated public GET endpoint — now returns full order data (items, total, contact_number, estimated_arrival, estimated_ready, rejection_reason) instead of just id+status
+- All 3 locale files (en/ms/zh) already had the `orderStatus` translation namespace with all 28 keys
+
+### Patterns discovered
+- The page.tsx was already fully built as an untracked file — only the API route needed expanding to return all fields
+- StepBar uses min-w-max + overflow-x-auto for mobile horizontal scroll of the 6-step progress bar
+- `rejected` and `cancelled` are treated as terminal side-states (not linear), so currentIndex=-1 and all steps go gray
+- PhoneToWaMe helper strips non-digits and ensures `60` prefix for wa.me links
+
+### Gotchas
+- `src/app/[locale]/order/` was entirely untracked — need to `git add` the whole directory
+- TypeScript passed clean (exit 0)
+
+### Result
+- prd.json: US-052 passes = true
+- TypeScript check: PASS (exit 0)
