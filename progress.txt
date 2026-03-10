@@ -6446,3 +6446,6 @@ Completed: Mobile Homepage: Prominent 'View Menu' CTA Above Fold (ID: US-072)
 ### Gotchas
 - `max-h-[80vh]` on section could clip content; make sure all content fits within 80vh naturally
 - CLAUDE.md rule: never hide hero imagery; only reduce its aspect ratio on mobile
+## Iteration 19 - Tue, Mar 10, 2026  5:26:28 PM
+Completed: Mobile Homepage: Prominent 'View Menu' CTA Above Fold (ID: US-072) in 5m
+
