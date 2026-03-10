@@ -7118,3 +7118,6 @@ This user story describes a frontend task for a Next.js/React application, not a
 ### Gotchas
 - prd.json must be opened with `encoding='utf-8'` on Windows — default CP1252 fails
 - The changes were already applied to the files (uncommitted) before this iteration started
+## Iteration 25 - Tue, Mar 10, 2026  6:13:21 PM
+Completed: Menu Page: Progressive Item Reveal and Reduced Visual Noise (ID: US-077) in 6m
+
