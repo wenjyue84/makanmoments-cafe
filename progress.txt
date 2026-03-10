@@ -2716,3 +2716,51 @@ Based on the user story JSON, the request pertains to a **Next.js/TypeScript** a
 ### Gotchas
 - prd.json was showing US-036 passes:false even though most code was committed - layout wiring was the gap
 - The layout is now dynamic per-request (uses cookies()) which is correct for auth/time-based checks
+## Iteration 20 - Tue, Mar 10, 2026 12:54:11 PM
+Completed: Operating Hours Alert for Non-Admin Users Outside Ordering Time (ID: US-036) in 12m
+
+
+## Pre-analysis for US-037 (Gemini 2.5 Pro)
+### Technical Brief for US-037: AI Helper for Admin Rules
+
+**Project Context:** This story is for a **Next.js/TypeScript** application. The analysis is based on the provided JSON technical notes, not on a Frappe/Python environment.
+
+**1. Python Files to Modify / Key Files to Create:**
+*   `src/app/api/admin/rules/ai-suggest/route.ts`: New server-side API route to handle the AI logic.
+*   `src/components/admin/admin-rules-ai-helper.tsx`: New client-side React component for the user input UI.
+*   `src/lib/chat/provider.ts`: To be utilized for connecting to the AI service.
+*   The existing parent component for the "Rules" tab will need to be modified to include the new AI helper and to accept the suggested rule data.
+
+**2. Frappe DocTypes & Hooks / Involved Schemas & APIs:**
+*   **Primary Schema (like DocType):** A `Rule` object structure. The AI's goal is to generate a JSON object matching this schema (e.g., `{ ruleType: 'disable', targetType: 'category', targetCategories: ['drinks'], timeFrom: '19:00' }`).
+*   **API Endpoint (like a Hook):** A new `POST` endpoint at `/api/admin/rules/ai-suggest` that accepts natural language text and returns a `Rule` JSON object.
+
+**3. Recommended Implementation Approach:**
+1.  In the new API route, create a system prompt that defines the `Rule` schema and its possible values (e.g., `RuleType: disable | discount | featured`).
+2.  The API should fetch dynamic data, like current product categories, and inject it into the prompt to give the AI context.
+3.  It will then send the user's query and the system prompt to the AI provider, explicitly requesting a JSON response.
+4.  The new frontend component will capture user text and call this API.
+5.  Upon receiving the JSON response, the component will use a callback or state management to pre-fill the main "Add Rule" form.
+
+**4. Edge Cases & Gotchas:**
+*   **AI Output Validation:** The AI may return malformed or incomplete JSON. The API route must have robust error handling and validation before sending the response to the client.
+*   **Ambiguity:** User's natural language can be ambiguous. The system prompt should be carefully engineered to guide the AI toward a structured output and minimize misinterpretation.
+*   **Context Staleness:** The categories and other contextual data provided to the AI must be fresh.
+
+
+## Iteration 20 - Story: AI Helper in Admin Rules Tab (ID: US-037)
+
+### What was implemented
+- `src/app/api/admin/rules/ai-suggest/route.ts` — POST handler, uses `generateText` (not `streamText`) from AI SDK with Groq primary/OpenRouter fallback, returns sanitized rule JSON
+- `src/components/admin/admin-rules-ai-helper.tsx` — collapsible panel with textarea, Generate Rule button, suggestion preview, Apply to Form button
+- Updated `admin-rules-panel.tsx` — added import, `handleAiSuggestion()` callback, and `<AdminRulesAiHelper>` above the header
+
+### Patterns discovered
+- AI SDK v6: `generateText` uses `maxOutputTokens` (NOT `maxTokens`) for token limit
+- Admin API routes: auth is handled by middleware for all `/api/admin/` — no auth needed inside route handler
+- `generateText` imported from `"ai"` — same package as `streamText`; good for JSON return since no streaming needed
+
+### Gotchas
+- `maxTokens` in AI SDK v6 has been renamed to `maxOutputTokens` — TypeScript catches this correctly
+- AI response may include markdown code fences; use `text.match(/\{[\s\S]*\}/)` to extract JSON
+- Categories validation is critical: AI may hallucinate category names; filter against real list before returning
