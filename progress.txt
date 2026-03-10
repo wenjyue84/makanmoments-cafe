@@ -13202,3 +13202,42 @@ Completed: Add Performance Benchmark Tests to /admin/tests Panel (ID: US-143) in
 ## Iteration 1 - Wed, Mar 11, 2026  3:13:07 AM
 Completed: Add Performance Benchmark Tests to /admin/tests Panel (ID: US-143) in 5m
 
+## Iteration 11 - Wed, Mar 11, 2026  3:13:45 AM
+Completed: Add Environment Variable Validation on Startup (ID: US-141) in 5m
+
+
+## Pre-analysis for US-144 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-144, designed for a Claude Code agent.
+
+---
+
+### **Technical Brief: US-144 - Fix Failing Admin Tests**
+
+**Objective:** Programmatically execute the entire Python test suite for the `lhdn_payroll_integration` app, identify all failures, and implement fixes for the underlying bugs.
+
+**1. Primary Files for Modification:**
+The investigation will start in Python `unittest` files. Fixes will be applied to the application's business logic controllers.
+- **Test Files (for analysis):** `lhdn_payroll_integration/lhdn_payroll_integration/doctype/**/test_*.py`
+- **Logic Files (for fixes):**
+  - `lhdn_payroll_integration/lhdn_payroll_integration/doctype/{doctype_name}/{doctype_name}.py`
+  - `lhdn_payroll_integration/lhdn_payroll_integration/api.py` or other shared modules.
+- **Configuration (for review):** `lhdn_payroll_integration/hooks.py` (to check `fixtures`).
+
+**2. Involved Frappe Concepts:**
+- **Test Runner:** The core task uses Frappe's server-side test runner, which discovers and executes `unittest` classes. The modern URL is `/app/test-runner`.
+- **DocTypes:** Failures will likely originate from tests exercising the app's core DocTypes (e.g., `LHDN Settings`, `Payroll Entry`, `Employee`, etc.).
+- **Hooks:** The `fixtures` hook in `hooks.py` defines the necessary database records for tests. Incorrect fixtures are a common failure point.
+
+**3. Recommended Implementation Approach:**
+1.  Execute the test suite via the command line for efficiency: `bench run-tests --app lhdn_payroll_integration`.
+2.  Parse the output to identify each `FAIL` or `ERROR`.
+3.  For each failure, use the stack trace to pinpoint the exact test method in a `test_*.py` file.
+4.  Debug the corresponding DocType controller (`.py` file) or API method to fix the root cause. Do not just alter the test assertion to match a buggy outcome.
+5.  After fixing and verifying a single test, commit the change atomically with a clear message before moving to the next failure.
+
+**4. Edge Cases & Gotchas:**
+- **CLI over UI:** Using `bench run-tests` is far more direct than automating a browser to click "Run All Tests." The goal is fixing Python code, not UI testing.
+- **Test Isolation:** Be mindful of test order dependency. A test that fails to clean up created documents can cause subsequent, unrelated tests to fail.
+- **Permissions:** Tests run as Administrator by default. A failure could be a legitimate `PermissionError` if a DocType's permissions are misconfigured.
+- **Stale Fixtures:** Test data specified in `hooks.py` may be outdated or incomplete, causing tests to fail before any logic is even executed.
+
