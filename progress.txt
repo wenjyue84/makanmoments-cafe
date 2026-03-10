@@ -1502,3 +1502,22 @@ Completed: Add Cafe Logo to Header and Footer (ID: US-019) in 9m
 ### Gotchas
 - globals.css has many hardcoded OKLCH values beyond CSS variables — search for the old hue (22) before finishing
 - Both TypeScript check and lint passed with no errors (CSS-only change)
+## Iteration 8 - Tue, Mar 10, 2026 11:23:09 AM
+Completed: Replace Menu Item Images with High-Quality Food Photos (ID: US-020) in 6m
+
+
+## Iteration N - Story: Add Cover Page Image to About Page (US-022)
+
+### What was implemented
+- Created `public/images/about/` directory
+- Compressed `COVER PAGE.png` to `public/images/about/cover-page.webp` (1400×1980, 443KB) using Sharp
+- Added `import Image from "next/image"` to `src/app/[locale]/about/page.tsx`
+- Added cover page image block between the header and story sections with `w-full rounded-2xl shadow-lg priority`
+
+### Patterns discovered
+- Node.js path with spaces must use forward slashes: `C:/Users/Jyue/.../COVER PAGE.png`
+- Python prd.json reads need `encoding='utf-8'` due to Unicode characters in JSON
+
+### Gotchas
+- `COVER PAGE.png` has a space in filename — works fine with forward slashes in Node
+- TypeScript check: `npx tsc --noEmit` shows no errors on changed files
