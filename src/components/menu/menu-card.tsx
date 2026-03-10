@@ -26,6 +26,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
   const { addItem, decrementItem, items } = useTray();
   const name = getLocalizedName(item, locale);
   const [imgError, setImgError] = useState(false);
+  const [imgLoaded, setImgLoaded] = useState(false);
   const [recipeOpen, setRecipeOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
   const [addScaling, setAddScaling] = useState(false);
@@ -59,7 +60,10 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
       <div className={cardClass}>
         {/* Photo — click/hover to reveal description */}
         <div
-          className="mb-3 relative aspect-[4/3] overflow-hidden rounded-lg bg-muted cursor-pointer"
+          className={cn(
+            "mb-3 relative aspect-[4/3] overflow-hidden rounded-lg cursor-pointer",
+            imgLoaded || !hasPhoto ? "bg-muted" : "bg-muted animate-pulse"
+          )}
           onClick={() => setShowDesc((v) => !v)}
           onMouseEnter={() => {
             hoverTimer.current = setTimeout(() => setShowDesc(true), 2000);
@@ -91,6 +95,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
                 sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 50vw, 33vw"
                 priority={priority}
                 loading={priority ? "eager" : "lazy"}
+                onLoad={() => setImgLoaded(true)}
                 onError={() => setImgError(true)}
               />
             )
@@ -191,7 +196,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
               <button
                 type="button"
                 onClick={() => decrementItem(item.code)}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground active:scale-90"
                 aria-label="Remove one"
               >
                 <Minus className="h-4 w-4" />

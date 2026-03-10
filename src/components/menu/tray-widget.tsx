@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ShoppingCart, X, Minus, Plus, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import { cn } from "@/lib/utils";
@@ -71,10 +71,23 @@ export function TrayWidget() {
     const [showOrderForm, setShowOrderForm] = useState(false);
     const [orderHistory, setOrderHistory] = useState<OrderHistoryEntry[]>([]);
     const [historyOpen, setHistoryOpen] = useState(false);
+    const [badgeBounce, setBadgeBounce] = useState(false);
     const { items, addItem, removeItem, clearTray, totalPrice } = useTray();
     const t = useTranslations("tray");
 
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
+    const prevTotalRef = useRef(totalItems);
+
+    // Bounce badge when an item is added
+    useEffect(() => {
+        if (totalItems > prevTotalRef.current) {
+            setBadgeBounce(true);
+            const timer = setTimeout(() => setBadgeBounce(false), 300);
+            prevTotalRef.current = totalItems;
+            return () => clearTimeout(timer);
+        }
+        prevTotalRef.current = totalItems;
+    }, [totalItems]);
 
     const hasTomYum = items.some(i => i.name.toLowerCase().includes('tom yum'));
     const hasOmelette = items.some(i => i.name.toLowerCase().includes('omelette'));
@@ -294,7 +307,11 @@ export function TrayWidget() {
                     aria-label="View Tray"
                 >
                     <ShoppingCart className="h-6 w-6" />
-                    {totalItems > 0 && <span className="font-bold text-lg">{totalItems}</span>}
+                    {totalItems > 0 && (
+                        <span className={cn("font-bold text-lg inline-block", badgeBounce && "badge-bounce")}>
+                            {totalItems}
+                        </span>
+                    )}
                 </button>
             )}
 

@@ -300,4 +300,26 @@
       box-shadow: 0 0 18px 4px oklch(0.42 0.14 145 / 0.60);
     }
   }
+
+  /* US-078: Tray badge bounce — brief scale pop when item is added */
+  @keyframes badge-bounce {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.35); }
+    70%  { transform: scale(0.88); }
+    100% { transform: scale(1); }
+  }
+  .badge-bounce {
+    animation: badge-bounce 0.3s ease-out;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .badge-bounce { animation: none; }
+  }
+
+  /* US-078: Global prefers-reduced-motion override — disables all animations */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }

@@ -136,7 +136,7 @@ export function MenuFilter({
         <button
           onClick={() => onCategoryChange(null)}
           className={cn(
-            "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+            "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
             selectedCategory === null
               ? "bg-primary text-primary-foreground"
               : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -153,7 +153,7 @@ export function MenuFilter({
               key={cat}
               onClick={() => onCategoryChange(cat)}
               className={cn(
-                "flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+                "flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors active:scale-95",
                 selectedCategory === cat
                   ? "bg-primary text-primary-foreground"
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -176,7 +176,7 @@ export function MenuFilter({
             key={`dc-${cat}`}
             onClick={() => onCategoryChange(`__dc__${cat}`)}
             className={cn(
-              "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+              "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors active:scale-95",
               selectedCategory === `__dc__${cat}`
                 ? "bg-amber-500 text-white"
                 : "border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
@@ -191,7 +191,7 @@ export function MenuFilter({
           <button
             onClick={() => onCategoryChange(FAV_KEY)}
             className={cn(
-              "flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+              "flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors active:scale-95",
               selectedCategory === FAV_KEY
                 ? "bg-red-500 text-white"
                 : "border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
