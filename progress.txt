@@ -10690,3 +10690,25 @@ Here is the technical brief for the user story.
 ### Gotchas
 - `prd.json` must be opened with `encoding='utf-8'` in Python on Windows or it fails with charmap decode error
 - The Chef's Pick badge in the section view's "chefPick" hero card uses `ChefPickCard` component (not MenuCard), so that was not modified — only the "rest" items in section view and flat view items use MenuCard
+## Iteration 1 - Tue, Mar 10, 2026 11:58:46 PM
+Completed: Admin Can Remove Item from Chef's Pick by Clicking the Badge on /en/menu (ID: US-123) in 6m
+
+
+## Iteration N - Story: US-124 — Limit Chef's Pick Hero Display to 2 Per Category
+
+### What was implemented
+- Changed `categorySections` useMemo in `menu-grid.tsx` to compute `heroItems` (up to 2) and `rest` (with overflow Chef's Picks prepended) instead of single `chefPick`
+- Featured items per category = items where `i.id === highlightedId` OR `i.displayCategories.includes("Chef's Picks")`
+- Falls back to first item in category if nothing is featured (preserving previous behavior)
+- Updated render section to loop over `sectionHeroItems` array instead of single `chefPick`
+- Updated `isHighlighted` for rest items to also check `isChefsPick(item)` (overflow items keep badge)
+- Also passed `onRemoveChefsPick` to rest grid's `EditableMenuCard` so overflow featured items can still be removed from Chef's Picks
+
+### Patterns discovered
+- `categorySections` shape changed from `{ cat, chefPick, rest }` to `{ cat, heroItems, rest }`
+- Used `sectionHeroItems` as alias in render destructure to avoid shadowing the flat-view `heroItems` useMemo variable
+- `chefsCatId` prop type is `string | null` (the page converts DB number id via `.id?.toString()`)
+
+### Gotchas
+- Variable naming conflict: `heroItems` is used both as a useMemo (flat view) and in `categorySections` items — used `sectionHeroItems` alias in the render destructure
+- TypeScript check passed cleanly after implementing changes

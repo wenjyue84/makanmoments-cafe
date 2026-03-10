@@ -28,6 +28,7 @@ interface MenuGridProps {
   initialCategory?: string | null;
   servingNowCategories?: string[];
   previewTime?: string | null;
+  chefsCatId?: string | null;
 }
 
 /** Returns false if an item has a time restriction and the given hour/minute is outside it. */
@@ -50,6 +51,7 @@ export function MenuGrid({
   initialCategory = null,
   servingNowCategories = [],
   previewTime = null,
+  chefsCatId = null,
 }: MenuGridProps) {
   // Parse preview time once
   const previewHour = previewTime ? parseInt(previewTime.split(":")[0], 10) : null;
@@ -69,6 +71,22 @@ export function MenuGrid({
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
+  const [removedFromChefsPick, setRemovedFromChefsPick] = useState<Set<string>>(new Set());
+
+  const isChefsPick = useCallback(
+    (item: MenuItem) => item.displayCategories.includes("Chef's Picks") && !removedFromChefsPick.has(item.id),
+    [removedFromChefsPick]
+  );
+
+  const handleRemoveChefsPick = useCallback(
+    async (itemId: string) => {
+      setRemovedFromChefsPick((prev) => new Set([...prev, itemId]));
+      if (chefsCatId) {
+        await fetch(`/api/admin/display-categories/${chefsCatId}/items?itemId=${itemId}`, { method: "DELETE" });
+      }
+    },
+    [chefsCatId]
+  );
   const [highlightError, setHighlightError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const chipBarScrollRef = useRef<HTMLDivElement>(null);
@@ -195,9 +213,22 @@ export function MenuGrid({
         const catItems = filtered.filter((item) => item.categories.includes(cat));
         if (catItems.length === 0) return null;
         const highlightedId = highlights[cat];
-        const chefPick = catItems.find((i) => i.id === highlightedId) ?? catItems[0];
-        const rest = catItems.filter((i) => i.id !== chefPick.id);
-        return { cat, chefPick, rest };
+        // All items tagged as Chef's Pick (admin-highlighted or in Chef's Picks display category)
+        const featuredItems = catItems.filter(
+          (i) => i.id === highlightedId || i.displayCategories.includes("Chef's Picks")
+        );
+        // Fall back to first item if nothing is featured
+        const effectiveFeatured = featuredItems.length > 0 ? featuredItems : [catItems[0]];
+        // Max 2 hero cards per category
+        const heroItems = effectiveFeatured.slice(0, 2);
+        const heroIds = new Set(heroItems.map((i) => i.id));
+        // Overflow featured items (3rd+): still Chef's Pick, but shown as regular cards
+        const overflowFeatured = effectiveFeatured.slice(2);
+        const overflowIds = new Set(overflowFeatured.map((i) => i.id));
+        // rest = all non-hero items, with overflow featured prepended so they appear at top-left
+        const nonHero = catItems.filter((i) => !heroIds.has(i.id));
+        const rest = [...nonHero.filter((i) => overflowIds.has(i.id)), ...nonHero.filter((i) => !overflowIds.has(i.id))];
+        return { cat, heroItems, rest };
       })
       .filter((s): s is NonNullable<typeof s> => s !== null);
   }, [filtered, categories, selectedPosCat, selectedDisplayCat, highlights]);
@@ -210,8 +241,8 @@ export function MenuGrid({
   const heroItems = useMemo(() => {
     if (!isFlatView || isSearching || isFavoritesSelected) return [];
     if (selectedDisplayCat?.toLowerCase().includes("chef")) return filtered.slice(0, 2);
-    return filtered.filter((i) => i.displayCategories.includes("Chef's Picks")).slice(0, 2);
-  }, [filtered, isFlatView, isSearching, isFavoritesSelected, selectedDisplayCat]);
+    return filtered.filter((i) => isChefsPick(i)).slice(0, 2);
+  }, [filtered, isFlatView, isSearching, isFavoritesSelected, selectedDisplayCat, isChefsPick]);
 
   const regularFlatItems = useMemo(() => {
     const heroIds = new Set(heroItems.map((i) => i.id));
@@ -359,7 +390,7 @@ export function MenuGrid({
             {(isAdmin && isEditMode ? filtered : regularFlatItems).map((item, index) => {
               const isHighlighted =
                 item.categories.some((cat) => highlights[cat] === item.id) ||
-                item.displayCategories.includes("Chef's Picks");
+                isChefsPick(item);
               const isUnavailableAtPreview =
                 isAdmin && hasPreviewTime
                   ? !isAvailableAtTime(item, previewHour!, previewMinute!)
@@ -370,6 +401,7 @@ export function MenuGrid({
                   item={item}
                   isHighlighted={isHighlighted}
                   onSetHighlight={() => handleSetHighlight(item.id, item.categories)}
+                  onRemoveChefsPick={isChefsPick(item) ? () => handleRemoveChefsPick(item.id) : undefined}
                   isUnavailableAtPreview={isUnavailableAtPreview}
                 />
               ) : (
@@ -389,9 +421,9 @@ export function MenuGrid({
           </div>
         </div>
       ) : (
-        /* Category sections: Chef's Pick hero + regular grid */
+        /* Category sections: Chef's Pick hero cards (max 2) + regular grid */
         <div className="mt-6 space-y-10">
-          {categorySections.map(({ cat, chefPick, rest }, sectionIdx) => (
+          {categorySections.map(({ cat, heroItems: sectionHeroItems, rest }, sectionIdx) => (
             <section key={cat} id={`section-${cat}`} aria-labelledby={`cat-${cat}`} className="scroll-mt-[108px]">
               <h2
                 id={`cat-${cat}`}
@@ -400,28 +432,40 @@ export function MenuGrid({
                 {cat}
               </h2>
 
-              {/* Chef's Pick hero card — full-width */}
+              {/* Chef's Pick hero cards — up to 2 per category */}
               {isAdmin && isEditMode ? (
-                <EditableMenuCard
-                  item={chefPick}
-                  isHighlighted={true}
-                  priority={sectionIdx === 0}
-                  onSetHighlight={() => handleSetHighlight(chefPick.id, chefPick.categories)}
-                  isUnavailableAtPreview={
-                    hasPreviewTime ? !isAvailableAtTime(chefPick, previewHour!, previewMinute!) : false
-                  }
-                />
+                <div className="space-y-4">
+                  {sectionHeroItems.map((hero, heroIdx) => (
+                    <EditableMenuCard
+                      key={hero.id}
+                      item={hero}
+                      isHighlighted={true}
+                      priority={sectionIdx === 0 && heroIdx === 0}
+                      onSetHighlight={() => handleSetHighlight(hero.id, hero.categories)}
+                      onRemoveChefsPick={isChefsPick(hero) ? () => handleRemoveChefsPick(hero.id) : undefined}
+                      isUnavailableAtPreview={
+                        hasPreviewTime ? !isAvailableAtTime(hero, previewHour!, previewMinute!) : false
+                      }
+                    />
+                  ))}
+                </div>
               ) : (
-                <FadeUp>
-                  <ChefPickCard item={chefPick} priority={sectionIdx === 0} />
-                </FadeUp>
+                <div className="space-y-4">
+                  {sectionHeroItems.map((hero, heroIdx) => (
+                    <FadeUp key={hero.id}>
+                      <ChefPickCard item={hero} priority={sectionIdx === 0 && heroIdx === 0} />
+                    </FadeUp>
+                  ))}
+                </div>
               )}
 
-              {/* Remaining items in standard grid */}
+              {/* Remaining items in standard grid (overflow Chef's Picks appear at top-left with badge) */}
               {rest.length > 0 && (
                 <div className="mt-4 grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {rest.map((item, index) => {
-                    const isHighlighted = item.categories.some((c) => highlights[c] === item.id);
+                    const isHighlighted =
+                      item.categories.some((c) => highlights[c] === item.id) ||
+                      isChefsPick(item);
                     const isUnavailableAtPreview =
                       hasPreviewTime ? !isAvailableAtTime(item, previewHour!, previewMinute!) : false;
                     return isAdmin && isEditMode ? (
@@ -430,6 +474,7 @@ export function MenuGrid({
                         item={item}
                         isHighlighted={isHighlighted}
                         onSetHighlight={() => handleSetHighlight(item.id, item.categories)}
+                        onRemoveChefsPick={isChefsPick(item) ? () => handleRemoveChefsPick(item.id) : undefined}
                         isUnavailableAtPreview={isUnavailableAtPreview}
                       />
                     ) : (
