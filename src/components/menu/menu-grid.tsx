@@ -68,7 +68,14 @@ export function MenuGrid({
     let result = items;
 
     if (selectedDisplayCat) {
-      result = result.filter((item) => item.displayCategories.includes(selectedDisplayCat));
+      const lc = selectedDisplayCat.toLowerCase();
+      if (lc.includes("chef")) {
+        // Chef's Picks: use junction table rows, fall back to featured=true items if empty
+        const fromJunction = items.filter((item) => item.displayCategories.includes(selectedDisplayCat));
+        result = fromJunction.length > 0 ? fromJunction : items.filter((i) => i.featured);
+      } else {
+        result = result.filter((item) => item.displayCategories.includes(selectedDisplayCat));
+      }
     } else if (selectedPosCat) {
       result = result.filter((item) => item.categories.includes(selectedPosCat));
     }
