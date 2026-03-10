@@ -1,9 +1,8 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Eye, EyeOff, X } from "lucide-react";
-import Fuse from "fuse.js";
 import type { MenuItem } from "@/types/menu";
 import { MenuCard } from "./menu-card";
 import { ChefPickCard } from "./chef-pick-card";
@@ -14,19 +13,7 @@ import { cn } from "@/lib/utils";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SPECIAL_DISPLAY_CATEGORIES } from "@/lib/constants";
-
-// Display category values are prefixed with "__dc__" to distinguish from POS categories
-const DC_PREFIX = "__dc__";
-
-// Fuse.js options defined at module level to prevent stale closure re-creation
-const fuseOptions = {
-  keys: ["nameEn", "nameMs", "nameZh", "description", "categories"],
-  threshold: 0.4,
-  minMatchCharLength: 2,
-  includeScore: true,
-};
-// Special filter key for user-favorited items
-const FAVORITES_FILTER = "__favorites__";
+import { useMenuFiltering, DC_PREFIX, FAVORITES_FILTER } from "@/hooks/useMenuFiltering";
 
 interface MenuGridProps {
   items: MenuItem[];
@@ -100,50 +87,26 @@ export function MenuGrid({
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const chipBarScrollRef = useRef<HTMLDivElement>(null);
 
-  // Resolve whether selected tab is a POS category or display category or favorites
-  const isFavoritesSelected = category === FAVORITES_FILTER;
-  const isDisplayCategorySelected = !isFavoritesSelected && (category?.startsWith(DC_PREFIX) ?? false);
-  const selectedDisplayCat = isDisplayCategorySelected ? category!.slice(DC_PREFIX.length) : null;
-  const selectedPosCat = !isDisplayCategorySelected && !isFavoritesSelected ? category : null;
-
-  // Fuse.js instance for fuzzy search across all items (memoized to avoid re-init on every render)
-  const fuse = useMemo(() => new Fuse(items, fuseOptions), [items]);
-
-  const filtered = useMemo(() => {
-    // Fuzzy search takes precedence — search across ALL items regardless of selected category
-    if (debouncedSearch.trim().length >= 2) {
-      return fuse.search(debouncedSearch).map((r) => r.item);
-    }
-
-    let result = items;
-
-    if (isFavoritesSelected) {
-      result = items.filter((i) => favorites.includes(i.code));
-    } else if (selectedDisplayCat) {
-      const lc = selectedDisplayCat.toLowerCase();
-      if (selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) {
-        // Chef's Picks: use junction table rows, fall back to featured=true items if empty
-        const fromJunction = items.filter((item) => item.displayCategories.includes(selectedDisplayCat));
-        result = fromJunction.length > 0 ? fromJunction : items.filter((i) => i.featured);
-      } else if (selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.UNDER_RM15) {
-        // Under RM15: auto-computed from price, excluding drinks
-        result = items.filter(
-          (i) =>
-            i.price < 15 &&
-            !i.displayCategories.some((dc) => dc === "Hot Drinks" || dc === "Cold Drinks & Juice")
-        );
-      } else if (selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.VEGETARIAN) {
-        // Vegetarian: auto-computed from dietary tags, no junction table needed
-        result = items.filter((i) => i.dietary?.some((d) => d.toLowerCase() === "vegetarian"));
-      } else {
-        result = result.filter((item) => item.displayCategories.includes(selectedDisplayCat));
-      }
-    } else if (selectedPosCat) {
-      result = result.filter((item) => item.categories.includes(selectedPosCat));
-    }
-
-    return result;
-  }, [items, selectedPosCat, selectedDisplayCat, isFavoritesSelected, favorites, debouncedSearch, fuse]);
+  const {
+    filtered,
+    categorySections,
+    heroItems,
+    regularFlatItems,
+    isFlatView,
+    isSearching,
+    isFavoritesSelected,
+    selectedDisplayCat,
+    selectedPosCat,
+  } = useMenuFiltering({
+    items,
+    selectedCategory: category,
+    searchQuery: debouncedSearch,
+    highlights,
+    displayCategories,
+    categories,
+    favorites,
+    removedFromChefsPick,
+  });
 
   const handleSetHighlight = useCallback(async (itemId: string, itemCategories: string[]) => {
     const prevHighlights = { ...highlights };
