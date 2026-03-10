@@ -986,3 +986,28 @@ The objective is to replace the current blog content with curated posts from "op
 *   **Manual Step:** The sync script is a manual process. The development workflow must include running this script to see updated blog content.
 *   **Content vs. Frontmatter:** Ensure you are modifying the `content` property from `gray-matter`, not the `data` (frontmatter) property. The metadata to be stripped is in the markdown body itself.
 
+
+## Iteration N - Story: US-015 - Blog Content: Operator-Perspective Posts + Metadata Stripping
+
+### What was implemented
+- Archived 134 ai-generated posts (mix of operator/customer perspective) from content/blog/ to content/blog/_archived/
+- Copied 45 operator posts with actual content from stories/ (26), operations/ (6), promotions/ (13) to content/blog/
+- Modified src/lib/blog-local.ts:
+  - Added stripMetadataSections() with CRLF normalization (critical for Windows files)
+  - Strips ## Source, ## Post Type, ## Response Strategy, ## Best Posting Time, ## References blocks
+  - Converts ## Content block → extracts AI summary as plain text paragraph
+  - Strips Obsidian metadata lines (**Type:**, **Created:**, **Tags:**)
+  - Added extractDateFromContent() for Notion-sync files using **Created:** field
+  - Updated extractExcerpt() skip patterns to exclude - **Key:** metadata bullets
+
+### Patterns discovered
+- CRITICAL: Files from Notion sync have CRLF (\r\n) line endings on Windows. gray-matter does NOT normalize them. Must call content.replace(/\r\n/g, '\n') before splitting by \n---\n
+- Notion-sync files have minimal content: just AI summary (~1-2 sentences Chinese). These are the blog posts from stories/operations/promotions/
+- Sections in both ai-posts and Notion-sync files are delimited by --- horizontal rules
+- ai-posts: 60 operator-perspective (小编), 68 customer-perspective (顾客), 6 other
+- Stories with content: 26 | Operations: 6 | Promotions: 13 = 45 total
+
+### Gotchas
+- CRLF is the critical bug here - Windows file copies preserve CRLF
+- The ## Content block in Notion sync files is a metadata wrapper, not actual content
+- gray-matter treats files without leading --- as content-only (no frontmatter extraction)
