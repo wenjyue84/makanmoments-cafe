@@ -8282,3 +8282,6 @@ Here is the technical brief for the KDS implementation based on the provided use
 ### Gotchas
 - API routes under `/api/kds/*` need to return 401 JSON, not redirect, on unauthorized access
 - `/kds` page handles unauthenticated state by detecting 401 from `/api/kds/orders` and calling `window.location.href = '/kds/login'`
+## Iteration 55 - Tue, Mar 10, 2026  7:08:42 PM
+Completed: KDS: Kitchen Display System — Login + Order Queue View (ID: US-087) in 10m
+
