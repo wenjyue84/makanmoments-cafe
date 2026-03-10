@@ -10763,3 +10763,21 @@ Completed: Limit Chef's Pick Hero Display to 2 Per Category; Show Extra as Regul
 - `.rainbow-kb/` not found warning is expected — US-126 seeds the KB
 - No DATABASE_URL needed for basic operation; DB features degrade gracefully
 - `tsconfig.json` has `"rootDir": "./src"` so shared/ needed to go inside src/
+
+## Iteration N+1 - Story: US-126 Seed Cafe Knowledge Base for Rainbow AI
+
+### What was implemented
+- Created `rainbow-ai/.rainbow-kb/` directory
+- Copied `knowledge/cafe-facts.md` → `.rainbow-kb/cafe-facts.md`
+- Copied `knowledge/menu-knowledge.md` → `.rainbow-kb/menu.md`
+- Copied `knowledge/faq.md` → `.rainbow-kb/faq.md`
+- Created `.rainbow-kb/ordering.md` with full pre-order flow, order statuses, T&G deposit info, and FAQ
+
+### Patterns discovered
+- `.rainbow-kb/` is already in .gitignore from US-125 — no additional changes needed
+- No hostel files existed in .rainbow-kb/ since the directory was newly created (not copied from digiman)
+- Knowledge files live at project root `knowledge/` — same as AI waiter chat system already uses
+
+### Gotchas
+- `.rainbow-kb/` path is relative to the CWD when running `npm run dev` inside `rainbow-ai/`
+- The KnowledgeBase will auto-load these files on startup (seen in startup log: "[KnowledgeBase] .rainbow-kb/ not found at .rainbow-kb")
