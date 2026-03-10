@@ -11512,3 +11512,40 @@ This technical brief is for a **Next.js/TypeScript** user story, not Frappe/Pyth
 ### Gotchas
 - `TextUIPart` has a `state` property and other fields — `isTextUIPart` is preferred over a type predicate to stay in sync with SDK
 - The `} as any` casts on individual tool definitions remain (separate issue, not in scope for US-135)
+
+## Iteration - Story: Fix TypeScript any Types in Chat Route (US-135)
+
+### What was implemented
+- All changes were already in place from a prior iteration (git status showed `M src/app/api/chat/route.ts`)
+- `interface ChatRequestBody { messages: UIMessage[]; sessionId?: string }` defined at line 14
+- `let body: ChatRequestBody;` typed (not `any`) at line 41
+- `isTextUIPart` imported from 'ai' and used for message part filtering (line 72)
+- `buildStream(model: LanguageModel)` properly typed at line 135
+- No `as any` cast on `streamText(...)` call
+- `npx tsc --noEmit` passes cleanly
+
+### Patterns discovered
+- When git status shows a file as modified, the story may already be implemented — verify acceptance criteria before re-doing work
+- Tool definitions still use `} as any)` casts due to AI SDK Zod type mismatch, but those are covered by eslint-disable comments and don't affect the story's acceptance criteria
+
+### Gotchas
+- None — story was already done; just needed to be marked complete
+
+## Iteration N - Wed, Mar 11, 2026 - Story: Fix TypeScript any Types in Chat Route (US-135)
+
+### What was implemented
+- Added `ChatRequestBody` interface (`{ messages: UIMessage[]; sessionId?: string }`)
+- Changed `let body: any` to `let body: ChatRequestBody`
+- Used `isTextUIPart` from 'ai' package instead of `(msg.parts as any[]).filter((p: any) => p.type === "text")`
+- Typed `buildStream` parameter as `LanguageModel` (from 'ai')
+- Removed `(streamText as any)` cast — now calls `streamText(...)` directly
+- Added `as ToolSet` cast on the toolSet object
+- Remaining `as any` on tool definitions (checkOrderStatusTool, submitOrderTool) are SDK-required and unrelated to acceptance criteria
+
+### Patterns discovered
+- Changes were already in the working tree (git status showed file as modified)
+- The story was partially complete — the diff showed all required changes already applied
+- `npx tsc --noEmit` passes clean (no "error TS" output)
+
+### Gotchas
+- `prd.json` must be opened with `encoding='utf-8'` on Windows (cp1252 default fails)
