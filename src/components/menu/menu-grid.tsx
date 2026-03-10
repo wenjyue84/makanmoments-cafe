@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SPECIAL_DISPLAY_CATEGORIES } from "@/lib/constants";
-import { useMenuFiltering, DC_PREFIX, FAVORITES_FILTER } from "@/hooks/useMenuFiltering";
+import { useMenuFiltering, DC_PREFIX, isAvailableAtTime } from "@/hooks/useMenuFiltering";
 
 interface MenuGridProps {
   items: MenuItem[];
@@ -25,17 +25,6 @@ interface MenuGridProps {
   servingNowCategories?: string[];
   previewTime?: string | null;
   chefsCatId?: string | null;
-}
-
-/** Returns false if an item has a time restriction and the given hour/minute is outside it. */
-function isAvailableAtTime(item: MenuItem, hour: number, minute: number): boolean {
-  if (!item.available) return false;
-  const { timeFrom, timeUntil } = item;
-  if (!timeFrom || !timeUntil) return true;
-  const [fh, fm] = timeFrom.split(":").map(Number);
-  const [uh, um] = timeUntil.split(":").map(Number);
-  const mins = hour * 60 + minute;
-  return mins >= fh * 60 + fm && mins < uh * 60 + um;
 }
 
 export function MenuGrid({
@@ -69,11 +58,6 @@ export function MenuGrid({
   const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
   const [removedFromChefsPick, setRemovedFromChefsPick] = useState<Set<string>>(new Set());
 
-  const isChefsPick = useCallback(
-    (item: MenuItem) => item.displayCategories.includes(SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) && !removedFromChefsPick.has(item.id),
-    [removedFromChefsPick]
-  );
-
   const handleRemoveChefsPick = useCallback(
     async (itemId: string) => {
       setRemovedFromChefsPick((prev) => new Set([...prev, itemId]));
@@ -93,10 +77,9 @@ export function MenuGrid({
     heroItems,
     regularFlatItems,
     isFlatView,
-    isSearching,
     isFavoritesSelected,
     selectedDisplayCat,
-    selectedPosCat,
+    isChefsPick,
   } = useMenuFiltering({
     items,
     selectedCategory: category,
@@ -166,57 +149,6 @@ export function MenuGrid({
       setHighlightError("Failed to remove Chef's Pick — change reverted");
     }
   }, [highlights]);
-
-  // Build category sections for grouped view (used when no search text)
-  // Note: isFlatView is used in effects below — computed after categorySections
-  const categorySections = useMemo(() => {
-    if (selectedDisplayCat) {
-      // Display category selected: flat list, no chef's pick hierarchy
-      return [];
-    }
-    const activeCats = selectedPosCat ? [selectedPosCat] : categories;
-    return activeCats
-      .map((cat) => {
-        const catItems = filtered.filter((item) => item.categories.includes(cat));
-        if (catItems.length === 0) return null;
-        const highlightedId = highlights[cat];
-        // All items tagged as Chef's Pick (admin-highlighted or in Chef's Picks display category)
-        const featuredItems = catItems.filter(
-          (i) => i.id === highlightedId || i.displayCategories.includes(SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS)
-        );
-        // Fall back to first item if nothing is featured
-        const effectiveFeatured = featuredItems.length > 0 ? featuredItems : [catItems[0]];
-        // Max 2 hero cards per category
-        const heroItems = effectiveFeatured.slice(0, 2);
-        const heroIds = new Set(heroItems.map((i) => i.id));
-        // Overflow featured items (3rd+): still Chef's Pick, but shown as regular cards
-        const overflowFeatured = effectiveFeatured.slice(2);
-        const overflowIds = new Set(overflowFeatured.map((i) => i.id));
-        // rest = all non-hero items, with overflow featured prepended so they appear at top-left
-        const nonHero = catItems.filter((i) => !heroIds.has(i.id));
-        const rest = [...nonHero.filter((i) => overflowIds.has(i.id)), ...nonHero.filter((i) => !overflowIds.has(i.id))];
-        return { cat, heroItems, rest };
-      })
-      .filter((s): s is NonNullable<typeof s> => s !== null);
-  }, [filtered, categories, selectedPosCat, selectedDisplayCat, highlights]);
-
-  const isSearching = debouncedSearch.trim().length > 0;
-  // Flat grid when: searching, display category selected, favorites, or no POS categories (all-display-category setup)
-  const isFlatView = isSearching || isDisplayCategorySelected || isFavoritesSelected || categories.length === 0;
-
-  // In flat view (customer mode): items tagged as Chef's Picks float to top as hero cards.
-  // All view (no display cat): show ALL Chef's Picks. Specific display cat: max 2.
-  const heroItems = useMemo(() => {
-    if (!isFlatView || isSearching || isFavoritesSelected) return [];
-    if (selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) return filtered.slice(0, 2);
-    const chefs = filtered.filter((i) => isChefsPick(i));
-    return selectedDisplayCat ? chefs.slice(0, 2) : chefs;
-  }, [filtered, isFlatView, isSearching, isFavoritesSelected, selectedDisplayCat, isChefsPick]);
-
-  const regularFlatItems = useMemo(() => {
-    const heroIds = new Set(heroItems.map((i) => i.id));
-    return filtered.filter((i) => !heroIds.has(i.id));
-  }, [filtered, heroItems]);
 
   // IntersectionObserver: update active chip as user scrolls through sections
   useEffect(() => {

@@ -6,6 +6,17 @@ import { SPECIAL_DISPLAY_CATEGORIES } from "@/lib/constants";
 // Display category values are prefixed with "__dc__" to distinguish from POS categories
 export const DC_PREFIX = "__dc__";
 
+/** Returns false if an item has a time restriction and the given hour/minute is outside it. */
+export function isAvailableAtTime(item: MenuItem, hour: number, minute: number): boolean {
+  if (!item.available) return false;
+  const { timeFrom, timeUntil } = item;
+  if (!timeFrom || !timeUntil) return true;
+  const [fh, fm] = timeFrom.split(":").map(Number);
+  const [uh, um] = timeUntil.split(":").map(Number);
+  const mins = hour * 60 + minute;
+  return mins >= fh * 60 + fm && mins < uh * 60 + um;
+}
+
 // Special filter key for user-favorited items
 export const FAVORITES_FILTER = "__favorites__";
 
@@ -46,6 +57,7 @@ export interface UseMenuFilteringResult {
   selectedDisplayCat: string | null;
   selectedPosCat: string | null;
   fuse: Fuse<MenuItem>;
+  isChefsPick: (item: MenuItem) => boolean;
 }
 
 export function useMenuFiltering({
@@ -93,8 +105,6 @@ export function useMenuFiltering({
     if (isFavoritesSelected) {
       result = items.filter((i) => favorites.includes(i.code));
     } else if (selectedDisplayCat) {
-      const lc = selectedDisplayCat.toLowerCase();
-      void lc; // used for future locale-aware filtering
       if (selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) {
         // Chef's Picks: use junction table rows, fall back to featured=true items if empty
         const fromJunction = items.filter((item) =>
@@ -191,5 +201,6 @@ export function useMenuFiltering({
     selectedDisplayCat,
     selectedPosCat,
     fuse,
+    isChefsPick,
   };
 }

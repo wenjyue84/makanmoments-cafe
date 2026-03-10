@@ -11921,3 +11921,180 @@ Completed: Memoize Fuse.js Instance in MenuGrid (ID: US-137) in 3m
 ## Iteration 7 - Wed, Mar 11, 2026  2:31:02 AM
 Completed: Memoize Fuse.js Instance in MenuGrid (ID: US-137) in 3m
 
+## Iteration 5 - Wed, Mar 11, 2026  2:31:38 AM
+Completed: Memoize Fuse.js Instance in MenuGrid (ID: US-137) in 3m
+
+
+## Pre-analysis for US-138 (Gemini 2.5 Pro)
+**Subject: Technical Brief for US-138: Refactor Menu Filtering Logic**
+
+**Correction:** This user story pertains to a **React/TypeScript** frontend application, not a Frappe/Python backend. The goal is to refactor component logic into a reusable hook.
+
+**1. Python Files to Modify / Key Files:**
+*   `src/hooks/useMenuFiltering.ts`: (New file) This will contain all the extracted logic.
+*   `src/components/menu/menu-grid.tsx`: (Existing file) This component will be refactored to use the new hook, becoming much leaner.
+
+**2. Frappe DocTypes / Core Concepts Involved:**
+*   **React Hook:** The primary concept is creating a custom hook (`useMenuFiltering`).
+*   **React State/Props:** The hook will process props like `items`, `selectedCategory`, `searchQuery`, and `displayCategories`.
+*   **Memoization:** `useMemo` is critical for performance, ensuring expensive filtering and grouping operations don't run on every render.
+*   **Data Structures:** Logic operates on arrays of menu item objects and groups them into sections.
+
+**3. Recommended Implementation Approach:**
+1.  Create the new file `src/hooks/useMenuFiltering.ts`.
+2.  Define the hook's signature to accept all necessary data as arguments (items, category, query, etc.).
+3.  Cut the `useMemo` blocks responsible for calculating `filteredItems`, `categorySections`, and `heroItems` from `menu-grid.tsx` and paste them into the new hook.
+4.  The hook should return these computed values in an object.
+5.  In `menu-grid.tsx`, import and call `useMenuFiltering`, passing the required state and props.
+6.  Replace the original logic in `menu-grid.tsx` with the returned values from the hook.
+
+**4. Edge Cases & Gotchas:**
+*   The hook must be a pure function; do not call other hooks like `useContext` inside it. All data must be passed in as arguments.
+*   Ensure the memoized Fuse.js instance from US-137 is properly incorporated and memoized *within* the new hook.
+*   Verify that initial render behavior (e.g., when `items` is empty or no category is selected) remains unchanged.
+*   Confirm that all existing filtering behaviors (category, search, Chef's Picks) work identically post-refactor.
+
+
+## Pre-analysis for US-138 (Gemini 2.5 Pro)
+Here is the technical brief for the engineering team, based on the provided user story.
+
+### Technical Brief: US-138 `useMenuFiltering` Hook Extraction
+
+**Objective:**
+Refactor the `MenuGrid.tsx` component by extracting approximately 150 lines of complex filtering, search, and data grouping logic into a new, reusable, and testable custom hook: `useMenuFiltering`.
+
+**Files to Modify:**
+1.  **Create:** `src/hooks/useMenuFiltering.ts`
+2.  **Update:** `src/components/menu/menu-grid.tsx` (or the file containing the `MenuGrid` component)
+
+**Core Implementation Plan:**
+1.  Create the `useMenuFiltering.ts` file and define the hook's signature. It should be a pure function, accepting all necessary data as props:
+    ```typescript
+    (
+      items: MenuItem[],
+      searchQuery: string,
+      selectedCategory: string,
+      highlights: string[],
+      displayCategories: DisplayCategory[],
+      fuse: Fuse<MenuItem>
+    ) => { filteredItems, categorySections, heroItems }
+    ```
+2.  Migrate the `useMemo` blocks responsible for calculating `filteredItems`, `categorySections`, and `heroItems` from `MenuGrid.tsx` into this new hook.
+3.  The hook will encapsulate all filtering logic: primary category selection, Fuse.js search, and display category grouping.
+4.  In `MenuGrid.tsx`, remove the extracted logic and replace it with a single call to the `useMenuFiltering` hook.
+5.  The component's JSX will then render the data returned from the hook.
+
+**Gotchas & Edge Cases:**
+*   **Purity:** The hook must not contain any side effects or internal state/context calls. All dependencies must be passed in as arguments.
+*   **Memoization:** Ensure the `useMemo` dependency arrays within the hook are correctly configured to prevent stale data or performance regressions.
+*   **Fuse.js Instance:** The hook should accept the memoized Fuse.js instance (from US-137) as an argument, not create its own.
+*   **Type Safety:** Define and export clear TypeScript types for the hook's arguments and its return object.
+
+
+## Pre-analysis for US-138 (Gemini 2.5 Pro)
+This is a React/Next.js task, not Frappe/Python. The user story outlines a refactoring task to improve code structure.
+
+### Technical Brief: US-138
+
+**Objective**: Extract complex filtering, searching, and grouping logic from the `MenuGrid` component into a dedicated, reusable React hook `useMenuFiltering`.
+
+**Files to Modify**:
+*   `src/components/menu/menu-grid.tsx`: Source of the logic. Will be simplified to consume the new hook.
+*   `src/hooks/useMenuFiltering.ts`: New file to create, which will contain the extracted logic.
+*   `src/types/menu.ts` (or similar): May need to add or adjust type definitions for the hook's interface.
+
+**Key DocTypes & Hooks**:
+*   This is a React project. The primary concept is creating a custom React Hook (`useMenuFiltering`). No Frappe DocTypes are involved.
+
+**Implementation Plan**:
+1.  Create `src/hooks/useMenuFiltering.ts`.
+2.  Define the hook's signature to accept props: `items`, `selectedCategory`, `searchQuery`, `highlights`, `displayCategories`, and the memoized `fuseInstance`.
+3.  Move the `useMemo` calculations for `filteredItems`, `categorySections`, and `heroItems` from `menu-grid.tsx` into the new hook.
+4.  The hook should return `{ filteredItems, categorySections, heroItems }`.
+5.  Refactor `menu-grid.tsx` to call `useMenuFiltering` and use its return values, removing ~100+ lines of logic.
+
+**Gotchas & Edge Cases**:
+*   **Hook Purity**: The hook must be pure. Ensure it does not call other hooks like `useContext` and receives all required data as arguments.
+*   **Fuse Instance**: The memoized `Fuse.js` instance must be passed into the hook, not instantiated within it, to avoid performance degradation.
+*   **Dependency Arrays**: Double-check the dependency arrays for all `useMemo` calls inside the new hook to ensure they are correct and prevent stale data.
+*   **Typing**: Ensure strong TypeScript types are used for the hook's arguments and return values.
+
+
+## Pre-analysis for US-138 (Gemini 2.5 Pro)
+Based on the user story, here is the technical brief for implementing the `useMenuFiltering` hook.
+
+### **Technical Brief: US-138 `useMenuFiltering` Hook**
+
+**1. Primary Files to Modify:**
+*   **Create:** `src/hooks/useMenuFiltering.ts`
+*   **Refactor:** `src/components/menu/menu-grid.tsx`
+
+**2. Core DocTypes & Hooks (React/Next.js Context):**
+*   **Hook:** `useMenuFiltering` (new)
+*   **Component:** `MenuGrid`
+*   **Data Structures (Props):** The hook will process `items` (array of menu item objects), `selectedCategory` (string), `searchQuery` (string), `highlights` (array of featured item IDs), and `displayCategories` (array of category objects).
+
+**3. Recommended Implementation Approach:**
+1.  Create the new hook `src/hooks/useMenuFiltering.ts`.
+2.  Define the hook to accept `(items, selectedCategory, searchQuery, highlights, displayCategories)` as arguments.
+3.  Locate and move the three main `useMemo` blocks from `menu-grid.tsx` into the `useMenuFiltering` hook:
+    *   The logic for the "Chef's Picks" section (`heroItems`).
+    *   The primary search and category filtering logic (`filteredItems`), which likely uses the memoized `Fuse` instance.
+    *   The logic that groups filtered items into sections for rendering (`categorySections`).
+4.  The hook should return an object: `{ filteredItems, categorySections, heroItems }`.
+5.  In `menu-grid.tsx`, replace the extracted logic with a single call to the new hook: `const { filteredItems, categorySections, heroItems } = useMenuFiltering(...)`.
+
+**4. Edge Cases & Gotchas:**
+*   **Purity:** The hook must be a pure function. Do not introduce any state or context lookups inside it; all necessary data must be passed as props.
+*   **Memoization:** Ensure the `useMemo` dependency arrays within the hook correctly list all external variables they depend on (e.g., `[items, searchQuery, selectedCategory]`) to prevent stale data or unnecessary recalculations.
+*   **Fuse.js Instance:** The memoized Fuse.js search instance (from US-137) should be passed into the hook as a parameter to maintain performance.
+*   **Initial State:** Confirm filtering logic gracefully handles initial state where `searchQuery` is empty and `selectedCategory` might be "all" or `null`.
+
+
+## Iteration N - Story: US-138 Extract MenuGrid Filtering into useMenuFiltering Hook
+
+### What was implemented
+- `src/hooks/useMenuFiltering.ts` created with all filtering/grouping logic extracted from menu-grid.tsx
+- `isChefsPick` function moved into hook and exported in return value
+- Removed duplicate `categorySections`, `heroItems`, `regularFlatItems` useMemo blocks from menu-grid.tsx
+- Removed duplicated `isChefsPick` useCallback from menu-grid.tsx
+- Hook accepts: items, selectedCategory, searchQuery, highlights, displayCategories, categories, favorites, removedFromChefsPick
+- Hook returns: filtered, categorySections, heroItems, regularFlatItems, isFlatView, isSearching, isFavoritesSelected, isDisplayCategorySelected, selectedDisplayCat, selectedPosCat, fuse, isChefsPick
+
+### Patterns discovered
+- menu-grid.tsx went from 508 lines (pre-US-137) to 402 lines — 106 lines removed, exceeding the 100-line target
+- The hook had already been partially scaffolded in a prior session; this iteration completed the extraction by also moving isChefsPick into it
+- Memoized Fuse instance (from US-137) now lives inside the hook — single responsibility
+
+### Gotchas
+- TypeScript check passes cleanly (npx tsc --noEmit)
+- menu-grid.tsx still imports DC_PREFIX and FAVORITES_FILTER from the hook — these are re-exported constants
+
+## Pre-analysis for US-138 (Gemini 2.5 Pro)
+This technical brief outlines the implementation plan for user story US-138, which refactors `MenuGrid.tsx` to isolate complex logic into a reusable React hook.
+
+### US-138: Technical Brief
+
+**1. Primary Files to Modify:**
+*   **Create:** `src/hooks/useMenuFiltering.ts`
+*   **Refactor:** `src/components/menu/menu-grid.tsx`
+
+**2. Core React Constructs Involved:**
+*   **Component:** `MenuGrid.tsx` (the view layer)
+*   **Hook (New):** `useMenuFiltering` (to encapsulate business logic)
+*   **Hook (Existing):** `useMemo` (for performance optimization of filtering/grouping)
+*   **Hook (Existing):** `useState` or parent state management for `selectedCategory` and `searchQuery`.
+
+**3. Recommended Implementation Approach:**
+1.  Create the new hook `useMenuFiltering.ts`. It will be a pure function that accepts all necessary data (`items`, `searchQuery`, `selectedCategory`, etc.) as parameters.
+2.  Relocate the `useMemo` blocks responsible for calculating `filteredItems`, `categorySections`, and `heroItems` from `menu-grid.tsx` into the `useMenuFiltering` hook.
+3.  The hook will manage all filtering logic: by category, free-text search (using the memoized Fuse.js instance), and special cases like "Chef's Picks".
+4.  It should return an object containing the computed data: `{ filteredItems, categorySections, heroItems }`.
+5.  In `MenuGrid.tsx`, remove the extracted logic and call the new hook to get the processed data to render. This will significantly simplify the component's body.
+
+**4. Edge Cases & Gotchas:**
+*   **Hook Purity:** Ensure the hook does not fetch data or access context directly. All dependencies must be passed in as props to facilitate testing and reuse.
+*   **Memoization:** The `useMemo` dependency arrays within the hook must be correctly updated to reflect the hook's parameters (`items`, `searchQuery`, etc.) to prevent stale data or unnecessary recalculations.
+*   **Prop Drilling:** The parent component of `MenuGrid` must supply all props required by the new hook.
+*   **Fuse.js Integration:** The memoized Fuse.js instance (from US-137) should be created and managed within the new hook.
+
