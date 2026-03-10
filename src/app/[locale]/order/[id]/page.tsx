@@ -397,8 +397,18 @@ export default function OrderStatusPage() {
       )}
 
       {/* Stage-specific info cards */}
+      {/* Inline payment section — shown when order is approved */}
+      {order.status === "approved" && (
+        <PaymentSection
+          order={order}
+          tng={tng}
+          t={t}
+          onSuccess={() => void fetchOrder()}
+        />
+      )}
+
       {order.status === "approved" && order.estimatedReady && (
-        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4">
+        <div className="mb-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-medium uppercase tracking-wide text-amber-600">
             {t("estimatedReady")}
           </p>
@@ -408,27 +418,12 @@ export default function OrderStatusPage() {
         </div>
       )}
 
-      {(order.status === "approved" || order.status === "payment_pending") && (
-        <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-4">
-          <p className="text-sm font-semibold text-blue-800">{t("paymentTitle")}</p>
-          <p className="mt-1 text-sm text-blue-700">{t("paymentDesc")}</p>
-          <Link
-            href={`/${params.locale as string}/order/${orderId}/payment`}
-            className="mt-3 inline-block rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white"
-          >
-            {t("paymentCta")}
-          </Link>
-        </div>
-      )}
-
       {order.status === "payment_uploaded" && (
         <div className="mb-4 rounded-2xl border border-green-200 bg-green-50 p-4">
-          <p className="text-sm font-semibold text-green-800">
-            {t("paymentUploadedMsg")}
-          </p>
-          <p className="mt-1 text-sm text-green-700">
-            {t("paymentUploadedSubMsg")}
-          </p>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="h-5 w-5 text-green-600" />
+            <p className="text-sm font-semibold text-green-800">{t("paymentUploaded")}</p>
+          </div>
         </div>
       )}
 

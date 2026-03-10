@@ -4763,3 +4763,68 @@ This brief outlines the implementation of the customer payment upload feature.
 ### Result
 - prd.json: US-054 passes = true
 - TypeScript check: PASS (exit 0)
+## Iteration 35 - Tue, Mar 10, 2026  3:46:56 PM
+Completed: Pre-Order: Touch & Go Payment Step for Customer (ID: US-054) in 5m
+
+
+## Pre-analysis for US-055 (Gemini 2.5 Pro)
+This technical brief is based on translating the provided Next.js/TypeScript user story (US-055) into its logical equivalent for a Frappe/Python implementation.
+
+### **Technical Brief: US-055 for Frappe/Python**
+
+**1. Python Files to Modify:**
+
+*   `lhdn_payroll_integration/lhdn_payroll_integration/doctype/pre_order/pre_order.py`: This will contain the core server-side logic. A new whitelisted function, e.g., `update_payment_and_status`, will be added here to handle the status changes.
+*   `lhdn_payroll_integration/hooks.py`: To expose the new `update_payment_and_status` function as a callable API endpoint.
+
+**2. Frappe DocTypes & Hooks Involved:**
+
+*   **DocType:** `Pre Order` (assuming this is the name). It must have:
+    *   A `status` field (Select) with states: `Payment Pending`, `Payment Uploaded`, `Preparing`, `Ready`.
+    *   An `payment_screenshot` field (Attach Image).
+    *   An `estimated_ready` field (Datetime).
+*   **Hooks:** A `whitelisted_methods` entry in `hooks.py` mapping the API call to the Python function in `pre_order.py`.
+
+**3. Recommended Implementation Approach:**
+
+1.  Define a single whitelisted controller method in `pre_order.py`, like `update_payment_and_status(order_id, action)`.
+2.  This function will handle three actions:
+    *   `confirm_payment`: Sets status to `Preparing` and calculates/saves `estimated_ready`.
+    *   `reject_payment`: Sets status back to `Payment Pending` and adds a comment (`doc.add_comment`).
+    *   `mark_ready`: Sets status to `Ready`.
+3.  Use `frappe.has_permission` to ensure only users with an "Admin" or similar role can execute these actions.
+4.  The "View Payment" button in the list view can be a custom client script that opens the `payment_screenshot` URL from the document.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Permissions:** Strictly validate that only authorized roles can call the status update method.
+*   **State Management:** Ensure the logic prevents invalid status jumps (e.g., from `Payment Pending` directly to `Ready`). Using Frappe's built-in Workflow feature on the `status` field is highly recommended.
+*   **Real-time Updates:** The customer tracking page will need a client-side script to poll the API every few seconds to get the latest order status. For a more advanced solution, consider using `frappe.publish_realtime`.
+
+
+## Iteration - Story: US-054 Pre-Order: Touch & Go Payment Step for Customer
+
+### What was implemented
+- `src/lib/site-settings.ts`: Already had `tng_phone` and `tng_qr_url` fields (snake_case)
+- `data/site-settings.json`: Already had `tng_phone` and `tng_qr_url` fields
+- `src/components/admin/admin-settings-panel.tsx`: Added "Touch & Go Payment" section with phone + QR URL inputs; updated DEFAULT_SETTINGS to include tng fields
+- `src/app/api/settings/route.ts`: NEW public GET route — returns `{tngPhone, tngQrUrl}` from site settings
+- `src/app/api/orders/[id]/payment/route.ts`: Already existed and was complete — accepts multipart/form-data with "screenshot" field, saves to public/uploads/payments/, updates status to 'payment_uploaded'
+- `src/app/[locale]/order/[id]/page.tsx`: Added inline PaymentSection component (TnG phone+QR display, file upload with progress, XHR for progress tracking); replaced old link-to-separate-page with inline upload; added payment_uploaded confirmation; fetch TnG settings from /api/settings on mount
+- `messages/*.json`: Added tngTitle, tngAmountLabel, tngPayToLabel, tngScanQrLabel, uploadLabel, uploadHint, uploadBtn, uploading, paymentUploaded, fileTooLarge, invalidFileType, uploadFailed to orderStatus namespace (all 3 locales)
+
+### Patterns discovered
+- `tng_phone`/`tng_qr_url` were already in SiteSettings type (snake_case), but admin panel and public API didn't expose them yet
+- Payment route `/api/orders/[id]/payment/route.ts` was pre-built and used field name "screenshot" (not "file")
+- The public settings route returns camelCase (`tngPhone`/`tngQrUrl`) even though the JSON storage uses snake_case
+- XHR (not fetch) is needed for upload progress tracking; use `xhr.upload.onprogress`
+- The existing page.tsx had `paymentUploadedMsg`/`paymentUploadedSubMsg` keys which didn't exist — replaced with `paymentUploaded`
+
+### Gotchas
+- Site settings JSON uses snake_case (`tng_phone`), public API returns camelCase (`tngPhone`) — keep consistent
+- Payment upload form field must be named "screenshot" (matches the existing route's `formData.get("screenshot")`)
+- Payment section shows when status === 'approved' (not 'payment_pending') per acceptance criteria
+
+### Result
+- prd.json: US-054 passes = true
+- TypeScript check: PASS (exit 0)
