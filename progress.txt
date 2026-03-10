@@ -12848,3 +12848,20 @@ Here is the plan for implementing startup validation in the `lhdn_payroll_integr
 
 ### Gotchas
 - The story was essentially pre-implemented; main work was verifying TypeScript passes cleanly
+
+## Iteration N - Story: Add Environment Variable Validation on Startup (US-141)
+
+### What was implemented
+- `src/lib/env.ts` — already complete with `server-only`, Zod schema, safeParse with clear error messages
+- `src/lib/db.ts` — already imports `env.DATABASE_URL` from `./env`
+- `src/lib/auth.ts` — already imports `env.ADMIN_JWT_SECRET` from `./env`
+- All 3 files were already modified (shown in git diff as unstaged M)
+
+### Patterns discovered
+- `z.string().min(1)` used instead of deprecated `.nonempty()` (Zod v4 compat)
+- `String(key)` cast used in error message for TypeScript safety
+- `env.ts` uses `safeParse` + manual error formatting, not `.parse()` directly
+
+### Gotchas
+- Story was already implemented — just needed prd.json update and commit
+- `server-only` package IS installed (just not in package.json explicitly — transitive dep)
