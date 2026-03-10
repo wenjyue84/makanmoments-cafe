@@ -10712,3 +10712,6 @@ Completed: Admin Can Remove Item from Chef's Pick by Clicking the Badge on /en/m
 ### Gotchas
 - Variable naming conflict: `heroItems` is used both as a useMemo (flat view) and in `categorySections` items — used `sectionHeroItems` alias in the render destructure
 - TypeScript check passed cleanly after implementing changes
+## Iteration 2 - Wed, Mar 11, 2026 12:06:59 AM
+Completed: Limit Chef's Pick Hero Display to 2 Per Category; Show Extra as Regular Items (ID: US-124) in 6m
+
