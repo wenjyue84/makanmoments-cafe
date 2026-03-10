@@ -45,13 +45,18 @@ export function EditableMenuCard({
   const { addItem } = useTray();
 
   const [localItem, setLocalItem] = useState<MenuItemWithRules>(item);
-  const [imgSrc, setImgSrc] = useState(`/images/menu/${item.code}.jpg`);
+  const imgInitVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
+  const [imgSrc, setImgSrc] = useState(
+    `/images/menu/${item.code}.jpg${imgInitVersion ? `?v=${imgInitVersion}` : ""}`
+  );
   const [imgError, setImgError] = useState(false);
+  const [isLocalUpload, setIsLocalUpload] = useState(false);
 
   const [editing, setEditing] = useState<EditTarget>(null);
   const [draftValue, setDraftValue] = useState("");
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const [recipeOpen, setRecipeOpen] = useState(false);
 
@@ -161,6 +166,9 @@ export function EditableMenuCard({
       const { path } = (await res.json()) as { path: string };
       setImgError(false);
       setImgSrc(`${path}?v=${Date.now()}`);
+      setIsLocalUpload(true);
+      setSuccessMsg("Image saved — menu page cache cleared");
+      setTimeout(() => setSuccessMsg(null), 4000);
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Upload failed");
     } finally {
@@ -198,6 +206,16 @@ export function EditableMenuCard({
           </div>
         )}
 
+        {/* Success toast */}
+        {successMsg && (
+          <div className="absolute inset-x-3 top-2 z-30 flex items-center justify-between gap-2 rounded bg-green-600 px-3 py-1.5 text-xs text-white">
+            <span>{successMsg}</span>
+            <button type="button" onClick={() => setSuccessMsg(null)}>
+              <X className="h-3 w-3" />
+            </button>
+          </div>
+        )}
+
         {/* Hidden file input */}
         <input
           ref={fileRef}
@@ -220,7 +238,7 @@ export function EditableMenuCard({
               priority={priority}
               loading={priority ? "eager" : "lazy"}
               onError={() => setImgError(true)}
-              unoptimized={imgSrc.includes("?v=")}
+              unoptimized={isLocalUpload}
             />
           ) : (
             <div className="flex h-full items-center justify-center text-3xl text-muted-foreground/30">

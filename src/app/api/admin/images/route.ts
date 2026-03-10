@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import { readdir, writeFile } from "fs/promises";
 import { join } from "path";
+import sql from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -53,6 +55,14 @@ export async function POST(request: NextRequest) {
   const buffer = Buffer.from(await file.arrayBuffer());
 
   await writeFile(join(MENU_IMAGES_DIR, filename), buffer);
+
+  // Touch updated_at so the image cache-busting version changes on next page render
+  await sql`UPDATE menu_items SET updated_at = NOW() WHERE code = ${code}`;
+
+  // Revalidate ISR cache for menu pages across all locales
+  revalidatePath("/en/menu");
+  revalidatePath("/ms/menu");
+  revalidatePath("/zh/menu");
 
   return NextResponse.json({ filename, path: `/images/menu/${filename}` });
 }

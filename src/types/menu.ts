@@ -18,6 +18,7 @@ export interface MenuItem {
   timeUntil: string;
   specialDates: string[];
   imagePosition: string;   // CSS object-position, e.g. '50% 30%'
+  updatedAt: string;       // ISO timestamp — used for image cache-busting
 }
 
 export interface DisplayCategory {

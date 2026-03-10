@@ -26,6 +26,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false }: Menu
   const [recipeOpen, setRecipeOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
   const prevQuantityRef = useRef<number>(0);
+  const imgVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
   const hasPhoto = !!item.code && !imgError;
   const hasRecipe = !!getRecipeInfo(item.nameEn);
 
@@ -61,7 +62,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false }: Menu
         >
           {hasPhoto ? (
             <Image
-              src={`/images/menu/${item.code}.jpg`}
+              src={`/images/menu/${item.code}.jpg${imgVersion ? `?v=${imgVersion}` : ""}`}
               alt={name}
               fill
               className="object-cover img-scale"

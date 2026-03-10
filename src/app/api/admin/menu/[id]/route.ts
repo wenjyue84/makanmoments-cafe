@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { revalidatePath } from "next/cache";
 import sql from "@/lib/db";
 
 export const runtime = "nodejs";
@@ -58,6 +59,12 @@ export async function PATCH(
   if (!rows[0]) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+
+  // Revalidate ISR cache for menu pages across all locales
+  revalidatePath("/en/menu");
+  revalidatePath("/ms/menu");
+  revalidatePath("/zh/menu");
+
   return NextResponse.json(rows[0]);
 }
 

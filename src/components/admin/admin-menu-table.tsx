@@ -190,6 +190,7 @@ export function AdminMenuTable({
         timeUntil: "",
         specialDates: [],
         imagePosition: "50% 50%",
+        updatedAt: new Date().toISOString(),
         _new: true,
         _dirty: true,
       },
