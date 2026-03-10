@@ -7483,3 +7483,84 @@ This user story pertains to the **React/TypeScript frontend**, not Frappe/Python
 ## Iteration 50 - Tue, Mar 10, 2026  6:32:31 PM
 Completed: Admin Settings: Consolidate Time Settings + Operating Hours as Sub-Sections (ID: US-080) in 5m
 
+## Iteration 27 - Tue, Mar 10, 2026  6:32:53 PM
+Completed: Admin Settings: Consolidate Time Settings + Operating Hours as Sub-Sections (ID: US-080) in 6m
+
+
+## Pre-analysis for US-081 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-081.
+
+***
+
+**Subject:** Technical Brief for US-081: Auto-Load Admin Tests
+
+**Core Task:** Refactor the Admin Tests UI panel to load the list of tests automatically when the component mounts, removing the need for a user to click a "Load Tests" button.
+
+**1. Primary File to Modify:**
+*   `src/components/admin/admin-tests-panel.tsx`
+
+**2. Key React Hooks/Concepts Involved:**
+*   `useEffect`: To trigger the test fetching logic on component mount.
+*   `useState`: To manage the `isLoading`, `error`, and test data states.
+
+**3. Recommended Implementation Approach:**
+1.  In `admin-tests-panel.tsx`, find the event handler function (e.g., `handleLoadTests`) that is currently triggered by the "Load Tests" button's `onClick` event.
+2.  Move the core logic from that handler into a `useEffect` hook.
+3.  Configure the `useEffect` with an empty dependency array (`[]`) so it runs only once when the component first mounts.
+4.  Use a state variable (e.g., `isLoading`) to display a spinner or skeleton loader while the fetch is in progress.
+5.  On fetch failure, update an `error` state to display an error message and a "Retry" button.
+6.  Remove the original "Load Tests" button from the JSX.
+
+**4. Edge Cases & Gotchas:**
+*   Ensure the "Run All Tests" button's functionality is distinct from loading and remains untouched.
+*   The fetch operation inside `useEffect` must not cause re-render loops.
+*   The "Retry" button in the error state should simply re-trigger the fetch logic.
+*   Verify the initial component state correctly shows a loading indicator before the tests are rendered.
+
+
+## Pre-analysis for US-081 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-081.
+
+**Project:** makanmoments.cafe (Next.js/React)
+**User Story:** US-081 - Auto-load tests in the admin panel.
+
+**Technical Brief:**
+
+This story transitions the admin test panel from a manual load to an automatic one. The work is entirely on the frontend within a React component.
+
+**1. File to Modify:**
+*   `src/components/admin/admin-tests-panel.tsx`: This is the core component that manages the state and rendering of the tests list.
+
+**2. Key React Hooks/State Involved:**
+*   **`useEffect`:** Replace the current button's `onClick` logic with a `useEffect(() => { ... }, [])` hook to trigger the test-fetching function on initial component mount.
+*   **`useState`:** Introduce or use existing state variables to manage loading and error states (e.g., `const [isLoading, setIsLoading] = useState(true);`, `const [error, setError] = useState(null);`).
+
+**3. Implementation Approach:**
+*   In `admin-tests-panel.tsx`, locate the handler function that fetches the tests (e.g., `loadTests` or `fetchTests`).
+*   Create a `useEffect` hook that calls this fetch function when the component mounts.
+*   Remove the `<button>` element for "Load Tests".
+*   Use the `isLoading` state to conditionally render a loading spinner or skeleton UI.
+*   On fetch failure, set an error state and display a message with a "Retry" button that re-calls the fetch function.
+*   Ensure the "Run All Tests" button remains and is functionally distinct.
+
+**4. Gotchas to Watch For:**
+*   **Race Conditions:** Implement cleanup logic within the `useEffect` hook (e.g., using an `AbortController`) to cancel the fetch request if the component unmounts prematurely.
+*   **State Management:** Ensure the loading state is correctly set to `false` in both success and error scenarios.
+*   **UI/UX:** The loading state should not block the "Run All Tests" button if it's already visible. The UI should clearly communicate the loading, success, and error states.
+
+
+## Iteration - Story: US-081 - Admin Tests: Auto-Load Tests on Tab Open
+
+### What was implemented
+- Replaced `loaded` boolean state with `loading` + `loadError` states
+- Added `useEffect(() => { loadTests() }, [loadTests])` to auto-load on mount
+- `loadTests()` now has try/catch/finally with proper error handling
+- Replaced the "Load Tests" gating block with: spinner while loading, error+Retry on failure
+- Removed the `loaded` state entirely; tests render immediately once loading completes
+
+### Patterns discovered
+- `useCallback` with `useEffect` dependency array — `loadTests` is stable (no deps), so effect fires once on mount
+- Spinner pattern: `border-4 border-orange-200 border-t-orange-500 animate-spin rounded-full h-8 w-8`
+
+### Gotchas
+- prd.json has non-ASCII characters (em-dashes in description) — must open with `encoding='utf-8'` in Python

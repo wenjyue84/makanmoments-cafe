@@ -47,22 +47,35 @@ export function AdminTestsPanel() {
   const [tests, setTests] = useState<TestMeta[]>([]);
   const [states, setStates] = useState<Record<string, TestState>>({});
   const [running, setRunning] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [summary, setSummary] = useState<{ total: number; passed: number; failed: number; duration: number } | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generateMsg, setGenerateMsg] = useState<string | null>(null);
 
   const loadTests = useCallback(async () => {
-    const res = await fetch("/api/admin/tests");
-    const data = (await res.json()) as TestMeta[];
-    setTests(data);
-    const initial: Record<string, TestState> = {};
-    data.forEach((t) => {
-      initial[t.id] = { status: "pending", log: "", duration: 0 };
-    });
-    setStates(initial);
-    setLoaded(true);
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const res = await fetch("/api/admin/tests");
+      if (!res.ok) throw new Error(`Failed to load tests (${res.status})`);
+      const data = (await res.json()) as TestMeta[];
+      setTests(data);
+      const initial: Record<string, TestState> = {};
+      data.forEach((t) => {
+        initial[t.id] = { status: "pending", log: "", duration: 0 };
+      });
+      setStates(initial);
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : "Failed to load tests");
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    loadTests();
+  }, [loadTests]);
 
   const runTests = useCallback(async (ids?: string[]) => {
     if (running) return;
@@ -184,15 +197,24 @@ export function AdminTestsPanel() {
     { smoke: [], unit: [], integration: [], e2e: [], "new-features": [], "pre-order": [] }
   );
 
-  if (!loaded) {
+  if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 gap-4">
-        <p className="text-gray-500 text-sm">Load the test suite to get started.</p>
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-orange-200 border-t-orange-500" />
+        <p className="text-gray-500 text-sm">Loading tests...</p>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 gap-4">
+        <p className="text-red-600 text-sm">{loadError}</p>
         <button
           onClick={loadTests}
           className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600"
         >
-          Load Tests
+          Retry
         </button>
       </div>
     );
