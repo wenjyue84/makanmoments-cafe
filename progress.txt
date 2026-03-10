@@ -2431,3 +2431,6 @@ Modify the admin menu interface to allow a single `MenuItem` to be assigned to m
 - The file has TWO mobile card sections (one inside DndContext for "All Categories", one outside for filtered view) — both needed updating
 - `toggleCategory` already existed — no new logic needed, only UI
 - `npx tsc --noEmit` passes cleanly
+## Iteration 16 - Tue, Mar 10, 2026 12:31:03 PM
+Completed: Admin: Drag and Drop Items Between Categories (ID: US-033) in 14m
+
