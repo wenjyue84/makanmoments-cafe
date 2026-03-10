@@ -7254,3 +7254,20 @@ This technical brief translates the provided user story's concept into a Frappe/
 ### Gotchas
 - prd.json must be opened with `encoding='utf-8'` on Windows — CP1252 default fails on em-dashes
 - Check globals.css before adding new keyframes — badge-bounce was already there
+
+## Iteration N - Story: US-078 Site-Wide: Micro-Interactions and Scroll-Triggered Polish
+
+### What was implemented
+- `menu-card.tsx`: Removed JS-based `addScaling` state; replaced with `active:scale-95` CSS pseudo-class on all three add/increment buttons; fixed decrement button from `active:scale-90` → `active:scale-95`
+- `globals.css`: Added global button `active:scale-95` fallback in `@layer utilities` for buttons without explicit transform utilities
+- Previous iterations had already implemented: `imgLoaded` skeleton (animate-pulse on container until image loads + `onLoad` callback), `badgeBounce` wired to tray badge span, filter chips with `transition-all duration-200 active:scale-95 scale-[1.04]` on active state, global prefers-reduced-motion override
+
+### Patterns discovered
+- Most of US-078 was pre-implemented in previous passes: skeleton, badge bounce, filter chip animations
+- The `addScaling` JS pattern (scale-110 on click via useState) conflicts with CSS `active:scale-95` because `scale-100` utility class is always present and overrides base layer rules; simplest fix is to remove JS animation and use pure CSS `active:scale-95`
+- menu-filter.tsx already had `scale-[1.04]` on selected chip state + `transition-all duration-200` — effectively a "scale up on active" animation
+
+### Gotchas
+- `@layer base` rules can be overridden by utility classes (scale-100 etc.) — use `@layer utilities` for the global button rule instead, or add `active:scale-95` directly to button className
+- The global `button:not(:disabled):active` rule goes in `@layer utilities` to ensure it applies broadly
+

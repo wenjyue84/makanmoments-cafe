@@ -301,6 +301,12 @@
     }
   }
 
+  /* US-078: Global button press scale feedback — applies to buttons without own transform utilities */
+  button:not(:disabled):active,
+  [role="button"]:not(:disabled):active {
+    transform: scale(0.95);
+  }
+
   /* US-078: Tray badge bounce — brief scale pop when item is added */
   @keyframes badge-bounce {
     0%   { transform: scale(1); }
