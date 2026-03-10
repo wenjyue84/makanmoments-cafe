@@ -6129,3 +6129,25 @@ Here is the technical brief for the frontend task:
 - Python `open()` on Windows requires `encoding='utf-8'` for prd.json (has non-ASCII chars)
 - favicon.ico at `src/app/favicon.ico` takes precedence over `public/favicon.ico` in Next.js App Router
 - The apple-touch-icon.png in /public was already there (180x180 placeholder) — replaced with cafe logo version
+## Iteration 17 - Tue, Mar 10, 2026  5:07:21 PM
+Completed: Menu Search Bar: Voice-to-Text Input Button (ID: US-068) in 8m
+
+
+## Iteration 42 - Story: Landing Page: Prominent Pre-Order System Messaging (US-070)
+
+### What was implemented
+- Created `src/components/home/preorder-banner.tsx` — RSC using `getTranslations("home")`
+- 3-step flow: Browse Menu → Pre-Order Online → Arrive & Enjoy (stacked on mobile, row on desktop)
+- Amber/warm brand styling (bg-amber-50, border-amber-200, dark mode support)
+- CTA button linking to `/menu` via next-intl `Link` (locale-aware)
+- Added `preorderTitle/Subtitle/Step1-3/Cta` keys to all 3 message files (en/ms/zh)
+- Inserted `<PreorderBanner />` in `src/app/[locale]/page.tsx` between HeroSection and InfoStrip
+
+### Patterns discovered
+- `Link` from `@/i18n/navigation` automatically prepends locale — use `href="/menu"` not `/en/menu`
+- Home page RSC pattern: import component, use `getTranslations` inside the component (not passed as props)
+- `isAdmin` branch in page.tsx renders `HomeInlineEditor` — PreorderBanner only appears in the non-admin branch
+
+### Gotchas
+- TypeScript check: 0 errors
+- Arrow connector between steps uses inline SVG (simpler than importing a Lucide arrow icon in server context)

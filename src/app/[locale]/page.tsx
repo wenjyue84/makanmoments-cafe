@@ -83,6 +83,7 @@ export default async function HomePage({
         heroTagline={content.heroTagline}
         heroSubtitle={content.heroSubtitle}
       />
+      <PreorderBanner />
       <InfoStrip />
       <Suspense fallback={<HighlightsSkeleton />}>
         <HighlightsLoader
