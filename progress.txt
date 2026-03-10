@@ -4643,3 +4643,56 @@ This technical brief translates user story US-053 from its original Next.js/Reac
 ### Result
 - prd.json: US-053 passes = true
 - TypeScript check: PASS (exit 0)
+## Iteration 8 - Tue, Mar 10, 2026  3:36:38 PM
+Completed: Pre-Order: Admin Orders Tab with Approve / Reject Actions (ID: US-053) in 6m
+
+
+## Pre-analysis for US-054 (Gemini 2.5 Pro)
+### Technical Brief: US-054 Touch & Go Payment
+
+**Target App:** `lhdn_payroll_integration`
+
+**1. Python Files to Modify:**
+*   `lhdn_payroll_integration/api.py`: Create a new whitelisted API endpoint here to handle the payment screenshot upload.
+*   `lhdn_payroll_integration/lhdn_payroll_integration/doctype/pre_order/pre_order.py`: Potentially add a controller method to handle status validation if logic becomes complex.
+*   `lhdn_payroll_integration/hooks.py`: Check `doc_events` for the `Pre Order` DocType to see if any existing logic conflicts with the new `payment_uploaded` status.
+
+**2. Frappe DocTypes / Hooks:**
+*   **DocTypes:**
+    *   `Pre Order` (Assumed): Add a new status "Payment Uploaded" to the `status` field's options. Add a new field `payment_screenshot` of type `Attach Image`.
+    *   `Website Settings` (Singleton): Add fields `tng_phone_number` (Data) and `tng_qr_code` (Attach Image) to store payment details.
+*   **Hooks:**
+    *   The primary trigger is a new whitelisted API endpoint, not a standard `doc_events` hook.
+
+**3. Implementation Approach:**
+*   Create a whitelisted API function `upload_payment_screenshot(order_id)` in `api.py`.
+*   The function receives the `order_id` and the uploaded file via `frappe.request.files`.
+*   It should fetch the order doc, verify its status is 'Approved', and check that the user has permission.
+*   Use Frappe's `frappe.get_doc` and file handling to create a new File document and attach it to the order's `payment_screenshot` field.
+*   On success, set the order's `status` to 'Payment Uploaded', save the document, and return a success message.
+
+**4. Edge Cases & Gotchas:**
+*   **Permissions:** Ensure the API endpoint is callable by the `Customer` role and that a customer can only upload a payment for their *own* order.
+*   **File Handling:** Explicitly check file size within the API method and use `frappe.throw` to return a clear error if it exceeds the limit (e.g., 5MB).
+*   **Atomic Transactions:** Ensure the status update and file attachment are part of a single transaction; `doc.save()` handles this, but be wary of manual `frappe.db.set_value` calls.
+
+
+## Iteration - Story: US-053 Pre-Order: Admin Orders Tab with Approve / Reject Actions
+
+### What was implemented
+- `src/app/api/admin/orders/route.ts`: Updated GET to return full order fields (contact_number, estimated_arrival, estimated_ready, rejection_reason) — previously only returned id/items/total/status/created_at
+- All other pieces were already complete from the previous iteration (commit 8014db6):
+  - `src/components/admin/admin-orders-panel.tsx`: Full Orders panel with filter tabs, order cards, ApproveModal, RejectModal, 30s polling
+  - `src/components/admin/admin-tabs.tsx`: "Orders" tab added as first tab
+  - `src/app/api/admin/orders/[id]/route.ts`: PATCH with approve/reject/seen actions
+
+### Patterns discovered
+- When RTK status shows modified files but git status shows clean, RTK may be using a cached snapshot — always verify with `git status` directly
+- The `admin:orders-viewed` custom event pattern links AdminOrdersPanel → AdminOrdersBell without prop-drilling
+
+### Gotchas
+- prd.json was already passes=true in HEAD (commit 8014db6) — the Python check at iteration start was reading the on-disk file which had stale data
+
+### Result
+- prd.json: US-053 passes = true (already in HEAD)
+- TypeScript check: PASS (exit 0)
