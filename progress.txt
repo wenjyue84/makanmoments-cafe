@@ -6449,3 +6449,98 @@ Completed: Mobile Homepage: Prominent 'View Menu' CTA Above Fold (ID: US-072)
 ## Iteration 19 - Tue, Mar 10, 2026  5:26:28 PM
 Completed: Mobile Homepage: Prominent 'View Menu' CTA Above Fold (ID: US-072) in 5m
 
+## Iteration 43 - Tue, Mar 10, 2026  5:26:55 PM
+Completed: Mobile Homepage: Prominent 'View Menu' CTA Above Fold (ID: US-072) in 5m
+
+
+## Pre-analysis for US-073 (Gemini 2.5 Pro)
+Based on the user story, the implementation is for a **Next.js/TypeScript** application, not a Frappe/Python one. Here is the technical brief for the correct stack:
+
+**Project:** Makan Moments Cafe - AI Waiter (Next.js/TypeScript)
+
+**1. Python Files to Modify:**
+*   None. This is a TypeScript/Next.js project.
+*   The primary file for logic is `src/components/chat/chat-widget.tsx`.
+*   Configuration files to update are `data/chat-settings.json` and `knowledge/cafe-facts.md`.
+
+**2. Frappe DocTypes / Hooks:**
+*   None. The core logic will use React hooks (`useEffect`, `useState`) within the `chat-widget.tsx` component.
+
+**3. Recommended Implementation Approach:**
+*   In `chat-widget.tsx`, use a `useEffect` hook triggered by the chat's `isOpen` state.
+*   **Greeting:** Inside the effect, if `isOpen` is true and `messages.length` is 0, call a function to send a predefined greeting prompt to the `/api/chat` endpoint. Fetch featured items from `/api/menu/featured` to include in the message.
+*   **Nudge:** On chat open, initiate a `setTimeout` for 3 minutes. If the user hasn't sent a message, this timer will trigger a nudge.
+*   **System Prompt:** Modify the system prompt in `data/chat-settings.json` to instruct the AI to be proactive, greet with featured items, and suggest pairings.
+
+**4. Edge Cases & Gotchas:**
+*   **Timer Management:** The inactivity `setTimeout` must be cleared (`clearTimeout`) on any new user message and when the chat widget is closed to prevent memory leaks and unwanted nudges.
+*   **Single Nudge:** Use a state flag (e.g., `hasNudged`) to ensure the proactive nudge fires only once per chat session.
+*   **Race Conditions:** Ensure the initial greeting doesn't fire if message history is being loaded from a previous session.
+*   **API Failure:** The greeting logic should gracefully handle cases where the `/api/menu/featured` endpoint fails, perhaps by using a default welcome message.
+
+
+## Pre-analysis for US-073 (Gemini 2.5 Pro)
+This brief outlines the implementation of US-073 within a Frappe/Python environment, transposing the logic from the provided user story.
+
+**Subject: Technical Brief for US-073: Proactive Payroll User Assistance**
+
+**1. Python Files to Modify:**
+*   `lhdn_payroll_integration/public/js/payroll_entry.js` (or equivalent form script): To manage client-side logic, timers, and API calls.
+*   `lhdn_payroll_integration/api.py`: To create a new `@frappe.whitelist()` endpoint that generates context-aware, proactive user assistance messages.
+*   `lhdn_payroll_integration/hooks.py`: To inject the custom JS file into the necessary DocType views using the `app_include_js` hook.
+
+**2. Frappe DocTypes & Hooks:**
+*   **DocTypes:**
+    *   A new **Single DocType** like `Payroll AI Settings` to store system prompts, message templates, and lists of "featured" payroll functions (e.g., "Form E Submission").
+    *   The primary target DocType will likely be `Payroll Entry` or `Salary Slip`.
+*   **Hooks:**
+    *   `app_include_js` in `hooks.py` to load the custom form script.
+
+**3. Recommended Implementation Approach:**
+1.  Implement a whitelisted Python function `get_proactive_message(context)` in `api.py`. It will fetch templates from `Payroll AI Settings` and format messages.
+2.  In the client-side JS, on `frappe.ui.form.on('load', ...)`, call the API to fetch and display a welcome message using `frappe.show_alert`.
+3.  On form load, initialize a `setTimeout` for the inactivity nudge.
+4.  Clear and reset the timer on any `change` event in the form to prevent the nudge for active users.
+
+**4. Edge Cases & Gotchas:**
+*   Ensure the inactivity nudge fires only once per form session by using a simple boolean flag.
+*   The "complementary item" logic can be mapped to field changes. When a user changes `Salary Component`, suggest a related `Deduction Type`.
+*   Use non-blocking `frappe.toast` or dismissible alerts to avoid disrupting user workflow.
+*   Make sure API calls are efficient and don't slow down form load times.
+
+
+## Iteration 45 - Story: AI Waiter: Proactive Greetings and Item Promotion (ID: US-073)
+
+### What was implemented
+- `knowledge/cafe-facts.md`: Added "Featured Today" section (Thai Basil Chicken Rice + Salted Egg Chicken Chop) and pairing suggestions guide
+- `data/chat-settings.json`: Updated system prompt with proactive pairing suggestion instructions (gitignored — change not committed but takes effect at runtime)
+- `messages/{en,ms,zh}.json`: Updated welcome message to mention 2 real featured items; added `chat.nudge` translation key
+- `src/components/chat/chat-panel.tsx`: 3-min inactivity nudge timer — `userMessageCount` dependency resets the timer on each user message; `nudgeSentRef` ensures fires only once; cleanup on unmount
+
+### Patterns discovered
+- `data/chat-settings.json` is gitignored — system prompt changes won't be in git history but take effect at runtime via `getSiteSettings()`
+- `chat-panel.tsx` uses static `messages` prop to `useChat()` for the welcome message — easiest way to update the welcome text is via translations (`chat.welcome` key)
+- Nudge implemented as separate `nudgeMessage` state rendered as an extra `<ChatBubble role="assistant">` after the main messages list
+- `userMessageCount` (derived from messages array) used as useEffect dependency to reset the 3-min timer on each new user message
+
+### Gotchas
+- `data/` folder is gitignored — always remember system prompt changes go to `data/chat-settings.json` at runtime only
+- TypeScript: 0 errors (nudgeTimerRef typed as `ReturnType<typeof setTimeout>` for cross-env compatibility)
+
+## Iteration N - Story: US-073 AI Waiter: Proactive Greetings and Item Promotion
+
+### What was implemented
+- `chat-panel.tsx` already had nudge timer logic added (NUDGE_DELAY_MS, nudgeSentRef, nudgeTimerRef, nudgeMessage state, useEffect with userMessageCount dependency)
+- Welcome message in all 3 locales (`messages/en.json`, `ms.json`, `zh.json`) already mentions Thai Basil Chicken Rice + Salted Egg Chicken Chop
+- Nudge message in all 3 locales already exists
+- `cafe-facts.md` already had "Featured Today" section with the 2 featured items
+- `chat-settings.json` system prompt already instructs AI to suggest complementary pairings
+
+### Patterns discovered
+- Nudge timer pattern: track `userMessageCount`, reset timer on each user message, `nudgeSentRef.current` prevents repeat firing
+- Nudge renders as a local assistant message (`nudgeMessage` state), not through the AI API
+- `// eslint-disable-next-line react-hooks/exhaustive-deps` used to suppress dependency warning for stable `nudgeText` translation
+
+### Gotchas
+- File had already been modified before this iteration — verify state before editing
+- The `nudgeText` translation key must exist in all 3 language files before use in the component
