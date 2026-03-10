@@ -37,7 +37,7 @@ function SignOutButton() {
     <form action="/api/admin/logout" method="POST">
       <button
         type="submit"
-        className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+        className="min-h-[44px] rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
       >
         Sign Out
       </button>

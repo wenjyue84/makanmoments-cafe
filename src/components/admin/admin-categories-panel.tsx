@@ -118,7 +118,7 @@ export function AdminCategoriesPanel({
           />
           <button
             onClick={addCategory}
-            className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600"
+            className="min-h-[44px] rounded-lg bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600"
           >
             Add
           </button>
@@ -168,13 +168,13 @@ export function AdminCategoriesPanel({
                     <>
                       <button
                         onClick={() => saveEdit(cat.id)}
-                        className="rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
+                        className="min-h-[44px] rounded bg-green-50 px-2 py-1 text-xs text-green-700 hover:bg-green-100"
                       >
                         Save
                       </button>
                       <button
                         onClick={() => setEditingId(null)}
-                        className="rounded bg-gray-50 px-2 py-1 text-xs text-gray-600 hover:bg-gray-100"
+                        className="min-h-[44px] rounded bg-gray-50 px-2 py-1 text-xs text-gray-600 hover:bg-gray-100"
                       >
                         Cancel
                       </button>
@@ -184,20 +184,20 @@ export function AdminCategoriesPanel({
                       <button
                         onClick={() => reorder(cat.id, "up")}
                         disabled={idx === 0}
-                        className="rounded px-1.5 py-0.5 text-xs text-gray-400 hover:bg-gray-100 disabled:opacity-30"
+                        className="min-h-[44px] min-w-[44px] rounded text-xs text-gray-400 hover:bg-gray-100 disabled:opacity-30"
                       >
                         ↑
                       </button>
                       <button
                         onClick={() => reorder(cat.id, "down")}
                         disabled={idx === categories.length - 1}
-                        className="rounded px-1.5 py-0.5 text-xs text-gray-400 hover:bg-gray-100 disabled:opacity-30"
+                        className="min-h-[44px] min-w-[44px] rounded text-xs text-gray-400 hover:bg-gray-100 disabled:opacity-30"
                       >
                         ↓
                       </button>
                       <button
                         onClick={() => deleteCategory(cat.id, cat.name)}
-                        className="rounded px-2 py-0.5 text-xs text-red-500 hover:bg-red-50"
+                        className="min-h-[44px] rounded px-2 py-0.5 text-xs text-red-500 hover:bg-red-50"
                       >
                         Delete
                       </button>

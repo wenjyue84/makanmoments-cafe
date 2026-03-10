@@ -282,7 +282,7 @@ export function AdminTestsPanel() {
                       <button
                         onClick={() => runTests([test.id])}
                         disabled={running}
-                        className="shrink-0 rounded border border-gray-200 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40"
+                        className="min-h-[44px] shrink-0 rounded border border-gray-200 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-40"
                       >
                         Run
                       </button>

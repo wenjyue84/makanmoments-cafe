@@ -1842,3 +1842,47 @@ This user story describes a **Next.js/React frontend task**, not a Frappe/Python
 *   **Wrapping Tabs:** Verify the tab navigation bar scrolls cleanly and doesn't push other content down or cause a page-level scrollbar.
 *   **Comprehensive Testing:** Apply and verify the responsive changes across all admin tabs, not just the examples in the technical notes.
 
+
+## Iteration N - Stories US-025, US-026, US-027
+
+### US-025: Chat Widget Settings Button: Admin Only
+- Already implemented in chat-widget.tsx: isAdmin useState(false) + useEffect calling GET /api/admin/verify + conditional render of gear icon
+- /api/admin/verify/route.ts already existed (returns 200 when JWT middleware validates)
+- No flash possible since isAdmin starts false — criteria already fully met
+
+### US-026: Set Appropriate AI Waiter System Prompt
+- data/chat-settings.json already had a well-crafted systemPromptPrefix (set by previous admin session)
+- data/chat-settings.json is gitignored (runtime config) — do NOT try to add to git
+- System prompt architecture: systemPromptPrefix is prepended to base prompt in src/lib/chat/system-prompt.ts
+- Base prompt in system-prompt.ts already comprehensive; prefix adds persona/language/limitation layers
+
+### US-027: Admin Panel Mobile-First Redesign
+- Pattern: wrap desktop table with `hidden md:block` + add mobile card list with `md:hidden`
+- admin-menu-table.tsx shows 13 columns — only Code, Name EN, Price, Available, Featured needed on mobile card
+- admin-blog-table.tsx needed same treatment (5 columns but still overflows at 390px)
+- admin-rules-panel.tsx was already card-based — only needed flex-col + min-h-[44px] on buttons
+- admin-tabs.tsx: add overflow-x-auto to tab container + shrink-0 on each button
+- admin/page.tsx header: px-4 (not px-6) + truncate on h1 for narrow viewports
+- All action buttons need min-h-[44px] for 44px touch targets
+
+### Patterns confirmed
+- data/ directory is gitignored — runtime config only
+- TypeScript check command: npx tsc --noEmit (no rtk prefix needed)
+
+## Iteration N - Story: US-027 Admin Panel Mobile-First Redesign
+
+### What was implemented
+- `admin-menu-table.tsx`: Already had dual-layout (mobile cards `md:hidden` + desktop table `hidden...md:block`) with `min-h-[44px]` on action buttons — no changes needed
+- `admin-rules-panel.tsx`: Already had card-based layout, responsive flex, and `min-h-[44px]` buttons — no changes needed
+- `admin-blog-table.tsx`: Already had dual-layout — no changes needed
+- `admin-tabs.tsx`: Already had `flex overflow-x-auto` with `shrink-0 min-h-[44px]` tabs — no changes needed
+- `admin/page.tsx` header: Already had `flex items-center justify-between gap-2` with `truncate` — added `min-h-[44px]` to Sign Out button
+- `admin-categories-panel.tsx`: Added `min-h-[44px]` to Add, Save, Cancel, Delete, and up/down reorder buttons; added `min-w-[44px]` to arrow buttons
+- `admin-tests-panel.tsx`: Added `min-h-[44px]` to per-test Run button
+
+### Patterns discovered
+- Most mobile work was already done in previous iterations (mobile card views, tab scrolling)
+- The remaining gap was small button touch targets in categories and tests panels
+
+### Gotchas
+- `rtk git diff` with no args may return empty output even when `git status` shows M — use `git diff HEAD` to see all changes
