@@ -1695,3 +1695,21 @@ Assuming the intent was to get a technical brief for the described frontend task
 ### Gotchas
 - `Check` icon from lucide-react replaces `Plus` icon when in tray
 - `prd.json` write requires `encoding='utf-8'` on Windows
+
+## Iteration N - Story: Menu Add Button 'Added' State with Background Color Change (US-024)
+
+### What was implemented
+- `src/components/menu/menu-card.tsx` updated with:
+  - `isInTray` derived from `useTray().items` — checks if `item.code` matches any tray item id
+  - Card wrapper gets `bg-green-50/40 dark:bg-green-900/10 ring-2 ring-green-400/40` tint when in tray
+  - Button changes to `bg-green-500 text-white` with `Check` icon + `tc("added")` text when in tray
+  - Pulse animation (`animate-pulse`) for 600ms when quantity increments (tracked via `useRef` + `useEffect`)
+  - Reverts to normal `+ Add` state when item removed from tray
+
+### Patterns discovered
+- File was already partially updated before this iteration (linter/previous run applied imports)
+- All 3 translation files already had `common.added` keys: "Added" / "Ditambah" / "已加入"
+
+### Gotchas
+- Python needs `encoding='utf-8'` when reading/writing prd.json (has emoji/CJK chars)
+- `npx tsc --noEmit` runs clean with zero errors on this file
