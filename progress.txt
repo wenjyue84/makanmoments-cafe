@@ -8119,3 +8119,59 @@ This is a technical brief for implementing the KDS feature described in story US
 *   **Error Handling:** Implement clear feedback for failed login attempts and for errors during the auto-refresh data fetch.
 *   **Data Latency:** While polling is specified, for a real-world scenario, consider Server-Sent Events (SSE) for more efficient, real-time order updates.
 
+
+## Pre-analysis for US-087 (Gemini 2.5 Pro)
+### KDS Implementation Brief (Next.js/TypeScript)
+
+**Project:** Makan Moments Cafe (Next.js)
+**User Story:** US-087: Kitchen Display System (KDS)
+
+This brief outlines the technical implementation for a new Kitchen Display System based on the provided user story. The implementation will be in **Next.js and TypeScript**, not Frappe/Python.
+
+**1. Key Files to Create/Modify:**
+*   `src/app/kds/page.tsx`: Main route. Conditionally renders Login UI or the Order Queue based on auth state.
+*   `src/app/api/kds/login/route.ts`: API endpoint to handle `POST` requests for kitchen staff authentication.
+*   `src/app/api/kds/orders/route.ts`: Secured API endpoint (`GET`) that returns orders with `status: 'preparing'`.
+*   `.env.example` & `.env`: Add `KITCHEN_USERNAME` and `KITCHEN_PASSWORD` variables.
+
+**2. Core Concepts (Next.js/React):**
+*   **Authentication:** A separate, dedicated authentication flow for the KDS. Use JWT or a session cookie, distinct from site admin auth.
+*   **API Routes:** Backend logic for login and data fetching will be encapsulated in these server-side routes.
+*   **React Hooks:** Use `useState` for form state and `useEffect` for the 30-second auto-refresh data fetching logic.
+
+**3. Recommended Implementation Approach:**
+1.  Implement the `/api/kds/login` route to validate credentials against environment variables and return a session cookie/JWT.
+2.  Create a login form component on the `/kds` page, which posts to the API route.
+3.  Protect the main view on the `/kds` page. If authenticated, fetch data from the `/api/kds/orders` endpoint.
+4.  The `/api/kds/orders` route will query the database for orders where `status = 'preparing'`, ordered by ETA.
+5.  Design the UI with large, high-contrast cards for readability on a kitchen tablet.
+
+**4. Gotchas & Edge Cases:**
+*   **Security:** Ensure the KDS auth cookie is properly secured (e.g., `HttpOnly`). Do not mix KDS auth with admin user sessions.
+*   **UI Robustness:** The auto-refresh `setInterval` in `useEffect` must include a cleanup function to prevent memory leaks on component unmount.
+*   **Error Handling:** Gracefully handle failed login attempts and API errors during the auto-refresh without crashing the display.
+*   **Database Query:** Ensure the query on the `orders` table is indexed for performance, as it will run every 30 seconds.
+
+
+## Iteration 30 - Story: Customer Can View Previous Order History After Sending (US-048)
+
+### What was implemented
+All components were already implemented in a prior iteration (likely done alongside US-047 refactoring):
+- `src/components/menu/tray-widget.tsx` — already has full order history: `OrderHistoryEntry` type, `loadHistory()`/`saveHistory()` helpers, `orderHistory` state, `pollStatuses` callback (polls `/api/orders/[id]` every 30s), `StatusBadge` component, history collapsible section in panel, saves on `onSuccess` from OrderFormModal
+- `src/app/api/orders/[id]/route.ts` — already exists, returns order status from `tray_orders` table (no auth required)
+- `messages/*.json` — `tray.orderHistory` key already present in EN/MS/ZH
+- `src/app/globals.css` — `badge-bounce` animation already present
+
+### What was confirmed
+- All 6 acceptance criteria met: localStorage persistence, collapsible history section, 30s polling, status badges, max 5 history, tray cleared but history remains
+- TypeScript check: PASS (exit 0)
+
+### Patterns discovered
+- `OrderFormModal` calls `onSuccess(orderId: number)` → tray-widget saves to history + clears tray
+- History key constant: `ORDER_HISTORY_KEY = "mm_order_history"`
+- Poll only non-final orders (`status !== "ready"`)
+- `badge-bounce` animation triggers on item count increase via `prevTotalRef`
+
+### Result
+- prd.json: US-048 passes = true
+- TypeScript check: PASS (exit 0)
