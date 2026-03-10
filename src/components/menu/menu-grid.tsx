@@ -13,6 +13,7 @@ import { FadeUp } from "@/components/ui/fade-up";
 import { cn } from "@/lib/utils";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useDebounce } from "@/hooks/use-debounce";
+import { SPECIAL_DISPLAY_CATEGORIES } from "@/lib/constants";
 
 // Display category values are prefixed with "__dc__" to distinguish from POS categories
 const DC_PREFIX = "__dc__";
@@ -74,7 +75,7 @@ export function MenuGrid({
   const [removedFromChefsPick, setRemovedFromChefsPick] = useState<Set<string>>(new Set());
 
   const isChefsPick = useCallback(
-    (item: MenuItem) => item.displayCategories.includes("Chef's Picks") && !removedFromChefsPick.has(item.id),
+    (item: MenuItem) => item.displayCategories.includes(SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) && !removedFromChefsPick.has(item.id),
     [removedFromChefsPick]
   );
 
@@ -121,18 +122,18 @@ export function MenuGrid({
       result = items.filter((i) => favorites.includes(i.code));
     } else if (selectedDisplayCat) {
       const lc = selectedDisplayCat.toLowerCase();
-      if (lc.includes("chef")) {
+      if (selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) {
         // Chef's Picks: use junction table rows, fall back to featured=true items if empty
         const fromJunction = items.filter((item) => item.displayCategories.includes(selectedDisplayCat));
         result = fromJunction.length > 0 ? fromJunction : items.filter((i) => i.featured);
-      } else if (lc.includes("rm15")) {
+      } else if (selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.UNDER_RM15) {
         // Under RM15: auto-computed from price, excluding drinks
         result = items.filter(
           (i) =>
             i.price < 15 &&
             !i.displayCategories.some((dc) => dc === "Hot Drinks" || dc === "Cold Drinks & Juice")
         );
-      } else if (lc.includes("vegetarian")) {
+      } else if (selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.VEGETARIAN) {
         // Vegetarian: auto-computed from dietary tags, no junction table needed
         result = items.filter((i) => i.dietary?.some((d) => d.toLowerCase() === "vegetarian"));
       } else {
@@ -219,7 +220,7 @@ export function MenuGrid({
         const highlightedId = highlights[cat];
         // All items tagged as Chef's Pick (admin-highlighted or in Chef's Picks display category)
         const featuredItems = catItems.filter(
-          (i) => i.id === highlightedId || i.displayCategories.includes("Chef's Picks")
+          (i) => i.id === highlightedId || i.displayCategories.includes(SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS)
         );
         // Fall back to first item if nothing is featured
         const effectiveFeatured = featuredItems.length > 0 ? featuredItems : [catItems[0]];
@@ -245,7 +246,7 @@ export function MenuGrid({
   // All view (no display cat): show ALL Chef's Picks. Specific display cat: max 2.
   const heroItems = useMemo(() => {
     if (!isFlatView || isSearching || isFavoritesSelected) return [];
-    if (selectedDisplayCat?.toLowerCase().includes("chef")) return filtered.slice(0, 2);
+    if (selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) return filtered.slice(0, 2);
     const chefs = filtered.filter((i) => isChefsPick(i));
     return selectedDisplayCat ? chefs.slice(0, 2) : chefs;
   }, [filtered, isFlatView, isSearching, isFavoritesSelected, selectedDisplayCat, isChefsPick]);
@@ -372,7 +373,7 @@ export function MenuGrid({
           <p className="text-lg text-muted-foreground">
             {isFavoritesSelected
               ? t("noFavorites")
-              : selectedDisplayCat?.toLowerCase().includes("vegetarian")
+              : selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.VEGETARIAN
               ? t("noVegetarianItems")
               : t("noResults")}
           </p>

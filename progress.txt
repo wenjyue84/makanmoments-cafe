@@ -11644,3 +11644,54 @@ Therefore, generating a technical brief for a Frappe/Python implementation from 
 
 To receive an accurate brief, please provide a user story relevant to the target Python/Frappe application.
 
+## Iteration 5 - Wed, Mar 11, 2026  2:21:32 AM
+Completed: Fix TypeScript any Types in Chat Route (ID: US-135) in 5m
+
+
+## Pre-analysis for US-136 (Gemini 2.5 Pro)
+Based on the provided user story's pattern, here is a technical brief for applying the same refactoring logic to the `lhdn_payroll_integration` Frappe app.
+
+**Subject: Technical Brief for US-136 Style Refactor in `lhdn_payroll_integration`**
+
+### 1. Python Files to Modify
+-   **New File:** `lhdn_payroll_integration/utils/constants.py`
+-   `lhdn_payroll_integration/doctype/tax_submission/tax_submission.py`
+-   `lhdn_payroll_integration/doctype/payroll_period/payroll_period.py`
+-   `lhdn_payroll_integration/doctype/lhdn_settings/lhdn_settings.py`
+-   Associated client scripts (`.js`) for the above DocTypes.
+
+### 2. Frappe DocTypes & Hooks
+-   **DocTypes:** `Tax Submission`, `Payroll Period`, `Salary Slip`, and `LHDN Settings` are likely to contain hardcoded status or category strings (e.g., "Submitted", "Draft", "EPF", "SOCSO").
+-   **Hooks:** Check `hooks.py` for any hardcoded strings in `doctype_js`, `doc_events`, or fixture paths.
+
+### 3. Implementation Approach
+1.  Create `lhdn_payroll_integration/utils/constants.py` to centralize statutory contribution names, submission statuses, and other recurring string literals.
+2.  Define constants using Enums or dictionaries, e.g., `CONTRIBUTION_TYPES = {"epf": "EPF", "socso": "SOCSO"}`.
+3.  Search the codebase for hardcoded literals like "PCB", "Draft", "Cancelled", "SOCSO Category 1", etc.
+4.  Replace all located instances in Python and JS files with imports from the new `constants.py` module.
+
+### 4. Edge Cases & Gotchas
+-   The same strings may be hardcoded in client-side `.js` files; these must be updated.
+-   Check `fixtures` directory for JSON files that might use these strings for data seeding.
+-   Data-sensitive strings used in database queries (`frappe.get_all`, filters) must be handled carefully to avoid breaking lookups.
+-   Run `bench build` after changes to ensure client-side assets are correctly bundled.
+
+
+## Iteration - Story: US-136 Move Hardcoded Display Category Names to Constants
+
+### What was implemented
+- Added `SPECIAL_DISPLAY_CATEGORIES` constant to `src/lib/constants.ts` with keys: CHEFS_PICKS, UNDER_RM15, VEGETARIAN, FAVORITES
+- Updated `src/components/menu/menu-grid.tsx` to import and use the constants in place of hardcoded strings:
+  - `isChefsPick` callback: `"Chef's Picks"` → `SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS`
+  - `filtered` useMemo: replaced `.includes("chef")`, `.includes("rm15")`, `.includes("vegetarian")` substring checks with exact equality (`===`) against the constants
+  - `categorySections` useMemo: `"Chef's Picks"` → `SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS`
+  - `heroItems` useMemo: `.includes("chef")` → `=== SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS`
+  - empty state message: `.includes("vegetarian")` → `=== SPECIAL_DISPLAY_CATEGORIES.VEGETARIAN`
+
+### Patterns discovered
+- The `admin-categories-panel.tsx` only had the string in a UI comment (HTML entity), not in logic — no change needed
+- `menu-card.tsx` had no hardcoded display category strings — no change needed
+- Replacing loose `lc.includes(...)` substring checks with strict equality is a correctness improvement (avoids false positives if a display category name contains "chef" as a substring)
+
+### Gotchas
+- TypeScript passes cleanly (`npx tsc --noEmit` with no output = success)

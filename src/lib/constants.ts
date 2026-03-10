@@ -37,6 +37,14 @@ export const CAFE = {
   openingDate: "October 2024",
 } as const;
 
+// Special display category names — website-only groups (not POS categories)
+export const SPECIAL_DISPLAY_CATEGORIES = {
+  CHEFS_PICKS: "Chef's Picks",
+  UNDER_RM15: "Under RM15",
+  VEGETARIAN: "Vegetarian",
+  FAVORITES: "Favorites",
+} as const;
+
 // Legacy reference — categories now live in Neon `categories` table
 export const MENU_CATEGORIES = [
   "Must-Try",
