@@ -7427,3 +7427,20 @@ Completed: Admin: Replace Horizontal Tab Bar with Left Sidebar Navigation (ID: U
 ### Gotchas
 - The `setHours` function was referenced in the old inline Operating Hours section but never defined — would have caused a TypeScript error
 - Each sub-component (Operating Hours, Time Settings) has its own separate API endpoint and save button
+
+## Iteration 50 - Tue, Mar 10, 2026  (US-080)
+Completed: Admin Settings: Consolidate Time Settings + Operating Hours as Sub-Sections (ID: US-080)
+
+### What was implemented
+- Removed "Time Settings", "Operating Hours", "Push Notifications" from top-level TABS in admin-tabs.tsx
+- AdminSettingsPanel now receives `categories` prop and renders AdminOperatingHours + AdminTimeSettings + AdminPushSettings as sub-sections
+- Added `pushNotificationsEnabled: true` to data/site-settings.json
+- All changes were already committed in b5cfa9c before this iteration ran
+
+### Patterns discovered
+- Files were already updated in prior commit — check git log before implementing to avoid redundant work
+- admin-settings-panel.tsx already had AdminOperatingHours/AdminTimeSettings/AdminPushSettings imports and integrated them
+- TypeScript check passes clean with these changes
+
+### Gotchas
+- When files appear "modified since read" it means a prior agent already made the change — re-read before editing
