@@ -6,19 +6,24 @@ import { MenuCard } from "@/components/menu/menu-card";
 
 interface HighlightsProps {
   items: MenuItem[];
+  highlightsTitle?: string;
+  highlightsSubtitle?: string;
 }
 
-export async function Highlights({ items }: HighlightsProps) {
+export async function Highlights({ items, highlightsTitle, highlightsSubtitle }: HighlightsProps) {
   const t = await getTranslations("home");
   const tc = await getTranslations("common");
 
   if (items.length === 0) return null;
 
+  const title = highlightsTitle || t("highlightsTitle");
+  const subtitle = highlightsSubtitle || t("highlightsSubtitle");
+
   return (
     <section className="mx-auto max-w-6xl px-4 py-16">
       <div className="mb-8">
-        <h2 className="font-display text-3xl font-bold">{t("highlightsTitle")}</h2>
-        <p className="mt-2 text-muted-foreground">{t("highlightsSubtitle")}</p>
+        <h2 className="font-display text-3xl font-bold">{title}</h2>
+        <p className="mt-2 text-muted-foreground">{subtitle}</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.slice(0, 6).map((item, index) => (

@@ -1106,3 +1106,64 @@ This user story is for a **Next.js/TypeScript** project, not Frappe/Python. The 
 ### Patterns discovered
 - Tailwind `flex flex-col` + inner `overflow-y-auto flex-1` is the standard pattern for modals with sticky headers/buttons
 - `z-20` needed on the button (vs `z-10`) to ensure it renders above the image and scrollable content
+## Iteration 5 - Tue, Mar 10, 2026 10:55:49 AM
+Completed: Fix Recipe Modal Close Button Visibility on Mobile (ID: US-016) in 4m
+
+
+## Pre-analysis for US-017 (Gemini 2.5 Pro)
+This user story describes a feature for a **Next.js/TypeScript** application, not a Frappe/Python one. Here is the technical brief based on the provided JSON for the Next.js project.
+
+---
+
+**Technical Brief: US-017 Admin WYSIWYG Editing**
+
+**1. Primary Files for Modification:**
+*   `src/app/[locale]/page.tsx`: The main server component for the landing page.
+*   `src/components/home/hero-section.tsx`: (Likely) The component rendering the static hero content.
+*   `src/components/home/highlights-section.tsx`: (Likely) The component rendering the highlights.
+*   `content/home.md`: New markdown file to store the editable text content.
+*   **New File:** `src/components/admin/admin-home-editor.tsx`: A client component to manage the editing state and UI.
+*   **New File:** `src/app/api/admin/content/home/route.ts`: The API endpoint to handle saving changes.
+
+**2. Key Next.js Constructs Involved:**
+*   **Server Component:** `page.tsx` will handle the initial admin check.
+*   **Client Component:** `admin-home-editor.tsx` will be the interactive "island" for editing.
+*   **API Route:** The `route.ts` file will serve as the backend endpoint for the save action.
+*   **Data Source:** A new `content/home.md` file will act as the database for the editable fields.
+
+**3. Recommended Implementation Approach:**
+1.  In `src/app/[locale]/page.tsx`, read the admin cookie to determine if the user is an administrator.
+2.  If `isAdmin`, dynamically import and render the `<AdminHomeEditor>` client component, passing the current content as props.
+3.  The `<AdminHomeEditor>` will overlay the edit banner, a floating save button, and use state to manage the edited content. It will render the passed children (the original page content) and apply `contentEditable={true}` attributes to the target text elements.
+4.  Create the API route at `src/app/api/admin/content/home/route.ts` that securely accepts POST requests, parses the incoming JSON body, and overwrites the content of `content/home.md`.
+5.  On "Save", the `<AdminHomeEditor>` will POST the updated content to the API route.
+
+**4. Edge Cases & Gotchas:**
+*   **API Security:** The API route *must* be protected to ensure only authenticated admins can write to the filesystem.
+*   **Data Hydration:** Ensure the editable text passed from the server component to the client component is correctly hydrated to avoid mismatches.
+*   **Highlights Editing:** The "highlights" section is more complex than text editing. This will likely require a modal or separate UI within the editor to manage the list of items, which may be stored as a JSON array in the markdown frontmatter.
+*   **Save State:** The floating save button needs clear UI states for "saving...", "success", and "error" to provide user feedback.
+*   **Markdown Parsing:** Use a reliable library (like `gray-matter`) in the API route to safely read and write to the frontmatter of `content/home.md` without corrupting it.
+
+
+## Iteration N - Story: US-017 - Admin WYSIWYG Editing on Landing Page /en
+
+### What was implemented
+- Created `content/home.md` — frontmatter-driven content for hero fields (heroTitle, heroTagline, heroSubtitle, highlightsTitle, highlightsSubtitle)
+- Modified `src/app/[locale]/page.tsx` — async page, reads home.md, checks admin cookie, renders HomeInlineEditor if admin or normal components if not
+- Modified `src/components/home/hero-section.tsx` — added optional HeroSectionProps (heroTitle, heroTagline, heroSubtitle) with fallback to translations/CAFE constants
+- Modified `src/components/home/highlights.tsx` — added optional highlightsTitle/highlightsSubtitle props with fallback to translations
+- Created `src/components/admin/home-inline-editor.tsx` — client component with sticky admin banner, edit mode toggle, inline inputs/textareas for all 5 fields, save/cancel/saved feedback
+- Created `src/app/api/admin/content/home/route.ts` — POST handler saves to content/home.md via gray-matter, calls revalidatePath
+
+### Patterns discovered
+- Same pattern as AboutInlineEditor/AboutPage: pass all content via props from page; if isAdmin, render full-page editor component instead of normal components
+- page.tsx needs `export const runtime = "nodejs"` for fs module + `export const revalidate = 3600` (can coexist)
+- home.md uses empty string defaults so `data.heroTitle || fallback.heroTitle` correctly falls back to i18n strings
+- HighlightsLoader helper component pattern still works but needs to accept content props when page is async
+
+### Gotchas
+- prd.json encoding: must use `encoding='utf-8'` and `ensure_ascii=False` on Windows (cp1252 default fails)
+- HeroSection and Highlights stay async (getTranslations still needed for CTA buttons in HeroSection)
+- TypeScript check: 0 errors (clean)
+- Featured items (highlights grid) come from Notion — admin sees read-only grid with note to manage via Notion

@@ -6,9 +6,19 @@ import { Button } from "@/components/ui/button";
 import { HERO_BLUR } from "@/data/hero-blur";
 import { CAFE } from "@/lib/constants";
 
-export async function HeroSection() {
+interface HeroSectionProps {
+  heroTitle?: string;
+  heroTagline?: string;
+  heroSubtitle?: string;
+}
+
+export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: HeroSectionProps = {}) {
   const t = await getTranslations("home");
   const tc = await getTranslations("common");
+
+  const title = heroTitle || t("heroTitle");
+  const tagline = heroTagline || CAFE.tagline.en;
+  const subtitle = heroSubtitle || t("heroSubtitle");
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-primary/8 via-background to-accent/15">
@@ -48,7 +58,7 @@ export async function HeroSection() {
               className="font-display text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl animate-fade-up"
               style={{ "--delay": "80ms" } as CSSProperties}
             >
-              <span className="text-primary">{t("heroTitle")}</span>
+              <span className="text-primary">{title}</span>
             </h1>
 
             {/* /bolder: Italic tagline with Playfair Display */}
@@ -56,14 +66,14 @@ export async function HeroSection() {
               className="mt-3 font-display text-lg italic text-primary/75 animate-fade-up"
               style={{ "--delay": "160ms" } as CSSProperties}
             >
-              {CAFE.tagline.en}
+              {tagline}
             </p>
 
             <p
               className="mt-5 text-base leading-8 text-muted-foreground sm:text-lg animate-fade-up"
               style={{ "--delay": "240ms" } as CSSProperties}
             >
-              {t("heroSubtitle")}
+              {subtitle}
             </p>
 
             <div

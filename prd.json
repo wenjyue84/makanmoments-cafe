@@ -480,7 +480,7 @@
         "US-006"
       ],
       "estimatedComplexity": "medium",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-018",
