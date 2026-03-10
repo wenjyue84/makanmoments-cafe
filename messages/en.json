@@ -143,7 +143,10 @@
     "invalidFileType": "Only JPEG and PNG files are accepted.",
     "uploadFailed": "Upload failed. Please try again.",
     "timeRemaining": "{countdown} remaining",
-    "readySoon": "Ready soon!"
+    "readySoon": "Ready soon!",
+    "titleExpired": "Order Expired",
+    "expiredTitle": "Your order has expired",
+    "expiredMsg": "No payment was received within 30 minutes. Please start a new order."
   },
   "orderForm": {
     "title": "Complete Your Pre-Order",

@@ -24,7 +24,7 @@ interface AdminOrder {
   created_at: string;
 }
 
-type FilterTab = "All" | "Pending" | "Active" | "Done";
+type FilterTab = "All" | "Pending" | "Active" | "Done" | "Expired";
 
 const STATUS_LABELS: Record<string, string> = {
   pending_approval: "Pending Approval",
@@ -34,6 +34,7 @@ const STATUS_LABELS: Record<string, string> = {
   payment_uploaded: "Payment Uploaded",
   preparing: "Preparing",
   ready: "Ready",
+  expired: "Expired",
   seen: "Seen",
   pending: "Pending",
 };
@@ -46,6 +47,7 @@ const STATUS_COLORS: Record<string, string> = {
   payment_uploaded: "bg-violet-100 text-violet-800",
   preparing: "bg-blue-100 text-blue-800",
   ready: "bg-purple-100 text-purple-800",
+  expired: "bg-stone-100 text-stone-600",
   seen: "bg-gray-100 text-gray-600",
   pending: "bg-yellow-100 text-yellow-800",
 };
@@ -77,6 +79,7 @@ function filterOrders(orders: AdminOrder[], tab: FilterTab) {
   if (tab === "Pending") return orders.filter((o) => o.status === "pending_approval" || o.status === "pending");
   if (tab === "Active") return orders.filter((o) => ["approved", "payment_pending", "payment_uploaded", "preparing"].includes(o.status));
   if (tab === "Done") return orders.filter((o) => o.status === "ready" || o.status === "rejected" || o.status === "seen");
+  if (tab === "Expired") return orders.filter((o) => o.status === "expired");
   return orders;
 }
 
@@ -567,7 +570,7 @@ export function AdminOrdersPanel() {
 
   const filtered = filterOrders(orders, filterTab);
 
-  const FILTER_TABS: FilterTab[] = ["All", "Pending", "Active", "Done"];
+  const FILTER_TABS: FilterTab[] = ["All", "Pending", "Active", "Done", "Expired"];
 
   return (
     <div>

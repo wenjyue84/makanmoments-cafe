@@ -143,7 +143,10 @@
     "invalidFileType": "仅支持 JPEG 和 PNG 文件。",
     "uploadFailed": "上传失败，请重试。",
     "timeRemaining": "还有 {countdown}",
-    "readySoon": "即将完成！"
+    "readySoon": "即将完成！",
+    "titleExpired": "订单已过期",
+    "expiredTitle": "您的订单已过期",
+    "expiredMsg": "30分钟内未收到付款。请重新下单。"
   },
   "orderForm": {
     "title": "完成预订",

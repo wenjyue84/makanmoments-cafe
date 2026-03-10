@@ -36,7 +36,18 @@ export async function GET(
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    const row = rows[0];
+    let row = rows[0];
+
+    // Auto-expire: if approved but no payment uploaded within 30 minutes, mark as expired
+    if (row.status === "approved") {
+      const createdAt = new Date(row.created_at as string);
+      const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
+      if (createdAt < thirtyMinAgo) {
+        await sql`UPDATE tray_orders SET status = 'expired' WHERE id = ${orderId}`;
+        row = { ...row, status: "expired" };
+      }
+    }
+
     return NextResponse.json({
       id: row.id,
       status: row.status,

@@ -29,7 +29,8 @@ type OrderStatus =
   | "preparing"
   | "ready"
   | "rejected"
-  | "cancelled";
+  | "cancelled"
+  | "expired";
 
 interface OrderData {
   id: number;
@@ -369,6 +370,7 @@ export default function OrderStatusPage() {
 
   const isRejected =
     order.status === "rejected" || order.status === "cancelled";
+  const isExpired = order.status === "expired";
   const isReady = order.status === "ready";
 
   return (
@@ -379,9 +381,11 @@ export default function OrderStatusPage() {
         <h1 className="mt-1 font-display text-2xl font-bold text-stone-800">
           {isRejected
             ? t("titleRejected")
-            : isReady
-              ? t("titleReady")
-              : t("title")}
+            : isExpired
+              ? t("titleExpired")
+              : isReady
+                ? t("titleReady")
+                : t("title")}
         </h1>
         {lastUpdated && (
           <p className="mt-1 text-xs text-stone-400">
@@ -391,7 +395,7 @@ export default function OrderStatusPage() {
       </div>
 
       {/* Progress bar */}
-      {!isRejected && (
+      {!isRejected && !isExpired && (
         <div className="mb-8 overflow-hidden rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
           <StepBar currentStatus={order.status} t={t} />
         </div>
@@ -415,6 +419,25 @@ export default function OrderStatusPage() {
               >
                 <PhoneCall className="h-4 w-4" />
                 {t("contactUs")}
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Expired state */}
+      {isExpired && (
+        <div className="mb-6 rounded-2xl border border-orange-200 bg-orange-50 p-5">
+          <div className="flex items-start gap-3">
+            <Clock className="mt-0.5 h-5 w-5 flex-shrink-0 text-orange-500" />
+            <div>
+              <p className="font-semibold text-orange-700">{t("expiredTitle")}</p>
+              <p className="mt-1 text-sm text-orange-600">{t("expiredMsg")}</p>
+              <Link
+                href="/"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white"
+              >
+                {t("backHome")}
               </Link>
             </div>
           </div>

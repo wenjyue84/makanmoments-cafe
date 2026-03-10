@@ -143,7 +143,10 @@
     "invalidFileType": "Hanya fail JPEG dan PNG diterima.",
     "uploadFailed": "Muat naik gagal. Sila cuba lagi.",
     "timeRemaining": "{countdown} lagi",
-    "readySoon": "Hampir siap!"
+    "readySoon": "Hampir siap!",
+    "titleExpired": "Pesanan Tamat",
+    "expiredTitle": "Pesanan anda telah tamat tempoh",
+    "expiredMsg": "Tiada pembayaran diterima dalam masa 30 minit. Sila buat pesanan baru."
   },
   "orderForm": {
     "title": "Lengkapkan Pra-Pesanan Anda",
