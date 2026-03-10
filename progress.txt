@@ -10445,3 +10445,50 @@ Completed: Fix React Key Prop Warning in AdminMenuTable (ID: US-112) in 6m
 *   **Date Calculation:** Ensure the `estimatedArrival` is dynamically calculated as "20 minutes from now" and correctly formatted as an ISO string.
 *   **Database State:** The test includes cleanup logic (DELETE FROM orders). Ensure this is not accidentally removed.
 
+## Iteration 3 - Tue, Mar 10, 2026 11:28:00 PM
+Completed: Fix US-042 Test — Translate Route Source Must Contain Literal String key (ID: US-113) in 3m
+
+
+## Pre-analysis for US-114 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-114, based on the provided JSON data.
+
+**Objective:**
+Fix the automated test `nf-044-order-notification`, which is failing due to an incomplete API request and an incorrect status check. The test needs to be updated to match the requirements of the `/api/orders` endpoint.
+
+**File to Modify:**
+- `src/lib/tests/new-features.ts`
+
+**Key Function:**
+- `testOrderNotificationBell`
+
+**Implementation Approach:**
+1.  In the `testOrderNotificationBell` function, locate the `fetch` call to `/api/orders`.
+2.  Modify the `body` of the request to include two new fields:
+    - `contactNumber`: A string, e.g., `'0123456789'`.
+    - `estimatedArrival`: An ISO 8601 date string set 20 minutes in the future. Example: `new Date(Date.now() + 20 * 60 * 1000).toISOString()`.
+3.  After the request, find the database query that verifies the new order.
+4.  Change the status comparison logic from `status !== 'pending'` to `status !== 'pending_approval'`.
+5.  Update any success log messages to reflect the `pending_approval` status.
+
+**Gotchas & Edge Cases:**
+- The primary change is isolated to the test itself; do not modify the `/api/orders` API route.
+- Ensure the `estimatedArrival` is a correctly formatted ISO string, as the endpoint will likely reject invalid formats.
+- The existing test cleanup logic (deleting the order record after the check) must remain intact to ensure tests are idempotent.
+
+
+## Iteration N - Story: Fix US-044 Test — Order Notification Test Missing Required Fields and Wrong Status Check (US-114)
+
+### What was implemented
+- In `src/lib/tests/new-features.ts`, function `testOrderNotificationBell` (id: nf-044-order-notification):
+  - Added `contactNumber: "0123456789"` and `estimatedArrival: new Date(Date.now() + 20 * 60 * 1000).toISOString()` to the POST body
+  - Changed status check from `'pending'` to `'pending_approval'`
+  - Updated all log messages to say `pending_approval` instead of `pending`
+  - Updated description string to say `status=pending_approval`
+
+### Patterns discovered
+- The table is `tray_orders` (not `orders` as CLAUDE.md schema suggests) — API route creates it as `tray_orders`
+- OrderSubmitSchema requires Malaysian phone matching `/^(\+?60|0)1[0-9]{8,9}$/` — `'0123456789'` passes
+- estimatedArrival must be at least 15 min from now (schema uses 14 min check with > comparison)
+
+### Gotchas
+- prd.json requires `encoding='utf-8'` for Python json operations on Windows

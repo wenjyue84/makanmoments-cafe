@@ -245,7 +245,7 @@ const testOrderNotificationBell: TestDefinition = {
   id: "nf-044-order-notification",
   name: "US-044: Order notification (POST /api/orders + DB verify)",
   description:
-    "POST /api/orders saves order to tray_orders with status=pending; DB record verified",
+    "POST /api/orders saves order to tray_orders with status=pending_approval; DB record verified",
   category: "new-features",
   run: async (): Promise<TestResult> => {
     const start = Date.now();
@@ -260,7 +260,12 @@ const testOrderNotificationBell: TestDefinition = {
       const postRes = await fetch(`${baseUrl}/api/orders`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ items: testItems, total: 9.99 }),
+        body: JSON.stringify({
+          items: testItems,
+          total: 9.99,
+          contactNumber: "0123456789",
+          estimatedArrival: new Date(Date.now() + 20 * 60 * 1000).toISOString(),
+        }),
       });
 
       const logs: string[] = [];
@@ -284,7 +289,7 @@ const testOrderNotificationBell: TestDefinition = {
       insertedId = postData.id;
       logs.push(`PASS: POST /api/orders => 201, order id=${insertedId}`);
 
-      // Step 2: Verify via direct DB query — order has status=pending
+      // Step 2: Verify via direct DB query — order has status=pending_approval
       const sql = (await import("@/lib/db")).default;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rows: any[] = await sql`
@@ -299,9 +304,9 @@ const testOrderNotificationBell: TestDefinition = {
           duration: Date.now() - start,
         };
       }
-      if (rows[0].status !== "pending") {
+      if (rows[0].status !== "pending_approval") {
         logs.push(
-          `FAIL: order status=${rows[0].status as string} (expected pending)`
+          `FAIL: order status=${rows[0].status as string} (expected pending_approval)`
         );
         return {
           pass: false,
@@ -309,7 +314,7 @@ const testOrderNotificationBell: TestDefinition = {
           duration: Date.now() - start,
         };
       }
-      logs.push("PASS: Order found in DB with status=pending");
+      logs.push("PASS: Order found in DB with status=pending_approval");
 
       // Step 3: Mark as seen via direct DB (admin API requires auth cookie)
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
