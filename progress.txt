@@ -8531,3 +8531,108 @@ This technical brief is for a **Next.js/TypeScript** project, not a Frappe/Pytho
 ## Iteration 2 - Tue, Mar 10, 2026  7:17:25 PM
 Completed: KDS: Mark Individual Food Items as Complete (ID: US-088) in 5m
 
+## Iteration 2 - Tue, Mar 10, 2026  7:17:44 PM
+Completed: KDS: Real-Time Order Updates and New Order Alert (ID: US-089) in 3m
+
+
+## Pre-analysis for US-090 (Gemini 2.5 Pro)
+**Subject: Technical Brief for US-090: Dynamic AI Menu from Database**
+
+This is a Next.js/TypeScript project. The goal is to replace a static markdown menu with a live database query for the AI system prompt, with caching.
+
+**Files to Modify:**
+*   `src/lib/chat/system-prompt.ts`: Main logic for fetching, caching, and formatting.
+*   `src/app/api/chat/route.ts`: To consume the new async prompt function.
+*   `src/app/api/admin/menu/[id]/route.ts`: To invalidate the cache on updates.
+
+**Implementation Approach:**
+
+1.  **Modify `src/lib/chat/system-prompt.ts`:**
+    *   Make `getSystemPrompt()` and its callers asynchronous (`async/await`).
+    *   Create a new `async function fetchMenuFromDB()` that queries the Neon DB for all available menu items (`SELECT ... FROM menu_items WHERE available = true`).
+    *   Format each database row into the specified string format (e.g., `- G01 Gyudon (Beef Bowl / 牛丼) — RM 23.90...`).
+    *   Implement an in-memory cache (`let menuCache = null`) with a 5-minute Time-to-Live (TTL) for the formatted menu string.
+    *   Replace the `loadKnowledge('menu-knowledge.md')` call with a call to this new cached function.
+    *   Update `invalidateSystemPromptCache()` to also set `menuCache = null`.
+
+2.  **Modify API Routes:**
+    *   In `/api/chat/route.ts`, update the call to `await getSystemPrompt()`.
+    *   In `/api/admin/menu/[id]/route.ts`, call `invalidateSystemPromptCache()` after a successful database update in the `PATCH` handler.
+
+**Gotchas & Edge Cases:**
+*   **Error Handling:** The DB query must be wrapped in a try/catch. As a fallback, consider loading the static `menu-knowledge.md` if the database fetch fails.
+*   **Data Integrity:** Ensure graceful handling of `null` or undefined values for optional fields like `categories` or `dietary` during string formatting to prevent runtime errors.
+*   **Static Content:** Continue to load `cafe-facts.md` and `faq.md` from the filesystem as before.
+
+
+## Pre-analysis for US-090 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-090, based on the provided JSON data.
+
+**Project:** Makan Moments Cafe (Next.js/TypeScript)
+**User Story:** US-090: AI Waiter: Inject Live DB Menu into System Prompt
+
+**Technical Brief**
+
+This story transitions the AI's menu knowledge from a static Markdown file to a live database query, ensuring the AI always has up-to-date information.
+
+**1. Files to Modify:**
+*   `src/lib/chat/system-prompt.ts`: Core logic for building the AI's system prompt.
+*   `src/app/api/chat/route.ts`: The main chat API endpoint that consumes the system prompt.
+*   `src/app/api/admin/menu/[id]/route.ts`: The admin endpoint for updating menu items, which will now trigger cache invalidation.
+
+**2. DocTypes & Hooks Involved:**
+*   This is a Next.js project. The primary integration is with the Neon DB, not Frappe DocTypes.
+*   The `menu_items` table in the Neon database is the source of truth.
+
+**3. Implementation Approach:**
+*   In `system-prompt.ts`, make `getSystemPrompt()` an `async` function.
+*   Create a new `async function fetchMenuFromDB()` that queries the `menu_items` table for all available items.
+*   Format the query results into a structured string block as specified in the technical notes.
+*   Replace the call to `loadKnowledge('menu-knowledge.md')` with the result from the new DB fetch function.
+*   Implement a simple in-memory cache (`let menuCache = null`) with a 5-minute Time-to-Live (TTL) for the formatted menu string to avoid excessive DB calls.
+*   Update `invalidateSystemPromptCache()` to also clear this new menu cache.
+*   Modify the `/api/chat` route to `await` the `getSystemPrompt()` call.
+*   In the `PATCH` handler for `/api/admin/menu/[id]`, call `invalidateSystemPromptCache()` after a successful database update.
+
+**4. Edge Cases & Gotchas:**
+*   **DB Errors:** The `fetchMenuFromDB` function should handle potential DB connection or query failures gracefully. Consider falling back to the static `menu-knowledge.md` file if the DB is unreachable.
+*   **Empty Menu:** If the DB query returns zero items, ensure the system prompt is still valid and doesn't cause downstream errors.
+*   **Async Propagation:** Changing `getSystemPrompt` to `async` is a breaking change; ensure all call sites are updated to use `await`.
+*   **Data Formatting:** Pay close attention to formatting array fields like `categories` and `dietary`, especially if they can be `null` or empty in the database.
+
+
+## Iteration — Story: US-090 AI Waiter: Inject Live DB Menu into System Prompt
+
+### What was implemented
+- `src/lib/chat/system-prompt.ts`: Added `fetchMenuFromDB()` (async, queries `menu_items WHERE available = true ORDER BY sort_order`), 5-min TTL `menuCache`, separate `staticKnowledgeCache` for cafe-facts.md + faq.md. Made `buildKnowledgeBlock()` and `getSystemPrompt()` async. `invalidateSystemPromptCache()` now clears both caches.
+- `src/app/api/chat/route.ts`: `await getSystemPrompt()` instead of sync call.
+- `src/app/api/admin/menu/[id]/route.ts`: Calls `invalidateSystemPromptCache()` after successful PATCH so AI picks up changes immediately.
+
+### Patterns discovered
+- Linter auto-improved the caching design: instead of caching the full assembled string (which would block 5-min menu refresh), it separates `staticKnowledgeCache` (permanent until invalidated) from `menuCache` (TTL-based). Better design.
+- Falls back to `loadKnowledge("menu-knowledge.md")` if DB is unavailable or returns empty rows.
+
+### Gotchas
+- `getSystemPrompt()` is now async — any caller must `await` it
+- prd.json must be opened with `encoding='utf-8'` on Windows (cp1252 default fails on em-dash chars)
+
+## Iteration N - Story: US-090 AI Waiter: Inject Live DB Menu into System Prompt
+
+### What was implemented
+- Rewrote `src/lib/chat/system-prompt.ts`:
+  - Replaced single `cachedKnowledge` blob with separate `staticKnowledgeCache` (cafe-facts.md + faq.md) and `menuCache` (DB, 5-min TTL)
+  - Added `fetchMenuFromDB()` async function — queries `menu_items WHERE available = true ORDER BY sort_order`
+  - `buildKnowledgeBlock()` is now async, calls `fetchMenuFromDB()` (uses TTL cache)
+  - `getSystemPrompt()` is now `async` — returns `Promise<string>`
+  - `invalidateSystemPromptCache()` clears both caches
+- `src/app/api/chat/route.ts` already had `await getSystemPrompt()` (previous run)
+- `src/app/api/admin/menu/[id]/route.ts` already imported and called `invalidateSystemPromptCache()` (previous run)
+
+### Patterns discovered
+- Previous agent had already partially updated files; key bug was `buildKnowledgeBlock()` still caching the entire block in `cachedKnowledge`, bypassing the `menuCache` 5-min TTL
+- Fix: separate static cache from menu cache so 5-min TTL auto-refreshes work independently of manual invalidation
+- prd.json requires `encoding='utf-8'` on Windows due to em-dash characters
+
+### Gotchas
+- Menu cache TTL won't work if the full knowledge block is also cached without expiry — keep them as separate variables
+- Always use `encoding='utf-8'` when reading/writing prd.json on Windows
