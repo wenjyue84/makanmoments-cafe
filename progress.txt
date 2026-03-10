@@ -8980,3 +8980,52 @@ Incomplete: Lighthouse Mobile Score >= 85 (LCP, CLS, FCP, TBT) (ID: US-093) — 
 
 ### Gotchas
 - prd.json must be opened with `encoding='utf-8'` on Windows (cp1252 default fails)
+## Iteration 2 - Tue, Mar 10, 2026  9:11:47 PM
+Completed: First-Time Visitor Splash Page: Pre-Order & Skip the Wait (ID: US-103) in 4m
+
+
+## Pre-analysis for US-104 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-104.
+
+**Objective:** Implement equal-width menu cards in the category grid on the `/en/menu` page, ensuring long item names wrap instead of expanding the card.
+
+**1. Primary Files to Modify:**
+*   `src/components/menu/menu-grid.tsx`: This is the main component rendering the menu item grid.
+*   `src/components/menu/menu-card.tsx`: The individual card component will likely need style adjustments for text wrapping.
+*   `src/app/[locale]/menu/page.tsx`: Verify how `menu-grid.tsx` is used and if any parent styles interfere.
+
+**2. Key Components & Frameworks:**
+*   **React Component:** `MenuGrid` and `MenuCard` (or similarly named components).
+*   **Styling:** Tailwind CSS.
+
+**3. Recommended Implementation Approach:**
+1.  In `menu-grid.tsx`, modify the `div` that acts as the grid container.
+2.  Set explicit, responsive column counts. Remove any `minmax` or `auto-fit` properties.
+    *   **Example:** `grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4`
+3.  In `menu-card.tsx`, ensure the root element of the card has `w-full` to make it fill its assigned grid column.
+4.  Locate the text element for the item name. Apply `break-words` to handle wrapping.
+5.  For a cleaner look, consider using the `@tailwindcss/line-clamp` plugin to truncate text to a specific number of lines (e.g., `line-clamp-2`). This also helps maintain a more consistent card height.
+
+**4. Edge Cases & Gotchas:**
+*   **Variable Card Height:** Forcing equal width can lead to unequal heights if item names wrap to 2 vs. 3 lines. To fix this, apply a `min-height` to the text container or the entire card to normalize row heights.
+*   **Line Clamp Plugin:** If the `@tailwindcss/line-clamp` plugin is not installed, it will need to be added via `npm` or `yarn` and configured in `tailwind.config.js`.
+*   **Visual Regression:** Test across all specified breakpoints (390px, 768px, 1024px) to confirm the column layout is correct and no horizontal scrollbar appears.
+*   **Image Distortion:** Ensure images within the cards continue to maintain their correct aspect ratio (e.g., using `aspect-square` and `object-cover`).
+
+
+## Iteration N - Story: US-104 - Menu Page — Equal Card Width in Category Grid
+
+### What was implemented
+- `menu-grid.tsx`: flat grid changed from `sm:grid-cols-2 lg:grid-cols-3` to `grid-cols-2 md:grid-cols-3 lg:grid-cols-4`
+- `menu-grid.tsx`: section grid changed from `grid-cols-2 sm:grid-cols-3` to `grid-cols-2 md:grid-cols-3 lg:grid-cols-4`
+- `menu-card.tsx`: added `w-full overflow-hidden` to card class string to enforce equal-width fill
+- `menu-card.tsx`: added `break-words` to item name `<h3>` to prevent long names from stretching layout
+
+### Patterns discovered
+- `cardClass` in `menu-card.tsx` is a plain string concatenation (not `cn()`), so changes are appended to the string
+- Grid breakpoints: mobile `grid-cols-2`, `md:` (768px) for 3-col, `lg:` (1024px) for 4-col — matches acceptance criteria
+- `sm:` (640px) breakpoint is skipped; going from 2-col directly to 3-col at 768px
+
+### Gotchas
+- Flat grid (search/display category results) had NO base column count — was 1-col on mobile despite appearing to be a 2-col layout at sm
+- Both grids needed the same column progression to be consistent

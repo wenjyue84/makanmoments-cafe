@@ -256,7 +256,7 @@ export function MenuGrid({
         </div>
       ) : isFlatView ? (
         /* Search results or display category: flat grid */
-        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
           {filtered.map((item, index) => {
             const isHighlighted = item.categories.some((cat) => highlights[cat] === item.id);
             const isUnavailableAtPreview =
@@ -314,7 +314,7 @@ export function MenuGrid({
 
               {/* Remaining items in standard grid */}
               {rest.length > 0 && (
-                <div className="mt-4 grid gap-4 grid-cols-2 sm:grid-cols-3">
+                <div className="mt-4 grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                   {rest.map((item, index) => {
                     const isHighlighted = item.categories.some((c) => highlights[c] === item.id);
                     const isUnavailableAtPreview =

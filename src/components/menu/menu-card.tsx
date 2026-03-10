@@ -51,8 +51,8 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
   }, [trayItem?.quantity]);
 
   const cardClass = isInTray
-    ? `group rounded-xl border p-4 hover-lift transition-colors bg-green-50/40 dark:bg-green-900/10 ring-2 ring-green-400/40 ${isHighlighted ? "border-amber-400" : "border-green-300/60"}`
-    : `group rounded-xl border bg-card p-4 hover-lift ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-border"}`;
+    ? `group w-full overflow-hidden rounded-xl border p-4 hover-lift transition-colors bg-green-50/40 dark:bg-green-900/10 ring-2 ring-green-400/40 ${isHighlighted ? "border-amber-400" : "border-green-300/60"}`
+    : `group w-full overflow-hidden rounded-xl border bg-card p-4 hover-lift ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-border"}`;
 
   return (
     <>
@@ -155,7 +155,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
 
         {/* Content */}
         <div className="space-y-1.5">
-          <h3 className="font-semibold leading-snug">{name}</h3>
+          <h3 className="font-semibold leading-snug break-words">{name}</h3>
           {item.description && (
             <div
               className={cn(
