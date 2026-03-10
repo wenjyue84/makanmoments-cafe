@@ -394,9 +394,9 @@ export function EditableMenuCard({
             Photo
           </button>
 
-          {/* Focal point arrow controls — shown on hover */}
+          {/* Focal point arrow controls — always visible in edit mode */}
           {hasPhoto && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 transition-opacity group-hover/card:opacity-100 pointer-events-none">
+            <div className="absolute inset-0 flex flex-col items-center justify-center opacity-40 transition-opacity group-hover/card:opacity-100 pointer-events-none">
               <div className="pointer-events-auto flex flex-col items-center gap-0.5">
                 <button
                   type="button"

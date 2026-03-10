@@ -126,8 +126,12 @@ export function MenuGrid({
         const fromJunction = items.filter((item) => item.displayCategories.includes(selectedDisplayCat));
         result = fromJunction.length > 0 ? fromJunction : items.filter((i) => i.featured);
       } else if (lc.includes("rm15")) {
-        // Under RM15: auto-computed from price, no junction table needed
-        result = items.filter((i) => i.price < 15);
+        // Under RM15: auto-computed from price, excluding drinks
+        result = items.filter(
+          (i) =>
+            i.price < 15 &&
+            !i.displayCategories.some((dc) => dc === "Hot Drinks" || dc === "Cold Drinks & Juice")
+        );
       } else if (lc.includes("vegetarian")) {
         // Vegetarian: auto-computed from dietary tags, no junction table needed
         result = items.filter((i) => i.dietary?.some((d) => d.toLowerCase() === "vegetarian"));
@@ -237,11 +241,13 @@ export function MenuGrid({
   // Flat grid when: searching, display category selected, favorites, or no POS categories (all-display-category setup)
   const isFlatView = isSearching || isDisplayCategorySelected || isFavoritesSelected || categories.length === 0;
 
-  // In flat view (customer mode): items tagged as Chef's Picks float to top as hero cards (max 2)
+  // In flat view (customer mode): items tagged as Chef's Picks float to top as hero cards.
+  // All view (no display cat): show ALL Chef's Picks. Specific display cat: max 2.
   const heroItems = useMemo(() => {
     if (!isFlatView || isSearching || isFavoritesSelected) return [];
     if (selectedDisplayCat?.toLowerCase().includes("chef")) return filtered.slice(0, 2);
-    return filtered.filter((i) => isChefsPick(i)).slice(0, 2);
+    const chefs = filtered.filter((i) => isChefsPick(i));
+    return selectedDisplayCat ? chefs.slice(0, 2) : chefs;
   }, [filtered, isFlatView, isSearching, isFavoritesSelected, selectedDisplayCat, isChefsPick]);
 
   const regularFlatItems = useMemo(() => {

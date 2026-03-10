@@ -7,8 +7,6 @@ import { MenuGrid } from "@/components/menu/menu-grid";
 import { MenuPageJsonLd } from "@/components/seo/json-ld";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 import { getDefaultCategoryForTime, getServingNowCategories, getMalaysiaTimeString } from "@/lib/time-slots";
-import { getOperatingStatus } from "@/lib/availability";
-import { OperatingHoursAlert } from "@/components/menu/operating-hours-alert";
 import { AdminPreviewBanner } from "@/components/menu/admin-preview-banner";
 
 export const revalidate = 3600;
@@ -52,13 +50,11 @@ export default async function MenuPage({
 
   const initialCategory = getDefaultCategoryForTime(previewTime);
   const servingNowCategories = getServingNowCategories(previewTime);
-  const operatingStatus = isAdmin ? "open" : getOperatingStatus();
   const currentTime = getMalaysiaTimeString();
 
   return (
     <>
       <MenuPageJsonLd />
-      <OperatingHoursAlert status={operatingStatus} />
       <div className="mx-auto max-w-6xl px-4 py-12 pb-40 md:pb-12">
         {isAdmin && (
           <AdminPreviewBanner currentTime={currentTime} previewTime={previewTime} />
