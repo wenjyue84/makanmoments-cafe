@@ -76,6 +76,9 @@ export function MenuGrid({
       } else if (lc.includes("rm15")) {
         // Under RM15: auto-computed from price, no junction table needed
         result = items.filter((i) => i.price < 15);
+      } else if (lc.includes("vegetarian")) {
+        // Vegetarian: auto-computed from dietary tags, no junction table needed
+        result = items.filter((i) => i.dietary?.some((d) => d.toLowerCase() === "vegetarian"));
       } else {
         result = result.filter((item) => item.displayCategories.includes(selectedDisplayCat));
       }

@@ -31,6 +31,12 @@ function rowToMenuItem(row: any, displayCatMap: Record<string, string[]> = {}): 
 
 // Fetch display categories (website-only, not POS)
 export async function getDisplayCategories(): Promise<DisplayCategory[]> {
+  // Ensure computed display categories exist (idempotent)
+  await sql`
+    INSERT INTO display_categories (name, sort_order, active)
+    VALUES ('Vegetarian', 6, true)
+    ON CONFLICT (name) DO NOTHING
+  `;
   const rows = await sql`
     SELECT * FROM display_categories ORDER BY sort_order ASC, name ASC
   `;

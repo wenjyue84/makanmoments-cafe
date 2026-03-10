@@ -5366,3 +5366,31 @@ This iteration: added the missing `?v=imgVersion` cache-buster to `ChefPickCard`
 ## Iteration 12 - Tue, Mar 10, 2026  4:24:54 PM
 Completed: Admin Menu Preview: Show Time-Based Dynamic Menu Same as Customer View (ID: US-058) in 10m
 
+
+## Pre-analysis for US-061 (Gemini 2.5 Pro)
+This user story describes a bug fix for a **Next.js/React** frontend, not a Frappe/Python application. The technical brief below is based on the actual content of the JSON provided.
+
+***
+
+### **Technical Brief: US-061 - Fix Chef's Picks Display**
+
+**Objective:** Correct the "Chef's Picks" filter on the menu page, which currently shows 0 items. The fix involves implementing a fallback to display all `featured=true` items if no items are explicitly assigned to the "Chef's Picks" category.
+
+**1. Primary File to Modify:**
+*   `src/components/menu/menu-grid.tsx`: This is the core component for displaying menu items. The filtering logic needs to be updated here.
+
+**2. Key Data Structures & API Endpoints:**
+*   **Tables:** `menu_items`, `display_categories`, `item_display_categories` (junction table).
+*   **Data Logic:** The frontend receives a list of all menu items and a list of display categories. The filtering happens client-side.
+*   **API:** `getDisplayCategories()` function needs to be verified to ensure it returns "Chef's Picks" as an active category.
+
+**3. Recommended Implementation Approach:**
+*   In `src/components/menu/menu-grid.tsx`, modify the item filtering logic.
+*   Add a special condition: when the `activeCategory` is "Chef's Picks" and the initial filtered item list is empty, re-filter the master `items` list to return all items where `item.featured === true`.
+*   This approach avoids a permanent database write and keeps the "Chef's Picks" category dynamic and based on the "featured" flag.
+
+**4. Edge Cases & Gotchas:**
+*   **Filter Count Badge:** The count displayed on the "Chef's Picks" filter tab must accurately reflect the number of `featured` items after the fallback is applied.
+*   **Data Integrity:** Avoid using the `INSERT` query mentioned in the notes as a permanent solution. It's better as a one-time script for data consistency, but the application logic should be the source of truth.
+*   **Hardcoded Strings:** Be cautious of hardcoding "Chef's Picks". If possible, use an ID or a constant to identify this special category.
+
