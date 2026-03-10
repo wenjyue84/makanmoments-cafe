@@ -10285,3 +10285,29 @@ MT01 Pineapple Fried Rice, AP01 Indonesia Ayam Penyet, BF01 KL Curry(Soup), BF02
 ## Iteration 1 - Tue, Mar 10, 2026 11:17:58 PM
 Completed: Admin Categories — Seed Chef's Picks with Curated Food Items (ID: US-111) in 5m
 
+
+## Pre-analysis for US-112 (Gemini 2.5 Pro)
+This user story is for a **React/TypeScript** frontend task, not a Frappe/Python one. The required changes are in a `.tsx` file.
+
+**Technical Brief for US-112**
+
+*   **Files to Modify:**
+    *   `src/components/admin/admin-menu-table.tsx` (This is a React component, no Python files are involved).
+
+*   **Frappe DocTypes / Hooks:**
+    *   None directly. The component likely fetches data originating from DocTypes like `MenuItem` or `DisplayCategory`, but the fix is client-side.
+
+*   **Implementation Approach:**
+    1.  Open `src/components/admin/admin-menu-table.tsx`.
+    2.  Find all instances of `.map()` used to render JSX lists.
+    3.  For each mapped element, add a unique `key` prop.
+    4.  Examples:
+        *   When mapping items: `<div key={item.id}>...</div>`
+        *   When mapping categories: `<tr key={category.id}>...</tr>`
+        *   When mapping badges: `<span key={badge.name}>...</span>`
+    5.  Use stable identifiers like `item.id`, `item.code`, or `category.id` for the keys.
+
+*   **Gotchas / Edge Cases:**
+    *   Do **not** use the array index from the `.map((item, index) => ...)` as the key, as it is unstable and can cause rendering bugs.
+    *   Ensure the key is applied to the top-level element returned from the map callback.
+
