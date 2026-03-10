@@ -535,6 +535,25 @@ export function AdminMenuTable({
                         </div>
                       </div>
 
+                      {/* Categories (mobile) */}
+                      <div className="mt-2 flex flex-wrap items-center gap-1">
+                        <span className="text-xs text-gray-500 shrink-0">In:</span>
+                        {categories.map((cat) => (
+                          <button
+                            key={cat}
+                            onClick={() => toggleCategory(item, cat)}
+                            className={cn(
+                              "rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
+                              item.categories.includes(cat)
+                                ? "border-orange-400 bg-orange-100 text-orange-800"
+                                : "border-gray-300 bg-gray-100 text-gray-500"
+                            )}
+                          >
+                            {cat}
+                          </button>
+                        ))}
+                      </div>
+
                       {/* Actions */}
                       <div className="mt-3 flex gap-2">
                         <button
@@ -997,6 +1016,25 @@ export function AdminMenuTable({
                       ★
                     </button>
                   </div>
+                </div>
+
+                {/* Categories (mobile) */}
+                <div className="mt-2 flex flex-wrap items-center gap-1">
+                  <span className="text-xs text-gray-500 shrink-0">In:</span>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => toggleCategory(item, cat)}
+                      className={cn(
+                        "rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
+                        item.categories.includes(cat)
+                          ? "border-orange-400 bg-orange-100 text-orange-800"
+                          : "border-gray-300 bg-gray-100 text-gray-500"
+                      )}
+                    >
+                      {cat}
+                    </button>
+                  ))}
                 </div>
 
                 {/* Actions */}

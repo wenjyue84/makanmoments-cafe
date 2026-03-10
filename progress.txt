@@ -2409,3 +2409,25 @@ Modify the admin menu interface to allow a single `MenuItem` to be assigned to m
 - File had been modified since last read when using Write tool — always re-read before writing
 - Windows Python file encoding: use `encoding='utf-8'` for prd.json operations
 - The `<>` fragment wrapper in `groupedItems.map` causes React key warning — acceptable for now (keys are on the actual `<tr>` elements)
+
+## Iteration N - Story: Admin: Duplicate Item to Multiple Categories (US-034)
+
+### What was implemented
+- Added category chip-toggle row to BOTH mobile card views in `admin-menu-table.tsx`:
+  - DnD grouped view mobile cards (inside DndContext section)
+  - Filtered flat view mobile cards (activeCategory !== null section)
+- Chips show all categories; orange = selected, gray = not selected; tap to toggle
+- Uses existing `toggleCategory()` function — marks item `_dirty`, triggers re-render
+- Desktop already had a hover-based category checklist dropdown (unchanged)
+- API (`PATCH /api/admin/menu/[id]`) already supports `categories` array
+- Public menu page already filters by `item.categories.includes(cat)` — multi-category display works
+
+### Patterns discovered
+- Mobile cards have no hover support — inline chip toggles are better than hover dropdowns
+- The "In:" label + chip approach matches screen size constraints and is touch-friendly
+- Both mobile views (DnD grouped + filtered flat) are separate JSX sections and must be updated independently
+
+### Gotchas
+- The file has TWO mobile card sections (one inside DndContext for "All Categories", one outside for filtered view) — both needed updating
+- `toggleCategory` already existed — no new logic needed, only UI
+- `npx tsc --noEmit` passes cleanly
