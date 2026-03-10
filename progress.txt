@@ -12523,3 +12523,21 @@ Here is the technical brief for **US-140**:
 - Modals call hook functions (onApprove, onReject, onStatusUpdate) passed as props — clean separation of API logic from UI
 - `"use client"` directive needed in the hook file since it uses useState/useEffect
 - TypeScript passes clean with `npx tsc --noEmit` — no errors
+## Iteration 2 - Wed, Mar 11, 2026  2:54:55 AM
+Completed: Split AdminMenuTable into Row Component and Edit Hook (ID: US-139) in 13m
+
+
+## Iteration 9 - Story: US-140 Extract AdminOrdersPanel into AdminOrderCard and useAdminOrders Hook
+Completed: All files already implemented from a previous iteration.
+
+### What was implemented
+- `src/hooks/useAdminOrders.ts` — already fully built with orders state, fetchOrders, approveOrder, rejectOrder, updateStatus, refresh
+- `src/components/admin/admin-order-card.tsx` — already fully built with ApproveModal, RejectModal, PaymentModal sub-components
+- `src/components/admin/admin-orders-panel.tsx` — already 89 lines (well under 200), uses hook + card component
+
+### Patterns discovered
+- Story was already complete from a prior iteration (useAdminOrders.ts was in the untracked files per git status)
+- When a story appears to be unimplemented but the hook file shows up as untracked, check if the work is done — it may just not be committed
+
+### Gotchas
+- Always check git status for untracked files — they may contain completed work that was never committed
