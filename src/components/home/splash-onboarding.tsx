@@ -9,9 +9,14 @@ export function SplashOnboarding() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    if (!localStorage.getItem(SPLASH_KEY)) {
-      setVisible(true);
-    }
+    // Delay splash so the LCP hero image can paint and be registered first.
+    // Without this, the fixed z-50 backdrop covers the hero and inflates LCP to ~5s.
+    const timer = setTimeout(() => {
+      if (!localStorage.getItem(SPLASH_KEY)) {
+        setVisible(true);
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   function dismiss() {

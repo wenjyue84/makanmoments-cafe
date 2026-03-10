@@ -35,8 +35,6 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: Hero
               sizes="100vw"
               priority
               fetchPriority="high"
-              placeholder="blur"
-              blurDataURL={HERO_BLUR.heroMobile}
             />
             {/* /delight: Overlay label on mobile image */}
             <div className="absolute bottom-3 left-3 rounded-full bg-background/80 px-3 py-1 text-xs font-medium backdrop-blur-sm">
