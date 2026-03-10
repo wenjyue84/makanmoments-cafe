@@ -27,14 +27,8 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   const { addItem } = useTray();
   const handledToolCalls = useRef(new Set<string>());
   const [isListening, setIsListening] = useState(false);
-  // Use state (not module var) in JSX to avoid SSR hydration mismatch
-  const [voiceSupported, setVoiceSupported] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
-  // Reveal mic button only on client after hydration
-  useEffect(() => {
-    setVoiceSupported(speechSupported);
-  }, []);
 
   const welcomeText = t("welcome");
   const { messages, sendMessage, status, error } = useChat({
@@ -212,7 +206,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
           className="flex-1 rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
           disabled={isLoading}
         />
-        {voiceSupported && (
+        {speechSupported && (
           <button
             type="button"
             onClick={toggleVoice}

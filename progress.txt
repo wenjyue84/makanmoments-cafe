@@ -5828,3 +5828,58 @@ This user story is for a **Next.js/React frontend application**, not a Frappe/Py
 - [x] After final result, recording stops and text auto-submits
 - [x] If Web Speech API not supported, mic button hidden (voiceSupported = false by default)
 - [x] TypeScript check passes (npx tsc --noEmit — clean)
+## Iteration 15 - Tue, Mar 10, 2026  4:51:18 PM
+Completed: AI Waiter: Voice Input via Web Speech API (ID: US-066) in 5m
+
+
+## Pre-analysis for US-067 (Gemini 2.5 Pro)
+### Technical Brief: US-067 Menu Fuzzy Search
+
+**Objective:** Replace the exact-match menu search with a multi-language, typo-tolerant fuzzy search using Fuse.js.
+
+**1. Files to Modify:**
+*   `src/components/menu/menu-grid.tsx`: Main component for search UI and logic.
+*   `src/hooks/use-debounce.ts`: New file for a custom debounce hook.
+
+**2. Framework/Libraries Involved:**
+*   **React:** The core view library.
+*   **Fuse.js:** The client-side fuzzy search library to be installed.
+*   **Hooks:** A new `useDebounce` custom hook will be created. This is a pure client-side change with no backend or DocType modifications.
+
+**3. Implementation Approach:**
+1.  **Install:** Add the required dependency: `npm install fuse.js`.
+2.  **Debounce:** Create a generic `useDebounce` hook in `src/hooks/use-debounce.ts` that takes a value and a delay (300ms) and returns the debounced value.
+3.  **Fuse Instance:** In `menu-grid.tsx`, use `useMemo` to create a `Fuse` instance based on the full, unfiltered list of menu items.
+4.  **Configuration:** Configure the Fuse instance to search across multiple fields: `keys: ['nameEn', 'nameMs', 'nameZh', 'description', 'categories']`, with `threshold: 0.4` and `minMatchCharLength: 2`.
+5.  **Search Logic:** Use the `useDebounce` hook on the search input's state. When the debounced query is non-empty, feed it to `fuse.search()`.
+6.  **Update View:** The component's state should display the search results by mapping them: `fuse.search(query).map(result => result.item)`. If the query is empty, it should revert to showing the items filtered by the active category.
+
+**4. Edge Cases & Gotchas:**
+*   **Data Structure:** `fuse.search()` returns an array of objects `{ item: T; refIndex: number; score: number; }`, not just the menu items. You must map the results to extract `result.item` before rendering.
+*   **Initial State:** Ensure that when the search bar is empty, the component correctly displays the default view (items filtered by the selected category), not an empty list.
+*   **Performance:** The `Fuse` instance should be memoized with `useMemo` to avoid re-initialization on every render, as it can be expensive with a large dataset.
+
+
+## Iteration - Story: US-066 - AI Waiter: Voice Input via Web Speech API
+
+### What was implemented
+- Added `Mic` icon import and `cn` utility import to `chat-panel.tsx`
+- Added module-level `speechSupported` constant (browser-only check for SpeechRecognition/webkitSpeechRecognition)
+- Added `isListening` state and `recognitionRef` to track voice session
+- Added `toggleVoice()` function that starts/stops recognition
+  - Uses session-local `transcript` object to capture final text (avoids stale closure issues)
+  - On `onend`: auto-submits transcript via `sendMessage` if non-empty
+  - Wrapped in try/catch — fails silently on permission denied
+- Added mic button in form: gray when idle, red + animate-ping when listening
+- Button hidden when `speechSupported` is false (unsupported browsers)
+- Refactored `handleSubmit` to use shared `handleSubmitText(useCallback)` for DRY submit logic
+
+### Patterns discovered
+- `ChatPanel` is loaded with `dynamic(..., { ssr: false })` — no SSR hydration concerns, can use module-level browser detection directly in JSX
+- For recognition session state, use a session-local object (`const session = { transcript: "" }`) to avoid stale closures in recognition event handlers
+- Pre-existing `@typescript-eslint/no-explicit-any` errors in the file (msg:any, p:any) — do not fix, just ensure new code uses eslint-disable-next-line where needed
+- `useCallback` needed for functions passed to voice handler to avoid stale isLoading
+
+### Gotchas
+- Do NOT use `setState` inside `useEffect` just for browser feature detection — causes lint error "Calling setState synchronously within an effect". Use module-level constant instead (safe since component is ssr:false)
+- The `submitInputRef.current = value` pattern during render causes "Cannot update ref during render" lint error — use session-local objects for capturing values in event handlers instead
