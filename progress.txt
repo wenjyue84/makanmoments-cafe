@@ -4696,3 +4696,50 @@ Completed: Pre-Order: Admin Orders Tab with Approve / Reject Actions (ID: US-053
 ### Result
 - prd.json: US-053 passes = true (already in HEAD)
 - TypeScript check: PASS (exit 0)
+## Iteration 34 - Tue, Mar 10, 2026  3:39:35 PM
+Completed: Pre-Order: Admin Orders Tab with Approve / Reject Actions (ID: US-053) in 10m
+
+
+## Pre-analysis for US-054 (Gemini 2.5 Pro)
+Here is a technical brief for implementing story US-054 in a Frappe/Python environment.
+
+**Subject: Technical Brief for US-054: Pre-Order Touch & Go Payment**
+
+This brief outlines the implementation of the customer payment upload feature.
+
+**1. DocType Modifications:**
+
+*   **Target DocType:** `Sales Order` (or a custom `Pre-Order` DocType if it exists).
+    *   Modify the `status` field: Add a new state `Payment Uploaded`.
+    *   Add a new field: `payment_screenshot` (Type: `Attach Image`).
+*   **Settings DocType:** A Singleton DocType like `LHDN Payroll Settings`.
+    *   Add field: `tng_phone_number` (Type: `Data`).
+    *   Add field: `tng_qr_code` (Type: `Attach Image`).
+
+**2. Backend Implementation (Python):**
+
+*   **File:** Create a new whitelisted function in `lhdn_payroll_integration/api.py`.
+*   **Function:** `upload_payment_screenshot(doc_name, file_data)`
+    *   This function will be decorated with `@frappe.whitelist()`.
+    *   It receives the order's `doc_name` and the base64-encoded `file_data`.
+    *   Logic:
+        1.  Create a Frappe `File` doc from the uploaded data.
+        2.  Fetch the `Sales Order` document: `doc = frappe.get_doc('Sales Order', doc_name)`.
+        3.  Attach the file: `doc.payment_screenshot = file_doc.file_url`.
+        4.  Update status: `doc.status = 'Payment Uploaded'`.
+        5.  Save the document: `doc.save(ignore_permissions=True)`.
+
+**3. Frontend Implementation (Web Template):**
+
+*   **File:** Modify the Web Form or Portal template for the `Sales Order`.
+*   Logic:
+    *   Use Jinja to conditionally show a "Payment" section if `doc.status == 'Approved'`.
+    *   Fetch and display the T&G details from the settings DocType.
+    *   Use JavaScript with an `<input type="file">` to read the file, validate its size (<5MB), and call the whitelisted Python function via `frappe.call`.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Permissions:** The `Guest` role needs permission to call the whitelisted method. Using `ignore_permissions=True` during the save is crucial.
+*   **Security:** Server-side validation of file type and size is mandatory, as client-side checks can be bypassed.
+*   **State Management:** Ensure no race conditions can occur if the admin changes the order while the customer is paying. The check `if doc.status == 'Approved'` is the primary guard.
+

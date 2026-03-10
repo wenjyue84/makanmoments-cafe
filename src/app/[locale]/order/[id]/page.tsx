@@ -253,7 +253,7 @@ export default function OrderStatusPage() {
         </div>
       )}
 
-      {order.status === "payment_pending" && (
+      {(order.status === "approved" || order.status === "payment_pending") && (
         <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50 p-4">
           <p className="text-sm font-semibold text-blue-800">{t("paymentTitle")}</p>
           <p className="mt-1 text-sm text-blue-700">{t("paymentDesc")}</p>
@@ -263,6 +263,17 @@ export default function OrderStatusPage() {
           >
             {t("paymentCta")}
           </Link>
+        </div>
+      )}
+
+      {order.status === "payment_uploaded" && (
+        <div className="mb-4 rounded-2xl border border-green-200 bg-green-50 p-4">
+          <p className="text-sm font-semibold text-green-800">
+            {t("paymentUploadedMsg")}
+          </p>
+          <p className="mt-1 text-sm text-green-700">
+            {t("paymentUploadedSubMsg")}
+          </p>
         </div>
       )}
 

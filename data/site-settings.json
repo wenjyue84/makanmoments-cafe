@@ -9,5 +9,7 @@
   },
   "preOrderEnabled": true,
   "depositRequired": false,
-  "paymentMethods": ["Touch & Go", "Cash on Arrival"]
+  "paymentMethods": ["Touch & Go", "Cash on Arrival"],
+  "tng_phone": "",
+  "tng_qr_url": ""
 }

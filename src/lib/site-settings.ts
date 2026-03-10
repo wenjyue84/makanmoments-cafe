@@ -13,6 +13,8 @@ export interface SiteSettings {
   preOrderEnabled: boolean;
   depositRequired: boolean;
   paymentMethods: string[];
+  tng_phone: string;
+  tng_qr_url: string;
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -27,6 +29,8 @@ const DEFAULT_SETTINGS: SiteSettings = {
   preOrderEnabled: true,
   depositRequired: false,
   paymentMethods: ["Touch & Go", "Cash on Arrival"],
+  tng_phone: "",
+  tng_qr_url: "",
 };
 
 const SETTINGS_PATH = path.join(process.cwd(), "data", "site-settings.json");
