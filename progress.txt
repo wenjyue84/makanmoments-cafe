@@ -9950,3 +9950,25 @@ Here is the technical brief for the Claude agent, based on the provided user sto
 ### Gotchas
 - Must reuse the `arrayBuffer` variable for both magic check and `Buffer.from()` — calling `file.arrayBuffer()` twice throws on some runtimes
 - Pre-existing lint errors in the repo are not our concern; only the changed file needs to be clean
+## Iteration 9 - Tue, Mar 10, 2026 10:07:46 PM
+Completed: File Upload Validation: Fix WebP Extension Bug + Add Magic Byte Check (ID: US-101) in 3m
+
+
+## Iteration N - Story: US-101 File Upload Validation: Fix WebP Extension Bug + Add Magic Byte Check
+
+### What was implemented
+- All fixes were already present in `src/app/api/orders/[id]/payment/route.ts`:
+  - `EXT_MAP` correctly maps `image/webp → webp` (not jpg)
+  - Error message: "Only JPEG, PNG, and WebP images are accepted"
+  - Magic byte check: JPEG (FF D8 FF), PNG (89 50 4E 47), WebP (RIFF...WEBP at bytes 8-11)
+  - `safeId` strips non-alphanumeric/hyphen chars from orderId
+  - `arrayBuffer` read once (line 101), reused for both magic check and file write
+- `tray_orders` uses `SERIAL PRIMARY KEY` (integer IDs) — `parseInt(id, 10)` is correct here
+
+### Patterns discovered
+- `tray_orders.id` is a SERIAL integer (not nanoid) — CLAUDE.md schema description is aspirational/future
+- `file.arrayBuffer()` should only be called once per file object; store in a const and reuse
+
+### Gotchas
+- Previous Ralph iterations had pre-analysis entries but never actually implemented — code was fixed manually between iterations
+- TypeScript: `npx tsc --noEmit` passes clean with no changes needed
