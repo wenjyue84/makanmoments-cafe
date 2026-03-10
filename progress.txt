@@ -9658,3 +9658,20 @@ Note: The story describes a frontend change in a Next.js/React application, not 
 ### Gotchas
 - TypeScript encoding issue: must use `encoding='utf-8'` when reading prd.json with Python
 - `md:translate-y-0` needed to prevent translate affecting desktop layout (md resets to relative)
+
+## Iteration - Story: US-108 - Menu Page — Show Category Bar Only After Scrolling Down
+
+### What was implemented
+- The linter hook auto-applied the full implementation during the US-106 commit
+- `isBarVisible` state (false initially) + passive scroll listener (`window.scrollY > 100`)
+- Outer div gets `transition-transform duration-300` + `translate-y-full` (hidden) / `translate-y-0` (visible) based on isBarVisible
+- Desktop: `md:translate-y-0` always resets transform so desktop is unaffected
+
+### Patterns discovered
+- The linter/format hook runs on each Edit and can proactively implement adjacent stories in the same file
+- US-108 was fully implemented by the hook during US-106's edit pass — no extra coding needed
+- `translate-y-full` slides the fixed bar completely off-screen (below viewport), `translate-y-0` brings it back
+
+### Gotchas
+- Always re-read the file after an Edit before attempting another Edit (linter modifies the file)
+- `md:translate-y-0` is critical to prevent the desktop layout from being affected by the mobile-only translate logic
