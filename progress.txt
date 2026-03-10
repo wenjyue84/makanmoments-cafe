@@ -12459,3 +12459,22 @@ Here is the technical brief for **US-140**:
 *   **Prop-drilling:** Ensure the callback functions from the hook are correctly passed through `admin-orders-panel.tsx` to the `AdminOrderCard` buttons.
 *   **Error/Loading States:** The main panel must correctly render loading spinners or error messages based on the state exposed by the `useAdminOrders` hook.
 
+
+## Iteration N - Story: US-139 Split AdminMenuTable into Row Component and Edit Hook
+
+### What was implemented
+- `src/hooks/useMenuTableEdit.ts` — already partially existed; updated to add `editingId`, `editForm`, `imgVersion`, `imagePickerCode`, `setImagePickerCode`, `handleImageChange`, `handleSave`, `handleCancel`
+- `src/components/admin/admin-menu-table-row.tsx` — already existed (from previous iteration); renders both mobile card (`variant="mobile"`) and desktop table row (`variant="desktop"`)
+- `src/components/admin/admin-menu-table.tsx` — refactored from 1349 lines to 365 lines by delegating to hook + row component; imports `useMenuTableEdit` and `AdminMenuTableRow`, keeps only grouping logic, search/filter state, and structural JSX
+
+### Patterns discovered
+- The row component was already built; the main task was wiring admin-menu-table.tsx to use it
+- The hook interface was extended by the linter to include `editForm`, `handleSave`, `handleCancel` — these were implemented as aliases/simple wrappers
+- `rowProps` spread pattern works well to pass shared props to all row instances
+- `desktopThead` as a JSX variable avoids duplicating the thead in both grouped and flat views
+- colSpan for the group header row in grouped view: use 13 (number of columns in new unified thead)
+
+### Gotchas
+- TypeScript: `npx tsc --noEmit` passes cleanly with no errors for changed files
+- The original file had 14 columns in grouped view (with separate Display Cats column) vs 13 in flat view — unified to 13 in new implementation
+- The linter auto-adds fields to TypeScript interfaces — always read the file after editing before writing again
