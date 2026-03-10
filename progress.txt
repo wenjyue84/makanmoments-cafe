@@ -817,3 +817,6 @@ Based on the user story JSON, the request is for a **frontend Next.js/React** im
 - prd.json must be read/written with UTF-8 encoding (has special chars)
 - TypeScript check passes cleanly (0 errors)
 - `pb-48` (192px) used instead of `pb-32` (128px) for safer bottom clearance
+## Iteration 2 - Tue, Mar 10, 2026 10:31:49 AM
+Completed: Mobile-First Bottom Navigation: Category Filter and Search at Bottom (ID: US-012) in 6m
+
