@@ -10414,3 +10414,34 @@ This task addresses a brittle test (US-042) that performs a static source code c
 
 ### Gotchas
 - One-line change only; TypeScript clean
+## Iteration 4 - Tue, Mar 10, 2026 11:27:00 PM
+Completed: Fix React Key Prop Warning in AdminMenuTable (ID: US-112) in 6m
+
+
+## Pre-analysis for US-114 (Gemini 2.5 Pro)
+**Subject: Technical Brief for US-114: Fix Order Notification Test**
+
+**Clarification:** The user story's technical notes indicate this is a **TypeScript/Next.js** task, not Frappe/Python. The implementation should target the `makanmoments.cafe` web application codebase.
+
+**1. Primary File for Modification:**
+*   `src/lib/tests/new-features.ts`: This file contains the integration test suite. The target function is `testOrderNotificationBell` (test ID: `nf-044-order-notification`).
+
+**2. Involved API / Data Structures (Not Frappe DocTypes):**
+*   **API Endpoint:** `POST /api/orders`
+*   **Database Table:** An `orders` table is implicitly involved, which the test queries directly after the API call.
+*   **Data Shape:** The JSON payload for the POST request requires `items`, `total`, `contactNumber`, and `estimatedArrival`. The corresponding database record has a `status` column.
+
+**3. Recommended Implementation Approach:**
+1.  Navigate to `src/lib/tests/new-features.ts` and find the `testOrderNotificationBell` function.
+2.  Modify the `fetch` call's body to include the two missing required fields:
+    *   `contactNumber: '0123456789'`
+    *   `estimatedArrival: new Date(Date.now() + 20 * 60 * 1000).toISOString()`
+3.  Locate the database status check within the test's verification logic.
+4.  Change the assertion from checking for `'pending'` to checking for `'pending_approval'`.
+5.  Update the success log message to also reflect the correct `pending_approval` status.
+
+**4. Gotchas to Watch For:**
+*   **Tech Stack:** The primary gotcha is the prompt's mention of Python/Frappe. The work is entirely in TypeScript.
+*   **Date Calculation:** Ensure the `estimatedArrival` is dynamically calculated as "20 minutes from now" and correctly formatted as an ISO string.
+*   **Database State:** The test includes cleanup logic (DELETE FROM orders). Ensure this is not accidentally removed.
+
