@@ -6839,3 +6839,24 @@ Here is the technical brief:
 ### Gotchas
 - TypeScript check: passes clean (npx tsc --noEmit)
 - Both menu-card.tsx and chef-pick-card.tsx need the same treatment — hero card descriptions also hidden by default
+
+## Iteration 46 - Story: US-075 - Promo Set Item: Add to Tray + Lazy Description Reveal
+
+### What was implemented
+- Verified that both `menu-card.tsx` and `chef-pick-card.tsx` already had the full feature implemented from prior iterations:
+  - `showDesc` state initialized to `false` (descriptions hidden by default)
+  - Image onClick toggle: `setShowDesc(v => !v)` 
+  - 2-second hover intent timer on image (mouseEnter/Leave with setTimeout)
+  - Animated description reveal: `max-h-40/48 opacity-100` vs `max-h-0 opacity-0` with `transition-all duration-300`
+  - Add-to-tray button in ChefPickCard (which renders the "top item" per category section)
+- Previous iteration (22) was marked incomplete without verifying the code was already correct
+- TypeScript check: zero errors
+
+### Patterns discovered
+- The "top item" per category section in menu-grid.tsx is always rendered as `<ChefPickCard>` (line 308)
+- `MenuItem.code` is `string` (non-nullable) — no null-id issue when adding to tray
+- chef-pick-card.tsx already had the animated reveal via `cn()` at lines 104-113 before this iteration
+
+### Gotchas
+- When prd.json passes=false but the feature looks implemented, always verify TypeScript passes before re-implementing
+- Previous incomplete iterations may leave partial changes that ARE complete — read files carefully
