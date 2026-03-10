@@ -29,7 +29,6 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
   const [imgLoaded, setImgLoaded] = useState(false);
   const [recipeOpen, setRecipeOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
-  const [addScaling, setAddScaling] = useState(false);
   const [showDesc, setShowDesc] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevQuantityRef = useRef<number>(0);
@@ -196,7 +195,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
               <button
                 type="button"
                 onClick={() => decrementItem(item.code)}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground active:scale-90"
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all active:scale-95 hover:bg-primary hover:text-primary-foreground"
                 aria-label="Remove one"
               >
                 <Minus className="h-4 w-4" />
@@ -206,15 +205,8 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
               </span>
               <button
                 type="button"
-                onClick={() => {
-                  addItem({ id: item.code, name, price: item.price });
-                  setAddScaling(true);
-                  setTimeout(() => setAddScaling(false), 150);
-                }}
-                className={cn(
-                  "flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all hover:bg-primary/90",
-                  addScaling ? "scale-110" : "scale-100"
-                )}
+                onClick={() => addItem({ id: item.code, name, price: item.price })}
+                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all active:scale-95 hover:bg-primary/90"
                 aria-label="Add one more"
               >
                 <Plus className="h-4 w-4" />
@@ -223,15 +215,8 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
           ) : (
             <button
               type="button"
-              onClick={() => {
-                addItem({ id: item.code, name, price: item.price });
-                setAddScaling(true);
-                setTimeout(() => setAddScaling(false), 150);
-              }}
-              className={cn(
-                "flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all hover:bg-primary hover:text-primary-foreground",
-                addScaling ? "scale-110" : "scale-100"
-              )}
+              onClick={() => addItem({ id: item.code, name, price: item.price })}
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all active:scale-95 hover:bg-primary hover:text-primary-foreground"
               aria-label={tc("add")}
             >
               <Plus className="h-4 w-4" />

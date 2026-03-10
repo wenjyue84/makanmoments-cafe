@@ -7208,3 +7208,49 @@ Based on the user story JSON, the request appears to be for a **Next.js/React fr
 ### Gotchas
 - prd.json file is UTF-8 encoded — python3 `open()` needs `encoding='utf-8'` explicitly on Windows
 - `useRef` for previous value tracking in effects prevents infinite loops when combined with `useEffect`
+## Iteration 48 - Tue, Mar 10, 2026  6:19:00 PM
+Completed: Menu Page: Progressive Item Reveal and Reduced Visual Noise (ID: US-077) in 9m
+
+
+## Pre-analysis for US-079 (Gemini 2.5 Pro)
+This technical brief translates the provided user story's concept into a Frappe/Python implementation plan for the `lhdn_payroll_integration` app.
+
+**Subject: Technical Brief for US-079: Admin Sidebar Navigation**
+
+**1. Python/Frappe Files to Modify:**
+    *   `lhdn_payroll_integration/hooks.py`: To register a new Workspace for the app.
+    *   `lhdn_payroll_integration/lhdn_payroll_integration/workspace/payroll_admin/payroll_admin.json`: The primary file for defining the new sidebar layout, links, and cards.
+    *   `lhdn_payroll_integration/public/css/payroll_admin.css`: For custom styling (e.g., active link highlighting) if the standard Workspace styles are insufficient.
+
+**2. Frappe DocTypes & Hooks Involved:**
+    *   **DocType:** A new `Workspace` DocType, likely named "Payroll Admin".
+    *   **DocTypes (for links):** The sidebar will link to core DocTypes such as `Payroll Entry`, `Employee`, `Tax Submission`, `LHDN Settings`, and custom `Report` DocTypes.
+    *   **Hooks:** The `workspace` hook in `hooks.py` will add the new Workspace to the module.
+
+**3. Recommended Implementation Approach:**
+    *   Create a new Workspace named "Payroll Admin" via `bench new-workspace "Payroll Admin"`.
+    *   In the generated `payroll_admin.json` file, configure the layout to use a sidebar.
+    *   Add `Shortcut` link types to the sidebar section, pointing to the relevant payroll management DocTypes and reports, assigning appropriate Frappe icons (e.g., 'icon-user', 'icon-settings').
+    *   The main section will dynamically render the list, report, or page view for the selected sidebar item.
+
+**4. Edge Cases & Gotchas:**
+    *   **Permissions:** Ensure user roles have permission to access the new Workspace and all DocTypes it links to.
+    *   **Frappe Version:** Workspace capabilities differ across Frappe versions (v13-v15). Confirm the target version supports sidebar layouts natively to avoid building a custom Page.
+    *   **Responsiveness:** While Workspaces are responsive, achieving a specific hamburger menu or icon-only strip on mobile might require minor custom CSS.
+
+
+## Iteration 49 - Story: Site-Wide Micro-Interactions and Scroll-Triggered Polish (US-078)
+
+### What was implemented
+- `src/components/menu/menu-filter.tsx`: Changed `transition-colors` → `transition-all duration-200` on all 4 category chip buttons; added `scale-[1.04]` to active chip state (All, POS categories, display categories, favorites). Gives a smooth pop animation when a chip becomes active.
+- `src/components/menu/menu-card.tsx`: Removed `addScaling` state (was doing scale-110 on add button via JS timeout); simplified to native CSS `active:scale-95` on all add/remove buttons.
+- All other US-078 criteria were already implemented: `globals.css` has `badge-bounce` keyframe + global `prefers-reduced-motion` override; `tray-widget.tsx` has badge bounce logic; `button.tsx` has `active:scale-[0.98]`; `menu-card.tsx` has `bg-muted animate-pulse` image skeleton.
+
+### Patterns discovered
+- Most of US-078 was already in the codebase from prior iterations — only the category chip active animation was missing
+- `scale-[1.04]` on active React state class + `transition-all duration-200` gives "smooth pop" when chip activates — no JS needed
+- `addScaling` JS state for scale animations is unnecessary when Tailwind `active:scale-*` covers the press feedback
+
+### Gotchas
+- prd.json must be opened with `encoding='utf-8'` on Windows — CP1252 default fails on em-dashes
+- Check globals.css before adding new keyframes — badge-bounce was already there
