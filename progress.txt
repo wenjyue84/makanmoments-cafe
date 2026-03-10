@@ -1289,3 +1289,36 @@ This user story focuses on enhancing the landing page's hero section by replacin
 ### Gotchas
 - Python3 on Windows needs explicit `encoding='utf-8'` when reading prd.json (cp1252 codec error otherwise)
 - Key name in HERO_BLUR must match what compress script generates: `greenCurryRice` (from `green-curry-rice.webp`)
+## Iteration 7 - Tue, Mar 10, 2026 11:08:37 AM
+Completed: Hero Image Improvements: Better Food Photos + Sharp Compression (ID: US-018) in 5m
+
+
+## Pre-analysis for US-019 (Gemini 2.5 Pro)
+Based on the user story JSON, the request is for a **Next.js/TypeScript** project, not a Frappe/Python application. The technical brief below is adjusted for the correct technology stack.
+
+***
+
+**Subject: Technical Brief for US-019: Add Cafe Logo (Next.js/TypeScript)**
+
+**1. Files to Modify:**
+*   `src/components/layout/header.tsx`: To replace the text wordmark with the new logo.
+*   `src/components/layout/footer.tsx`: To add the new logo.
+*   `scripts/process-logo.mjs` (New file): A one-off script for image processing.
+*   `public/images/logo.png`: The destination for the processed image asset.
+
+**2. Key Components & Libraries:**
+*   **Next.js `<Image>` component:** For optimized, responsive image rendering.
+*   **`sharp` (or `jimp`):** Node.js library for the image processing script to remove the background.
+
+**3. Recommended Implementation Approach:**
+1.  Create `scripts/process-logo.mjs` to programmatically load the source `logo.jpg`.
+2.  Use the `sharp` library within the script to remove the white background and save the result as `public/images/logo.png`.
+3.  In `header.tsx`, replace the text logo with `<Image src="/images/logo.png" ... />`.
+4.  Apply `alt` text and style the image height to `40-48px`.
+5.  Repeat the `<Image>` component implementation in `footer.tsx`, adjusting the size to a max-height of `80px`.
+
+**4. Edge Cases & Gotchas:**
+*   Automated background removal may leave artifacts; manual editing might be a faster alternative.
+*   The header logo is likely an LCP element; use the `priority` prop on the `<Image>` component.
+*   For dark mode, CSS `filter: invert(1)` could work on a monochrome logo, but a separate logo variant is a more robust solution if `mix-blend-mode` proves inconsistent.
+
