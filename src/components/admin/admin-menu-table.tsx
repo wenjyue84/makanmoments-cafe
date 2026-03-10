@@ -127,6 +127,7 @@ export function AdminMenuTable({
   const [highlightedCode, setHighlightedCode] = useState<string | null>(null);
   const [activeDrag, setActiveDrag] = useState<{ itemId: string; nameEn: string } | null>(null);
   const [suggesting, setSuggesting] = useState<Record<string, boolean>>({});
+  const [search, setSearch] = useState("");
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -368,11 +369,20 @@ export function AdminMenuTable({
     }
   }
 
-  const filteredItems = activeCategory
-    ? items.filter((i) => i.categories.includes(activeCategory))
-    : items;
+  const searchedItems =
+    search === ""
+      ? items
+      : items.filter((item) =>
+          [item.code, item.nameEn, item.nameMs, item.nameZh].some((v) =>
+            v?.toLowerCase().includes(search.toLowerCase())
+          )
+        );
 
-  const groupedItems = groupByPrimaryCategory(items, categories);
+  const filteredItems = activeCategory
+    ? searchedItems.filter((i) => i.categories.includes(activeCategory))
+    : searchedItems;
+
+  const groupedItems = groupByPrimaryCategory(searchedItems, categories);
 
   return (
     <div className="space-y-4">
@@ -407,6 +417,13 @@ export function AdminMenuTable({
       {error && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
       )}
+      <input
+        type="search"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search by name or code..."
+        className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+      />
       <div className="flex flex-wrap items-center gap-3">
         <select
           value={activeCategory ?? ""}
@@ -438,6 +455,12 @@ export function AdminMenuTable({
           + Add Item
         </button>
       </div>
+
+      {filteredItems.length === 0 && search !== "" && (
+        <p className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-500">
+          No items match &ldquo;{search}&rdquo;
+        </p>
+      )}
 
       {activeCategory === null ? (
         /* ——— DnD Grouped View (All Categories) ——— */

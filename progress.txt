@@ -7805,3 +7805,74 @@ Based on the user story JSON, the request is for a **Next.js/React** frontend im
 ## Iteration 29 - Tue, Mar 10, 2026  6:45:03 PM
 Completed: Admin: Deep-Linkable Sub-URLs for Each Tab (ID: US-083) in 4m
 
+## Iteration 52 - Tue, Mar 10, 2026  6:45:13 PM
+Completed: Admin: Deep-Linkable Sub-URLs for Each Tab (ID: US-083) in 5m
+
+
+## Pre-analysis for US-085 (Gemini 2.5 Pro)
+This user story is for a **React/TypeScript** frontend, not a Frappe/Python backend. The implementation will be entirely client-side within a `.tsx` component.
+
+### Technical Brief: US-085 Admin Menu Search (React)
+
+**1. File to Modify:**
+`src/components/admin/admin-menu-table.tsx`
+
+**2. Core React Components / Hooks:**
+- The functional component `AdminMenuTable` is the primary target.
+- It will require the `useState` hook to manage the search input's state.
+
+**3. Implementation Approach:**
+- Introduce a state variable: `const [search, setSearch] = useState('');`
+- Add an `<input>` element at the top of the table, binding its `value` and `onChange` to the `search` state.
+- Before the existing category filter, apply a new `.filter()` to the `items` prop.
+- The filter logic should perform a case-insensitive check of the `search` term against `item.code`, `item.nameEn`, `item.nameMs`, and `item.nameZh`.
+- Render a "0 results" message if the filtered item list is empty.
+
+**4. Edge Cases & Gotchas:**
+- The filter logic must handle potentially `null` or `undefined` name fields to avoid runtime errors (e.g., `item.nameEn?.toLowerCase()`).
+- Ensure the search filter is applied *before* the category filter to allow searching within a selected category.
+- The component should be purely client-side with no API calls for filtering.
+
+
+## Pre-analysis for US-085 (Gemini 2.5 Pro)
+This user story (US-085) outlines a **frontend enhancement** for a React/Next.js application, not a Frappe/Python one. The technical notes specify a `.tsx` file and React `useState`, indicating a client-side implementation.
+
+Here is the technical brief based on the actual story content:
+
+**1. File to Modify:**
+*   `src/components/admin/admin-menu-table.tsx`
+
+**2. Framework Components & Data Structures:**
+*   This is a React component, likely a client component (`'use client'`).
+*   It will use the `useState` hook to manage the search input's state.
+*   The core data is an array of `item` objects, containing `code`, `nameEn`, `nameMs`, and `nameZh` fields.
+
+**3. Recommended Implementation Approach:**
+*   Introduce a state variable for the search term: `const [search, setSearch] = useState('');`.
+*   Add a styled `<input>` element above the category filters, bound to the `search` state.
+*   Apply a filter to the main `items` array *before* the category filter.
+*   The filter logic should perform a case-insensitive `includes()` check on the `code`, `nameEn`, `nameMs`, and `nameZh` fields.
+*   Display a "0 results found" message if the filtered array is empty.
+
+**4. Edge Cases & Gotchas:**
+*   The filter logic must safely handle potentially `null` or `undefined` name fields to prevent runtime errors (e.g., using optional chaining: `v?.toLowerCase()`).
+*   Ensure the search input's styling is consistent with the page's existing UI elements.
+*   Confirm that clearing the search input correctly restores the original, unfiltered item list (respecting any active category filter).
+
+
+## Iteration N - Story: US-085 Admin Menu: Search Items by Code or Name
+
+### What was implemented
+- Added `search` state to `AdminMenuTable` component
+- Added `searchedItems` derived array: filters `items` against `search` across `code`, `nameEn`, `nameMs`, `nameZh`
+- Updated `filteredItems` and `groupedItems` to use `searchedItems` (search composes with category filter)
+- Added search `<input>` above the category select with placeholder "Search by name or code..."
+- Added "0 results" message when search produces no matches
+
+### Patterns discovered
+- `filteredItems` (category filter) and `groupedItems` (DnD grouped view) both now derive from `searchedItems` — search applies in both views
+- The "0 results" check uses `filteredItems.length === 0 && search !== ""` to avoid showing the message when the list is naturally empty
+
+### Gotchas
+- DnD grouped view uses `groupedItems` (not `filteredItems`), so both must be updated to use `searchedItems`
+- TypeScript check passes clean (0 errors)
