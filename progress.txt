@@ -8356,3 +8356,20 @@ This story adapts KDS item completion logic for a payroll context. The goal is t
 *   Handle empty child tables gracefully (e.g., disable the finalize button).
 *   Ensure user permissions allow for status changes on the parent DocType.
 
+## Iteration 1 - Tue, Mar 10, 2026  7:11:59 PM
+Completed: KDS: Kitchen Display System — Login + Order Queue View (ID: US-087) in 6m
+
+
+## Iteration N - Story: US-088 - KDS: Mark Individual Food Items as Complete
+
+### What was implemented
+- Already fully implemented in prior iteration (US-087 work)
+- `src/app/kds/page.tsx`: OrderCard with per-item tap-to-complete, Map<orderId,Set<itemIndex>> state, green border when all done, "Mark as Ready" button
+- `src/app/api/kds/orders/[id]/ready/route.ts`: POST endpoint sets status='ready' in tray_orders
+
+### Patterns discovered
+- KDS item completion was pre-built alongside the US-087 login/queue view
+- TypeScript check: zero errors
+
+### Gotchas
+- Story was already complete — just needed prd.json updated
