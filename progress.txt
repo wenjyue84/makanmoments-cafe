@@ -3326,3 +3326,29 @@ Completed: Admin: Add Chinese and Malay Translations for All Food Items (ID: US-
 - `suggesting` uses `Record<string, boolean>` with `${itemId}-ms` / `${itemId}-zh` keys for per-field loading
 - Warning indicator uses 🌐 emoji (not ⚠️) — appears inline with nameEn field when either MS or ZH is missing
 - Suggest buttons appear per language field with ✨ icon (→ "…" when loading)
+
+## Pre-analysis for US-043 (Gemini 2.5 Pro)
+This user story (US-043) outlines a client-side enhancement for a Next.js/TypeScript application, not a Frappe/Python backend task. The implementation focuses on React components and client-side filtering logic.
+
+Here is the corresponding technical brief:
+
+**1. Files to Modify (TypeScript):**
+*   `src/components/menu/menu-grid.tsx`: The primary candidate for containing the search and filter logic that iterates through menu items.
+*   `src/components/menu/menu-filter.tsx`: A possible secondary location if the search input and its state are managed in a dedicated component.
+
+**2. Involved Components & Hooks (React):**
+*   The change centers on the client-side filtering of the `MenuItem` data array.
+*   The implementation will modify the filtering logic tied to the 'Search dishes' input, likely managed by `useState` and potentially optimized with `useMemo`.
+
+**3. Implementation Approach:**
+*   Within the component responsible for rendering the menu, locate the filtering function that takes the search query.
+*   Convert the search query to lowercase once to ensure case-insensitivity and efficiency.
+*   Update the `.filter()` condition to check for the query's presence in `item.nameEn`, `item.nameMs`, `item.nameZh`, and `item.description`.
+*   The new logic will be an OR condition: `q => nameEn.includes(q) || nameMs.includes(q) || nameZh.includes(q)`.
+
+**4. Edge Cases & Gotchas:**
+*   **Display Logic:** Verify that `getLocalizedName()` is still used to *display* the item name in the current locale, even though searching is multi-lingual.
+*   **Performance:** For a large menu, debounce the search input to prevent performance degradation from rapid re-filtering on every keystroke.
+*   **No API Call:** This is a pure client-side change. No backend or API modifications are necessary.
+*   **Partial Matching:** The `.includes()` method will correctly handle partial strings (e.g., 'tomyam' matching 'Tom Yum').
+
