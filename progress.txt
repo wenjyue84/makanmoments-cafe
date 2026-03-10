@@ -11748,3 +11748,34 @@ Completed: Move Hardcoded Display Category Names to Constants (ID: US-136) in 4m
 ### Gotchas
 - `dietary-badge.tsx` uses "Vegetarian" as a CSS class key and dietary label — different from display categories, not a candidate for SPECIAL_DISPLAY_CATEGORIES
 - TypeScript passes clean (exit 0) with no changes needed
+## Iteration 6 - Wed, Mar 11, 2026  2:26:36 AM
+Completed: Move Hardcoded Display Category Names to Constants (ID: US-136) in 6m
+
+
+## Pre-analysis for US-137 (Gemini 2.5 Pro)
+### US-137: Memoize Fuse.js Instance in MenuGrid - Technical Brief
+
+**Objective:**
+Memoize the Fuse.js search index instance within the `MenuGrid` React component to prevent its costly re-initialization on every render, which currently happens on any state change. The index should only be rebuilt when the underlying `items` data changes.
+
+**File to Modify:**
+*   `src/components/menu/menu-grid.tsx`
+
+**Involved APIs & Libraries:**
+*   React `useMemo` hook.
+*   `Fuse.js` constructor and `search` method.
+
+**Implementation Plan:**
+1.  **Isolate Options:** Locate the `fuseOptions` object within the `MenuGrid` component and move it outside the component body, defining it as a module-level `const`. This prevents it from being recreated on each render.
+2.  **Memoize Instance:** Find the line `const fuse = new Fuse(items, fuseOptions);` (or similar).
+3.  **Wrap with `useMemo`:** Replace the existing instantiation with the `useMemo` hook. The dependency array must contain only `[items]`.
+    ```typescript
+    const fuse = useMemo(() => new Fuse(items, fuseOptions), [items]);
+    ```
+4.  **Verify:** The existing search logic, which calls `fuse.search(searchQuery)`, should continue to function correctly using the memoized instance.
+
+**Gotchas & Edge Cases:**
+*   **Dependency Array:** Ensure only `items` is in the dependency array. Including other state variables like `searchQuery` would negate the performance benefit.
+*   **Constant Options:** Defining `fuseOptions` outside the component is crucial. If it were an inline object, a new object reference on each render would break the memoization.
+*   **No-Op Renders:** The primary goal is to stop the Fuse index from rebuilding during renders caused by state changes that don't affect the item list (e.g., typing in the search box).
+
