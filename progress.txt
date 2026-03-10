@@ -12601,3 +12601,57 @@ Completed: Split AdminMenuTable into Row Component and Edit Hook (ID: US-139) in
 ## Iteration 1 - Wed, Mar 11, 2026  2:57:22 AM
 Completed: Extract AdminOrdersPanel into AdminOrderCard and useAdminOrders Hook (ID: US-140) in 6m
 
+## Iteration 9 - Wed, Mar 11, 2026  2:57:45 AM
+Completed: Extract AdminOrdersPanel into AdminOrderCard and useAdminOrders Hook (ID: US-140) in 3m
+
+
+## Iteration N - Story: US-140 - Extract AdminOrdersPanel into AdminOrderCard and useAdminOrders Hook
+
+### What was implemented
+- `src/hooks/useAdminOrders.ts` already pre-created with: orders state, fetchOrders, approveOrder, rejectOrder, updateStatus, filterOrders, FilterTab type
+- `src/components/admin/admin-order-card.tsx` already pre-created with: ApproveModal, RejectModal, PaymentModal, AdminOrderCard component
+- `admin-orders-panel.tsx` already refactored to 89 lines (was 634), using `useAdminOrders` hook and `AdminOrderCard`
+
+### Patterns discovered
+- Both the hook and card files were pre-created by a previous agent — the refactoring was complete
+- Hook uses `ActionResult = { ok: boolean; error?: string }` return type for all API calls (not `Promise<string | null>`)
+- `updateStatus` (not `updateOrderStatus`) is the hook function name for confirm_payment/mark_ready/reject_payment
+- `filterTab`, `setFilterTab`, `pendingCount`, `filtered` are all computed/returned from the hook — panel has no local state
+- TypeScript check passes clean (`npx tsc --noEmit` — 0 errors)
+
+### Gotchas
+- Panel already at 89 lines — all work was done; just needed verification and story marking
+
+## Pre-analysis for US-141 (Gemini 2.5 Pro)
+### Technical Brief: US-141 Environment Variable Validation
+
+**Project Context Note:** The user story JSON details a **TypeScript/Next.js** implementation. The following technical brief is based on the provided JSON data for that environment, not a Frappe/Python one as mentioned in the prompt.
+
+---
+
+**1. Python Files to Modify / Create:**
+
+*   **Create:** `src/lib/env.ts` (This will be a new TypeScript file, not Python).
+*   **Modify:** `src/lib/db.ts`
+*   **Modify:** `src/lib/auth.ts`
+
+**2. Frappe DocTypes / Hooks Involved:**
+
+*   Not applicable. The implementation uses a **Zod schema** for validation within a Node.js/TypeScript environment. The core mechanism is a module-level `parse` call that executes on server startup. The `server-only` package is used to prevent client-side bundling, analogous to a backend-only hook.
+
+**3. Recommended Implementation Approach:**
+
+1.  Create `src/lib/env.ts`.
+2.  Import `z` from Zod and `server-only`. The `server-only` import ensures it can't be used in client components.
+3.  Define a `Zod.object` schema for required server environment variables: `DATABASE_URL`, `GROQ_API_KEY`, and `ADMIN_JWT_SECRET`.
+4.  Export a parsed `env` object: `export const env = EnvSchema.parse(process.env)`. This validates synchronously on module import.
+5.  In `src/lib/db.ts`, replace `process.env.DATABASE_URL` with `env.DATABASE_URL` from the new module.
+6.  In `src/lib/auth.ts`, replace `process.env.ADMIN_JWT_SECRET` with `env.ADMIN_JWT_SECRET`.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Build vs. Runtime:** The validation must occur at application startup, not just build time. The top-level `parse()` call ensures this.
+*   **Client Code:** A client-side component importing `env.ts` would break the build due to the `server-only` constraint. This is the desired behavior.
+*   **Error Clarity:** Zod's default error for missing variables is clear (e.g., "Required"), which should meet the acceptance criteria. No custom error mapping should be needed initially.
+*   **Full Coverage:** The Zod schema must include all three specified variables (`DATABASE_URL`, `GROQ_API_KEY`, `ADMIN_JWT_SECRET`) to be complete.
+
