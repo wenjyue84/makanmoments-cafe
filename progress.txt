@@ -2074,3 +2074,42 @@ Here is the technical brief for implementing story US-029.
 - `Thai-styled_green_cu` is the actual DB code for green curry rice — truncated display in query-db.mjs
 - The `getFeaturedItems()` filters by `available=true` so featured items must also be available
 - TypeScript check clean (no code changes needed — pure DB update)
+## Iteration 15 - Tue, Mar 10, 2026 11:56:24 AM
+Completed: Admin: Set 6 Homepage Highlights (ID: US-029) in 4m
+
+
+## Pre-analysis for US-030 (Gemini 2.5 Pro)
+Here is the technical brief for implementing the user story.
+
+**Subject: Technical Brief for US-030: Admin Alert for Missing Menu Photos**
+
+**1. Python/Frappe Files to Modify:**
+Based on the `technicalNotes` in the JSON, this implementation is for a **Next.js/TypeScript** application, not a Frappe/Python one. The primary files are:
+
+*   **Create:** `src/app/api/admin/menu/missing-photos/route.ts`
+*   **Modify:** The React component that renders the admin menu, likely located at `src/components/admin/AdminMenuTable.tsx` or a similar path.
+
+**2. Frappe DocTypes/Hooks:**
+*   Not applicable. This story involves Next.js API routes and React components.
+
+**3. Recommended Implementation Approach:**
+
+*   **Backend (API Route):**
+    1.  Create a `GET` handler in `src/app/api/admin/menu/missing-photos/route.ts`.
+    2.  Use existing data-fetching logic (e.g., from `src/lib/menu.ts`) to get all menu items from the database.
+    3.  Iterate through the menu items. For each item, use `fs.existsSync` to check if a corresponding image file (`public/images/menu/{item.code}.jpg`, `.webp`, or `.png`) exists.
+    4.  Return a JSON array containing the full objects of menu items that are missing a photo.
+
+*   **Frontend (React Component):**
+    1.  In the `AdminMenuTable` component, use a `useEffect` hook to fetch data from the new `/api/admin/menu/missing-photos` API endpoint on component mount.
+    2.  Use `useState` to store the list of items returned from the API.
+    3.  Use another `useState` hook for a `dismissed` flag, initializing its value from `sessionStorage`.
+    4.  Conditionally render the styled alert banner if the item list is not empty and the `dismissed` state is false.
+    5.  The banner's "Dismiss" button should set the `dismissed` state to `true` and also set a flag in `sessionStorage` to persist it for the session.
+
+**4. Edge Cases & Gotchas:**
+
+*   **File System Paths:** Ensure the path for `fs.existsSync` is correctly resolved from the project root (e.g., using `process.cwd()`).
+*   **Storage:** Strictly use `sessionStorage` as requested to ensure the alert reappears on the next visit (new session). Do not use `localStorage`.
+*   **Async Operations:** The file system check on the backend is synchronous (`existsSync`), which is acceptable for this use case but should be noted. The frontend fetch is asynchronous.
+

@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import type { MenuItemWithRules } from "@/types/menu";
 import { cn } from "@/lib/utils";
 import { ImagePickerModal } from "./image-picker-modal";
+
+const MISSING_PHOTOS_DISMISSED_KEY = "admin_missing_photos_dismissed";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DIETARY_OPTIONS = ["Spicy", "Vegetarian", "Vegan", "Gluten Free"];
@@ -25,6 +27,35 @@ export function AdminMenuTable({
   const [error, setError] = useState<string | null>(null);
   const [imagePickerCode, setImagePickerCode] = useState<string | null>(null);
   const [imgVersion, setImgVersion] = useState(0);
+  const [missingPhotos, setMissingPhotos] = useState<{ id: string; code: string; nameEn: string }[]>([]);
+  const [photoAlertDismissed, setPhotoAlertDismissed] = useState(false);
+  const [highlightedCode, setHighlightedCode] = useState<string | null>(null);
+
+  useEffect(() => {
+    const dismissed = sessionStorage.getItem(MISSING_PHOTOS_DISMISSED_KEY);
+    if (dismissed) {
+      setPhotoAlertDismissed(true);
+      return;
+    }
+    fetch("/api/admin/menu/missing-photos")
+      .then((r) => r.json())
+      .then((data) => setMissingPhotos(data))
+      .catch(() => {});
+  }, []);
+
+  function dismissPhotoAlert() {
+    sessionStorage.setItem(MISSING_PHOTOS_DISMISSED_KEY, "1");
+    setPhotoAlertDismissed(true);
+  }
+
+  function scrollToItem(code: string) {
+    setHighlightedCode(code);
+    const el = document.getElementById(`menu-row-${code}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      setTimeout(() => setHighlightedCode(null), 2000);
+    }
+  }
 
   function updateItem(id: string, patch: Partial<EditableItem>) {
     setItems((prev) =>
@@ -149,6 +180,34 @@ export function AdminMenuTable({
 
   return (
     <div className="space-y-4">
+      {!photoAlertDismissed && missingPhotos.length > 0 && (
+        <div className="rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-800">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="font-medium">
+                ⚠️ {missingPhotos.length} item{missingPhotos.length !== 1 ? "s" : ""} have no photo. Consider adding photos to improve the menu page.
+              </p>
+              <p className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
+                {missingPhotos.map((item) => (
+                  <button
+                    key={item.id}
+                    onClick={() => scrollToItem(item.code)}
+                    className="underline hover:text-amber-900"
+                  >
+                    {item.nameEn}
+                  </button>
+                ))}
+              </p>
+            </div>
+            <button
+              onClick={dismissPhotoAlert}
+              className="shrink-0 rounded px-2 py-0.5 text-xs font-medium hover:bg-amber-100"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
       {error && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
       )}
@@ -169,13 +228,16 @@ export function AdminMenuTable({
         {items.map((item) => (
           <div
             key={item.id}
+            id={item.code ? `menu-row-${item.code}` : undefined}
             className={cn(
               "rounded-xl border p-4",
-              item.disabledByRule
-                ? "bg-red-50/60"
-                : item._dirty
-                  ? "bg-amber-50"
-                  : "bg-white"
+              highlightedCode === item.code
+                ? "ring-2 ring-amber-400 bg-amber-50"
+                : item.disabledByRule
+                  ? "bg-red-50/60"
+                  : item._dirty
+                    ? "bg-amber-50"
+                    : "bg-white"
             )}
           >
             <div className="flex gap-3">
@@ -301,13 +363,16 @@ export function AdminMenuTable({
             {items.map((item) => (
               <tr
                 key={item.id}
+                id={item.code ? `menu-row-${item.code}` : undefined}
                 className={cn(
                   "align-top",
-                  item.disabledByRule
-                    ? "bg-red-50/60"
-                    : item._dirty
-                      ? "bg-amber-50"
-                      : "bg-white"
+                  highlightedCode === item.code
+                    ? "ring-2 ring-amber-400 bg-amber-50"
+                    : item.disabledByRule
+                      ? "bg-red-50/60"
+                      : item._dirty
+                        ? "bg-amber-50"
+                        : "bg-white"
                 )}
               >
                 {/* Image */}
