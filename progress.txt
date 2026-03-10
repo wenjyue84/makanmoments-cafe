@@ -6108,3 +6108,24 @@ Here is the technical brief for the frontend task:
 - [x] Apple touch icon (180x180) set for iOS home screen
 - [x] PWA manifest icons use cafe logo paths
 - [x] TypeScript check passes (0 errors)
+
+## Iteration N - Story: US-069 - Favicon: Cafe Logo as Browser Tab Icon
+
+### What was implemented
+- Generated `src/app/favicon.ico` (32x32, PNG-ICO format) from `public/images/logo.png` using sharp
+- Generated `public/apple-touch-icon.png` (180x180) with cream background (#fef9f0) from logo
+- Generated `public/icon-192.png` (192x192) and `public/icon-512.png` (512x512) for PWA
+- Updated `public/manifest.json` to reference new `/icon-192.png` and `/icon-512.png` icons
+- Layout.tsx metadata already had correct icon wiring (`icon: "/favicon.ico"`, `apple: "/apple-touch-icon.png"`)
+
+### Patterns discovered
+- sharp uses PNG-ICO format (PNG embedded in ICO container) — works in all modern browsers
+- ICO file structure: 6-byte ICONDIR + 16-byte ICONDIRENTRY + raw PNG bytes
+- `fit: 'contain'` preserves aspect ratio; use with background color for non-transparent icons
+- For the favicon, transparent background (RGBA) is fine; for apple/PWA icons use the brand cream (#fef9f0)
+- manifest.json was referencing `images/logo.png` at 512x512 which is unresized — replaced with proper /icon-512.png
+
+### Gotchas
+- Python `open()` on Windows requires `encoding='utf-8'` for prd.json (has non-ASCII chars)
+- favicon.ico at `src/app/favicon.ico` takes precedence over `public/favicon.ico` in Next.js App Router
+- The apple-touch-icon.png in /public was already there (180x180 placeholder) — replaced with cafe logo version
