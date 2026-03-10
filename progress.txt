@@ -13167,3 +13167,32 @@ FAILED quality gates: Add Reliability Tests to /admin/tests Panel (ID: US-142) �
 - Previous TypeScript check ran from wrong directory — errors shown were not from env.ts files
 - Always run npx tsc --noEmit from the project root (makanmoments.cafe/)
 - admin-tests-panel.tsx already has "performance" category — TypeScript is clean
+
+## Pre-analysis for US-144 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-144.
+
+**Subject:** Technical Brief for US-144: Fix Admin Tests
+**App Context:** `lhdn_payroll_integration` (Frappe/Python)
+
+**1. Python Files to Modify:**
+- The specific files depend on test failures.
+- Test scripts are located in: `lhdn_payroll_integration/lhdn_payroll_integration/tests/`.
+- Failing tests will likely point to bugs in DocType controllers (`.../doctype/[doctype_name]/[doctype_name].py`) or custom API logic (`.../api.py`).
+
+**2. Frappe DocTypes & Hooks:**
+- The custom `/admin/tests` page is the primary entry point. Its definition may be found by searching the app's source.
+- `hooks.py` is likely involved in defining the route for the test page and any custom permissions.
+- Any DocType within the application could be the subject of a failing test.
+
+**3. Implementation Approach:**
+1. Use a browser automation script to log in and run tests from the `/admin/tests` page.
+2. Systematically identify each failing test and its error message from the output.
+3. Trace the failure to the relevant Python test file and the application code it covers.
+4. Debug and fix the root cause, prioritizing application bugs over test-only issues.
+5. Re-run tests to confirm the fix and commit each fix individually.
+
+**4. Edge Cases & Gotchas:**
+- The automation script must handle Frappe authentication and session cookie management.
+- Be aware of environment-specific failures; ensure all required test environment variables and database fixtures are in place.
+- Carefully distinguish between a true application bug and an incorrect or outdated test assertion.
+
