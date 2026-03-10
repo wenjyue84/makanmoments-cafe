@@ -11214,3 +11214,20 @@ This user story describes a **Next.js/TypeScript frontend task**, not a Frappe/P
 ## Iteration 1 - Wed, Mar 11, 2026  2:07:37 AM
 Completed: Add AbortController Fetch Timeout to Critical Client-Side Calls (ID: US-133) in 4m
 
+
+## Iteration 4 - Story: Add AbortController Fetch Timeout (US-133)
+Completed in ~10m
+
+### What was implemented
+- `fetchWithTimeout(url, options, timeoutMs=8000)` added to `src/lib/utils.ts` (linter pre-empted this)
+- `src/app/[locale]/order/[id]/page.tsx`: `fetchOrder` uses `fetchWithTimeout`; AbortError caught, shows `t("timeout")`
+- `src/components/admin/admin-orders-panel.tsx`: All PATCH/GET fetch calls (ApproveModal, RejectModal, PaymentModal confirmPayment/rejectPayment, handleMarkReady, fetchOrders) use `fetchWithTimeout`; AbortError shows "Request timed out — please try again"
+- Translation key `"timeout"` added to all 3 messages files (en/ms/zh) under `orderStatus`
+
+### Patterns discovered
+- The linter/formatter aggressively rewrites code and message files mid-implementation — check actual file state before each edit
+- Linter adds `"timeout"` key to messages; added `"fetchTimeout"` created a duplicate — let linter win and use `t("timeout")`
+- TypeScript passes cleanly with `npx tsc --noEmit`
+
+### Gotchas
+- Don't fight the linter on key names — verify what key the linter settles on and use that consistently
