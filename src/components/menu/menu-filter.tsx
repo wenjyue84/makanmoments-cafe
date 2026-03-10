@@ -39,6 +39,8 @@ export function MenuFilter({
   const [isListening, setIsListening] = useState(false);
   const [voiceReady, setVoiceReady] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  // US-108: show category bar only after scrolling past threshold
+  const [isBarVisible, setIsBarVisible] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -46,6 +48,15 @@ export function MenuFilter({
   // Reveal mic after hydration to avoid SSR mismatch
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setVoiceReady(speechSupported); }, []);
+
+  // US-108: show bar when scrolled past 100px, hide when back at top
+  useEffect(() => {
+    function onScroll() {
+      setIsBarVisible(window.scrollY > 100);
+    }
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   // Auto-focus search input when expanded on mobile
   useEffect(() => {
@@ -175,7 +186,7 @@ export function MenuFilter({
       </div>
 
       {/* Category pills — horizontally scrollable on mobile, wrapping on desktop */}
-      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 md:flex-wrap md:overflow-visible">
+      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:overflow-visible md:snap-none">
         {/* Search icon — mobile only, visible when search is collapsed */}
         {!isSearchOpen && (
           <button
@@ -191,7 +202,7 @@ export function MenuFilter({
         <button
           onClick={() => onCategoryChange(null)}
           className={cn(
-            "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+            "flex-shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
             selectedCategory === null
               ? "bg-primary text-primary-foreground scale-[1.04]"
               : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -208,7 +219,7 @@ export function MenuFilter({
               key={cat}
               onClick={() => onCategoryChange(cat)}
               className={cn(
-                "flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95",
+                "flex-shrink-0 snap-start inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95",
                 selectedCategory === cat
                   ? "bg-primary text-primary-foreground scale-[1.04]"
                   : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
@@ -231,7 +242,7 @@ export function MenuFilter({
             key={`dc-${cat}`}
             onClick={() => onCategoryChange(`__dc__${cat}`)}
             className={cn(
-              "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95",
+              "flex-shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95",
               selectedCategory === `__dc__${cat}`
                 ? "bg-amber-500 text-white scale-[1.04]"
                 : "border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
@@ -246,7 +257,7 @@ export function MenuFilter({
           <button
             onClick={() => onCategoryChange(FAV_KEY)}
             className={cn(
-              "flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95",
+              "flex-shrink-0 snap-start inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95",
               selectedCategory === FAV_KEY
                 ? "bg-red-500 text-white scale-[1.04]"
                 : "border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"

@@ -334,4 +334,13 @@
       transition-duration: 0.01ms !important;
     }
   }
+
+  /* US-106: Hide scrollbar while keeping scroll functional */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

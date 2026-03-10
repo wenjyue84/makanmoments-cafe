@@ -9582,3 +9582,56 @@ Here is the technical brief for user story US-106, tailored for a React/Next.js 
     *   Verify that horizontal scrolling works smoothly with both mouse-wheel and touch-swipe gestures.
     *   Confirm that the existing logic for highlighting the "active" category is not affected by the new flexbox and overflow styles.
 
+## Iteration 9 - Tue, Mar 10, 2026  9:45:07 PM
+Completed: Menu Page — Hide Header on Scroll Down, Show on Scroll Up (ID: US-105) in 4m
+
+
+## Pre-analysis for US-106 (Gemini 2.5 Pro)
+Based on the user story JSON, here is the technical brief for implementing `US-106`.
+
+Note: The story describes a frontend change in a Next.js/React application, not a Frappe/Python one. The following brief is for a frontend developer.
+
+---
+
+### **Technical Brief: US-106 - Single-Row Category Filter**
+
+*   **Objective**: Convert the wrapping menu category filter into a single, horizontally-scrollable row with a hidden scrollbar.
+
+*   **Primary File to Modify**:
+    *   `src/components/menu/menu-filter.tsx`
+
+*   **Involved Frameworks/Libraries**:
+    *   React / Next.js
+    *   Tailwind CSS
+
+*   **Implementation Approach**:
+    1.  Locate the container element that wraps the category pills inside `menu-filter.tsx`.
+    2.  Modify the container's classes:
+        *   Add: `flex`, `overflow-x-auto`, `flex-nowrap`.
+        *   Remove any existing `flex-wrap`.
+    3.  On each child category pill/link, add `flex-shrink-0` to prevent them from shrinking.
+    4.  To hide the scrollbar, use the `scrollbar-hide` class (if the `tailwind-scrollbar-hide` plugin is installed). If not, add the standard CSS fallback.
+    5.  For a smoother mobile experience, add `snap-x snap-mandatory` to the container and `snap-start` to each pill.
+
+*   **Edge Cases & Gotchas**:
+    *   **Scrollbar Hiding**: The `scrollbar-hide` utility is not standard in Tailwind. Verify it's enabled in the project's config. If not, use custom CSS (`::-webkit-scrollbar { display: none; }` etc.).
+    *   **Active State**: Ensure horizontal scrolling doesn't interfere with the active category's highlighting.
+    *   **Auto-Scrolling**: Consider using `element.scrollIntoView()` to automatically bring the active category into view when the component loads or a category is selected.
+
+
+## Iteration - Story: US-106 - Menu Page — Single-Row Category Filter Bar
+
+### What was implemented
+- Added `.scrollbar-hide` CSS utility to `src/app/globals.css` `@layer utilities` section (cross-browser: -ms-overflow-style, scrollbar-width: none, ::-webkit-scrollbar: display:none)
+- Updated `src/components/menu/menu-filter.tsx` category pills container: added `scrollbar-hide snap-x snap-mandatory md:snap-none` to the div
+- Added `snap-start` to all 4 category pill types: All button, POS category buttons, display category buttons, Favorites button
+
+### Patterns discovered
+- The category container already had `flex flex-nowrap overflow-x-auto` and `flex-shrink-0` on pills — only missing scrollbar-hide and snap
+- Tailwind v4 (this project) uses `@import "tailwindcss"` — custom utilities go in `@layer utilities` block in globals.css, NOT in a tailwind.config.ts file
+- `scrollbar-hide` is NOT a built-in Tailwind utility — must be defined manually in globals.css
+- Desktop already had `md:flex-wrap md:overflow-visible` — added `md:snap-none` to disable snap on desktop
+
+### Gotchas
+- Python script needs `encoding='utf-8'` on Windows for prd.json (has special chars)
+- TypeScript check passes clean (0 errors)
