@@ -4257,3 +4257,26 @@ The issue is a persistent dark overlay on the `/admin` page, which is a React cl
 *   **Global State:** The overlay's visibility could be controlled by a global state manager (like Zustand or Context) rather than local component state.
 *   **Animation Libraries:** A Framer Motion or CSS transition `onExitComplete` or similar callback might not be firing, failing to unmount the overlay component.
 
+## Iteration 31 - Tue, Mar 10, 2026  3:09:02 PM
+Completed: Admin Settings Tab with System-Wide Configuration (ID: US-050) in 10m
+
+
+## Iteration - Story: US-049 Fix Admin Page Dark Overlay Problem
+
+### What was implemented
+- Fix was already committed in 8c1e036: `src/app/admin/layout.tsx`
+  - Added inline `<script>` to strip `.dark` class from `document.documentElement` before first paint
+  - Changed body classes from CSS variable-based (`bg-background text-foreground`) to explicit (`bg-white text-gray-900`)
+- Root cause: soft client-side navigation preserved `.dark` class from locale pages, triggering Tailwind v4 dark variant
+- This iteration: only restored `passes: true` in prd.json (was accidentally reverted by US-050 commit 8cfe881)
+
+### Patterns discovered
+- US-050 commit (8cfe881) accidentally overwrote US-049's `passes: true` back to `false` in prd.json — subsequent commits can regress prd.json status markers
+- Admin layout sits outside `[locale]` routing — it has its own `<html>/<body>` so dark mode inheritance from locale pages is a real hazard
+
+### Gotchas
+- Always verify prd.json state after multi-story iterations — later stories may overwrite earlier passes markers
+
+### Result
+- prd.json: US-049 passes = true (restored)
+- TypeScript check: PASS (exit 0)
