@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useMemo, useCallback } from "react";
-import { useTranslations, useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
 import type { MenuItem } from "@/types/menu";
-import { getLocalizedName } from "@/lib/utils";
 import { MenuCard } from "./menu-card";
 import { ChefPickCard } from "./chef-pick-card";
 import { EditableMenuCard } from "./editable-menu-card";
@@ -32,7 +31,6 @@ export function MenuGrid({
   servingNowCategories = [],
 }: MenuGridProps) {
   const t = useTranslations("common");
-  const locale = useLocale();
   // Validate initialCategory — fall back to null if the category doesn't exist in known lists
   const [category, setCategory] = useState<string | null>(() => {
     if (!initialCategory) return null;
@@ -61,9 +59,10 @@ export function MenuGrid({
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((item) => {
-        const name = getLocalizedName(item, locale).toLowerCase();
         return (
-          name.includes(q) ||
+          item.nameEn.toLowerCase().includes(q) ||
+          item.nameMs.toLowerCase().includes(q) ||
+          item.nameZh.toLowerCase().includes(q) ||
           item.code.toLowerCase().includes(q) ||
           item.description.toLowerCase().includes(q)
         );
@@ -71,7 +70,7 @@ export function MenuGrid({
     }
 
     return result;
-  }, [items, selectedPosCat, selectedDisplayCat, search, locale]);
+  }, [items, selectedPosCat, selectedDisplayCat, search]);
 
   const handleSetHighlight = useCallback(async (itemId: string, itemCategories: string[]) => {
     // Optimistic update

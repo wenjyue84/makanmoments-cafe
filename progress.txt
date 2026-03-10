@@ -3352,3 +3352,55 @@ Here is the corresponding technical brief:
 *   **No API Call:** This is a pure client-side change. No backend or API modifications are necessary.
 *   **Partial Matching:** The `.includes()` method will correctly handle partial strings (e.g., 'tomyam' matching 'Tom Yum').
 
+## Iteration 24 - Tue, Mar 10, 2026  1:57:14 PM
+Completed: Admin: Add Chinese and Malay Translations for All Food Items (ID: US-042) in 7m
+
+
+## Pre-analysis for US-043 (Gemini 2.5 Pro)
+This user story describes a client-side feature for a Next.js/TypeScript project, not a Frappe/Python one. The following technical brief is based on the actual content of the story JSON provided.
+
+---
+
+**Subject: Technical Brief for US-043: Multi-Language Dish Search**
+
+This brief covers the implementation of a client-side, multi-language search enhancement for the menu page.
+
+**1. Files to Modify (TypeScript/React):**
+*   The search and filter logic is located in a client-side React component.
+*   Primary candidate: `src/components/menu/menu-grid.tsx`
+*   Secondary candidate: `src/components/menu/menu-filter.tsx` (or a similar component that manages the search input state).
+
+**2. Frappe DocTypes / Data Structures:**
+*   This is a pure client-side change. No backend (Python/Frappe) modifications are necessary.
+*   The change targets the in-memory array of menu item objects, which are filtered based on user input.
+*   The relevant object fields are: `nameEn`, `nameMs`, `nameZh`, and `description`.
+
+**3. Implementation Approach:**
+*   In the component responsible for filtering, get the lowercase search query.
+*   Modify the existing `.filter()` condition to check the query against all three language names and the description.
+*   The logic should be: `item.nameEn.toLowerCase().includes(q) || item.nameMs.toLowerCase().includes(q) || item.nameZh.toLowerCase().includes(q) || item.description.toLowerCase().includes(q)`.
+
+**4. Gotchas & Verification:**
+*   **Display Logic:** Ensure the item's name is still displayed in the correct, active locale (e.g., using a `getLocalizedName()` function). The search logic must not interfere with the display logic.
+*   **Performance:** Since the search is client-side across multiple fields, verify that there is no noticeable input lag on the menu page.
+*   **Case-Insensitivity:** Double-check that both the query and the item fields are converted to lowercase for comparison.
+
+
+## Iteration 26 - Story: Multi-Language Search (US-043)
+
+### What was implemented
+- Modified `src/components/menu/menu-grid.tsx`: changed the search filter from locale-specific (`getLocalizedName(item, locale)`) to searching all three language fields simultaneously (`nameEn`, `nameMs`, `nameZh`, plus existing `code` and `description`)
+- Removed unused `useLocale`, `getLocalizedName` imports and `locale` from useMemo dependency array
+
+### Patterns discovered
+- MenuItem type has `nameEn`, `nameMs`, `nameZh` fields — all directly accessible for cross-language search
+- Filter is entirely client-side inside a `useMemo` — no API changes needed
+- The `getLocalizedName` utility is NOT needed for searching (only for display in MenuCard etc.)
+
+### Gotchas
+- Remember to remove `locale` from useMemo deps when it's no longer used inside the computation
+- `getLocalizedName` is still used in other components (MenuCard, etc.) — only removed from this file
+
+### Result
+- prd.json: US-043 passes = true
+- TypeScript check: PASS (exit 0)
