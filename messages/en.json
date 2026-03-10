@@ -121,6 +121,7 @@
     "loading": "Loading order...",
     "notFound": "Order not found. Please check the link.",
     "fetchError": "Could not load order status. Please refresh.",
+    "fetchTimeout": "Request timed out — please try again.",
     "lastUpdated": "Last updated: {time}",
     "step_pending_approval": "Pending",
     "step_approved": "Approved",
@@ -163,7 +164,8 @@
     "expiredMsg": "No payment was received within 30 minutes. Please start a new order.",
     "maxRetriesTitle": "Order Not Found",
     "maxRetriesMsg": "We could not find your order. Please contact the cafe directly.",
-    "contactCafe": "Contact Cafe on WhatsApp"
+    "contactCafe": "Contact Cafe on WhatsApp",
+    "timeout": "Request timed out — please try again"
   },
   "orderForm": {
     "title": "Complete Your Pre-Order",

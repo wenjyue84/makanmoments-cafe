@@ -121,6 +121,7 @@
     "loading": "Memuatkan pesanan...",
     "notFound": "Pesanan tidak dijumpai. Sila semak pautan.",
     "fetchError": "Tidak dapat memuatkan status pesanan. Sila muat semula.",
+    "fetchTimeout": "Permintaan tamat masa — sila cuba lagi.",
     "lastUpdated": "Dikemas kini: {time}",
     "step_pending_approval": "Menunggu",
     "step_approved": "Diluluskan",
@@ -163,7 +164,8 @@
     "expiredMsg": "Tiada pembayaran diterima dalam masa 30 minit. Sila buat pesanan baru.",
     "maxRetriesTitle": "Pesanan Tidak Dijumpai",
     "maxRetriesMsg": "Kami tidak dapat mencari pesanan anda. Sila hubungi kafe secara terus.",
-    "contactCafe": "Hubungi Kafe di WhatsApp"
+    "contactCafe": "Hubungi Kafe di WhatsApp",
+    "timeout": "Permintaan tamat masa — sila cuba lagi"
   },
   "orderForm": {
     "title": "Lengkapkan Pra-Pesanan Anda",

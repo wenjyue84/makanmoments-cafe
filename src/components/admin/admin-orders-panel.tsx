@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, X, Clock, RefreshCw, Eye } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, fetchWithTimeout } from "@/lib/utils";
 
 interface OrderItem {
   id: string;
@@ -102,7 +102,7 @@ function ApproveModal({ orderId, onClose, onDone }: ApproveModalProps) {
     setSaving(true);
     setErr("");
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      const res = await fetchWithTimeout(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "approve", estimatedReady: new Date(readyTime).toISOString() }),
@@ -114,8 +114,8 @@ function ApproveModal({ orderId, onClose, onDone }: ApproveModalProps) {
       }
       const data = await res.json();
       onDone({ status: "approved", estimated_ready: data.estimated_ready });
-    } catch {
-      setErr("Network error");
+    } catch (err) {
+      setErr(err instanceof Error && err.name === "AbortError" ? "Request timed out — please try again" : "Network error");
     } finally {
       setSaving(false);
     }
@@ -178,7 +178,7 @@ function RejectModal({ orderId, onClose, onDone }: RejectModalProps) {
     setSaving(true);
     setErr("");
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      const res = await fetchWithTimeout(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "reject", rejectionReason: reason.trim() }),
@@ -189,8 +189,8 @@ function RejectModal({ orderId, onClose, onDone }: RejectModalProps) {
         return;
       }
       onDone({ status: "rejected", rejection_reason: reason.trim() });
-    } catch {
-      setErr("Network error");
+    } catch (err) {
+      setErr(err instanceof Error && err.name === "AbortError" ? "Request timed out — please try again" : "Network error");
     } finally {
       setSaving(false);
     }
@@ -253,7 +253,7 @@ function PaymentModal({ orderId, screenshotUrl, onClose, onDone }: PaymentModalP
     setSaving(true);
     setErr("");
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      const res = await fetchWithTimeout(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "confirm_payment" }),
@@ -264,8 +264,8 @@ function PaymentModal({ orderId, screenshotUrl, onClose, onDone }: PaymentModalP
         return;
       }
       onDone({ status: "preparing" });
-    } catch {
-      setErr("Network error");
+    } catch (err) {
+      setErr(err instanceof Error && err.name === "AbortError" ? "Request timed out — please try again" : "Network error");
     } finally {
       setSaving(false);
     }
@@ -276,7 +276,7 @@ function PaymentModal({ orderId, screenshotUrl, onClose, onDone }: PaymentModalP
     setSaving(true);
     setErr("");
     try {
-      const res = await fetch(`/api/admin/orders/${orderId}`, {
+      const res = await fetchWithTimeout(`/api/admin/orders/${orderId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "reject_payment", rejectionReason: reason.trim() }),
@@ -287,8 +287,8 @@ function PaymentModal({ orderId, screenshotUrl, onClose, onDone }: PaymentModalP
         return;
       }
       onDone({ status: "payment_pending", rejection_reason: reason.trim() });
-    } catch {
-      setErr("Network error");
+    } catch (err) {
+      setErr(err instanceof Error && err.name === "AbortError" ? "Request timed out — please try again" : "Network error");
     } finally {
       setSaving(false);
     }
@@ -385,7 +385,7 @@ function OrderCard({ order, onUpdate }: OrderCardProps) {
   async function handleMarkReady() {
     setMarkingReady(true);
     try {
-      const res = await fetch(`/api/admin/orders/${order.id}`, {
+      const res = await fetchWithTimeout(`/api/admin/orders/${order.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "mark_ready" }),
@@ -536,7 +536,7 @@ export function AdminOrdersPanel() {
     if (!silent) setLoading(true);
     else setRefreshing(true);
     try {
-      const res = await fetch("/api/admin/orders");
+      const res = await fetchWithTimeout("/api/admin/orders");
       if (!res.ok) return;
       const data: AdminOrder[] = await res.json();
       setOrders(data);

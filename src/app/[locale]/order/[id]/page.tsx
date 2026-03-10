@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { CheckCircle2, Circle, Clock, XCircle, PhoneCall, Upload } from "lucide-react";
 import Link from "next/link";
+import { fetchWithTimeout } from "@/lib/utils";
 // Phone formatted for wa.me (strip non-digits, ensure 60 prefix)
 function phoneToWaMe(phone: string): string {
   const digits = phone.replace(/\D/g, "");
@@ -294,7 +295,7 @@ export default function OrderStatusPage() {
 
   const fetchOrder = useCallback(async () => {
     try {
-      const res = await fetch(`/api/orders/${orderId}`, { cache: "no-store" });
+      const res = await fetchWithTimeout(`/api/orders/${orderId}`, { cache: "no-store" });
       if (!res.ok) {
         failCount.current += 1;
         if (failCount.current >= MAX_FAIL_COUNT) {
@@ -318,7 +319,12 @@ export default function OrderStatusPage() {
       if (TERMINAL_STATUSES.includes(data.status)) {
         stopPolling();
       }
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        setError(t("timeout"));
+        setLoading(false);
+        return;
+      }
       failCount.current += 1;
       if (failCount.current >= MAX_FAIL_COUNT) {
         stopPolling();

@@ -11085,3 +11085,113 @@ Here is a technical brief for the user story, tailored for a Frappe/Python devel
 ## Iteration 2 - Wed, Mar 11, 2026  2:00:27 AM
 Completed: Add Max-Retry Limit to Order Status Polling (ID: US-132) in 5m
 
+## Iteration 3 - Wed, Mar 11, 2026  2:00:46 AM
+Completed: Add Max-Retry Limit to Order Status Polling (ID: US-132) in 4m
+
+
+## Pre-analysis for US-133 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** frontend, not Frappe/Python. The implementation will be client-side.
+
+**Technical Brief: US-133 Fetch Timeout Implementation**
+
+**1. Files to Modify:**
+*   `src/lib/utils.ts` or create `src/lib/fetch.ts`: To house the new `fetchWithTimeout` utility.
+*   `src/app/[locale]/order/[id]/page.tsx`: To apply the timeout to the order status fetch call.
+*   `src/components/admin/admin-orders-panel.tsx`: To apply the timeout to the order action handlers (approve/reject).
+
+**2. Key Entities Involved:**
+*   **Utility Function:** `fetchWithTimeout`
+*   **React Components:** `OrderStatusPage` (or the default export of the page file), `AdminOrdersPanel`.
+*   **Hooks:** `useState` will be needed in consumer components to manage timeout error messages.
+
+**3. Recommended Implementation Approach:**
+*   Create a `fetchWithTimeout(url, options, timeoutMs)` utility.
+*   Inside, instantiate an `AbortController`. Pass its `signal` to the `fetch` call's options.
+*   Use `setTimeout` to call `controller.abort()` after `timeoutMs`.
+*   Crucially, clear this timer in a `finally` block to prevent leaks if the fetch completes or errors out early.
+*   In the consuming components, wrap fetch calls in a `try/catch` block.
+*   Catch the specific `AbortError` by checking `err.name === 'AbortError'` and set a user-facing error state (e.g., "Request timed out...").
+
+**4. Edge Cases & Gotchas:**
+*   **Memory Leaks:** Failure to clear the `setTimeout` on fetch completion will cause memory leaks. Use a `finally` block on the `fetch` promise.
+*   **UI State:** The components must manage a new error state to display the timeout message. Ensure the UI gracefully handles this state.
+*   **False Timeouts:** Confirm that the 8-second timeout is sufficient for typical backend responses on slow connections to avoid a poor user experience.
+
+
+## Pre-analysis for US-133 (Gemini 2.5 Pro)
+Here is the technical brief for the user story:
+
+**Subject: Technical Brief for US-133: Implement Fetch Timeout**
+
+This is a **TypeScript/Next.js** frontend task, not a Frappe/Python one. The goal is to prevent infinite loading spinners on critical API calls by implementing an 8-second timeout.
+
+**1. Files to Modify:**
+*   `src/lib/utils.ts` (or create a new `src/lib/fetch.ts`): To house the new `fetchWithTimeout` utility function.
+*   `src/app/[locale]/order/[id]/page.tsx`: To apply the timeout to the customer-facing order status fetch.
+*   `src/components/admin/admin-orders-panel.tsx`: To apply the timeout to the admin action buttons (e.g., approve, reject).
+
+**2. Frappe DocTypes/Hooks:**
+*   None. This task is purely client-side and does not involve any Frappe DocTypes or server-side hooks.
+
+**3. Implementation Approach:**
+*   Create a `fetchWithTimeout(url, options, timeoutMs = 8000)` function.
+*   Inside, instantiate an `AbortController`.
+*   Set a `setTimeout` that calls `controller.abort()` after `timeoutMs`.
+*   Pass `controller.signal` to the native `fetch` call within the options.
+*   Crucially, use a `finally` block to call `clearTimeout` on the timer ID to prevent memory leaks if the fetch completes or fails normally.
+
+**4. Edge Cases & Gotchas:**
+*   **Error Handling:** The `catch` block must specifically check for `err.name === 'AbortError'`. Any other error type should be handled as a standard network/server error, not a timeout.
+*   **UI Feedback:** Calling components must use state (e.g., `useState`) to store the specific error message ("Request timed out...") and render it conditionally in the UI.
+*   **Existing Options:** Ensure the `fetchWithTimeout` utility correctly merges its `signal` with any pre-existing `signal` or other options passed into it.
+
+
+## Pre-analysis for US-133 (Gemini 2.5 Pro)
+This user story describes a **Next.js/TypeScript frontend task**, not a Frappe/Python one. Here is the technical brief based on the provided JSON for the target codebase.
+
+**Subject: Technical Brief for US-133: Implement Client-Side Fetch Timeouts**
+
+### 1. Python/Frappe Files to Modify
+- **None.** This is a frontend task involving TypeScript and React components.
+
+### 2. DocTypes & Hooks Involved
+- **None.** The changes are purely on the client-side within the Next.js application.
+
+### 3. Recommended Implementation Approach
+- **Create a Utility Function:**
+  - Create a new file at `src/lib/fetch.ts`.
+  - Implement an async function `fetchWithTimeout(url, options, timeoutMs = 8000)`.
+  - Inside, instantiate an `AbortController`.
+  - Set a `setTimeout` that calls `controller.abort()` after `timeoutMs`.
+  - Pass the `controller.signal` to the native `fetch` call within the options.
+  - Use a `finally` block to clear the timeout timer, preventing memory leaks.
+- **Refactor Target Components:**
+  - In `src/app/[locale]/order/[id]/page.tsx`, replace the `fetch` call inside the `fetchOrder` function with the new `fetchWithTimeout`.
+  - In `src/components/admin/admin-orders-panel.tsx`, update the `fetch` calls in the order action handlers (e.g., approve, reject) to use `fetchWithTimeout`.
+- **Error Handling:**
+  - Wrap the `fetchWithTimeout` calls in `try...catch` blocks.
+  - In the `catch` block, check if `error.name === 'AbortError'`. If true, set a state variable to display the required timeout error message: "Request timed out — please try again."
+
+### 4. Edge Cases & Gotchas to Watch For
+- **Signal Merging:** If the original `fetch` call already has an `AbortSignal`, the new utility will need to link it with the timeout signal.
+- **State Management:** Ensure error messages are cleared on subsequent successful requests or retries.
+- **False Timeouts:** The 8-second timeout should be validated against typical network conditions to avoid firing incorrectly during normal operation.
+
+
+## Iteration 4 - Wed, Mar 11, 2026
+
+### Story: US-133 - Add AbortController Fetch Timeout to Critical Client-Side Calls
+
+### What was implemented
+- Added `fetchWithTimeout(url, options, timeoutMs=8000)` to `src/lib/utils.ts` (uses AbortController, clears timer in finally block)
+- Applied to `src/app/[locale]/order/[id]/page.tsx` — fetchOrder uses fetchWithTimeout; AbortError caught and shows `t("fetchTimeout")`
+- Applied to all 4 action handlers in `src/components/admin/admin-orders-panel.tsx` — ApproveModal, RejectModal, PaymentModal (confirm + reject)
+- Added `fetchTimeout` translation key to `messages/en.json`, `messages/ms.json`, `messages/zh.json`
+
+### Patterns discovered
+- Linter/pre-commit hooks auto-applied changes across files — all 3 files and translation keys were already updated before this iteration completed its read phase
+- `cache: "no-store"` in fetchOrder is passed through spread, AbortSignal merges correctly
+
+### Gotchas
+- TypeScript check: `npx tsc --noEmit` returns clean (no errors for changed files)
+- Admin panel modals use hardcoded English timeout message; order status page uses translation key
