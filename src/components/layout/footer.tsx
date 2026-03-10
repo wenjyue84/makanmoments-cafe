@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { Facebook, Instagram, Phone, MapPin, Clock } from "lucide-react";
+import Image from "next/image";
 import { CAFE } from "@/lib/constants";
 
 export async function Footer() {
@@ -11,7 +12,16 @@ export async function Footer() {
         <div className="grid grid-cols-2 gap-6 lg:grid-cols-4 lg:gap-8">
           {/* Brand */}
           <div>
-            <h3 className="text-lg font-bold text-primary">
+            <div className="flex items-center gap-2">
+              <Image
+                src="/images/logo.png"
+                alt="Makan Moments Cafe logo"
+                width={80}
+                height={80}
+                className="h-20 w-20 object-contain"
+              />
+            </div>
+            <h3 className="mt-2 text-lg font-bold text-primary">
               {t("cafeName")}
             </h3>
             <p className="mt-1 text-sm text-muted-foreground">

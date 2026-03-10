@@ -1322,3 +1322,52 @@ Based on the user story JSON, the request is for a **Next.js/TypeScript** projec
 *   The header logo is likely an LCP element; use the `priority` prop on the `<Image>` component.
 *   For dark mode, CSS `filter: invert(1)` could work on a monochrome logo, but a separate logo variant is a more robust solution if `mix-blend-mode` proves inconsistent.
 
+## Iteration 6 - Tue, Mar 10, 2026 11:11:38 AM
+Completed: Hero Image Improvements: Better Food Photos + Sharp Compression (ID: US-018) in 8m
+
+
+## Pre-analysis for US-019 (Gemini 2.5 Pro)
+### Technical Brief: US-019 - Add Cafe Logo
+
+This user story is for a **Next.js/TypeScript** project, not Frappe/Python. The context in the prompt is incorrect; the following brief is based on the technical details within the JSON data.
+
+**1. Primary Files to Modify:**
+*   `src/components/layout/header.tsx`: To replace the current text-based wordmark with the new image logo.
+*   `src/components/layout/footer.tsx`: To add the new image logo.
+*   `scripts/process-logo.mjs` (New file): A one-off script to process the source JPG, remove its background, and save it as a web-optimized PNG.
+
+**2. Key Framework Components Involved:**
+*   **Next.js Components:** `next/image` is the recommended component for rendering the logo to ensure optimized loading, proper sizing, and handling of `alt` text.
+*   **No Frappe DocTypes/Hooks** are relevant to this task.
+
+**3. Recommended Implementation Approach:**
+1.  Create a new script (`scripts/process-logo.mjs`) that uses the `sharp` library.
+2.  The script should read the source `logo.jpg`, process it to make the white background transparent, and save the output as `public/images/logo.png`.
+3.  In `header.tsx`, remove the "Makan Moments" text element and replace it with `<Image src="/images/logo.png" ... />`. Apply CSS to constrain the height to `40-48px`.
+4.  In `footer.tsx`, add the same `<Image>` component, styling it with a `max-height` of `80px`.
+5.  Ensure the `alt` attribute is set to "Makan Moments Cafe logo" in both locations.
+
+**4. Edge Cases & Gotchas:**
+*   **Background Removal:** Automatically removing the white background with `sharp` might leave artifacts. Using a `threshold` may be necessary. If imperfect, a CSS `mix-blend-mode` can be a fallback but is less robust.
+*   **Dark Mode:** The transparent PNG must be tested against the site's dark theme to ensure it doesn't become invisible or clash.
+*   **Image Optimization:** Ensure the final PNG is well-compressed to not impact page load speed. `next/image` will handle some optimization, but the source file should be reasonably sized.
+*   **Static Paths:** The path in the `<Image>` component's `src` prop must be relative to the `public` directory (e.g., `/images/logo.png`).
+
+
+## Iteration N - Story: US-019 - Add Cafe Logo to Header and Footer
+
+### What was implemented
+- Copied logo.jpg from `C:\Users\Jyue\Documents\2-areas\makan-moments-cafe\3-resources\photos\Frequently used\logo.jpg` to `public/images/logo.jpg`
+- Used sharp to remove white background (threshold: pixels with R,G,B all > 240 set to alpha=0) and saved as `public/images/logo.png` (1563x1563, RGBA)
+- Updated `src/components/layout/header.tsx`: added `import Image from "next/image"` and added `<Image>` (44px square) alongside the text wordmark in the logo Link
+- Updated `src/components/layout/footer.tsx`: added `import Image from "next/image"` and added `<Image>` (80px square) above the cafeName heading in the Brand section
+
+### Patterns discovered
+- sharp is already a dependency (`^0.34.5`) and available in the project
+- White background removal: iterate raw RGBA pixels, set alpha=0 for any pixel where R,G,B all > 240
+- Logo is 1563x1563 square — use `object-contain` to preserve aspect ratio at target sizes
+- Both header and footer kept text wordmark alongside logo image
+
+### Gotchas
+- `npx next lint --file` flag doesn't exist; use `npx eslint <file>` for per-file lint checks
+- Background lint job spawned via npm run lint -- but used npx eslint directly for immediate result
