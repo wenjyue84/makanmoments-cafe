@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, X } from "lucide-react";
 import Fuse from "fuse.js";
 import type { MenuItem } from "@/types/menu";
 import { MenuCard } from "./menu-card";
@@ -69,6 +69,7 @@ export function MenuGrid({
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
   const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
+  const [highlightError, setHighlightError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const chipBarScrollRef = useRef<HTMLDivElement>(null);
 
@@ -123,23 +124,31 @@ export function MenuGrid({
   }, [items, selectedPosCat, selectedDisplayCat, isFavoritesSelected, favorites, debouncedSearch, fuse]);
 
   const handleSetHighlight = useCallback(async (itemId: string, itemCategories: string[]) => {
+    const prevHighlights = { ...highlights };
     // Optimistic update
     const newHighlights = { ...highlights };
     for (const cat of itemCategories) {
       newHighlights[cat] = itemId;
     }
     setHighlights(newHighlights);
+    setHighlightError(null);
 
-    // Persist each category
-    await Promise.all(
-      itemCategories.map((cat) =>
-        fetch("/api/admin/highlights", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ category: cat, itemId }),
+    try {
+      await Promise.all(
+        itemCategories.map(async (cat) => {
+          const res = await fetch("/api/admin/highlights", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category: cat, itemId }),
+          });
+          if (!res.ok) throw new Error("Failed to save highlight");
         })
-      )
-    );
+      );
+    } catch {
+      // Rollback on error
+      setHighlights(prevHighlights);
+      setHighlightError("Failed to save Chef's Pick — change reverted");
+    }
   }, [highlights]);
 
   // Build category sections for grouped view (used when no search text)
@@ -250,6 +259,16 @@ export function MenuGrid({
             ) : (
               <><EyeOff className="h-3.5 w-3.5" /> Edit Mode</>
             )}
+          </button>
+        </div>
+      )}
+
+      {/* Highlight error toast */}
+      {highlightError && (
+        <div className="flex items-center justify-between gap-2 rounded-lg bg-destructive px-3 py-2 text-sm text-destructive-foreground mb-2">
+          <span>{highlightError}</span>
+          <button type="button" onClick={() => setHighlightError(null)} aria-label="Dismiss">
+            <X className="h-3.5 w-3.5" />
           </button>
         </div>
       )}

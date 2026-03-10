@@ -10587,3 +10587,54 @@ Implement a visually appealing placeholder for menu items that lack a photo, ens
 
 ### Gotchas
 - Python json load on Windows requires explicit `encoding='utf-8'` to avoid cp1252 decode errors
+## Iteration 6 - Tue, Mar 10, 2026 11:41:09 PM
+Completed: Fix US-056 Test — Add 30-Minute Auto-Expiry Logic to GET /api/orders/[id] (ID: US-116) in 7m
+
+
+## Pre-analysis for US-122 (Gemini 2.5 Pro)
+This user story describes a frontend task for a React/Next.js application, not a Frappe/Python one. The technical notes and project file structure confirm a Next.js/TypeScript environment.
+
+This technical brief is therefore adapted for the actual project stack.
+
+---
+**Subject: Technical Brief for US-122: Instant Menu Item Highlight**
+
+**1. Python/Frappe Files to Modify:**
+The core logic is frontend-based. The backend change involves the API endpoint that the frontend calls. Assuming a standard REST API structure, a Python file handling menu item updates would be modified, for instance:
+- `[app_name]/api/menu.py` or a similar file defining the `/api/resource/MenuItem/:id` route.
+
+**2. Frappe DocTypes / Hooks:**
+- **DocType:** `MenuItem`. The endpoint will need to receive a PATCH request to modify a boolean field on this DocType, likely named `highlighted` or `is_featured`.
+- **Hooks:** No `doc_event` hooks in `hooks.py` should be necessary, as the action is a direct API call triggered by user interaction, not a standard DocType lifecycle event (e.g., `on_update`).
+
+**3. Recommended Implementation Approach:**
+The story requires an "optimistic update" on the frontend. The Python backend's role is simple:
+- Expose a `PATCH` endpoint decorated with `@frappe.whitelist()`.
+- The method should accept the item's `name` (ID) and the new boolean value for the highlight status.
+- It should use `frappe.get_doc` to load the `MenuItem`, update the field, and call `doc.save(ignore_permissions=True)`.
+- Use `frappe.db.commit()` to persist the change immediately.
+- Return a success or error JSON response.
+
+**4. Edge Cases & Gotchas:**
+- **Permissions:** The whitelisted API method must validate that the logged-in user has the appropriate role (e.g., 'System Manager' or a custom 'Restaurant Manager' role) to modify menu items.
+- **Error Handling:** If the `doc.save()` fails due to validation errors or database issues, the API must return a non-200 status code (e.g., 400 or 500) with a clear error message in the JSON body so the frontend can revert its UI state.
+- **Data Validation:** The endpoint should validate the incoming data to ensure the highlight status is a boolean.
+
+
+## Iteration N - Story: Instant Highlight Reflection on /en/menu Without Page Refresh (US-122)
+
+### What was implemented
+- In `src/components/menu/menu-grid.tsx`:
+  - Added `X` to lucide-react imports
+  - Added `highlightError` state (string | null)
+  - Updated `handleSetHighlight`: saves `prevHighlights` before optimistic update, wraps API calls in try/catch, restores `prevHighlights` and sets error message on failure
+  - Added error toast in JSX (dismissible, renders above chip bar when set)
+
+### Patterns discovered
+- `handleSetHighlight` already had optimistic update (setHighlights before await) — the only missing piece was rollback on API error and showing an error indicator
+- `highlights` state (Record<string, string>) maps POS category name → item.id for the Chef's Pick of each category
+- Error indicator placement: below admin edit/customer view toggle, above the chip bar
+
+### Gotchas
+- TypeScript returned 0 errors for this project (no pre-existing TS errors, unlike the 8000+ lint warnings)
+- The file had been modified by a linter between the initial read and first edit — always re-read before editing if there's a gap
