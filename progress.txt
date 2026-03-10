@@ -1059,3 +1059,50 @@ This user story describes a frontend UI bug fix for a React/Next.js application,
   - Converts ## Content → extracts AI summary text only
   - Strips **Type:**, **Created:**, **Tags:** bold metadata lines
 - Each post renders as: # Title + hr + AI summary paragraph (clean, no metadata)
+## Iteration 4 - Tue, Mar 10, 2026 10:52:43 AM
+Completed: Blog Content: Use Only Operator-Perspective Posts, Remove Metadata (ID: US-015) in 13m
+
+
+## Pre-analysis for US-016 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** project, not Frappe/Python. The technical brief below is based on the actual story content.
+
+### **Technical Brief: US-016 Recipe Modal Fix**
+
+**Objective:** Ensure the recipe modal's close button is always visible on mobile viewports by making it a sticky element.
+
+**1. Primary File to Modify:**
+`src/components/menu/recipe-modal.tsx`
+
+**2. Key Components & Hooks:**
+- `RecipeModal`: The main component to be refactored.
+- It likely uses a `Dialog` component from a UI library (e.g., shadcn/ui, Radix), which manages the modal's open/close state and overlay.
+
+**3. Recommended Implementation Approach:**
+- Inside the modal, structure the layout using Flexbox (`flex flex-col`).
+- Create a distinct header `<div>` to contain the close (`<X />`) button.
+- Apply `sticky top-0 bg-background z-10` classes to this header to fix it to the top of the modal's scroll container.
+- Make the content area scrollable by giving it `overflow-y-auto` and `flex-1`.
+- The `bg-background` on the header is crucial to prevent content from showing through during scroll.
+
+**4. Gotchas & Verification:**
+- **Viewport Testing:** Critical to test on small mobile viewports (e.g., 390px wide) to confirm the button is visible on load.
+- **Scroll Lock:** Ensure the main page body does not scroll when the modal is open.
+- **Existing Behavior:** Verify that tapping the overlay (outside the modal content) still closes the modal.
+- **Content Overflow:** The modal content itself must scroll, while the header with the close button remains fixed.
+
+
+## Iteration N - Story: Fix Recipe Modal Close Button Visibility on Mobile (US-016)
+
+### What was implemented
+- Restructured `src/components/menu/recipe-modal.tsx` modal layout
+- Changed outer container from `relative overflow-y-auto` to `relative flex flex-col max-h-[92vh]`
+- Added inner `overflow-y-auto flex-1` wrapper around scrollable content (image + text)
+- Close button remains `absolute right-3 top-3 z-20` in the outer non-scrolling container
+- Result: X button is always visible regardless of scroll position; content scrolls independently
+
+### Root Cause
+`position: absolute` children ARE part of the scroll container's flow. When `overflow-y-auto` is on the same element that the button is `absolute` within, scrolling that container moves the button off-screen. The fix separates the scroll container (inner div) from the positioning ancestor (outer div).
+
+### Patterns discovered
+- Tailwind `flex flex-col` + inner `overflow-y-auto flex-1` is the standard pattern for modals with sticky headers/buttons
+- `z-20` needed on the button (vs `z-10`) to ensure it renders above the image and scrollable content

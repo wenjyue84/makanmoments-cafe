@@ -47,100 +47,103 @@ export function RecipeModal({ item, open, onClose }: RecipeModalProps) {
       aria-label={name}
     >
       <div
-        className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl bg-card max-h-[92vh] overflow-y-auto"
+        className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl bg-card max-h-[92vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Close button */}
+        {/* Close button — absolutely positioned outside the scroll container so it stays visible */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3 top-3 z-10 rounded-full bg-black/50 p-1.5 text-white transition-colors hover:bg-black/70"
+          className="absolute right-3 top-3 z-20 rounded-full bg-black/50 p-1.5 text-white transition-colors hover:bg-black/70"
           aria-label={t("close")}
         >
           <X className="h-4 w-4" />
         </button>
 
-        {/* Food image */}
-        {hasPhoto && (
-          <div className="relative aspect-video w-full overflow-hidden rounded-t-2xl">
-            <Image
-              src={`/images/menu/${item.code}.jpg`}
-              alt={name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, 512px"
-              onError={() => setImgError(true)}
-            />
-          </div>
-        )}
-
-        {/* Content */}
-        <div className="space-y-4 p-5">
-          {/* Title + price */}
-          <div className="flex items-start justify-between gap-3">
-            <h2 className="text-lg font-bold leading-snug">{name}</h2>
-            <span className="shrink-0 text-base font-bold text-primary">
-              {formatPrice(item.price)}
-            </span>
-          </div>
-
-          {/* Dietary badges */}
-          {item.dietary.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {item.dietary.map((d) => (
-                <DietaryBadge key={d} label={d} />
-              ))}
+        {/* Scrollable content area — button stays above this */}
+        <div className="overflow-y-auto flex-1">
+          {/* Food image */}
+          {hasPhoto && (
+            <div className="relative aspect-video w-full overflow-hidden rounded-t-2xl">
+              <Image
+                src={`/images/menu/${item.code}.jpg`}
+                alt={name}
+                fill
+                className="object-cover"
+                sizes="(max-width: 640px) 100vw, 512px"
+                onError={() => setImgError(true)}
+              />
             </div>
           )}
 
-          {/* Short description */}
-          {item.description && (
-            <p className="text-sm text-muted-foreground">{item.description}</p>
-          )}
+          {/* Content */}
+          <div className="space-y-4 p-5">
+            {/* Title + price */}
+            <div className="flex items-start justify-between gap-3">
+              <h2 className="text-lg font-bold leading-snug">{name}</h2>
+              <span className="shrink-0 text-base font-bold text-primary">
+                {formatPrice(item.price)}
+              </span>
+            </div>
 
-          {/* Recipe info — only shown if data exists */}
-          {recipe && (
-            <>
-              <hr className="border-border" />
+            {/* Dietary badges */}
+            {item.dietary.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {item.dietary.map((d) => (
+                  <DietaryBadge key={d} label={d} />
+                ))}
+              </div>
+            )}
 
-              {/* Key ingredients */}
-              {recipe.ingredients.length > 0 && (
-                <div>
-                  <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold">
-                    <span aria-hidden="true">🌿</span>
-                    {t("ingredients")}
-                  </h3>
-                  <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-                    {recipe.ingredients.map((ing) => (
-                      <li
-                        key={ing}
-                        className="flex items-start gap-1.5 text-sm text-muted-foreground"
-                      >
-                        <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
-                        {ing}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+            {/* Short description */}
+            {item.description && (
+              <p className="text-sm text-muted-foreground">{item.description}</p>
+            )}
 
-              {/* How we make it */}
-              {recipe.preparation && (
-                <>
-                  <hr className="border-border" />
+            {/* Recipe info — only shown if data exists */}
+            {recipe && (
+              <>
+                <hr className="border-border" />
+
+                {/* Key ingredients */}
+                {recipe.ingredients.length > 0 && (
                   <div>
-                    <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
-                      <span aria-hidden="true">👨‍🍳</span>
-                      {t("preparation")}
+                    <h3 className="mb-2.5 flex items-center gap-1.5 text-sm font-semibold">
+                      <span aria-hidden="true">🌿</span>
+                      {t("ingredients")}
                     </h3>
-                    <p className="text-sm leading-relaxed text-muted-foreground">
-                      {recipe.preparation}
-                    </p>
+                    <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+                      {recipe.ingredients.map((ing) => (
+                        <li
+                          key={ing}
+                          className="flex items-start gap-1.5 text-sm text-muted-foreground"
+                        >
+                          <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
+                          {ing}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                </>
-              )}
-            </>
-          )}
+                )}
+
+                {/* How we make it */}
+                {recipe.preparation && (
+                  <>
+                    <hr className="border-border" />
+                    <div>
+                      <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold">
+                        <span aria-hidden="true">👨‍🍳</span>
+                        {t("preparation")}
+                      </h3>
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        {recipe.preparation}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
     </div>
