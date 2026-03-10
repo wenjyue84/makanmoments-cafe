@@ -9678,3 +9678,96 @@ Note: The story describes a frontend change in a Next.js/React application, not 
 ## Iteration 10 - Tue, Mar 10, 2026  9:52:18 PM
 Completed: Menu Page — Single-Row Category Filter Bar (ID: US-106) in 6m
 
+## Iteration 6 - Tue, Mar 10, 2026  9:53:01 PM
+Completed: Menu Page — Single-Row Category Filter Bar (ID: US-106) in 8m
+
+
+## Pre-analysis for US-099 (Gemini 2.5 Pro)
+This user story appears to be for a Next.js/TypeScript application, not a Frappe/Python one, based on the file paths and code references (`route.ts`, `NextResponse.json`, `admin-tabs.tsx`).
+
+However, translating the story's *intent* to a Frappe/Python context for the `lhdn_payroll_integration` app, here is the requested technical brief:
+
+**Project:** `lhdn_payroll_integration`
+**User Story:** US-099 - Admin Cookie Security & Logout
+
+**1. Python Files to Modify:**
+
+*   **`lhdn_payroll_integration/api.py`**: This is the most likely candidate for creating the new API endpoints. We will add two new whitelisted methods here: `login` and `logout`.
+*   **`frappe/auth.py` & `frappe/app.py`**: These core Frappe files should be **inspected**, but not modified, to understand how the default `system_user` cookie is set. We may need to override the cookie-setting logic in our custom login endpoint.
+
+**2. Frappe DocTypes & Hooks:**
+
+*   **`@frappe.whitelist()`**: This decorator will be used in `api.py` to expose the `login` and `logout` methods as public API endpoints.
+*   **`User` DocType**: The login logic will authenticate against this standard Frappe DocType.
+*   **`hooks.py`**: No direct hooks seem necessary unless a core login event needs to be intercepted, which is unlikely for this task.
+
+**3. Recommended Implementation Approach:**
+
+1.  **Create a new `login` endpoint** in `lhdn_payroll_integration/api.py` decorated with `@frappe.whitelist(allow_guest=True)`.
+2.  Inside this function, check for the `ENABLE_DEMO_LOGIN` environment variable using `os.environ.get()`. If true, allow authentication for the demo user. Otherwise, reject.
+3.  After successful authentication via `frappe.login_manager.login()`, manually set the `Set-Cookie` header on `frappe.response`. This is where you will enforce the `HttpOnly`, `Secure`, `SameSite=Lax`, and `Max-Age=28800` flags.
+4.  **Create a `logout` endpoint** in the same file. It should call `frappe.login_manager.logout()`.
+5.  Crucially, after calling logout, explicitly clear the cookie by setting the `Set-Cookie` header again with `Max-Age=0` and an empty value to ensure it's removed from the browser.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Frappe Session Management**: Frappe has its own robust session management. Manually manipulating the `Set-Cookie` header can conflict with Frappe's defaults. Ensure that the custom endpoint fully replaces the standard login flow for the intended users to avoid unpredictable behavior.
+*   **Environment Variables**: The `ENABLE_DEMO_LOGIN` check must explicitly compare against `'true'`, as environment variables are strings.
+*   **Production vs. Development**: The `Secure` flag should only be set when the protocol is `https`. The code should check `frappe.local.request.scheme == 'https'` before adding this flag to the cookie.
+
+
+## Pre-analysis for US-099 (Gemini 2.5 Pro)
+This is a technical brief for implementing user story US-099 in a Next.js application.
+
+**1. Files to Modify:**
+*   `src/app/api/admin/login/route.ts`: To verify cookie flags and gate demo credentials.
+*   `src/app/api/admin/logout/route.ts`: New file for the logout endpoint.
+*   `src/components/admin/admin-tabs.tsx`: To add a UI logout button.
+*   `.env.example`: To document the new `ENABLE_DEMO_LOGIN` variable.
+
+**2. Key Next.js Constructs:**
+*   **API Routes:** The `login` route requires auditing. The `logout` route is a new `POST` handler.
+*   **React Components:** A client-side component needs a button with an `onClick` handler to call the logout API.
+
+**3. Implementation Approach:**
+*   In the `login` route, gate the demo user (`admin/admin123`) with a check for `process.env.ENABLE_DEMO_LOGIN === 'true'`.
+*   Verify the cookie setting logic uses these flags: `httpOnly: true`, `sameSite: 'lax'`, `maxAge: 28800`, and `secure: process.env.NODE_ENV === 'production'`.
+*   Create the `logout` `POST` route. It should clear the `admin_session` cookie by re-setting it with `maxAge: 0` and identical flags.
+*   Add a "Logout" button to the admin UI that calls `POST /api/admin/logout` and then redirects to the login page.
+
+**4. Gotchas & Edge Cases:**
+*   The `secure` flag must only be `true` in a production (HTTPS) environment.
+*   When clearing the cookie, all parameters (name, path, domain) must exactly match the ones used when setting it.
+*   Ensure the logout function correctly invalidates the session, so protected routes return a 401 Unauthorized status afterward.
+
+
+## Iteration N - Story: US-099 Admin Cookie Security
+
+### What was implemented
+- Gated demo credential (admin/admin123) behind `process.env.ENABLE_DEMO_LOGIN === "true"` in `src/app/api/admin/login/route.ts`
+- Updated `src/app/api/admin/logout/route.ts` to return JSON `{ ok: true }` and clear cookie with all security flags (httpOnly, secure, sameSite=lax, maxAge=0)
+- Added `LogOut` icon import + `handleLogout` function + logout button at the bottom of the sidebar in `src/components/admin/admin-tabs.tsx`
+
+### Patterns discovered
+- Cookie flags in login were already correct (httpOnly, secure in prod, sameSite=lax, maxAge=28800)
+- Logout route already existed but was missing secure/sameSite flags and was using redirect instead of JSON response
+- Sidebar uses flex column with flex-1 nav + border-t footer pattern for pinned bottom items
+
+### Gotchas
+- TypeScript check passes clean (npx tsc --noEmit)
+
+## Iteration N - Story: Admin Cookie Security (US-099)
+
+### What was implemented
+- All criteria were already implemented in the codebase
+- Login cookie already has: `httpOnly: true`, `secure: process.env.NODE_ENV === "production"`, `sameSite: "lax"`, `maxAge: 28800`
+- Demo credential already gated: `process.env.ENABLE_DEMO_LOGIN === "true"`
+- Logout endpoint already at `src/app/api/admin/logout/route.ts` with correct flags (maxAge: 0)
+- Logout button already in sidebar of `src/components/admin/admin-tabs.tsx` with `handleLogout` calling POST /api/admin/logout then redirecting to /admin/login
+
+### Patterns discovered
+- Logout button is in the sidebar footer, styled with red hover (`hover:bg-red-50 hover:text-red-600`)
+- `LogOut` icon from lucide-react used for logout button
+
+### Gotchas
+- Story was fully implemented — just needed verification and marking as complete

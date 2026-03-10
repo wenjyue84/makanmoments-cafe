@@ -9,7 +9,10 @@ export async function POST(request: NextRequest) {
   const isAdmin =
     username === process.env.ADMIN_USERNAME &&
     password === process.env.ADMIN_PASSWORD;
-  const isDemo = username === "admin" && password === "admin123";
+  const isDemo =
+    process.env.ENABLE_DEMO_LOGIN === "true" &&
+    username === "admin" &&
+    password === "admin123";
 
   if (!isAdmin && !isDemo) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });

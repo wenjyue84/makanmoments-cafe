@@ -13,6 +13,7 @@ import {
   Settings,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 import type { MenuItemWithRules } from "@/types/menu";
 import type { BlogPost } from "@/types/blog";
@@ -103,6 +104,11 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  const handleLogout = async () => {
+    await fetch("/api/admin/logout", { method: "POST" });
+    router.push("/admin/login");
+  };
+
   // Derive active tab from URL segment
   const slug = pathname.split("/").pop() ?? "";
   const activeTab: Tab = SLUG_TO_TAB[slug] ?? "Menu";
@@ -159,6 +165,17 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
               </button>
             ))}
           </nav>
+
+          {/* Logout */}
+          <div className="border-t px-3 py-3">
+            <button
+              onClick={handleLogout}
+              className="flex w-full items-center gap-2.5 rounded px-2 py-2 text-sm text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600"
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span>Logout</span>
+            </button>
+          </div>
         </div>
       </aside>
 
