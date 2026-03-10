@@ -1371,3 +1371,20 @@ This user story is for a **Next.js/TypeScript** project, not Frappe/Python. The 
 ### Gotchas
 - `npx next lint --file` flag doesn't exist; use `npx eslint <file>` for per-file lint checks
 - Background lint job spawned via npm run lint -- but used npx eslint directly for immediate result
+
+## Iteration 8 - Story: US-019 - Add Cafe Logo to Header and Footer
+
+### What was implemented
+- logo.png already existed in public/images/ (1563x1563, RGBA, hasAlpha: true) from a previous session
+- Header (header.tsx) already had <Image src="/images/logo.png" h-11/44px priority> alongside text wordmark
+- Footer (footer.tsx) already had <Image src="/images/logo.png" h-20/80px> in Brand section
+- Both files had proper alt="Makan Moments Cafe logo"
+- All acceptance criteria already met — verified TypeScript (clean) and lint (clean)
+- Marked passes: true, committed
+
+### Patterns discovered
+- Story was already implemented in working tree but not committed or marked complete
+- Always check git status + file contents before assuming work remains
+
+### Gotchas
+- npx tsc --noEmit returns no output on success (no error = pass)
