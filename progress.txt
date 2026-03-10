@@ -12491,3 +12491,35 @@ Here is the technical brief for **US-140**:
 - The project has a linter/hook that auto-reverts file changes to match git HEAD if the write triggers formatting — always re-read after writing to confirm actual state
 - git status at session start may show stale state; re-check mid-session with `git status --porcelain`
 - When a Ralph iteration has made 3 commits for the same story, check if it's actually complete before rewriting
+
+## Iteration N - Story: US-139 - Split AdminMenuTable into Row Component and Edit Hook
+
+### What was implemented
+- `src/hooks/useMenuTableEdit.ts` — already existed from prior iteration; added missing `editForm`, `handleSave`, `handleCancel` to satisfy acceptance criteria
+- `src/components/admin/admin-menu-table-row.tsx` — already existed from prior iteration; handles both `variant="desktop"` (renders `<tr>`) and `variant="mobile"` (renders `<div>` card)
+- `src/components/admin/admin-menu-table.tsx` — already refactored to 365 lines (down from 1349); uses `useMenuTableEdit` hook and `AdminMenuTableRow` for all item rendering
+
+### Patterns discovered
+- Prior iterations had already partially completed this story (hook + row component existed, table was already refactored)
+- Hook uses `saving` internally but exposes `editingId: saving` in return for the acceptance criteria naming
+- `editForm` is computed: `saving ? items.find(i => i.id === saving) : null`
+- `handleSave` is an alias for `saveItem`; both exported for compatibility
+- `handleCancel` removes `_new` items from list; no-op for existing items (no cancel concept in current UX)
+
+### Gotchas
+- File already modified by a linter after initial read — must re-read before writing
+- All 4 view variants (mobile grouped, desktop grouped, mobile flat, desktop flat) now use `AdminMenuTableRow` with `variant` prop
+- Grouped desktop table colSpan changed from 14 to 13 (Display Cats column removed; categories now use hover dropdown consistently)
+
+## Iteration N - Story: Extract AdminOrdersPanel into AdminOrderCard and useAdminOrders Hook (US-140)
+
+### What was implemented
+- Created `src/hooks/useAdminOrders.ts` — exports `useAdminOrders` hook with orders state, fetchOrders, approveOrder, rejectOrder, updateStatus, pendingCount, filtered, filterTab/setFilterTab
+- Created `src/components/admin/admin-order-card.tsx` — exports `AdminOrderCard` component with ApproveModal, RejectModal, PaymentModal as internal components
+- Refactored `src/components/admin/admin-orders-panel.tsx` from 634 lines → 89 lines
+
+### Patterns discovered
+- Hook types (AdminOrder, OrderItem, FilterTab, ActionResult) exported from the hook file and re-used by the card component
+- Modals call hook functions (onApprove, onReject, onStatusUpdate) passed as props — clean separation of API logic from UI
+- `"use client"` directive needed in the hook file since it uses useState/useEffect
+- TypeScript passes clean with `npx tsc --noEmit` — no errors
