@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CheckCircle2, Circle, Clock, XCircle, PhoneCall } from "lucide-react";
+import { CheckCircle2, Circle, Clock, XCircle, PhoneCall, Upload } from "lucide-react";
 import Link from "next/link";
 // Phone formatted for wa.me (strip non-digits, ensure 60 prefix)
 function phoneToWaMe(phone: string): string {
@@ -41,6 +41,152 @@ interface OrderData {
   estimatedReady: string | null;
   rejectionReason: string | null;
   createdAt: string;
+}
+
+interface TnGSettings {
+  tngPhone: string;
+  tngQrUrl: string;
+}
+
+type UploadState = "idle" | "uploading" | "success" | "error";
+
+function PaymentSection({
+  order,
+  tng,
+  t,
+  onSuccess,
+}: {
+  order: OrderData;
+  tng: TnGSettings;
+  t: ReturnType<typeof useTranslations>;
+  onSuccess: () => void;
+}) {
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [uploadState, setUploadState] = useState<UploadState>("idle");
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0] ?? null;
+    setErrorMsg(null);
+    if (!file) { setSelectedFile(null); setPreview(null); return; }
+    if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
+      setErrorMsg(t("invalidFileType")); setSelectedFile(null); setPreview(null); return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg(t("fileTooLarge")); setSelectedFile(null); setPreview(null); return;
+    }
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setPreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  }
+
+  async function handleUpload() {
+    if (!selectedFile) return;
+    setUploadState("uploading");
+    setUploadProgress(0);
+    setErrorMsg(null);
+    try {
+      const formData = new FormData();
+      formData.append("screenshot", selectedFile);
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open("POST", `/api/orders/${order.id}/payment`);
+        xhr.upload.onprogress = (ev) => {
+          if (ev.lengthComputable) setUploadProgress(Math.round((ev.loaded / ev.total) * 100));
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) { resolve(); return; }
+          try {
+            const body = JSON.parse(xhr.responseText) as { error?: string };
+            reject(new Error(body.error ?? t("uploadFailed")));
+          } catch { reject(new Error(t("uploadFailed"))); }
+        };
+        xhr.onerror = () => reject(new Error(t("uploadFailed")));
+        xhr.send(formData);
+      });
+      setUploadState("success");
+      setUploadProgress(100);
+      onSuccess();
+    } catch (err) {
+      setUploadState("error");
+      setErrorMsg(err instanceof Error ? err.message : t("uploadFailed"));
+    }
+  }
+
+  return (
+    <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
+      <h2 className="mb-3 font-semibold text-amber-900">{t("tngTitle")}</h2>
+
+      {/* Amount */}
+      <div className="mb-4 rounded-xl border border-amber-300 bg-white px-4 py-3">
+        <p className="text-xs font-medium uppercase tracking-wide text-amber-600">{t("tngAmountLabel")}</p>
+        <p className="mt-0.5 text-2xl font-bold text-amber-800">RM {Number(order.total).toFixed(2)}</p>
+      </div>
+
+      {/* TnG phone */}
+      {tng.tngPhone && (
+        <div className="mb-3">
+          <p className="text-xs font-medium text-amber-700">{t("tngPayToLabel")}</p>
+          <p className="mt-0.5 text-lg font-semibold text-stone-800">{tng.tngPhone}</p>
+        </div>
+      )}
+
+      {/* TnG QR */}
+      {tng.tngQrUrl && (
+        <div className="mb-4">
+          <p className="mb-1 text-xs font-medium text-amber-700">{t("tngScanQrLabel")}</p>
+          <img src={tng.tngQrUrl} alt="Touch & Go QR Code" className="h-36 w-36 rounded-xl border border-amber-200 object-contain" />
+        </div>
+      )}
+
+      {/* File upload */}
+      <div className="border-t border-amber-200 pt-4">
+        <p className="mb-1 text-sm font-medium text-stone-700">{t("uploadLabel")}</p>
+        <p className="mb-3 text-xs text-stone-500">{t("uploadHint")}</p>
+
+        <input ref={fileInputRef} type="file" accept="image/jpeg,image/jpg,image/png" onChange={handleFileChange} className="hidden" />
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={uploadState === "uploading" || uploadState === "success"}
+          className="flex min-h-[44px] items-center gap-2 rounded-xl border-2 border-dashed border-amber-300 bg-white px-4 py-2 text-sm font-medium text-amber-700 hover:border-amber-500 hover:bg-amber-50 disabled:opacity-50"
+        >
+          <Upload className="h-4 w-4" />
+          {selectedFile ? selectedFile.name : t("uploadBtn")}
+        </button>
+
+        {preview && (
+          <img src={preview} alt="Preview" className="mt-3 h-24 w-24 rounded-xl border border-stone-200 object-cover" />
+        )}
+
+        {errorMsg && <p className="mt-2 text-sm text-red-600">{errorMsg}</p>}
+
+        {uploadState === "uploading" && (
+          <div className="mt-3">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-amber-100">
+              <div className="h-full rounded-full bg-amber-500 transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+            </div>
+            <p className="mt-1 text-xs text-amber-700">{t("uploading")} {uploadProgress}%</p>
+          </div>
+        )}
+
+        {selectedFile && (uploadState === "idle" || uploadState === "error") && (
+          <button
+            type="button"
+            onClick={() => void handleUpload()}
+            className="mt-3 flex min-h-[44px] items-center gap-2 rounded-xl bg-amber-600 px-5 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+          >
+            <Upload className="h-4 w-4" />
+            {t("uploadBtn")}
+          </button>
+        )}
+      </div>
+    </div>
+  );
 }
 
 function formatDateTime(iso: string): string {
@@ -125,6 +271,7 @@ export default function OrderStatusPage() {
   const t = useTranslations("orderStatus");
 
   const [order, setOrder] = useState<OrderData | null>(null);
+  const [tng, setTng] = useState<TnGSettings>({ tngPhone: "", tngQrUrl: "" });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
@@ -150,6 +297,14 @@ export default function OrderStatusPage() {
       setLoading(false);
     }
   }, [orderId, t]);
+
+  // Fetch TnG settings once on mount
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((r) => r.json())
+      .then((data: TnGSettings) => setTng(data))
+      .catch(() => {/* non-critical */});
+  }, []);
 
   useEffect(() => {
     void fetchOrder();

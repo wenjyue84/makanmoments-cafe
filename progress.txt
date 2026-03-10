@@ -4743,3 +4743,23 @@ This brief outlines the implementation of the customer payment upload feature.
 *   **Security:** Server-side validation of file type and size is mandatory, as client-side checks can be bypassed.
 *   **State Management:** Ensure no race conditions can occur if the admin changes the order while the customer is paying. The check `if doc.status == 'Approved'` is the primary guard.
 
+
+## Iteration - Story: US-054 Pre-Order: Touch & Go Payment Step for Customer
+
+### What was implemented
+- All pieces were already built in the codebase (payment page, API route, admin settings, translations)
+- Fixed field name mismatch: payment page interface had `tng_phone`/`tng_qr_url` but public `/api/settings` returns `tngPhone`/`tngQrUrl` (camelCase)
+- ZH translations already had `paymentPage` section and `paymentUploadedMsg`/`paymentUploadedSubMsg`
+
+### Patterns discovered
+- Public API `/api/settings` returns camelCase (`tngPhone`, `tngQrUrl`) — always check field name case when consuming API responses
+- Payment page at `/[locale]/order/[id]/payment/page.tsx` — separate page from status tracker
+- Public settings endpoint at `src/app/api/settings/route.ts` (no auth required, only exposes safe fields)
+
+### Gotchas
+- Always read the actual API response field names before assuming snake_case in client interfaces
+- prd.json needs utf-8 encoding flag in Python: `open('prd.json', encoding='utf-8')`
+
+### Result
+- prd.json: US-054 passes = true
+- TypeScript check: PASS (exit 0)
