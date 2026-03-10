@@ -1,0 +1,56 @@
+[
+  {
+    "name": "home",
+    "url": "/en",
+    "errors": [],
+    "warnings": [
+      "[WARNING] Image with src \"/images/hero/hero-mobile.webp\" has \"fill\" prop and \"sizes\" prop of \"100vw\", but image is not rendered at full viewport width. Please adjust \"sizes\" to improve page performance. Read more: https://nextjs.org/docs/api-reference/next/image#sizes",
+      "[WARNING] Image with src \"/images/menu/TM03.jpg?v=1773073040980\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading"
+    ],
+    "not_found": []
+  },
+  {
+    "name": "menu",
+    "url": "/en/menu",
+    "errors": [],
+    "warnings": [
+      "[WARNING] Image with src \"/images/menu/TM03.jpg?v=1773073040980\" was detected as the Largest Contentful Paint (LCP). Please add the `loading=\"eager\"` property if this image is above the fold.\nRead more: https://nextjs.org/docs/app/api-reference/components/image#loading"
+    ],
+    "not_found": []
+  },
+  {
+    "name": "about",
+    "url": "/en/about",
+    "errors": [],
+    "warnings": [],
+    "not_found": []
+  },
+  {
+    "name": "contact",
+    "url": "/en/contact",
+    "errors": [],
+    "warnings": [],
+    "not_found": []
+  },
+  {
+    "name": "admin_login",
+    "url": "/admin/login",
+    "errors": [],
+    "warnings": [],
+    "not_found": []
+  },
+  {
+    "name": "admin_dashboard",
+    "url": "/admin",
+    "errors": [],
+    "warnings": [],
+    "not_found": []
+  },
+  {
+    "name": "admin_ai_waiter",
+    "url": "/admin/ai-waiter",
+    "errors": [],
+    "warnings": [],
+    "not_found": []
+  }
+]
