@@ -122,6 +122,7 @@ export default async function LocaleLayout({
       </head>
       <body
         className={`${playfairDisplay.variable} ${notoSans.variable} ${locale === "zh" ? notoSansSC.variable : ""} font-sans antialiased`}
+        suppressHydrationWarning
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <TrayProvider>

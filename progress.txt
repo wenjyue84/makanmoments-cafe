@@ -10638,3 +10638,55 @@ The story requires an "optimistic update" on the frontend. The Python backend's 
 ### Gotchas
 - TypeScript returned 0 errors for this project (no pre-existing TS errors, unlike the 8000+ lint warnings)
 - The file had been modified by a linter between the initial read and first edit — always re-read before editing if there's a gap
+## Iteration 5 - Tue, Mar 10, 2026 11:44:24 PM
+Completed: Show Colorful Placeholder Image for Menu Items Without a Photo (ID: US-121) in 6m
+
+
+## Pre-analysis for US-123 (Gemini 2.5 Pro)
+Here is the technical brief for the user story.
+
+**Note:** The provided user story targets a Next.js/TypeScript frontend and a Node.js API, not Frappe/Python. This brief is tailored to the actual project stack.
+
+### **Technical Brief: US-123 - Admin Can Remove Chef's Pick from Menu**
+
+**1. Files to Modify:**
+*   **Frontend Component:** `src/components/menu/menu-card.tsx` (or a similar component responsible for rendering a single menu item). This is where the Chef's Pick badge UI exists.
+*   **Parent Page:** `src/app/(main)/[lang]/menu/page.tsx`. This page will fetch user session data to determine `isAdmin` status and manage the overall menu items state.
+*   **API Route:** `src/app/api/admin/menu/[id]/route.ts`. This backend endpoint will handle the database update.
+
+**2. Key DocTypes / Data Models:**
+*   The API will interact with the `MenuItem` database model (likely via Prisma). The key boolean field to update is `featured` or `is_highlighted`.
+
+**3. Implementation Approach:**
+*   **Frontend:**
+    *   In `menu/page.tsx`, verify if the logged-in user is an admin.
+    *   Pass the `isAdmin` boolean prop down to the `MenuCard` component, along with a state update handler function.
+    *   In `MenuCard`, wrap the "Chef's Pick" badge in a `<button>` element, conditionally rendered only if `isAdmin` is `true`.
+    *   The button's `onClick` handler will perform an optimistic UI update (setting the item's `featured` state to `false` locally) and then trigger a `PATCH` request to `/api/admin/menu/[ITEM_ID]`.
+*   **Backend:**
+    *   Protect the `PATCH` route to ensure it's only accessible by authenticated admins.
+    *   The route will update the `featured` field to `false` for the specified menu item in the database.
+
+**4. Edge Cases & Gotchas:**
+*   **Auth:** The API route MUST be secured; do not rely on the frontend hiding the button as the sole security measure.
+*   **UI Revert:** If the API `PATCH` call fails, the optimistic UI update must be reverted to its original state, and an error notification (e.g., a toast message) should be displayed to the admin.
+*   **User Feedback:** Apply `cursor:pointer` and a hover effect to the badge for admins to signal interactivity.
+
+
+## Iteration N - Story: US-123 — Admin Can Remove Item from Chef's Pick by Clicking the Badge on /en/menu
+
+### What was implemented
+- Added DELETE endpoint to `/api/admin/highlights/route.ts` — accepts `{ category }` body, deletes that row from `category_highlights`
+- Added `handleRemoveHighlight(itemId, itemCategories)` to `menu-grid.tsx` with optimistic update + rollback on error
+- Added `isAdmin` and `onRemoveHighlight` props to `MenuCard`; when both truthy, the Chef's Pick badge becomes a `<button>` with hover:opacity-75, cursor-pointer, and "✕" suffix
+- Passed `isAdmin` and `onRemoveHighlight` to `MenuCard` in both render sites in menu-grid (flat view + section rest grid)
+
+### Patterns discovered
+- `MenuCard` is shown (not `EditableMenuCard`) when admin is in customer view mode (isEditMode=false) or for non-admin users — the isAdmin prop gates interactivity
+- The `handleRemoveHighlight` mirrors `handleSetHighlight` pattern exactly: optimistic update → API calls → rollback on error
+- The `highlightError` state is shared between set and remove operations (reuses same error toast)
+- TypeScript check: 0 errors in changed files
+
+### Gotchas
+- `prd.json` must be opened with `encoding='utf-8'` in Python on Windows or it fails with charmap decode error
+- The Chef's Pick badge in the section view's "chefPick" hero card uses `ChefPickCard` component (not MenuCard), so that was not modified — only the "rest" items in section view and flat view items use MenuCard
