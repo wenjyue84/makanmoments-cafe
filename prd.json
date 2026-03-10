@@ -1889,7 +1889,7 @@
         "US-067"
       ],
       "estimatedComplexity": "small",
-      "passes": false
+      "passes": true
     },
     {
       "id": "US-069",

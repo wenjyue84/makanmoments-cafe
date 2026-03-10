@@ -5943,3 +5943,52 @@ This story adds a voice-to-text feature to the menu search bar. The implementati
 *   **Permissions:** The browser will prompt for microphone access. The UI should handle the listening state correctly whether permission is granted or denied.
 *   **Silence Detection:** Ensure the recognition correctly stops after a 2-second pause as per the acceptance criteria.
 
+## Iteration 16 - Tue, Mar 10, 2026  4:56:53 PM
+Completed: Menu Search: Fuzzy Matching with Fuse.js (ID: US-067) in 4m
+
+
+## Pre-analysis for US-068 (Gemini 2.5 Pro)
+Based on the user story `US-068`, here is a concise technical brief for implementation in the Next.js/React codebase:
+
+**Subject:** Technical Brief for US-068: Menu Search Voice-to-Text
+
+**1. Key Files to Modify:**
+*   `src/components/menu/menu-filter.tsx`: This is the primary file. It will house the new microphone button, its styling, and the voice recognition logic.
+*   `src/components/menu/menu-grid.tsx`: This component likely holds the shared search state and the `setSearchQuery` function that needs to be called with the voice transcript.
+
+**2. Frameworks, Hooks & APIs:**
+*   **React Hooks:** `useState` will be needed to manage a new `isListening` state. The `setSearchQuery` state setter function passed as a prop is the key integration point.
+*   **Browser API:** The Web Speech API (`window.SpeechRecognition`) is the core technology for the voice-to-text functionality.
+*   **Component:** The changes are scoped to the `MenuFilter` client component (`'use client'`).
+
+**3. Implementation Approach:**
+1.  In `menu-filter.tsx`, add a `<button>` for the microphone inside the search input's wrapper `div`.
+2.  Use absolute positioning to place the icon on the right side of the input field.
+3.  Create a state `const [isListening, setIsListening] = useState(false)`.
+4.  On button click, toggle `isListening` and start/stop the Web Speech API recognition.
+5.  On a successful recognition result (`onresult` event), call the `setSearchQuery(transcript)` prop. This will automatically trigger the existing Fuse.js search.
+6.  Conditionally render the microphone button only if `window.SpeechRecognition` is available in the browser.
+
+**4. Edge Cases & Gotchas:**
+*   **Browser Compatibility:** The Web Speech API is not supported in all browsers. The feature detection check is a hard requirement.
+*   **Microphone Permissions:** The implementation must handle cases where the user denies microphone access.
+*   **State Management:** Ensure the `isListening` state is correctly synchronized with the speech recognition events (e.g., automatically set to `false` after a result or timeout).
+*   **UI Feedback:** The "Listening..." placeholder and pulsing icon are crucial for good UX and must be tied to the `isListening` state.
+
+
+## Iteration N - Story: US-068 - Menu Search Bar: Voice-to-Text Input Button
+
+### What was implemented
+- Added voice input mic button to `src/components/menu/menu-filter.tsx`
+- Added `listening` translation key to all 3 messages files (en/ms/zh)
+- Uses `useState(false)` + `useEffect` with eslint-disable for hydration-safe voice detection
+- Session object pattern (same as chat-panel) captures transcript; `onSearchChange(text)` updates search which triggers Fuse.js
+
+### Patterns discovered
+- `menu-filter.tsx` is a server-rendered client component (unlike chat-panel which is ssr:false), so must use state+effect for browser API detection
+- `react-hooks/set-state-in-effect` is a custom/non-standard lint rule - suppress with `// eslint-disable-next-line react-hooks/set-state-in-effect` when the pattern is intentional (hydration-safe initialization)
+- Session object inside toggleVoice avoids stale closure issues for the transcript
+
+### Gotchas
+- `menu-filter.tsx` needs `pr-10` on input when voice is ready (not `pr-4`) to avoid text overlapping the mic button
+- The `listening` placeholder only shows while browser recognition is active, reverts to normal on stop

@@ -1,8 +1,13 @@
 "use client";
 
+import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { Search, Heart } from "lucide-react";
+import { Search, Heart, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const speechSupported =
+  typeof window !== "undefined" &&
+  ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
 const FAV_KEY = "__favorites__";
 
@@ -31,6 +36,55 @@ export function MenuFilter({
 }: MenuFilterProps) {
   const t = useTranslations("menu");
   const tc = useTranslations("common");
+  const [isListening, setIsListening] = useState(false);
+  const [voiceReady, setVoiceReady] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
+
+  // Reveal mic after hydration to avoid SSR mismatch
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { setVoiceReady(speechSupported); }, []);
+
+  function toggleVoice() {
+    if (!speechSupported) return;
+    try {
+      if (isListening && recognitionRef.current) {
+        recognitionRef.current.stop();
+        return;
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const Win = window as any;
+      const SpeechRecognitionCtor = Win.SpeechRecognition || Win.webkitSpeechRecognition;
+      const recognition = new SpeechRecognitionCtor();
+      recognition.lang = "en-US";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      const session = { transcript: "" };
+
+      recognition.onstart = () => setIsListening(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = (event: any) => {
+        const text = event.results[0][0].transcript;
+        session.transcript = text;
+        onSearchChange(text);
+      };
+      recognition.onend = () => {
+        setIsListening(false);
+        recognitionRef.current = null;
+      };
+      recognition.onerror = () => {
+        setIsListening(false);
+        recognitionRef.current = null;
+        session.transcript = "";
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setIsListening(false);
+    }
+  }
 
   return (
     <div
@@ -51,11 +105,29 @@ export function MenuFilter({
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
-          placeholder={t("searchPlaceholder")}
+          placeholder={isListening ? t("listening") : t("searchPlaceholder")}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full rounded-lg border border-input bg-background py-2.5 pl-10 pr-4 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary"
+          className={cn(
+            "w-full rounded-lg border border-input bg-background py-2.5 pl-10 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary",
+            voiceReady ? "pr-10" : "pr-4"
+          )}
         />
+        {voiceReady && (
+          <button
+            type="button"
+            onClick={toggleVoice}
+            className={cn(
+              "absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 transition-colors",
+              isListening
+                ? "animate-pulse text-red-500"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+            aria-label={isListening ? "Stop voice search" : "Voice search"}
+          >
+            <Mic className="h-4 w-4" />
+          </button>
+        )}
       </div>
 
       {/* Category pills — horizontally scrollable on mobile, wrapping on desktop */}
