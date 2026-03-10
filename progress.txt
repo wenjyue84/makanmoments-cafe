@@ -7444,3 +7444,39 @@ Completed: Admin Settings: Consolidate Time Settings + Operating Hours as Sub-Se
 
 ### Gotchas
 - When files appear "modified since read" it means a prior agent already made the change — re-read before editing
+
+## Pre-analysis for US-081 (Gemini 2.5 Pro)
+### Technical Brief for Claude: US-081
+
+**Objective:** Refactor the Admin Tests panel to load tests automatically on mount instead of requiring a button click.
+
+**Technology Correction:**
+This user story pertains to the **React/TypeScript frontend**, not Frappe/Python. All modifications will be within `.tsx` component files.
+
+**1. Primary File to Modify:**
+*   `src/components/admin/admin-tests-panel.tsx`
+
+**2. Involved Framework Concepts:**
+*   **Component:** `AdminTestsPanel` (or similarly named component in the file).
+*   **React Hooks:**
+    *   `useEffect`: To trigger the data fetch when the component mounts.
+    *   `useState`: To manage loading, error, and test data states.
+
+**3. Implementation Approach:**
+1.  Locate the existing `onClick` handler function responsible for fetching tests (e.g., `handleLoadTests`).
+2.  Create a `useEffect` hook that runs on initial component mount:
+    ```javascript
+    useEffect(() => {
+      // Call the test fetching logic here
+    }, []);
+    ```
+3.  Move the core logic from the `onClick` handler into the `useEffect` hook.
+4.  Implement `useState` variables to track `isLoading` and `error` states.
+5.  Render a loading indicator (spinner/skeleton) when `isLoading` is true.
+6.  Remove the now-redundant "Load Tests" button from the JSX.
+
+**4. Edge Cases & Gotchas:**
+*   **Error Handling:** If the fetch fails, set an error state and display a "Retry" button as per acceptance criteria. The retry button should re-trigger the fetch.
+*   **State Management:** Ensure the component correctly transitions between loading, error, and success states without race conditions.
+*   **Button Confusion:** The story distinguishes between the old "Load Tests" button and the main "Run All Tests" button. Be careful to only remove the former.
+
