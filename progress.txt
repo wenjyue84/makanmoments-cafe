@@ -11082,3 +11082,6 @@ Here is a technical brief for the user story, tailored for a Frappe/Python devel
 ### Gotchas
 - File was already partially implemented when Ralph started — the pre-commit hook or linter had already applied changes
 - `stopPolling` must be in `useCallback`'s dependency array for `fetchOrder`
+## Iteration 2 - Wed, Mar 11, 2026  2:00:27 AM
+Completed: Add Max-Retry Limit to Order Status Polling (ID: US-132) in 5m
+
