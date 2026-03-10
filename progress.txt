@@ -11064,3 +11064,21 @@ Here is a technical brief for the user story, tailored for a Frappe/Python devel
 ### Gotchas
 - TypeScript check passes cleanly (no errors in the modified file)
 - Pre-existing lint errors in repo — don't try to fix them
+
+## Iteration - Story: US-132 - Add Max-Retry Limit to Order Status Polling
+
+### What was implemented
+- Added `MAX_FAIL_COUNT = 40` constant and `TERMINAL_STATUSES` array in `src/app/[locale]/order/[id]/page.tsx`
+- Added `failCount = useRef(0)` and `intervalRef = useRef<...>(null)` refs
+- Added `notFound` state + `stopPolling` useCallback
+- Updated `fetchOrder`: increments `failCount` on non-OK/catch; calls `stopPolling()` + `setNotFound(true)` at ≥40 failures; resets `failCount = 0` on success; calls `stopPolling()` on terminal statuses (ready, rejected, cancelled, expired)
+- Stored interval in `intervalRef.current` in the polling useEffect
+- Added `if (notFound)` render block with `maxRetriesTitle`, `maxRetriesMsg`, `contactCafe` translations + WhatsApp link
+
+### Patterns discovered
+- Translation keys `maxRetriesTitle`, `maxRetriesMsg`, `contactCafe` were already present in all 3 locale files (en/ms/zh)
+- `TERMINAL_STATUSES` includes expired + cancelled, not just ready/rejected
+
+### Gotchas
+- File was already partially implemented when Ralph started — the pre-commit hook or linter had already applied changes
+- `stopPolling` must be in `useCallback`'s dependency array for `fetchOrder`
