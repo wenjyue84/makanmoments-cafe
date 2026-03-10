@@ -6296,3 +6296,78 @@ Most of US-071 was already pre-built by a previous iteration. This iteration com
 ## Iteration 18 - Tue, Mar 10, 2026  5:19:30 PM
 Completed: Landing Page: Prominent Pre-Order System Messaging (ID: US-070) in 10m
 
+## Iteration 42 - Tue, Mar 10, 2026  5:20:01 PM
+Completed: Admin: Multiple Images per Menu Item (Up to 3) (ID: US-071) in 8m
+
+### What was implemented
+- `src/types/menu.ts`: Added `photos: string[]` field (non-optional, always array)
+- `src/lib/menu.ts`: Added `getSecondaryPhotosMap()` using `readdirSync` to scan for `{code}-{N}.ext` files; updated `rowToMenuItem` to populate `photos: [primary, ...secondary]`
+- `src/app/api/admin/images/route.ts`: POST now accepts `imageIndex` (1-3), saves as `{code}-{N}.ext` for secondary; DELETE handler accepts JSON body `{code, imageIndex}` and tries multiple extensions
+- `src/components/menu/image-carousel.tsx`: Created with prev/next arrows, dot indicators, click-to-navigate dots
+- `src/components/menu/menu-card.tsx`: Uses `ImageCarousel` when `item.photos.length > 1`
+- `src/components/admin/image-picker-modal.tsx`: Added Secondary Images section with per-slot upload/delete buttons
+
+### Patterns discovered
+- All 6 implementation files were already pre-built by a previous iteration — verified implementation was complete and TypeScript clean
+- `getSecondaryPhotosMap()` scans once per query call and returns a map; more efficient than per-item `existsSync`
+- Secondary images API: POST uses `imageIndex` field in FormData; DELETE uses JSON body (not query params)
+- ImageCarousel uses button-based navigation (no scroll-snap) for better cross-browser compatibility
+
+### Gotchas
+- `prd.json` needs UTF-8 encoding when reading/writing with Python (charmap error otherwise)
+- The `photos` field is now `string[]` (required, not optional) — always contains at least the primary image path
+
+
+## Pre-analysis for US-072 (Gemini 2.5 Pro)
+**Technical Brief: US-072 - Mobile Homepage CTA Enhancement**
+
+**Technology Stack:** This is a **Next.js/React/Tailwind CSS** frontend task, not a Frappe/Python one. All modifications will be in `.tsx` and CSS classes.
+
+**1. Files to Modify:**
+*   `src/components/home/hero-section.tsx`: The primary target containing the hero image and CTA.
+*   `src/app/[locale]/page.tsx`: The home page where the `HeroSection` component is rendered; may need review but likely no changes.
+
+**2. Frappe DocTypes/Hooks:**
+*   None. This is purely a frontend component layout and styling change.
+
+**3. Recommended Implementation Approach:**
+*   In `hero-section.tsx`, apply a responsive height class like `max-h-[75vh]` to the main container to ensure it doesn't fill the entire viewport on mobile.
+*   Locate the "View Menu" button (likely a `next/link` component).
+*   Replace its existing classes with the following to make it a prominent, full-width button on mobile: `w-full sm:w-auto min-h-[52px] text-lg font-bold bg-orange-500 text-white rounded-xl hover:bg-orange-600`.
+*   Ensure the button is structurally placed *after* the main headline text, not positioned absolutely over the image.
+
+**4. Edge Cases & Gotchas:**
+*   **Responsiveness:** Verify the button correctly shrinks from `w-full` on mobile to `sm:w-auto` on larger screens.
+*   **Cumulative Layout Shift (CLS):** Ensure the hero image uses the `next/image` component with `priority` and has a defined aspect ratio to prevent the CTA from being pushed down on load.
+*   **Verification:** Use Chrome DevTools on a 390px wide viewport to confirm the entire button is visible above the fold without any scrolling.
+
+
+## Pre-analysis for US-072 (Gemini 2.5 Pro)
+### Technical Brief: US-072 - Mobile Homepage CTA Enhancement
+
+**Project:** Next.js / React Frontend
+**Objective:** Redesign the "View Menu" CTA on the mobile homepage to be prominently visible above the fold.
+
+**1. Primary File for Modification:**
+*   `src/components/home/hero-section.tsx`: This component contains the hero image, headline, and the target CTA button.
+
+**2. Involved Frameworks & DocTypes:**
+*   **Framework:** Next.js / React
+*   **Styling:** Tailwind CSS
+*   **DocTypes:** N/A (This is a frontend component modification, not a Frappe backend change).
+
+**3. Recommended Implementation Approach:**
+1.  In `hero-section.tsx`, locate the main container `div` for the hero section. Apply a responsive max-height class (e.g., `max-h-[75vh]`) to ensure the entire section is shorter on mobile viewports, pushing the CTA above the fold.
+2.  Find the `Link` or `button` element for the "View Menu" CTA.
+3.  Modify its `className` attribute to apply the following Tailwind CSS utilities:
+    *   **Sizing & Shape:** `w-full sm:w-auto min-h-[52px] rounded-xl`
+    *   **Color & Contrast:** `bg-orange-500 text-white hover:bg-orange-600`
+    *   **Typography:** `text-lg font-bold`
+4.  Ensure the button is positioned directly below the hero text, not floating over the image.
+5.  Hide any non-essential decorative elements on mobile using `hidden lg:block` to reduce clutter.
+
+**4. Edge Cases & Gotchas:**
+*   **Hero Image Cropping:** The reduced `max-h` will affect the background image. Verify `object-position` on the `next/image` component to ensure the focal point of the image remains centered and visually appealing.
+*   **Layout Shift (CLS):** Ensure the hero `next/image` component uses the `priority` prop and has explicit dimensions to prevent layout shift.
+*   **Accessibility:** Confirm the final orange background and white text combination meets WCAG AA contrast ratios.
+
