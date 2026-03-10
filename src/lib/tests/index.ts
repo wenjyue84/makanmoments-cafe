@@ -6,6 +6,7 @@ export { e2eTests } from "./e2e";
 export { newFeaturesTests } from "./new-features";
 export { preOrderTests } from "./pre-order";
 export { reliabilityTests } from "./reliability";
+export { performanceTests } from "./performance";
 
 import { smokeTests } from "./smoke";
 import { unitTests } from "./unit";
@@ -14,6 +15,7 @@ import { e2eTests } from "./e2e";
 import { newFeaturesTests } from "./new-features";
 import { preOrderTests } from "./pre-order";
 import { reliabilityTests } from "./reliability";
+import { performanceTests } from "./performance";
 import type { TestDefinition, TestMeta } from "./types";
 
 export const ALL_TESTS: TestDefinition[] = [
@@ -24,6 +26,7 @@ export const ALL_TESTS: TestDefinition[] = [
   ...newFeaturesTests,
   ...preOrderTests,
   ...reliabilityTests,
+  ...performanceTests,
 ];
 
 export function getTestMeta(): TestMeta[] {
