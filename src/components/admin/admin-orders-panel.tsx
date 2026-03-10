@@ -9,6 +9,7 @@ const FILTER_TABS: FilterTab[] = ["All", "Pending", "Active", "Done", "Expired"]
 
 export function AdminOrdersPanel() {
   const {
+    orders,
     loading,
     refreshing,
     filterTab,
@@ -20,6 +21,8 @@ export function AdminOrdersPanel() {
     rejectOrder,
     updateStatus,
   } = useAdminOrders();
+
+  const expiredCount = orders.filter((o) => o.status === "expired").length;
 
   return (
     <div>
@@ -60,6 +63,11 @@ export function AdminOrdersPanel() {
             {tab === "Pending" && pendingCount > 0 && (
               <span className="ml-1.5 rounded-full bg-orange-500 text-white text-[10px] font-bold px-1.5 py-0.5">
                 {pendingCount}
+              </span>
+            )}
+            {tab === "Expired" && expiredCount > 0 && (
+              <span className="ml-1.5 rounded-full bg-gray-400 text-white text-[10px] font-bold px-1.5 py-0.5">
+                {expiredCount}
               </span>
             )}
           </button>

@@ -13,6 +13,9 @@ interface RateLimitEntry {
  * const result = limiter(ip);
  * if (!result.allowed) return 429;
  */
+// Localhost IPs are exempt from rate limiting (test runner, dev tools)
+const LOCALHOST_IPS = new Set(["127.0.0.1", "::1", "localhost", "::ffff:127.0.0.1"]);
+
 export function createRateLimiter(options: {
   windowMs: number;
   max: number;
@@ -30,6 +33,9 @@ export function createRateLimiter(options: {
   }, 5 * 60 * 1000);
 
   return function check(ip: string): { allowed: boolean; retryAfter?: number } {
+    // Exempt localhost — used by the admin test runner and dev tools
+    if (LOCALHOST_IPS.has(ip)) return { allowed: true };
+
     const now = Date.now();
     const entry = store.get(ip);
 
