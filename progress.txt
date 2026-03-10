@@ -1388,3 +1388,63 @@ This user story is for a **Next.js/TypeScript** project, not Frappe/Python. The 
 
 ### Gotchas
 - npx tsc --noEmit returns no output on success (no error = pass)
+## Iteration 7 - Tue, Mar 10, 2026 11:16:13 AM
+Completed: Add Cafe Logo to Header and Footer (ID: US-019) in 3m
+
+
+## Pre-analysis for US-020 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** project, not Frappe/Python. The plan should target a Node.js script.
+
+**Project:** makanmoments.cafe (Next.js)
+**User Story:** US-020
+
+### Technical Brief for AI Agent
+
+**1. Objective:**
+Create a Node.js script to find specific menu item codes from the database, then copy, compress (to WebP), and rename corresponding high-quality source photos into the `public/images/menu/` directory, so they appear on the website's menu cards.
+
+**2. Files to Modify / Create:**
+*   **Create:** `scripts/copy-menu-photos.mjs` - This will be the main script to perform the copy and compression logic.
+*   **Verify (No Change Likely Needed):** `src/components/menu/MenuItemCard.tsx` - Inspect this file to confirm how it constructs the image path (e.g., `/images/menu/${item.code}.jpg`). Ensure it will resolve correctly once new images are in place. The goal is likely to use a `.webp` extension for better performance.
+
+**3. Implementation Approach:**
+*   **Dependency:** Add `sharp` to dev dependencies for image processing: `npm install -D sharp`.
+*   **Mapping:** Inside `copy-menu-photos.mjs`, create a hardcoded mapping object.
+    *   First, manually query the database (as per technical notes) to get the correct `code` for each of the 9 specified menu items (Gyudon, Tom Yum, etc.).
+    *   The map should look like: `const photoMap = { 'TM03': 'path/to/tm03 gyudon a5.jpg', ... };`
+*   **Script Logic:**
+    1.  Read the `photoMap` object.
+    2.  For each `(code, sourcePath)` pair, use `sharp(sourcePath)` to:
+        *   Resize the image if needed to a standard width (e.g., 600px).
+        *   Convert to WebP format: `.webp({ quality: 80 })`.
+        *   Save to the destination: `public/images/menu/${code}.webp`.
+    3.  Log progress for each file processed.
+*   **Component Logic:** Update `MenuItemCard.tsx` to prefer `.webp` images if it currently only looks for `.jpg`.
+
+**4. Gotchas & Edge Cases:**
+*   **Item Codes:** Double-check that the item codes from the DB are correct. An incorrect code will lead to a photo being mapped to the wrong dish.
+*   **File Extension:** The script should output `.webp` for performance, not `.jpg`. This may require a minor change in the frontend component to look for `[code].webp` first.
+*   **Source Paths:** The source file paths contain spaces and are in two different directories. Ensure the mapping in the script points to the exact, correct source file for each item code.
+*   **Compression:** The acceptance criteria require images ≤ 150KB. The script must use `sharp`'s quality and resizing options to meet this constraint.
+
+
+## Iteration N - Story: US-020 - Replace Menu Item Images with High-Quality Food Photos
+
+### What was implemented
+- Created `scripts/copy-menu-photos.mjs` to copy + compress 9 food photos
+- Used sharp to resize to 800x600, JPEG quality 82, mozjpeg compression
+- All 9 photos processed under 150KB (55-79KB range)
+- Mapping: TM03 (gyudon), MT04 (seafood tomyum), MT01 (pineapple fried rice), DD02 (bubur cha cha), Thai-styled_green_cu (thai green curry), AP01 (ayam penyet), SF11 (chicken wing), BF02 (fish slices noodles), BF01 (KL curry mee)
+- Photos saved to `public/images/menu/{code}.jpg` matching the pattern in menu.ts
+
+### Patterns discovered
+- menu.ts uses `photo: /images/menu/${row.code}.jpg` — file must be named exactly as the DB code
+- menu-card.tsx sets `imgError` state on `onError` to show fallback emoji when image 404s
+- DB code for "Thai-styled green curry rice" is `Thai-styled_green_cu` (truncated)
+- BF01 = KL Curry (Soup) — matched to "a5 kl curry mee.png"
+- sharp `.flatten({ background: white })` needed for PNG inputs with transparency before JPEG conversion
+
+### Gotchas
+- Source filename "ap01nasi ayam penyet a5.jpg" has no space between "ap01" and "nasi" — check carefully
+- `a5 kl curry mee.png` is in ver-4.5 subfolder, not in "Frequently used"
+- DB item code `Thai-styled_green_cu` is truncated from the full name
