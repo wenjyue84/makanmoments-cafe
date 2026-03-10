@@ -12655,3 +12655,4 @@ Completed: Extract AdminOrdersPanel into AdminOrderCard and useAdminOrders Hook 
 *   **Error Clarity:** Zod's default error for missing variables is clear (e.g., "Required"), which should meet the acceptance criteria. No custom error mapping should be needed initially.
 *   **Full Coverage:** The Zod schema must include all three specified variables (`DATABASE_URL`, `GROQ_API_KEY`, `ADMIN_JWT_SECRET`) to be complete.
 
+
