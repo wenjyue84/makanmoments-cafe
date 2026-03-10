@@ -21,6 +21,21 @@ import { GripVertical } from "lucide-react";
 
 const MISSING_PHOTOS_DISMISSED_KEY = "admin_missing_photos_dismissed";
 
+const COLUMN_TOOLTIPS: Record<string, string> = {
+  IMAGE: "Item photo — click the image in a row to upload a new one",
+  CODE: "POS item code (read-only) — used to match photos and rules",
+  NAME: "Item name in English, Malay, and Chinese — all 3 are shown on the menu",
+  PRICE: "Selling price in RM — displayed on the public menu",
+  ON: "Toggle item visibility on the public menu (on/off switch)",
+  STAR: "Featured — marks item for the homepage highlights section",
+  CATEGORIES: "POS categories this item belongs to (e.g. Rice, Noodles, Drinks)",
+  DIETARY: "Dietary tags shown to customers (Spicy, Vegetarian, Vegan, Gluten Free)",
+  DAYS: "Days of week this item is available (e.g., Mon-Fri only)",
+  TIME: "Time window this item is served (e.g., 11:00-15:00)",
+  DATES: "Special dates this item is available or unavailable",
+  SORT: "Display order within its category — lower number appears first",
+};
+
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const DIETARY_OPTIONS = ["Spicy", "Vegetarian", "Vegan", "Gluten Free"];
 
@@ -668,18 +683,18 @@ export function AdminMenuTable({
               <thead>
                 <tr className="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                   <th className="w-8 px-2 py-3"></th>
-                  <th className="px-3 py-3">Image</th>
-                  <th className="px-3 py-3">Code</th>
-                  <th className="px-3 py-3">Name EN / MS / ZH</th>
-                  <th className="px-3 py-3">Price</th>
-                  <th className="px-3 py-3">On</th>
-                  <th className="px-3 py-3">★</th>
-                  <th className="px-3 py-3">Categories</th>
-                  <th className="px-3 py-3">Dietary</th>
-                  <th className="px-3 py-3">Days</th>
-                  <th className="px-3 py-3">Time</th>
-                  <th className="px-3 py-3">Dates</th>
-                  <th className="px-3 py-3">Sort</th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.IMAGE} className="cursor-help border-b border-dashed border-gray-400">Image</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CODE} className="cursor-help border-b border-dashed border-gray-400">Code</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.NAME} className="cursor-help border-b border-dashed border-gray-400">Name EN / MS / ZH</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.PRICE} className="cursor-help border-b border-dashed border-gray-400">Price</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.ON} className="cursor-help border-b border-dashed border-gray-400">On</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.STAR} className="cursor-help border-b border-dashed border-gray-400">★</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CATEGORIES} className="cursor-help border-b border-dashed border-gray-400">Categories</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DIETARY} className="cursor-help border-b border-dashed border-gray-400">Dietary</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DAYS} className="cursor-help border-b border-dashed border-gray-400">Days</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.TIME} className="cursor-help border-b border-dashed border-gray-400">Time</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DATES} className="cursor-help border-b border-dashed border-gray-400">Dates</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.SORT} className="cursor-help border-b border-dashed border-gray-400">Sort</span></th>
                   <th className="px-3 py-3">Actions</th>
                 </tr>
               </thead>
@@ -1209,18 +1224,18 @@ export function AdminMenuTable({
             <table className="min-w-full text-sm">
               <thead>
                 <tr className="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  <th className="px-3 py-3">Image</th>
-                  <th className="px-3 py-3">Code</th>
-                  <th className="px-3 py-3">Name EN / MS / ZH</th>
-                  <th className="px-3 py-3">Price</th>
-                  <th className="px-3 py-3">On</th>
-                  <th className="px-3 py-3">★</th>
-                  <th className="px-3 py-3">Categories</th>
-                  <th className="px-3 py-3">Dietary</th>
-                  <th className="px-3 py-3">Days</th>
-                  <th className="px-3 py-3">Time</th>
-                  <th className="px-3 py-3">Dates</th>
-                  <th className="px-3 py-3">Sort</th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.IMAGE} className="cursor-help border-b border-dashed border-gray-400">Image</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CODE} className="cursor-help border-b border-dashed border-gray-400">Code</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.NAME} className="cursor-help border-b border-dashed border-gray-400">Name EN / MS / ZH</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.PRICE} className="cursor-help border-b border-dashed border-gray-400">Price</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.ON} className="cursor-help border-b border-dashed border-gray-400">On</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.STAR} className="cursor-help border-b border-dashed border-gray-400">★</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CATEGORIES} className="cursor-help border-b border-dashed border-gray-400">Categories</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DIETARY} className="cursor-help border-b border-dashed border-gray-400">Dietary</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DAYS} className="cursor-help border-b border-dashed border-gray-400">Days</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.TIME} className="cursor-help border-b border-dashed border-gray-400">Time</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DATES} className="cursor-help border-b border-dashed border-gray-400">Dates</span></th>
+                  <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.SORT} className="cursor-help border-b border-dashed border-gray-400">Sort</span></th>
                   <th className="px-3 py-3">Actions</th>
                 </tr>
               </thead>

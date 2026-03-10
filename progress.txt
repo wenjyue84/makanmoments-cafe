@@ -7909,3 +7909,126 @@ Completed: Admin Menu: Search Items by Code or Name (ID: US-085) in 4m
 ## Iteration 30 - Tue, Mar 10, 2026  6:50:17 PM
 Completed: Admin Menu: Search Items by Code or Name (ID: US-085) in 3m
 
+## Iteration 53 - Tue, Mar 10, 2026  6:50:40 PM
+Completed: Admin Menu: Search Items by Code or Name (ID: US-085) in 3m
+
+
+## Pre-analysis for US-086 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-086, based on the provided JSON.
+
+**Note:** The user story describes a frontend change for a Next.js/React application, not a Frappe/Python one. This brief is tailored to the React/TypeScript implementation details within the story's `technicalNotes`.
+
+---
+
+### **Technical Brief: US-086 Admin Menu Tooltips**
+
+**1. Primary File to Modify:**
+*   `src/components/admin/admin-menu-table.tsx`: This file contains the `<thead>` section of the admin menu table where the column headers are defined.
+
+**2. Key Components & Libraries:**
+*   **React Component:** The main target is `AdminMenuTable`.
+*   **UI Library (optional but recommended):** `shadcn/ui`. The story suggests using its `TooltipProvider`, `Tooltip`, `TooltipTrigger`, and `TooltipContent` components for a richer user experience over a simple `title` attribute.
+
+**3. Recommended Implementation Approach:**
+*   In `admin-menu-table.tsx`, create a constant object (e.g., `COLUMN_TOOLTIPS`) to map column keys (`CODE`, `ON`, `★`, etc.) to their descriptive tooltip strings as specified in the acceptance criteria.
+*   Locate the table header (`<th>`) generation logic.
+*   For each header, wrap the label in the `shadcn/ui` Tooltip component.
+*   Use the column key to look up the appropriate text from the `COLUMN_TOOLTIPS` object and pass it to `TooltipContent`.
+*   Applying a `cursor-help` and a dashed underline to the header text will improve UI affordance.
+
+**4. Edge Cases & Gotchas:**
+*   **Dependency:** This story (US-086) must be implemented in the context of the new left-navigation admin layout from US-079. Ensure that work is based on the correct UI.
+*   **Special Characters:** The "Featured" column is represented by a star (★). Ensure the key used in the `COLUMN_TOOLTIPS` object matches how this column is identified in the code (e.g., 'STAR' or 'FEATURED').
+*   **Accessibility:** Using the `shadcn/ui` Tooltip component is preferred as it handles accessibility (ARIA attributes) correctly. If using a simple `title` attribute for a quicker implementation, ensure it's applied to an element that can receive focus.
+
+
+## Pre-analysis for US-086 (Gemini 2.5 Pro)
+Here is a technical brief for implementing the user story in a Frappe/Python context, based on an analogy from the provided JSON.
+
+***
+
+### **Technical Brief for Claude: US-086 (Frappe/Python)**
+
+**Objective:** Implement hover tooltips for column headers in a Frappe list view to provide hints for administrators.
+
+**1. Python/JS Files to Modify:**
+*   **Primary:** `lhdn_payroll_integration/doctype/menu_item/menu_item_list.js`
+    *   This client-side script is the correct place to intercept and customize the rendering of the list view, including its header.
+*   **Secondary:** `lhdn_payroll_integration/doctype/menu_item/menu_item.py`
+    *   Unlikely to be needed, but may be relevant if column visibility or labels are determined by server-side logic.
+
+**2. Frappe DocTypes & Hooks:**
+*   **DocType:** `Menu Item` (inferred). The task is to modify the standard **List View** for this DocType.
+*   **Hooks:** No hooks are required. This is a client-side UI enhancement for an existing view.
+
+**3. Implementation Approach:**
+1.  Create a tooltip mapping object in `menu_item_list.js`, mapping DocType `fieldnames` to the tooltip strings from the acceptance criteria.
+2.  In the `make` or `setup` method of the list view controller, get the header elements after they are rendered.
+3.  Iterate through the header cells (`<th>`). For each cell, read its `data-fieldname` attribute.
+4.  Use the `fieldname` to look up the corresponding tooltip text from your mapping object.
+5.  Apply the text to the element using `element.setAttribute('title', tooltipText)`.
+6.  Add a `cursor-help` class to the element for better visual feedback.
+
+**4. Edge Cases & Gotchas:**
+*   The tooltip map must use the internal **`fieldname`** (e.g., `is_featured`), not the UI Label (e.g., "★").
+*   This implementation will only affect the `Menu Item` list view. If a similar feature is needed on Reports or other pages, a more generalized approach via a shared JS library may be needed.
+*   For multi-language support, wrap all tooltip strings in Frappe's translation function: `__("Tooltip text")`.
+
+
+## Pre-analysis for US-086 (Gemini 2.5 Pro)
+Here is the technical brief for the user story:
+
+**Objective:** Implement tooltips on column headers in the new admin menu table to provide explanations for each field.
+
+**File to Modify:**
+*   `src/components/admin/admin-menu-table.tsx`
+
+**UI Components & Data:**
+*   This is a React/Next.js task, not Frappe/Python.
+*   Modify the table header (`<thead>`) rendering logic.
+*   Use the `Tooltip` component suite from `shadcn/ui` (`TooltipProvider`, `Tooltip`, `TooltipTrigger`, `TooltipContent`).
+
+**Implementation Approach:**
+1.  Define a constant object `COLUMN_TOOLTIPS` mapping column keys (e.g., 'CODE', '★', 'ON') to the specified tooltip strings.
+2.  Wrap the `<table>` or `<thead>` with `<TooltipProvider>`.
+3.  For each column header (`<th>`), wrap the text or icon in a `<Tooltip>` component.
+4.  The header label itself becomes the `<TooltipTrigger>`.
+5.  The corresponding value from `COLUMN_TOOLTIPS` goes into the `<TooltipContent>`.
+6.  Apply a `cursor-help` class and a dashed underline to the trigger for a clear visual hint.
+
+**Gotchas & Edge Cases:**
+*   Ensure `Tooltip` components are correctly imported from `@/components/ui/tooltip`.
+*   The keys in the `COLUMN_TOOLTIPS` object must exactly match the identifiers used in the table's column definitions.
+*   This implementation applies only to the new left-nav admin UI (dependency: US-079). Do not apply it to any older table components.
+
+
+## Iteration - Tue, Mar 10, 2026 - Story: Admin Menu Table: Column Header Tooltips (ID: US-086)
+
+### What was implemented
+- Added `COLUMN_TOOLTIPS` constant at top of `src/components/admin/admin-menu-table.tsx` mapping column keys to plain-language descriptions
+- Applied `<span title={COLUMN_TOOLTIPS.X} className="cursor-help border-b border-dashed border-gray-400">` wrappers to both thead sections (desktop DnD view + filtered list view)
+- Columns with tooltips: IMAGE, CODE, NAME, PRICE, ON, STAR (★), CATEGORIES, DIETARY, DAYS, TIME, DATES, SORT
+- Actions column left without tooltip (self-explanatory)
+
+### Patterns discovered
+- The file had two separate `<thead>` sections — one for the grouped DnD view (line ~683) and one for the filtered flat view (line ~1225). Both needed updating.
+- COLUMN_TOOLTIPS was already partially added by a previous iteration — check for partial state before writing from scratch
+- Simple HTML `title` attribute is acceptable per acceptance criteria ("title attribute or aria-label")
+
+### Gotchas
+- Always re-read the file before editing — linters/formatters may have modified it between reads
+
+## Iteration N - Story: US-086 Admin Menu Table: Column Header Tooltips
+
+### What was implemented
+- Added `COLUMN_TOOLTIPS` constant (Record<string, string>) near top of `src/components/admin/admin-menu-table.tsx`
+- Wrapped each `<th>` label in `<span title={COLUMN_TOOLTIPS.KEY} className="cursor-help border-b border-dashed border-gray-400">` in BOTH table theads (DnD grouped view + filtered/single-category view)
+- Tooltips cover: IMAGE, CODE, NAME, PRICE, ON, STAR, CATEGORIES, DIETARY, DAYS, TIME, DATES, SORT
+
+### Patterns discovered
+- The file has TWO `<thead>` sections: one for the DnD all-categories view (~line 683) and one for the filtered single-category view (~line 1225) — both need updating
+- The linter auto-applied the second edit after the first write, so the second block was already done when re-read
+- `title` attribute on `<span>` is sufficient — no need to install shadcn/ui Tooltip for this small use case
+
+### Gotchas
+- Must read file again before second Edit if it was auto-modified by linter after first Edit
