@@ -7405,3 +7405,25 @@ This user story refactors the admin dashboard UI, not a Frappe/Python app. The g
 ### Gotchas
 - Must also remove removed tab names from TAB_ICONS record (TypeScript fails if TABS and TAB_ICONS are out of sync)
 - The `setHours` function in the old settings panel was exclusively used by the simple Operating Hours section — safe to delete when removing that section
+## Iteration 50 - Tue, Mar 10, 2026  6:30:23 PM
+Completed: Admin: Replace Horizontal Tab Bar with Left Sidebar Navigation (ID: US-079) in 6m
+
+
+## Iteration - Story: Admin Settings: Consolidate Time Settings + Operating Hours as Sub-Sections (US-080)
+
+### What was implemented
+- Removed "Time Settings", "Operating Hours", "Push Notifications" from TABS array in admin-tabs.tsx (already done by prior iteration)
+- Replaced broken inline Operating Hours section (had undefined `setHours`) with `<AdminOperatingHours />` component
+- Added `<AdminTimeSettings categories={categories} />` section in Settings panel
+- Added `<AdminPushSettings />` in Settings panel
+- Section order: General → Operating Hours → Time Settings → T&G Payment → Push Notifications → Pre-Order System
+- `pushNotificationsEnabled: true` already set in data/site-settings.json
+
+### Patterns discovered
+- A previous iteration had already partially applied this story (tabs removed, file imports set up), but the settings panel body was stale with broken inline code
+- `AdminOperatingHours` and `AdminTimeSettings` each manage their own state + save logic independently
+- `AdminPushSettings` already has its own card wrapper, so no outer section card needed
+
+### Gotchas
+- The `setHours` function was referenced in the old inline Operating Hours section but never defined — would have caused a TypeScript error
+- Each sub-component (Operating Hours, Time Settings) has its own separate API endpoint and save button
