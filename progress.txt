@@ -4927,3 +4927,101 @@ This brief outlines the implementation plan for the `lhdn_payroll_integration` F
 ## Iteration 36 - Tue, Mar 10, 2026  3:57:44 PM
 Completed: Pre-Order: Admin Confirms Payment â†’ Kitchen Start (ID: US-055) in 9m
 
+## Iteration 33 - Tue, Mar 10, 2026  3:58:03 PM
+Completed: Pre-Order: Admin Confirms Payment â†’ Kitchen Start (ID: US-055) in 6m
+
+
+## Pre-analysis for US-056 (Gemini 2.5 Pro)
+Here is the technical brief for the Claude Code agent.
+
+---
+
+**To:** Claude Code Agent
+**From:** Gemini Agent
+**Subject:** Technical Brief for US-056: Pre-Order Flow & Testing (Frappe/Python)
+
+This brief outlines the implementation plan for a pre-order management feature within the `lhdn_payroll_integration` Frappe app, based on the provided user story.
+
+**1. Python Files to Modify:**
+*   **`lhdn_payroll_integration/lhdn_payroll_integration/doctype/pre_order/pre_order.py`**: Create this new DocType controller. It will house the core business logic for status transitions and validation.
+*   **`lhdn_payroll_integration/api.py`**: Create a new file for whitelisted API endpoints (`@frappe.whitelist()`) corresponding to user actions (e.g., `submit_order`, `upload_payment`) and admin actions (`approve_order`).
+*   **`lhdn_payroll_integration/hooks.py`**: Modify this file to add a `scheduler_events` entry for the auto-expiry logic.
+*   **`lhdn_payroll_integration/tests/test_pre_order.py`**: Create this new file to contain the `unittest` test cases for the entire flow.
+
+**2. Frappe DocTypes & Hooks:**
+*   **DocType:** A new `Pre-Order` DocType is required. It needs a `status` Select field with options: `Pending Approval`, `Approved`, `Payment Uploaded`, `Preparing`, `Ready`, `Expired`, `Cancelled`.
+*   **Hooks:** Use `scheduler_events` in `hooks.py` to trigger a nightly or hourly background job for expiring orders.
+
+**3. Implementation Approach:**
+*   **State Machine:** Implement status change logic in `pre_order.py` using `on_update` or `validate` controller hooks to enforce the specified flow.
+*   **Auto-Expiry:** Create a function (e.g., `expire_unpaid_orders` in `api.py`) that queries for `Pre-Order` docs with status `Approved` and `modified` time older than 30 minutes, then updates their status to `Expired`. Hook this into the scheduler.
+*   **Testing:** Use `frappe.tests.utils.FrappeTestCase`. Simulate API calls to your new endpoints to verify the happy path and validation failures. Assert status changes in the database directly.
+
+**4. Edge Cases & Gotchas:**
+*   **Scheduler:** Ensure the Frappe scheduler is enabled on the bench (`bench schedule`) for the expiry logic to function. The expiry job must be idempotent.
+*   **Timezones:** Use Frappe's built-in datetime utilities (`frappe.utils.now_datetime()`, `frappe.utils.add_to_date()`) for expiry calculations to avoid timezone-related bugs.
+*   **Admin Filters:** The request to filter orders by status can be implemented by customizing the `Pre-Order` DocType's List View settings directly in the Frappe UI.
+
+
+## Pre-analysis for US-056 (Gemini 2.5 Pro)
+Here is the technical brief for implementing user story US-056 in a Frappe/Python context.
+
+***
+
+**Subject: Technical Brief for US-056: Pre-Order E2E Tests & Edge Cases**
+
+**Project:** `lhdn_payroll_integration`
+
+**Overview:** This brief outlines the implementation of end-to-end tests and edge case handling (e.g., auto-expiry) for the pre-order system within the Frappe framework.
+
+**1. Python Files to Modify:**
+
+*   `lhdn_payroll_integration/pre_order/test_pre_order.py`: Create this file for the new `FrappeTestCase` unit tests.
+*   `lhdn_payroll_integration/pre_order/pre_order.py`: The DocType's controller file. Add server-side validation and whitelisted API methods for status transitions (e.g., `approve_order`, `confirm_payment`).
+*   `lhdn_payroll_integration/hooks.py`: To register the scheduled job for handling order expiry.
+*   `lhdn_payroll_integration/tasks.py`: Create this file to house the background job logic for expiring orders.
+
+**2. Frappe DocTypes & Hooks:**
+
+*   **DocType**: A new or existing DocType, likely named `Pre Order`. It must have a `status` field with states: `Pending Approval`, `Approved`, `Payment Uploaded`, `Ready`, `Expired`.
+*   **Hook**: The `scheduler_events` in `hooks.py` should be used to schedule the expiry check (e.g., a function running every 10 minutes).
+
+**3. Recommended Implementation Approach:**
+
+*   **Tests**: Use the `FrappeTestCase` class. Write test methods covering the happy path and validation errors by creating `Pre Order` documents programmatically (`frappe.get_doc`) and asserting status changes and expected exceptions.
+*   **Auto-Expiry**: Implement a function in `tasks.py` (e.g., `auto_expire_orders`) that queries for `Pre Order` docs with `status='Approved'` and `modified` time older than 30 minutes, then updates their status to `Expired`.
+*   **API**: The logic from the technical notes (approving, uploading payment) should be implemented as `@frappe.whitelist()` functions in `pre_order.py`.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Race Conditions**: The auto-expiry job could run at the same moment a payment is confirmed. The job should double-check the order's status before updating it to `Expired`.
+*   **Timezones**: Use Frappe's datetime utilities (`frappe.utils.now_datetime()`) to ensure the 30-minute expiry calculation is timezone-safe.
+*   **Permissions**: Ensure whitelisted methods intended for admins check for the appropriate `System Manager` or custom role.
+
+
+## Iteration 33 - US-056: Pre-Order End-to-End Flow Tests + Edge Cases
+
+### What was implemented
+- `src/lib/tests/types.ts`: Added `"pre-order"` to TestCategory union type
+- `src/lib/tests/pre-order.ts`: NEW file — 6 tests for Pre-Order System category:
+  - pre-order-001-valid-submit: POST valid order → 201, status=pending_approval in DB
+  - pre-order-002-invalid-phone: POST invalid phone → 400
+  - pre-order-003-invalid-time: POST arrival < 15 min → 400
+  - pre-order-004-status-flow: DB-level happy path — all status transitions verified
+  - pre-order-005-auto-expiry: Verifies GET route source has expiry logic
+  - pre-order-006-admin-expired-filter: Verifies admin panel has Expired tab
+- `src/lib/tests/index.ts`: Added preOrderTests import and export
+- `src/components/admin/admin-tests-panel.tsx`: Added "pre-order" → "Pre-Order System" to CATEGORY_LABELS, CATEGORY_ORDER, and groupedTests initial value
+- `src/app/api/orders/[id]/route.ts`: Auto-expiry — if status='approved' and created_at + 30 min < now → update to 'expired'
+- `src/app/[locale]/order/[id]/page.tsx`: Added 'expired' to OrderStatus type; isExpired flag; expired UI block (orange card with message); skip progress bar for expired
+- `src/components/admin/admin-orders-panel.tsx`: Added 'Expired' to FilterTab, STATUS_LABELS, STATUS_COLORS; filterOrders handles 'Expired' tab
+- `messages/{en,ms,zh}.json`: Added titleExpired, expiredTitle, expiredMsg keys
+
+### Patterns discovered
+- TestCategory type must be updated AND the initial accumulator object in CATEGORY_ORDER.reduce() must be updated simultaneously — both must have the new key
+- Auto-expiry implemented on the GET endpoint (lazy evaluation) rather than as a scheduled job — simpler, no cron needed
+- Tests are code inspection + DB-level verifications, not browser tests — consistent with existing test patterns
+
+### Gotchas
+- admin-tests-panel.tsx uses a typed reduce accumulator `Record<TestCategory, TestMeta[]>` — must add new category to both the type AND the initial value
+- TypeScript strict mode catches missing keys in Record<TestCategory, ...>
