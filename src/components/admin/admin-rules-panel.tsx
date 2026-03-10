@@ -596,52 +596,51 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
                 !rule.active && "opacity-60"
               )}
             >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-medium">{rule.name}</span>
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-xs font-medium",
-                        RULE_TYPE_COLORS[rule.rule_type]
-                      )}
-                    >
-                      {RULE_TYPE_LABELS[rule.rule_type]}
-                    </span>
-                    {!rule.active && (
-                      <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-                        Inactive
-                      </span>
-                    )}
-                  </div>
+              <div className="flex flex-col gap-2">
+                {/* Rule name — full width, wraps cleanly */}
+                <p className="font-medium leading-snug">{rule.name}</p>
 
-                  <p className="text-sm text-gray-500">
-                    {rule.target_type === "category"
-                      ? `Categories: ${rule.target_categories.join(", ") || "none"}${
-                          (rule.exclude_item_ids?.length ?? 0) > 0
-                            ? ` (except ${rule.exclude_item_ids.length} item${rule.exclude_item_ids.length !== 1 ? "s" : ""})`
-                            : ""
-                        }`
-                      : `${rule.target_item_ids.length} item${rule.target_item_ids.length !== 1 ? "s" : ""}`}
-                    {rule.rule_type === "discount" && ` · ${rule.value}% off`}
-                    {rule.priority > 0 && ` · Priority ${rule.priority}`}
+                {/* Target details */}
+                <p className="text-sm text-gray-500">
+                  {rule.target_type === "category"
+                    ? `Categories: ${rule.target_categories.join(", ") || "none"}${
+                        (rule.exclude_item_ids?.length ?? 0) > 0
+                          ? ` (except ${rule.exclude_item_ids.length} item${rule.exclude_item_ids.length !== 1 ? "s" : ""})`
+                          : ""
+                      }`
+                    : `${rule.target_item_ids.length} item${rule.target_item_ids.length !== 1 ? "s" : ""}`}
+                  {rule.rule_type === "discount" && ` · ${rule.value}% off`}
+                  {rule.priority > 0 && ` · Priority ${rule.priority}`}
+                </p>
+
+                {(rule.time_from || rule.time_until) && (
+                  <p className="text-xs text-gray-400">
+                    Daily {rule.time_from || "00:00"} – {rule.time_until || "23:59"}
                   </p>
+                )}
+                {(rule.starts_at || rule.ends_at) && (
+                  <p className="text-xs text-gray-400">
+                    {rule.starts_at && `From ${new Date(rule.starts_at).toLocaleString()}`}
+                    {rule.starts_at && rule.ends_at && " "}
+                    {rule.ends_at && `Until ${new Date(rule.ends_at).toLocaleString()}`}
+                  </p>
+                )}
 
-                  {(rule.time_from || rule.time_until) && (
-                    <p className="text-xs text-gray-400">
-                      Daily {rule.time_from || "00:00"} – {rule.time_until || "23:59"}
-                    </p>
+                {/* Status badge + action buttons — always on their own row */}
+                <div className="flex flex-wrap items-center gap-2 pt-1">
+                  <span
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-xs font-medium",
+                      RULE_TYPE_COLORS[rule.rule_type]
+                    )}
+                  >
+                    {RULE_TYPE_LABELS[rule.rule_type]}
+                  </span>
+                  {!rule.active && (
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                      Inactive
+                    </span>
                   )}
-                  {(rule.starts_at || rule.ends_at) && (
-                    <p className="text-xs text-gray-400">
-                      {rule.starts_at && `From ${new Date(rule.starts_at).toLocaleString()}`}
-                      {rule.starts_at && rule.ends_at && " "}
-                      {rule.ends_at && `Until ${new Date(rule.ends_at).toLocaleString()}`}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-wrap gap-2 sm:shrink-0 sm:flex-nowrap">
                   <button
                     onClick={() => toggleActive(rule)}
                     className={cn(
@@ -651,7 +650,7 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
                         : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                     )}
                   >
-                    {rule.active ? "Active" : "Inactive"}
+                    {rule.active ? "Active" : "Disable"}
                   </button>
                   <button
                     onClick={() => openEdit(rule)}
