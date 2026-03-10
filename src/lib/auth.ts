@@ -1,14 +1,12 @@
 import { SignJWT, jwtVerify } from "jose";
+import { env } from "./env";
 
 export const COOKIE_NAME = "admin_session";
 export const KDS_COOKIE_NAME = "kds_session";
 
-// Lazy — computed at call time, not module load, so missing env var doesn't
-// crash middleware import in the Edge runtime.
+// Secret is validated at startup by env.ts — throws a clear error if missing.
 function getSecret(): Uint8Array {
-  const raw = process.env.ADMIN_JWT_SECRET;
-  if (!raw) throw new Error("ADMIN_JWT_SECRET is not set in .env.local");
-  return new TextEncoder().encode(raw);
+  return new TextEncoder().encode(env.ADMIN_JWT_SECRET);
 }
 
 export async function signAdminToken(): Promise<string> {
