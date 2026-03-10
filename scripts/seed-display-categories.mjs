@@ -18,6 +18,10 @@ const CHEFS_PICKS_CODES = [
   'AP01',  // Indonesia Ayam Penyet with rice — rice dish
   'MT01',  // Pineapple Fried Rice — rice dish
   'SF11',  // Thai Style Chicken Wing — snack/side
+  'MT04',  // Seafood Tomyum Soup+Rice with Egg
+  'TM03',  // Beef Gyu-Don
+  'DD02',  // Bubur Cha Cha
+  'Thai-styled_green_cu', // Thai-styled green curry rice
 ];
 
 async function main() {
