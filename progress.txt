@@ -12541,3 +12541,57 @@ Completed: All files already implemented from a previous iteration.
 
 ### Gotchas
 - Always check git status for untracked files — they may contain completed work that was never committed
+
+## Pre-analysis for US-141 (Gemini 2.5 Pro)
+Here is the technical brief for implementing the user story in a Frappe/Python context.
+
+**Subject: Technical Brief for US-141: Environment Variable Validation on Startup**
+
+**1. Python Files to Modify:**
+*   **Create:** A new module, `lhdn_payroll_integration/config.py`. This will centralize the validation logic and provide access to the validated environment variables.
+*   **Modify:** The app's root `lhdn_payroll_integration/__init__.py` to execute the validation check when the Frappe server process loads the app.
+*   **Refactor:** Any existing files that make API calls (e.g., `lhdn_payroll_integration/api.py`, `lhdn_payroll_integration/connector.py`) to import credentials from the new `config.py` instead of using `os.getenv` directly.
+
+**2. Frappe DocTypes & Hooks:**
+*   **DocTypes:** Not applicable. This is a system-level configuration check.
+*   **Hooks (`hooks.py`):** The validation should run once when the server process starts, not on every request. Therefore, triggering the check from the app's `__init__.py` is more suitable than using a boot session hook.
+
+**3. Recommended Implementation Approach:**
+*   In `config.py`, define the list of required environment variables (e.g., `LHDN_API_KEY`, `LHDN_SECRET`, `LHDN_ENDPOINT_URL`).
+*   Create a function that checks for the presence of these variables using `os.getenv`.
+*   If a variable is missing or empty, raise `frappe.ImproperlyConfigured(f"Error: Environment variable {var_name} is not set.")` to halt startup with a clear error.
+*   Import and call this validation function at the top of `lhdn_payroll_integration/__init__.py`.
+
+**4. Edge Cases & Gotchas:**
+*   The check only runs on process start. Users must run `bench restart` for changes in the `.env` file to be recognized or re-validated.
+*   Ensure the error message is explicit and clearly states which variable is missing to simplify debugging for administrators.
+*   Do not include fallback or default values for secrets within the code; the system should fail explicitly if they are not configured in the environment.
+
+
+## Pre-analysis for US-141 (Gemini 2.5 Pro)
+Here is the technical brief for implementing the user story in a Frappe/Python context.
+
+**Subject: Technical Brief for US-141: Environment Variable Validation**
+
+This brief outlines the implementation of startup environment variable validation for the `lhdn_payroll_integration` app, translating the core logic from the provided user story into a Python/Frappe-idiomatic approach.
+
+**1. Files to Modify:**
+*   **Create:** `lhdn_payroll_integration/env.py`. This new module will be the single source of truth for accessing and validating environment variables.
+*   **Modify:** `lhdn_payroll_integration/hooks.py`. We will use a hook to trigger the validation check on server startup.
+*   **Modify (Potentially):** Any existing files that currently use `os.environ.get()` for critical variables. They will be refactored to import from `env.py`.
+
+**2. Involved Frappe Hooks:**
+*   **`on_startup`:** This server-side hook in `hooks.py` is the ideal entry point to run our validation logic each time the system boots up.
+
+**3. Implementation Approach:**
+*   In `env.py`, define a list of required variable names (e.g., `['DATABASE_URL', 'GROQ_API_KEY', 'ADMIN_JWT_SECRET']`).
+*   Create a function, `validate_env_vars()`, that iterates through this list, checking `os.environ.get(var)`.
+*   If a variable is missing or empty, raise a `frappe.throw(f"Missing required environment var: {var}")` to halt startup and provide a clear error.
+*   In `hooks.py`, add `on_startup = "lhdn_payroll_integration.env.validate_env_vars"` to the main hook dictionary.
+*   Refactor dependent files to import variables from `env.py` rather than calling `os.environ` directly.
+
+**4. Gotchas & Edge Cases:**
+*   The variable names in the story may be illustrative. Confirm the actual critical variables for this specific Frappe app.
+*   The `on_startup` hook runs after a user session is initiated. For pre-boot validation, the logic could be placed in `lhdn_payroll_integration/__init__.py` to run on module import, which is even earlier. Using `hooks.py` is cleaner if post-login validation is sufficient.
+*   Ensure the error halts the `bench start` process and is clearly visible in the terminal log. `frappe.throw` will achieve this.
+
