@@ -12256,3 +12256,83 @@ Here is the technical brief for the agent:
 *   **Performance:** The current component is large; ensure the refactor doesn't introduce unnecessary re-renders. Use `React.memo` on the new row component if needed.
 *   **API Logic:** The `PATCH` request logic inside `handleSave` must be self-contained within the `useMenuTableEdit` hook.
 
+## Iteration 6 - Wed, Mar 11, 2026  2:41:27 AM
+Completed: Extract MenuGrid Filtering and Grouping into useMenuFiltering Hook (ID: US-138) in 9m
+
+
+## Pre-analysis for US-139 (Gemini 2.5 Pro)
+Based on the provided JSON for user story US-139, the task is a **React/TypeScript refactoring**, not a Frappe/Python implementation. Here is the technical brief for the described frontend task.
+
+---
+
+**Technical Brief: US-139 Refactor Admin Menu Table**
+
+**1. Python/Frappe Files to Modify:**
+*   This is a frontend task. The primary files are:
+    *   `(Refactor)` `src/components/admin/admin-menu-table.tsx`
+    *   `(Create)` `src/components/admin/admin-menu-table-row.tsx`
+    *   `(Create)` `src/hooks/useMenuTableEdit.ts`
+
+**2. Frappe DocTypes / Hooks Involved:**
+*   **React Components:** `AdminMenuTable` will be refactored. A new presentational component, `AdminMenuTableRow`, will be created.
+*   **React Hooks:** State management logic (`useState`, etc.) will be extracted into a new custom hook, `useMenuTableEdit`.
+*   **API Interaction:** The `useMenuTableEdit` hook will encapsulate the `PATCH` request logic to the backend API for saving item updates.
+
+**3. Recommended Implementation Approach:**
+1.  **Create `useMenuTableEdit.ts`:** Move all state (`editingId`, `editForm`) and handler functions (`handleSave`, `handleCancel`, `handleInputChange`, `handleImageChange`) from `admin-menu-table.tsx` into this new hook.
+2.  **Create `AdminMenuTableRow.tsx`:** This component will receive props (`item`, `isEditing`, `editForm`, etc.) and render either the display view or the inline edit form for a single menu item. Extract the conditional row/edit JSX from the original table file.
+3.  **Refactor `AdminMenuTable.tsx`:** Remove all extracted logic. Use the `useMenuTableEdit` hook to get state and handlers. In the body, map over the menu data and render the new `AdminMenuTableRow` component for each item, passing the required props.
+
+**4. Edge Cases & Gotchas:**
+*   **State Synchronization:** Ensure the `editForm` state in the hook is correctly populated when editing starts and is reset on cancel/save.
+*   **Prop Typing:** Define strict TypeScript interfaces for the props of `AdminMenuTableRow` and the return signature of `useMenuTableEdit`.
+*   **API Error Handling:** The `handleSave` function within the hook must properly handle and surface API errors to the UI.
+*   **Controlled Components:** Ensure all form inputs within the new row component are correctly wired as controlled components to the `editForm` state.
+
+
+## Pre-analysis for US-139 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-139.
+
+**Subject: Technical Brief for US-139: Refactor AdminMenuTable Component**
+
+**Objective:** Decompose the monolithic `admin-menu-table.tsx` into a dedicated row component and a custom hook to isolate state management and rendering logic.
+
+**1. Files to Modify/Create:**
+*   **Refactor:** `src/components/admin/admin-menu-table.tsx`
+*   **Create:** `src/components/admin/admin-menu-table-row.tsx`
+*   **Create:** `src/hooks/useMenuTableEdit.ts`
+
+**2. Involved Entities (React):**
+*   **Components:** `AdminMenuTable`, `AdminMenuTableRow` (new)
+*   **Hooks:** `useMenuTableEdit` (new), `useState`, `useEffect`, `useCallback`
+*   **API Calls:** `PATCH` requests to the menu item API endpoint.
+
+**3. Implementation Approach:**
+1.  **Create `useMenuTableEdit.ts`:** Migrate all state (`editingId`, `editForm`) and handler logic (`handleSave`, `handleCancel`, `handleImageChange`, etc.) from `admin-menu-table.tsx` into this new custom hook. The hook should return the state variables and handlers.
+2.  **Create `AdminMenuTableRow.tsx`:** Extract the JSX for a single `<tr>` from `admin-menu-table.tsx`. This component will receive props like `item`, `isEditing`, `editForm`, and the handlers from the hook, and will conditionally render either the display view or the inline edit form.
+3.  **Refactor `AdminMenuTable.tsx`:** Remove the extracted state and logic. Call the `useMenuTableEdit` hook to get the necessary state and functions. The main render body should now simply map over the grouped menu items and render the new `<AdminMenuTableRow />` component for each, passing the required props.
+
+**4. Gotchas & Edge Cases:**
+*   **Prop-drilling:** Ensure all handlers and state from the hook are correctly passed as props from the parent table to the row component.
+*   **State Synchronization:** The `handleSave` function in the hook must correctly optimistic-update or refetch data to ensure the UI reflects the change post-save.
+*   **TypeScript:** Strongly type the props for `AdminMenuTableRow` and the state within the `useMenuTableEdit` hook, especially for the `editForm` object, to prevent type-related errors during the build.
+*   **Form Inputs:** Ensure `onChange` handlers in the row component correctly update the `editForm` state managed by the hook.
+
+
+## Iteration N - Story: US-139 - Split AdminMenuTable into Row Component and Edit Hook
+
+### What was implemented
+- Created `src/hooks/useMenuTableEdit.ts`: exports `EditableItem` type, `UseMenuTableEditResult` interface, and `useMenuTableEdit(initialItems)` hook containing all items state, saving/error/suggesting state, and all handlers (updateItem, saveItem, deleteItem, addNewRow, toggleDay, toggleDietary, toggleCategory, suggestTranslation)
+- Created `src/components/admin/admin-menu-table-row.tsx`: `AdminMenuTableRow` component with `variant: "desktop" | "mobile"` prop — desktop renders a `<tr>`, mobile renders a `<div>` card. Accepts all handler callbacks as props.
+- Refactored `admin-menu-table.tsx`: reduced from 1349 to 394 lines (71% reduction). Now uses `useMenuTableEdit` hook and maps items to `<AdminMenuTableRow>` in both grouped and filtered views.
+
+### Patterns discovered
+- The table is always-editable inline (no click-to-edit mode toggle); `useMenuTableEdit` manages all items state + PATCH handlers
+- `AdminMenuTableRow` uses a `variant` prop to render either `<tr>` (desktop) or `<div>` (mobile card)
+- Spread `rowProps` object pattern avoids prop drilling boilerplate in parent
+- `EditableItem` type exported from the hook file so the row component can import it without circular deps
+
+### Gotchas
+- The grouped view and filtered view both use `AdminMenuTableRow` — row handles both scenarios via same props
+- `tableHead(showDisplayCats: boolean)` helper renders the table header with optional Display Cats column
+- TypeScript check passes clean with no errors
