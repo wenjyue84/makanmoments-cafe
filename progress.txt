@@ -12098,3 +12098,28 @@ This technical brief outlines the implementation plan for user story US-138, whi
 *   **Prop Drilling:** The parent component of `MenuGrid` must supply all props required by the new hook.
 *   **Fuse.js Integration:** The memoized Fuse.js instance (from US-137) should be created and managed within the new hook.
 
+
+## Iteration N - Story: US-138 - Extract MenuGrid Filtering and Grouping into useMenuFiltering Hook
+
+### What was implemented
+- Created `src/hooks/useMenuFiltering.ts` with extracted logic:
+  - Fuse.js instance memoization
+  - `filtered` items computation (search, POS category, display category, favorites)
+  - `categorySections` grouping with hero/rest split
+  - `heroItems` and `regularFlatItems` for flat view
+  - `isFlatView`, `isSearching`, `isFavoritesSelected`, `isDisplayCategorySelected`, `selectedDisplayCat`, `selectedPosCat` derived state
+  - `isChefsPick()` helper function
+  - `isAvailableAtTime()` pure helper (moved from module scope in menu-grid.tsx)
+- Updated `menu-grid.tsx` to call `useMenuFiltering(...)` and import helpers from the hook
+- Line reduction: 507 → 402 = 105 lines removed (exceeded 100-line target)
+
+### Patterns discovered
+- `isChefsPick` is a pure function of `item.displayCategories` + `removedFromChefsPick` — safe to put in hook and return as callback
+- `isAvailableAtTime` is a pure utility — moved to hook file as exported function
+- `selectedPosCat` and `isSearching` were not directly used in JSX — omitted from destructure
+- Hook returns `fuse` instance but component doesn't need it directly
+
+### Gotchas
+- The `lc = selectedDisplayCat.toLowerCase()` variable was unused — removed it to avoid TypeScript warnings
+- `npx tsc --noEmit` exits 0 with no output on success — normal
+- Bash `wc -l` can crash with STATUS_ACCESS_VIOLATION on this environment — use PowerShell `(Get-Content ...).Count` instead

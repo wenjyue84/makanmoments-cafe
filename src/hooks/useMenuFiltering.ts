@@ -65,7 +65,7 @@ export function useMenuFiltering({
   selectedCategory,
   searchQuery,
   highlights,
-  displayCategories,
+  displayCategories: _displayCategories,
   categories,
   favorites,
   removedFromChefsPick,
@@ -180,7 +180,11 @@ export function useMenuFiltering({
     if (!isFlatView || isSearching || isFavoritesSelected) return [];
     if (selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS)
       return filtered.slice(0, 2);
-    const chefs = filtered.filter((i) => isChefsPick(i));
+    const chefs = filtered.filter(
+      (i) =>
+        i.displayCategories.includes(SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) &&
+        !removedFromChefsPick.has(i.id)
+    );
     return selectedDisplayCat ? chefs.slice(0, 2) : chefs;
   }, [filtered, isFlatView, isSearching, isFavoritesSelected, selectedDisplayCat, removedFromChefsPick]);
 
