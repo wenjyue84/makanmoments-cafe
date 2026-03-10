@@ -1886,3 +1886,35 @@ This user story describes a **Next.js/React frontend task**, not a Frappe/Python
 
 ### Gotchas
 - `rtk git diff` with no args may return empty output even when `git status` shows M — use `git diff HEAD` to see all changes
+## Iteration 11 - Tue, Mar 10, 2026 11:43:43 AM
+Completed: Chat Widget Settings Button: Admin Only (ID: US-025) in 9m
+
+
+## Pre-analysis for US-028 (Gemini 2.5 Pro)
+Here is a technical brief for the user story:
+
+**Project:** Makan Moments Cafe - Admin Panel
+**Objective:** Refactor the mobile layout for rule cards in the admin rules panel to improve readability and usability on narrow screens.
+
+**1. Primary File to Modify:**
+*   `src/components/admin/admin-rules-panel.tsx`
+
+**2. Involved UI Components:**
+*   The main container/card for each individual rule.
+*   The text element displaying the rule's name.
+*   The status badge component (`Active`/`Disable`).
+*   The action buttons (`Edit`/`Delete`).
+
+**3. Recommended Implementation Approach:**
+*   Target the main rule card component, which currently uses a `flex-row` layout.
+*   Change the layout to `flex flex-col gap-2` to stack content vertically.
+*   The rule name should be the first item, spanning the full width of the card to allow for clean text wrapping.
+*   The status badges and action buttons should be grouped together in a `div` below the name, using a `flex flex-row gap-2` layout for that group.
+*   Remove any fixed-width constraints on the rule name's column that causes premature word stacking.
+
+**4. Edge Cases & Verification:**
+*   **Responsiveness:** Verify the layout at a 390px viewport. Ensure no content is cut off.
+*   **Touch Targets:** Action buttons and badges must have a minimum touch target size of 44px. Use padding if necessary.
+*   **Wrapping:** Use `flex-wrap` on the button container to ensure they stack gracefully if horizontal space is insufficient.
+*   **Long Text:** Test with an unusually long rule name to confirm it wraps correctly and doesn't break the layout.
+
