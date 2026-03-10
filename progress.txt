@@ -5488,3 +5488,25 @@ Here is the technical brief for US-063.
 ### Result
 - prd.json: US-063 passes = true
 - TypeScript check: PASS (exit 0)
+## Iteration 13 - Tue, Mar 10, 2026  4:31:50 PM
+Completed: Fix: Chef's Picks Display Category Shows 0 Items (ID: US-061) in 5m
+
+
+## Iteration 39 - Story: Vegetarian Category: Auto-Computed from Dietary Tag (US-063)
+
+### What was implemented
+- No code changes needed — all acceptance criteria were already satisfied from prior iterations
+- menu-grid.tsx already had vegetarian filter branch (lines 79-82): `items.filter(i => i.dietary?.some(d => d.toLowerCase() === 'vegetarian'))`
+- menu.ts getDisplayCategories() already inserts 'Vegetarian' with sort_order=6 via ON CONFLICT DO NOTHING
+- dietary-badge.tsx already has Leaf icon + badge-vegetarian CSS class (green oklch hue 145)
+- globals.css already defines badge-vegetarian with green colors (light + dark mode)
+- All 3 message files already have noVegetarianItems translation
+- admin-menu-table.tsx already includes "Vegetarian" in DIETARY_OPTIONS array
+
+### Patterns discovered
+- These features were implemented piecemeal across earlier stories (US-061, US-062 context)
+- The git status showed dietary-badge.tsx and menu-grid.tsx as modified — those were the relevant files
+- TypeScript check passes clean (0 errors)
+
+### Gotchas
+- prd.json must be read/written with encoding='utf-8' (Python default cp1252 fails on Windows)
