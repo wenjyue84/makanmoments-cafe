@@ -12920,3 +12920,6 @@ Here is the technical brief for implementing it in the correct Next.js environme
 
 ### Gotchas
 - `prd.json` uses UTF-8 encoding — must open with `encoding='utf-8'` in Python, default cp1252 fails
+## Iteration 4 - Wed, Mar 11, 2026  3:05:59 AM
+Completed: Add Environment Variable Validation on Startup (ID: US-141) in 4m
+
