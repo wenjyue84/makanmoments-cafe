@@ -2351,3 +2351,61 @@ Here is the technical brief:
 - Items with no categories don't appear in grouped view (no Uncategorized section)
 - `outline` on `<tbody>` doesn't render well in all browsers — used `bg-orange-50/60` as the over indicator instead
 - prd.json must be read/written with utf-8 encoding (has multi-byte chars)
+## Iteration 17 - Tue, Mar 10, 2026 12:26:04 PM
+Completed: Admin: List All Items for a Particular Category (ID: US-032) in 14m
+
+
+## Pre-analysis for US-034 (Gemini 2.5 Pro)
+Here is the technical brief for the implementation of user story US-034.
+
+**Note:** The user story pertains to a Next.js/TypeScript project, not Frappe/Python. The following brief reflects the correct technology stack based on the provided JSON and workspace context.
+
+---
+
+### **Technical Brief: US-034 - Admin: Duplicate Item to Multiple Categories**
+
+**1. Core Task:**
+Modify the admin menu interface to allow a single `MenuItem` to be assigned to multiple categories simultaneously.
+
+**2. Files to Modify:**
+*   **Frontend (Admin UI):** `src/components/admin/admin-menu-table.tsx` — This is the primary file. The item edit modal within this component needs to be updated to display a category multi-selector.
+*   **Backend (API):** `src/app/api/admin/menu/[id]/route.ts` (or similar) — The `PATCH` handler in this API route must be updated to process and save the incoming `categories: string[]` array to the database.
+*   **Database Logic:** `src/lib/menu.ts` — The function responsible for updating a menu item (`updateMenuItem`, for instance) will be called by the API route.
+
+**3. Implementation Approach:**
+*   In the `admin-menu-table.tsx` edit modal, fetch all available categories.
+*   Render a multi-select checklist (e.g., using checkboxes) for all categories.
+*   For the item being edited, pre-select the checkboxes corresponding to the categories already in its `item.categories` array.
+*   On save, construct the updated `string[]` of category names and send it via a `PATCH` request to `/api/admin/menu/[id]`.
+*   The public menu page (`src/app/[locale]/menu/page.tsx`) logic should already support this, but verify that filtering correctly displays the item under each of its assigned categories.
+
+**4. Edge Cases & Gotchas:**
+*   **UI State:** Ensure the checkbox state is correctly managed in React to reflect selections.
+*   **No Categories Selected:** Decide on the behavior if an admin deselects all categories. Should the UI enforce at least one selection?
+*   **Data Validation:** The API should ensure the received `categories` array contains valid, existing category names before saving.
+
+
+## Iteration N - Story: Admin: Drag and Drop Items Between Categories (US-033)
+
+### What was implemented
+- Added `@dnd-kit/core` imports: `DndContext`, `DragOverlay`, `PointerSensor`, `TouchSensor`, `useDraggable`, `useDroppable`
+- Added `GripVertical` icon from `lucide-react`
+- Created top-level `DraggableHandle` component (grip button with `useDraggable`) - must be top-level for stable React refs
+- Created top-level `DroppableCategoryLabel` component (highlights orange when an item is dragged over it)
+- Added `groupByPrimaryCategory()` helper: groups items by their first category; items with no category go to `__none__` (Uncategorized)
+- Added `activeDrag` state + `useSensors` with `PointerSensor` (distance: 8) + `TouchSensor` (delay: 200) for mouse+touch support
+- Added `handleDragStart` (sets activeDrag for DragOverlay) and `handleDragEnd` (optimistic update + PATCH /api/admin/menu/[id])
+- Modified render: when `activeCategory === null`, shows new DnD grouped view (mobile + desktop) wrapped in `DndContext`; when category is filtered, shows existing flat view unchanged
+- DragOverlay shows item name in orange pill while dragging
+- Drag logic: remove sourceCategory, add targetCategory to item.categories array; reverts on API failure
+
+### Patterns discovered
+- `useDraggable`/`useDroppable` hook components MUST be defined outside parent component for stable references (avoids remount on every render)
+- DnD grouped view shows empty category sections with "drag here" hint text — makes drop targets discoverable
+- `__none__` sentinel is used for uncategorized items; drag to/from it adds/removes categories appropriately
+- colSpan for category header rows = 14 (added drag handle column) in the DnD desktop view
+
+### Gotchas
+- File had been modified since last read when using Write tool — always re-read before writing
+- Windows Python file encoding: use `encoding='utf-8'` for prd.json operations
+- The `<>` fragment wrapper in `groupedItems.map` causes React key warning — acceptable for now (keys are on the actual `<tr>` elements)
