@@ -5347,3 +5347,19 @@ This iteration: added the missing `?v=imgVersion` cache-buster to `ChefPickCard`
 ### Result
 - prd.json: US-059 passes = true
 - TypeScript check: PASS (exit 0)
+
+## Iteration N+2 - Story: US-059 - Bug Fix: Admin Image Changes Not Reflected on Public Menu Page
+
+### What was implemented
+- `src/app/api/admin/images/route.ts`: Added `revalidatePath` calls for /en/menu, /ms/menu, /zh/menu after image write; added DB touch `UPDATE menu_items SET updated_at = NOW() WHERE code = ${code}`
+- `src/components/menu/menu-card.tsx`: Image src uses `?v={updatedAt timestamp}` for next/image cache busting
+- `src/components/menu/editable-menu-card.tsx`: Initial imgSrc uses item.updatedAt version; success toast "Image saved — menu page cache cleared" shown after upload (auto-dismisses in 4s)
+
+### Patterns discovered
+- Changes from pre-analysis were already committed in a prior iteration (commits `4ccaefe`, `03db5cb`)
+- `rtk git add` returns "ok (nothing to add)" when files were already staged/clean — always check `git status` first
+- prd.json still showed `passes: false` at iteration start even though code was committed — need to mark passes: true explicitly
+
+### Gotchas
+- Use `encoding='utf-8'` when reading/writing prd.json on Windows (cp1252 codec fails on em-dash characters in story text)
+- Always check git log to avoid re-implementing already-committed work
