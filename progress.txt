@@ -9870,3 +9870,83 @@ This user story is for a **Next.js/TypeScript** application, not Frappe/Python. 
 ## Iteration 8 - Tue, Mar 10, 2026 10:03:15 PM
 Completed: Rate Limiting: Reusable Factory + Apply to Orders + Admin Login Endpoints (ID: US-100) in 4m
 
+## Iteration 12 - Tue, Mar 10, 2026 10:03:44 PM
+Completed: Rate Limiting: Reusable Factory + Apply to Orders + Admin Login Endpoints (ID: US-100) in 5m
+
+
+## Pre-analysis for US-101 (Gemini 2.5 Pro)
+This technical brief translates the user story's requirements from its original Next.js/TypeScript context into a plan for a Frappe/Python application.
+
+***
+
+**Technical Brief for US-101: File Upload Validation**
+
+**1. Python Files to Modify:**
+*   **`lhdn_payroll_integration/api.py`**: This is the most probable location for the `@frappe.whitelist()` decorated function that handles the file upload API endpoint.
+*   **`lhdn_payroll_integration/utils.py`**: A good candidate for a new helper function, `validate_image_upload(file)`, to encapsulate the size, MIME type, and magic byte validation logic.
+
+**2. Frappe DocTypes & Hooks:**
+*   **DocType**: The target is likely a custom DocType such as "Payment Record" or "Transaction", which would contain an `Attach Image` field to store the uploaded screenshot.
+*   **API Endpoint**: The implementation should be a dedicated whitelisted function to handle the `POST` request, rather than a standard `doc_events` hook, to align with the specified API-driven approach.
+
+**3. Recommended Implementation Approach:**
+*   In the whitelisted function, access the uploaded file via `frappe.request.files['file']`.
+*   Validate file size first. If it exceeds 5MB, `frappe.throw("File must be smaller than 5MB")`.
+*   Correct the extension logic using a Python dictionary: `ext = {'image/png': 'png', 'image/webp': 'webp'}.get(file.content_type, 'jpg')`.
+*   Implement a magic byte check by reading the first 12 bytes of the file stream (`file.stream.read(12)`). Reject the file if the bytes do not match the expected signature for the file's `content_type`.
+*   Update validation error messages to `frappe.throw("Only JPEG, PNG, and WebP images are accepted")`.
+
+**4. Edge Cases & Gotchas:**
+*   **File Stream Position**: After reading the magic bytes from the file stream, you must reset it with `file.stream.seek(0)`. Failure to do so will result in a corrupted or incomplete file being saved.
+*   **Security**: Ensure the filename is sanitized using `werkzeug.utils.secure_filename` before saving to prevent any path traversal vulnerabilities.
+*   **Permissions**: The API method must enforce `frappe.has_permission` checks to ensure the user is authorized to update the target document.
+
+
+## Pre-analysis for US-101 (Gemini 2.5 Pro)
+Here is the technical brief for the Claude agent, based on the provided user story and mapping it to a Frappe/Python context:
+
+**Project:** `lhdn_payroll_integration`
+**User Story:** US-101 - File Upload Validation
+
+### Technical Implementation Brief
+
+**1. Primary File for Modification:**
+*   `lhdn_payroll_integration/api.py`: This file is the most likely candidate. Create or modify a whitelisted API endpoint here to handle the payment screenshot upload logic.
+
+**2. Frappe DocTypes & Hooks:**
+*   **Endpoint:** A new `@frappe.whitelist()` decorated function, e.g., `upload_payment_screenshot`.
+*   **DocType:** A parent DocType is implied (e.g., "T&G Payment" or "Order"). The uploaded file will be linked to this DocType via an `Attach Image` field.
+*   **File DocType:** The implementation will create a record in Frappe's standard `File` DocType.
+
+**3. Recommended Approach:**
+*   The whitelisted function should retrieve the file from `frappe.request.files`.
+*   Validate file size first (< 5MB), throwing a 400 error if exceeded.
+*   **Magic Byte Check:** Read the first 12 bytes of the file stream (`file_obj.read(12)`). Use a dictionary to map byte signatures (`b'\xFF\xD8\xFF'`, `b'\x89PNG\r\n\x1a\n'`, `b'RIFF'...'WEBP'`) to their correct types (JPEG, PNG, WebP). Reject if the bytes don't match an allowed type.
+*   **Extension Fix:** Determine the file extension from the validated magic bytes, not the client-provided MIME type. This fixes the WebP bug.
+*   Create a `File` document via `frappe.get_doc`, letting Frappe's core handle filename sanitization and saving.
+*   Link the new `file.file_url` to the relevant parent document.
+
+**4. Gotchas & Edge Cases:**
+*   **MIME vs. Magic Bytes:** Prioritize the magic byte validation over the client-sent `Content-Type` header to prevent spoofing.
+*   **Error Handling:** Use `frappe.throw` with the correct HTTP status code (`frappe.response.http_status_code = 400`) and the specified error messages.
+*   **Permissions:** Ensure the API method checks `frappe.PermissionError` for the parent DocType before attaching the file.
+
+
+## Iteration N - Story: US-101 File Upload Validation: Fix WebP Extension Bug + Add Magic Byte Check
+
+### What was implemented
+- Added `MAGIC_BYTES` map with checker functions for JPEG (FF D8 FF), PNG (89 50 4E 47...), WebP (RIFF....WEBP bytes 8-11)
+- Added `EXT_MAP` replacing the old `file.type === "image/png" ? "png" : "jpg"` ternary — WebP now saves as `.webp`
+- Updated MIME error message: "Only JPEG, PNG, and WebP images are accepted"
+- Added magic byte check: reads first 12 bytes of ArrayBuffer; rejects if they don't match declared MIME type
+- Used already-read `arrayBuffer` for `Buffer.from()` (no double read)
+- Added `safeId` sanitization: `String(orderId).replace(/[^a-zA-Z0-9-]/g, "")`
+
+### Patterns discovered
+- `file.arrayBuffer()` returns an `ArrayBuffer`; `new Uint8Array(arrayBuffer.slice(0, 12))` is idiomatic for header inspection
+- WebP magic: bytes 0-3 are "RIFF" (0x52 49 46 46), bytes 8-11 are "WEBP" (0x57 45 42 50)
+- The `orderId` is already `parseInt`-validated to a number, so `safeId` sanitization is belt-and-suspenders
+
+### Gotchas
+- Must reuse the `arrayBuffer` variable for both magic check and `Buffer.from()` — calling `file.arrayBuffer()` twice throws on some runtimes
+- Pre-existing lint errors in the repo are not our concern; only the changed file needs to be clean

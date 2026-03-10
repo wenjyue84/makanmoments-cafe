@@ -8,6 +8,35 @@ export const runtime = "nodejs";
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 
+// Magic byte signatures for allowed image types
+const MAGIC_BYTES: Record<string, (bytes: Uint8Array) => boolean> = {
+  "image/jpeg": (b) => b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
+  "image/png": (b) =>
+    b[0] === 0x89 &&
+    b[1] === 0x50 &&
+    b[2] === 0x4e &&
+    b[3] === 0x47 &&
+    b[4] === 0x0d &&
+    b[5] === 0x0a &&
+    b[6] === 0x1a &&
+    b[7] === 0x0a,
+  "image/webp": (b) =>
+    b[0] === 0x52 &&
+    b[1] === 0x49 &&
+    b[2] === 0x46 &&
+    b[3] === 0x46 &&
+    b[8] === 0x57 &&
+    b[9] === 0x45 &&
+    b[10] === 0x42 &&
+    b[11] === 0x50,
+};
+
+const EXT_MAP: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
+
 // POST /api/orders/:id/payment — customer uploads TnG payment screenshot
 // Public endpoint (order ID acts as a shared secret, no auth required)
 export async function POST(
@@ -55,7 +84,7 @@ export async function POST(
     // Validate type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: "Only JPEG and PNG images are accepted" },
+        { error: "Only JPEG, PNG, and WebP images are accepted" },
         { status: 400 }
       );
     }
@@ -68,9 +97,21 @@ export async function POST(
       );
     }
 
+    // Magic byte check — prevents MIME spoofing
+    const arrayBuffer = await file.arrayBuffer();
+    const header = new Uint8Array(arrayBuffer.slice(0, 12));
+    const magicCheck = MAGIC_BYTES[file.type];
+    if (!magicCheck || !magicCheck(header)) {
+      return NextResponse.json(
+        { error: "Only JPEG, PNG, and WebP images are accepted" },
+        { status: 400 }
+      );
+    }
+
     // Save file to public/uploads/payments/
-    const ext = file.type === "image/png" ? "png" : "jpg";
-    const filename = `${orderId}.${ext}`;
+    const ext = EXT_MAP[file.type] ?? "jpg";
+    const safeId = String(orderId).replace(/[^a-zA-Z0-9-]/g, "");
+    const filename = `${safeId}.${ext}`;
     const uploadsDir = path.join(
       process.cwd(),
       "public",
@@ -79,7 +120,7 @@ export async function POST(
     );
     fs.mkdirSync(uploadsDir, { recursive: true });
     const filePath = path.join(uploadsDir, filename);
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const buffer = Buffer.from(arrayBuffer);
     fs.writeFileSync(filePath, buffer);
 
     const screenshotUrl = `/uploads/payments/${filename}`;
