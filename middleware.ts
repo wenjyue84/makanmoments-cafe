@@ -2,6 +2,9 @@ import createMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 import { routing } from "./src/i18n/routing";
 import { verifyAdminToken, COOKIE_NAME } from "./src/lib/auth";
+import { getSiteSettings } from "./src/lib/site-settings";
+
+export const runtime = "nodejs";
 
 const intlMiddleware = createMiddleware(routing);
 
@@ -21,6 +24,14 @@ export async function middleware(request: NextRequest) {
     }
     return NextResponse.next();
   }
+
+  // For root path, redirect to admin-configured default locale
+  if (pathname === "/") {
+    const { defaultLocale } = getSiteSettings();
+    const locale = ["en", "ms", "zh"].includes(defaultLocale) ? defaultLocale : "en";
+    return NextResponse.redirect(new URL(`/${locale}`, request.url));
+  }
+
   return intlMiddleware(request);
 }
 
