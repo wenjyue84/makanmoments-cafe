@@ -3992,3 +3992,57 @@ This user story concerns a frontend bug in a **Next.js/TypeScript** application,
 ### Gotchas
 - When Ralph re-enters a story already committed, `prd.json` shows `passes: true` and git shows clean; verify before re-implementing
 - Windows terminal encoding issue with Chinese chars in Python print — use `encoding='utf-8'` on file open
+## Iteration 28 - Tue, Mar 10, 2026  2:42:11 PM
+Completed: Customer Can View Previous Order History After Sending (ID: US-048) in 13m
+
+
+## Pre-analysis for US-049 (Gemini 2.5 Pro)
+### Technical Brief: US-049 - Fix Admin Page Dark Overlay
+
+**Objective:**
+Diagnose and resolve a persistent dark overlay on the `/admin` page, which is obstructing UI interaction. The root cause is likely an unclosed modal backdrop or a CSS z-index conflict.
+
+**Affected Files & Components:**
+Based on the Next.js/React project structure, the investigation should focus on:
+-   `src/app/admin/page.tsx`: The main entry point for the admin page.
+-   `src/components/admin/*.tsx`: Specifically, any files implementing modal/dialog functionality (e.g., using `shadcn/ui`'s `Dialog`, `Drawer`, or a similar library).
+-   `src/app/layout.tsx`: Check for any global providers or components that could be rendering a persistent overlay.
+
+**Implementation Approach:**
+1.  **Diagnose:** Use Chrome DevTools on the `/admin` page to identify the overlay element. Search the DOM for elements with class names containing `overlay` or `backdrop`, or inline styles setting `opacity < 1` and a high `z-index`.
+2.  **Isolate:** Pinpoint the React component responsible for rendering this rogue element.
+3.  **Fix:** The most probable cause is a state management issue. Ensure that the `open`/`onOpenChange` state for the modal/dialog component correctly triggers the removal of the backdrop element from the DOM upon closing.
+
+**Edge Cases & Gotchas:**
+-   The overlay may not be a direct child of the admin page but rendered through a React Portal higher up the component tree.
+-   A custom CSS rule could be overriding the default `z-index` or `display` properties of the component library, causing this issue.
+-   Ensure the fix is scoped correctly and does not inadvertently affect the behavior of modals or dialogs in other parts of the application.
+
+
+## Iteration 31 - Story: Fix Admin Page Dark Overlay Problem (US-049)
+
+### What was implemented
+- Fixed `src/app/admin/layout.tsx`:
+  - Replaced `bg-background text-foreground` body classes with explicit `bg-white text-gray-900`
+  - Added inline `<script>` in `<head>` that runs `document.documentElement.classList.remove('dark')` immediately on page load
+- No other files changed
+
+### Root cause discovered
+- Admin layout body used `bg-background text-foreground` — CSS variable-based classes that respond to dark mode
+- When user navigates from a dark-mode public page (/en, /ms, /zh) to /admin via client-side navigation (Next.js soft nav), the `.dark` class persists on `document.documentElement` because ThemeToggle unmounts without cleaning up
+- `.dark` on `<html>` activates `@custom-variant dark (&:is(.dark *))` — all children including admin body inherit dark mode CSS variables
+- Body background becomes `oklch(0.14 0.015 48)` = very dark charcoal, while explicit `bg-gray-50` content areas remain light → visual clash/"dark overlay" effect
+
+### Fix approach
+- Inline script strips `.dark` immediately on page parse (runs before first paint) — no flash
+- Explicit `bg-white text-gray-900` makes admin immune to dark mode CSS variables
+- Admin page always renders in light mode regardless of ThemeToggle state
+
+### Gotchas
+- `document.documentElement.classList.remove('dark')` must run in `<head>` as inline script to prevent flash — NOT in `useEffect` (too late)
+- Tailwind v4 custom dark variant `(&:is(.dark *))` is class-based only — OS dark mode alone doesn't trigger it
+- Admin layout has its own `<html>` element (sibling to [locale] layout in Next.js route tree) but `document.documentElement` is shared across soft navigations
+
+### Result
+- prd.json: US-049 passes = true
+- TypeScript check: PASS (exit 0)
