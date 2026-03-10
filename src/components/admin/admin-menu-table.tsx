@@ -3,9 +3,9 @@
 import { Fragment, useState, useEffect } from "react";
 import type { MenuItemWithRules } from "@/types/menu";
 import { ImagePickerModal } from "./image-picker-modal";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { AdminMenuTableRow } from "./admin-menu-table-row";
 import { useMenuTableEdit, type EditableItem } from "@/hooks/useMenuTableEdit";
-import { ChevronDown, ChevronUp } from "lucide-react";
 
 const MISSING_PHOTOS_DISMISSED_KEY = "admin_missing_photos_dismissed";
 
@@ -30,8 +30,6 @@ interface AdminMenuTableProps {
   displayCategories?: string[];
 }
 
-// — Grouping helpers —
-
 function groupByPrimaryCategory(
   items: EditableItem[],
   categories: string[]
@@ -39,22 +37,16 @@ function groupByPrimaryCategory(
   const catMap = new Map<string, EditableItem[]>();
   for (const cat of categories) catMap.set(cat, []);
   catMap.set("__none__", []);
-
   for (const item of items) {
     const primaryCat = item.categories[0] ?? "__none__";
     if (!catMap.has(primaryCat)) catMap.set(primaryCat, []);
     catMap.get(primaryCat)!.push(item);
   }
-
-  const result: { cat: string; label: string; items: EditableItem[] }[] = [];
-  for (const [cat, catItems] of catMap) {
-    result.push({
-      cat,
-      label: cat === "__none__" ? "Uncategorized" : cat,
-      items: catItems,
-    });
-  }
-  return result;
+  return [...catMap.entries()].map(([cat, catItems]) => ({
+    cat,
+    label: cat === "__none__" ? "Uncategorized" : cat,
+    items: catItems,
+  }));
 }
 
 function filterByDisplayCat(item: EditableItem, dc: string): boolean {
@@ -62,9 +54,7 @@ function filterByDisplayCat(item: EditableItem, dc: string): boolean {
   if (lc.includes("rm15"))
     return (
       item.price < 15 &&
-      !item.displayCategories.some(
-        (d) => d === "Hot Drinks" || d === "Cold Drinks & Juice"
-      )
+      !item.displayCategories.some((d) => d === "Hot Drinks" || d === "Cold Drinks & Juice")
     );
   if (lc.includes("vegetarian"))
     return item.dietary?.some((d) => d.toLowerCase() === "vegetarian") ?? false;
@@ -78,21 +68,37 @@ function groupByDisplayCategory(
   const catMap = new Map<string, EditableItem[]>();
   for (const dc of displayCategories) catMap.set(dc, []);
   catMap.set("__none__", []);
-
   for (const item of items) {
     const primaryDC = item.displayCategories[0] ?? "__none__";
     if (!catMap.has(primaryDC)) catMap.set(primaryDC, []);
     catMap.get(primaryDC)!.push(item);
   }
-
   return [...catMap.entries()]
     .map(([cat, catItems]) => ({
       cat,
       label: cat === "__none__" ? "Uncategorized" : cat,
       items: catItems,
     }))
-    .filter(({ cat: filterCat, items: catItems }) => catItems.length > 0 || displayCategories.includes(filterCat));
+    .filter(({ cat, items: catItems }) => catItems.length > 0 || displayCategories.includes(cat));
 }
+
+const TABLE_HEADER = (
+  <tr className="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.IMAGE} className="cursor-help border-b border-dashed border-gray-400">Image</span></th>
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CODE} className="cursor-help border-b border-dashed border-gray-400">Code</span></th>
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.NAME} className="cursor-help border-b border-dashed border-gray-400">Name EN / MS / ZH</span></th>
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.PRICE} className="cursor-help border-b border-dashed border-gray-400">Price</span></th>
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.ON} className="cursor-help border-b border-dashed border-gray-400">On</span></th>
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.STAR} className="cursor-help border-b border-dashed border-gray-400">★</span></th>
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CATEGORIES} className="cursor-help border-b border-dashed border-gray-400">Categories</span></th>
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DIETARY} className="cursor-help border-b border-dashed border-gray-400">Dietary</span></th>
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DAYS} className="cursor-help border-b border-dashed border-gray-400">Days</span></th>
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.TIME} className="cursor-help border-b border-dashed border-gray-400">Time</span></th>
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DATES} className="cursor-help border-b border-dashed border-gray-400">Dates</span></th>
+    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.SORT} className="cursor-help border-b border-dashed border-gray-400">Sort</span></th>
+    <th className="px-3 py-3">Actions</th>
+  </tr>
+);
 
 export function AdminMenuTable({
   initialItems,
@@ -118,22 +124,20 @@ export function AdminMenuTable({
   const [imagePickerCode, setImagePickerCode] = useState<string | null>(null);
   const [imgVersion, setImgVersion] = useState(0);
   const [missingPhotos, setMissingPhotos] = useState<{ id: string; code: string; nameEn: string }[]>([]);
-  const [photoAlertDismissed, setPhotoAlertDismissed] = useState(false);
+  const [photoAlertDismissed, setPhotoAlertDismissed] = useState(
+    () => typeof window !== "undefined" && !!sessionStorage.getItem(MISSING_PHOTOS_DISMISSED_KEY)
+  );
   const [isAlertExpanded, setIsAlertExpanded] = useState(false);
   const [highlightedCode, setHighlightedCode] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    const dismissed = sessionStorage.getItem(MISSING_PHOTOS_DISMISSED_KEY);
-    if (dismissed) {
-      setPhotoAlertDismissed(true);
-      return;
-    }
+    if (photoAlertDismissed) return;
     fetch("/api/admin/menu/missing-photos")
       .then((r) => r.json())
       .then((data) => setMissingPhotos(data))
       .catch(() => {});
-  }, []);
+  }, [photoAlertDismissed]);
 
   function dismissPhotoAlert() {
     sessionStorage.setItem(MISSING_PHOTOS_DISMISSED_KEY, "1");
@@ -168,11 +172,13 @@ export function AdminMenuTable({
       : searchedItems.filter((i) => i.categories.includes(activeCategory))
     : searchedItems;
 
-  const groupedItems = displayCategories.length > 0
-    ? groupByDisplayCategory(searchedItems, displayCategories)
-    : groupByPrimaryCategory(searchedItems, categories);
+  const groupedItems =
+    displayCategories.length > 0
+      ? groupByDisplayCategory(searchedItems, displayCategories)
+      : groupByPrimaryCategory(searchedItems, categories);
 
-  const rowProps = {
+  const sharedRowProps = (item: EditableItem) => ({
+    item,
     categories,
     imgVersion,
     highlightedCode,
@@ -186,30 +192,7 @@ export function AdminMenuTable({
     onToggleDietary: toggleDietary,
     onToggleCategory: toggleCategory,
     onSuggestTranslation: suggestTranslation,
-  };
-
-  const tableHead = (showDisplayCats: boolean) => (
-    <thead>
-      <tr className="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.IMAGE} className="cursor-help border-b border-dashed border-gray-400">Image</span></th>
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CODE} className="cursor-help border-b border-dashed border-gray-400">Code</span></th>
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.NAME} className="cursor-help border-b border-dashed border-gray-400">Name EN / MS / ZH</span></th>
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.PRICE} className="cursor-help border-b border-dashed border-gray-400">Price</span></th>
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.ON} className="cursor-help border-b border-dashed border-gray-400">On</span></th>
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.STAR} className="cursor-help border-b border-dashed border-gray-400">★</span></th>
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CATEGORIES} className="cursor-help border-b border-dashed border-gray-400">{showDisplayCats ? "POS Categories" : "Categories"}</span></th>
-        {showDisplayCats && (
-          <th className="px-3 py-3"><span title="Display categories (website groups)" className="cursor-help border-b border-dashed border-gray-400">Display Cats</span></th>
-        )}
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DIETARY} className="cursor-help border-b border-dashed border-gray-400">Dietary</span></th>
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DAYS} className="cursor-help border-b border-dashed border-gray-400">Days</span></th>
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.TIME} className="cursor-help border-b border-dashed border-gray-400">Time</span></th>
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DATES} className="cursor-help border-b border-dashed border-gray-400">Dates</span></th>
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.SORT} className="cursor-help border-b border-dashed border-gray-400">Sort</span></th>
-        <th className="px-3 py-3">Actions</th>
-      </tr>
-    </thead>
-  );
+  });
 
   return (
     <div className="space-y-4">
@@ -217,7 +200,7 @@ export function AdminMenuTable({
         <div className="rounded-lg border border-amber-400 bg-amber-50 p-3 text-sm text-amber-800">
           <div className="flex items-center justify-between gap-2">
             <p className="font-medium">
-              ⚠️ {missingPhotos.length} item{missingPhotos.length !== 1 ? "s" : ""} have no photo. Consider adding photos to improve the menu page.
+              ⚠️ {missingPhotos.length} item{missingPhotos.length !== 1 ? "s" : ""} have no photo.
             </p>
             <div className="flex shrink-0 items-center gap-1">
               <button
@@ -225,16 +208,9 @@ export function AdminMenuTable({
                 className="rounded p-0.5 hover:bg-amber-100"
                 aria-label={isAlertExpanded ? "Collapse item list" : "Expand item list"}
               >
-                {isAlertExpanded ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
+                {isAlertExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </button>
-              <button
-                onClick={dismissPhotoAlert}
-                className="rounded px-2 py-0.5 text-xs font-medium hover:bg-amber-100"
-              >
+              <button onClick={dismissPhotoAlert} className="rounded px-2 py-0.5 text-xs font-medium hover:bg-amber-100">
                 Dismiss
               </button>
             </div>
@@ -242,11 +218,7 @@ export function AdminMenuTable({
           {isAlertExpanded && (
             <p className="mt-1 flex flex-wrap gap-x-2 gap-y-0.5">
               {missingPhotos.map((item) => (
-                <button
-                  key={item.id}
-                  onClick={() => scrollToItem(item.code)}
-                  className="underline hover:text-amber-900"
-                >
+                <button key={item.id} onClick={() => scrollToItem(item.code)} className="underline hover:text-amber-900">
                   {item.nameEn}
                 </button>
               ))}
@@ -255,9 +227,7 @@ export function AdminMenuTable({
         </div>
       )}
 
-      {error && (
-        <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
-      )}
+      {error && <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>}
 
       <input
         type="search"
@@ -317,29 +287,25 @@ export function AdminMenuTable({
       )}
 
       {activeCategory === null ? (
-        /* ——— Display Category Grouped View (All) ——— */
         <>
-          {/* Mobile grouped view */}
+          {/* Mobile grouped */}
           <div className="md:hidden space-y-4">
             {groupedItems.map(({ cat, label, items: groupItems }) => (
               <div key={cat} className="space-y-2">
                 <div className="rounded px-2 py-1.5 text-xs font-semibold uppercase tracking-wide bg-amber-50 text-amber-800 border border-amber-200">
                   {label} ({groupItems.length})
                 </div>
-                {groupItems.length === 0 && (
-                  <p className="px-2 text-xs italic text-gray-400">No items</p>
-                )}
+                {groupItems.length === 0 && <p className="px-2 text-xs italic text-gray-400">No items</p>}
                 {groupItems.map((item) => (
-                  <AdminMenuTableRow key={item.id} item={item} variant="mobile" {...rowProps} />
+                  <AdminMenuTableRow key={item.id} {...sharedRowProps(item)} variant="mobile" />
                 ))}
               </div>
             ))}
           </div>
-
           {/* Desktop grouped table */}
           <div className="hidden overflow-x-auto rounded-xl border bg-white md:block">
             <table className="min-w-full text-sm">
-              {tableHead(false)}
+              <thead>{TABLE_HEADER}</thead>
               <tbody className="divide-y divide-gray-100">
                 {groupedItems.map(({ cat, label, items: groupItems }) => (
                   <Fragment key={cat}>
@@ -351,7 +317,7 @@ export function AdminMenuTable({
                       </td>
                     </tr>
                     {groupItems.map((item) => (
-                      <AdminMenuTableRow key={item.id} item={item} variant="desktop" {...rowProps} />
+                      <AdminMenuTableRow key={item.id} {...sharedRowProps(item)} variant="desktop" />
                     ))}
                   </Fragment>
                 ))}
@@ -360,22 +326,20 @@ export function AdminMenuTable({
           </div>
         </>
       ) : (
-        /* ——— Filtered Flat View (Category selected) ——— */
         <>
-          {/* Mobile card list */}
+          {/* Mobile flat */}
           <div className="md:hidden space-y-3">
             {filteredItems.map((item) => (
-              <AdminMenuTableRow key={item.id} item={item} variant="mobile" {...rowProps} />
+              <AdminMenuTableRow key={item.id} {...sharedRowProps(item)} variant="mobile" />
             ))}
           </div>
-
-          {/* Desktop table */}
+          {/* Desktop flat table */}
           <div className="hidden overflow-x-auto rounded-xl border bg-white md:block">
             <table className="min-w-full text-sm">
-              {tableHead(false)}
+              <thead>{TABLE_HEADER}</thead>
               <tbody className="divide-y divide-gray-100">
                 {filteredItems.map((item) => (
-                  <AdminMenuTableRow key={item.id} item={item} variant="desktop" {...rowProps} />
+                  <AdminMenuTableRow key={item.id} {...sharedRowProps(item)} variant="desktop" />
                 ))}
               </tbody>
             </table>
