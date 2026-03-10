@@ -9972,3 +9972,30 @@ Completed: File Upload Validation: Fix WebP Extension Bug + Add Magic Byte Check
 ### Gotchas
 - Previous Ralph iterations had pre-analysis entries but never actually implemented — code was fixed manually between iterations
 - TypeScript: `npx tsc --noEmit` passes clean with no changes needed
+
+## Pre-analysis for US-102 (Gemini 2.5 Pro)
+### Technical Brief: US-102 Zod Input Validation
+
+**Objective:**
+Implement strict input validation for the `orders` and `admin/orders` API endpoints using Zod schemas to replace manual checks, improve robustness, and ensure data integrity.
+
+**Files to Modify:**
+*   `src/lib/schemas/order.ts` (New file)
+*   `src/app/api/orders/route.ts` (Modify `POST` handler)
+*   `src/app/api/admin/orders/[id]/route.ts` (Modify `PATCH` handler)
+
+**Key API Routes & Schemas:**
+*   **Route:** `POST /api/orders` -> `OrderSubmitSchema`
+*   **Route:** `PATCH /api/admin/orders/[id]` -> `OrderPatchSchema`
+
+**Implementation Approach:**
+1.  Create `OrderSubmitSchema` and `OrderPatchSchema` in `src/lib/schemas/order.ts` with the specified validation rules (phone regex, date refinement, enums).
+2.  In the `POST` and `PATCH` route handlers, use `safeParse()` to validate the request body against the respective schema.
+3.  If validation fails, return a `422 Unprocessable Entity` response with the exact error format: `{ error: 'Validation failed', fields: { fieldName: 'Error message' } }`.
+4.  Conduct a brief audit of database calls in both files to ensure they use parameterized queries, preventing SQL injection.
+
+**Gotchas & Edge Cases:**
+*   The `estimatedArrival` refinement must calculate the time difference correctly (at least 15 minutes from now).
+*   The error payload structure is critical for client-side feedback.
+*   Ensure no regressions: all currently valid order submissions and patches must continue to work.
+
