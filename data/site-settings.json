@@ -1,0 +1,13 @@
+{
+  "defaultLocale": "en",
+  "cafeName": "Makan Moments",
+  "currency": "RM",
+  "operatingHours": {
+    "open": "11:00",
+    "lastOrder": "22:30",
+    "close": "23:00"
+  },
+  "preOrderEnabled": true,
+  "depositRequired": false,
+  "paymentMethods": ["Touch & Go", "Cash on Arrival"]
+}

@@ -11,6 +11,7 @@ import { AdminTestsPanel } from "./admin-tests-panel";
 import { AdminTimeSettings } from "./admin-time-settings";
 import { AdminOperatingHours } from "./admin-operating-hours";
 import { AdminPushSettings } from "./admin-push-settings";
+import { AdminSettingsPanel } from "./admin-settings-panel";
 import { cn } from "@/lib/utils";
 
 interface AdminTabsProps {
@@ -19,7 +20,7 @@ interface AdminTabsProps {
   posts: BlogPost[];
 }
 
-const TABS = ["Menu", "Categories", "Rules", "Blog", "Tests", "Time Settings", "Operating Hours", "Push Notifications"] as const;
+const TABS = ["Menu", "Categories", "Rules", "Blog", "Tests", "Time Settings", "Operating Hours", "Push Notifications", "Settings"] as const;
 type Tab = (typeof TABS)[number];
 
 export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
@@ -58,6 +59,7 @@ export function AdminTabs({ items, categories, posts }: AdminTabsProps) {
       {activeTab === "Time Settings" && <AdminTimeSettings categories={categories} />}
       {activeTab === "Operating Hours" && <AdminOperatingHours />}
       {activeTab === "Push Notifications" && <AdminPushSettings />}
+      {activeTab === "Settings" && <AdminSettingsPanel />}
     </div>
   );
 }
