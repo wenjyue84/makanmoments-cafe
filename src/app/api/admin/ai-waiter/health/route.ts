@@ -15,7 +15,26 @@ export async function GET() {
     const res = await fetch("http://localhost:3002/health", {
       signal: AbortSignal.timeout(3000),
     });
-    return NextResponse.json({ online: res.ok });
+    if (!res.ok) return NextResponse.json({ online: false });
+
+    // Also verify the root page allows iframe embedding — if X-Frame-Options
+    // is DENY or SAMEORIGIN (cross-origin), the iframe will be blocked by the browser.
+    try {
+      const rootRes = await fetch("http://localhost:3002/", {
+        signal: AbortSignal.timeout(3000),
+        redirect: "follow",
+      });
+      const xfo = rootRes.headers.get("x-frame-options") ?? "";
+      const csp = rootRes.headers.get("content-security-policy") ?? "";
+      const blocksFraming =
+        xfo.toLowerCase() === "deny" ||
+        xfo.toLowerCase() === "sameorigin" ||
+        /frame-ancestors\s+['"]?none['"]?/.test(csp);
+      return NextResponse.json({ online: !blocksFraming });
+    } catch {
+      // If root fetch fails but /health is ok, still consider it online
+      return NextResponse.json({ online: true });
+    }
   } catch {
     return NextResponse.json({ online: false });
   }

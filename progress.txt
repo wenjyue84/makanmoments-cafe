@@ -13568,3 +13568,58 @@ This story requires running automated or manual browser tests on critical pages 
 - pre-order: src/lib/tests/pre-order.ts — order flow tests
 - reliability: src/lib/tests/reliability.ts — API behavior tests
 - performance: src/lib/tests/performance.ts — response time checks
+
+## Pre-analysis for US-145 (Gemini 2.5 Pro)
+**Warning:** The provided user story (US-145) describes frontend testing and fixes for a JavaScript/Next.js application, not a Frappe/Python app. The technical brief below has been adapted to a hypothetical Frappe/Python context as requested.
+
+### Technical Brief: US-145 (Frappe/Python Adaptation)
+
+1.  **Python Files to Modify:**
+    *   The test automation itself would be a new Python script using a library like Playwright or Selenium.
+    *   For fixes, likely candidates are `.py` controller files for Web Pages if logic errors prevent rendering.
+    *   Custom app utility files (`api.py`, `utils.py`) might need changes if they serve broken data to the frontend.
+
+2.  **Frappe DocTypes & Hooks:**
+    *   Public pages (`/en/menu`) correspond to "Web Page" DocTypes or templates for DocTypes with `has_web_view` enabled.
+    *   Admin pages (`/admin/ai-waiter`) would be custom Desk Pages. Errors could be in the page's client-side `.js` or server-side `.py` file.
+    *   `hooks.py` is critical; check `app_include_js` and `app_include_css` hooks for broken asset paths causing 404s.
+
+3.  **Implementation Approach:**
+    *   Create a Python test script that logs into the Frappe Desk.
+    *   The script should then navigate to the list of specified URLs.
+    *   In each page, it must check the browser's developer console for logs at the "error" level.
+    *   Any found JS errors or asset 404s should be traced back to their source (e.g., a Client Script, Web Page template, or hook).
+    *   Fixes should be applied individually and committed.
+
+4.  **Edge Cases & Gotchas:**
+    *   **Asset Caching:** Run `bench clear-cache` and `bench build` after fixing asset paths in `hooks.py` to ensure changes are applied.
+    *   **Permissions:** Desk-side errors can be role/permission-based. Ensure the test user has the appropriate roles.
+    *   **Iframe:** For the AI Waiter, the test should only validate that the iframe container loads, not the external content within it.
+
+
+## Iteration 8 - Wed, Mar 11, 2026 - Story: Browser Test All Key Pages and Fix Errors (US-145)
+
+### What was implemented
+- Browser-tested all key pages using Playwright: /en, /en/menu, /en/about, /en/contact, /admin/login, /admin, /admin/ai-waiter
+- Fixed CSP in `next.config.ts`: added `frame-src 'self' https://www.google.com https://maps.google.com` (was missing, blocked Google Maps embed on contact page)
+- Kept `http://localhost:3002` in frame-src only in non-production via string concat
+- Fixed `src/app/api/admin/ai-waiter/health/route.ts`: added X-Frame-Options check — if localhost:3002 blocks iframe embedding, reports offline so admin sees status card instead of blank iframe with console error
+
+### Test results (final pass)
+- /en: no errors, no 404s
+- /en/menu: no errors, no 404s; chat widget found and opened
+- /en/about: no errors, no 404s
+- /en/contact: no errors, no 404s (Google Maps CSP fixed)
+- /admin/login: no errors, no 404s
+- /admin: no errors, no 404s (logged in successfully)
+- /admin/ai-waiter: no errors, no 404s; shows offline card (Rainbow AI blocks framing via X-Frame-Options: sameorigin — correctly detected and handled)
+
+### Patterns discovered
+- CSP `frame-src` was absent — must be explicit for any iframe on the site (Google Maps, Rainbow AI)
+- `X-Frame-Options: sameorigin` from a target URL blocks browser embedding even if server CSP allows it — must detect server-side and show fallback
+- Chrome DevTools MCP was unavailable (lockfile issue) — used Playwright via `uv run --with playwright` instead
+- Test script must use `PYTHONIOENCODING=utf-8` to avoid encoding errors on Windows (emoji in print statements)
+
+### Gotchas
+- next.config.ts auto-updated between read and edit — always re-read before editing config files
+- Playwright console event listeners accumulate on same page object across multiple `check_page` calls — error count inflated; real errors are lower
