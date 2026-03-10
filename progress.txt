@@ -2243,3 +2243,51 @@ Here is the technical brief for the frontend implementation:
     *   **Empty State:** If a category has no items, ensure a clear message is shown rather than an empty table.
     *   **Responsiveness:** The filter UI must be tested on mobile to ensure it is usable and does not break the layout.
 
+## Iteration 16 - Tue, Mar 10, 2026 12:10:28 PM
+Completed: Admin Alerts: Notify About Items Without Photos (ID: US-030) in 12m
+
+
+## Pre-analysis for US-032 (Gemini 2.5 Pro)
+**Subject: Technical Brief for US-032: Admin Menu Category Filter**
+
+**Target Platform:** Frappe/Python
+**User Story:** Filter menu items by category in the admin list view.
+
+**1. Python/JS Files to Modify:**
+- `[app]/doctype/menu_item/menu_item_list.js`: To add the client-side filter UI and logic.
+- `[app]/doctype/menu_item/menu_item.py`: To create a whitelisted backend function for fetching category item counts.
+
+**2. Frappe DocTypes & Hooks:**
+- **DocTypes:** `Menu Item` (the list to be filtered), `Menu Category` (the filter source).
+- **Assumptions:** Assumes a `Link` field named `category` exists in the `Menu Item` DocType, referencing `Menu Category`.
+
+**3. Implementation Approach:**
+1. In `menu_item_list.js`, add a `frappe.ui.form.Filter` field to the list view's `make` method.
+2. This filter should be of type `Link` and point to the `Menu Category` DocType.
+3. To display item counts, create a whitelisted `@frappe.whitelist()` function in `menu_item.py`.
+4. This function will execute a `frappe.db.sql` query to `COUNT(*)` from `tabMenu Item` and `GROUP BY category`.
+5. Call this whitelisted function from `menu_item_list.js` to fetch counts and format the dropdown options.
+
+**4. Edge Cases & Gotchas:**
+- If an item can have multiple categories, a Child Table is needed, which complicates the filter query significantly.
+- For performance, avoid fetching all items client-side. Rely on Frappe's standard server-side list filtering.
+- Ensure the filter UI includes an "All Categories" option that clears the filter from the list view.
+
+
+## Iteration N - Story: Admin: List All Items for a Particular Category (US-032)
+
+### What was implemented
+- Added `activeCategory` state to `AdminMenuTable`
+- Computed `filteredItems` derived from `items` based on `activeCategory`
+- Added `<select>` dropdown above the items list showing "All Categories (N items)" + per-category counts
+- Updated both mobile card list and desktop table to render `filteredItems` instead of `items`
+- Header text updates dynamically to show filtered count when a category is active
+
+### Patterns discovered
+- `filteredItems` is a derived variable (not state) computed at render time — no useEffect needed
+- The `categories` prop is already passed from the parent page — no changes needed upstream
+- Both mobile and desktop views must be updated for consistent filter behavior
+
+### Gotchas
+- `items.length` (not `filteredItems.length`) should remain the source for category counts in the dropdown, since counts should reflect total items, not the current filtered set
+- TypeScript check passes cleanly — no errors introduced

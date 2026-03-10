@@ -23,6 +23,7 @@ export function AdminMenuTable({
   categories,
 }: AdminMenuTableProps) {
   const [items, setItems] = useState<EditableItem[]>(initialItems);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [imagePickerCode, setImagePickerCode] = useState<string | null>(null);
@@ -179,6 +180,10 @@ export function AdminMenuTable({
     updateItem(item.id, { categories: cats });
   }
 
+  const filteredItems = activeCategory
+    ? items.filter((i) => i.categories.includes(activeCategory))
+    : items;
+
   return (
     <div className="space-y-4">
       {!photoAlertDismissed && missingPhotos.length > 0 && (
@@ -212,9 +217,26 @@ export function AdminMenuTable({
       {error && (
         <div className="rounded-lg bg-red-50 p-3 text-sm text-red-700">{error}</div>
       )}
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-gray-900">
-          Menu Items ({items.length})
+      <div className="flex flex-wrap items-center gap-3">
+        <select
+          value={activeCategory ?? ""}
+          onChange={(e) => setActiveCategory(e.target.value || null)}
+          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
+        >
+          <option value="">All Categories ({items.length} items)</option>
+          {categories.map((cat) => {
+            const count = items.filter((i) => i.categories.includes(cat)).length;
+            return (
+              <option key={cat} value={cat}>
+                {cat} ({count} item{count !== 1 ? "s" : ""})
+              </option>
+            );
+          })}
+        </select>
+        <h2 className="flex-1 text-lg font-semibold text-gray-900">
+          {activeCategory
+            ? `${activeCategory} (${filteredItems.length} item${filteredItems.length !== 1 ? "s" : ""})`
+            : `Menu Items (${items.length})`}
         </h2>
         <button
           onClick={addNewRow}
@@ -226,7 +248,7 @@ export function AdminMenuTable({
 
       {/* Mobile card list */}
       <div className="md:hidden space-y-3">
-        {items.map((item) => (
+        {filteredItems.map((item) => (
           <div
             key={item.id}
             id={item.code ? `menu-row-${item.code}` : undefined}
@@ -361,7 +383,7 @@ export function AdminMenuTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {items.map((item) => (
+            {filteredItems.map((item) => (
               <tr
                 key={item.id}
                 id={item.code ? `menu-row-${item.code}` : undefined}
