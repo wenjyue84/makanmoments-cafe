@@ -3870,3 +3870,65 @@ This user story is for a Next.js/TypeScript application, not Frappe/Python. The 
 ### Result
 - prd.json: US-046 passes = true
 - TypeScript check: PASS (0 errors)
+## Iteration 29 - Tue, Mar 10, 2026  2:33:47 PM
+Completed: Tests for US-041 to US-045 in Admin Tests Tab (ID: US-046) in 14m
+
+
+## Pre-analysis for US-048 (Gemini 2.5 Pro)
+This technical brief is for a Next.js/TypeScript implementation, not Frappe/Python, based on the provided user story and project structure.
+
+**Project:** Makan Moments Cafe (Next.js/React)
+**User Story:** US-048: Customer Can View Previous Order History
+
+**1. Python/Frappe Files:**
+*   None. This is a TypeScript/Next.js task. The story targets the frontend React application and its corresponding backend API routes.
+
+**2. Key Files & DocTypes:**
+*   **Primary Frontend File:** `src/components/menu/tray-widget.tsx`. This component will manage saving orders to `localStorage` and rendering the history.
+*   **New Backend API Route:** `src/app/api/orders/[id]/route.ts` (needs to be created). This will provide a public endpoint to check order status.
+*   **DocTypes/Hooks:** Not applicable.
+
+**3. Implementation Approach:**
+*   **In `tray-widget.tsx`:**
+    *   Upon successful order submission, use the API response to create an order object `{ id, items, total, timestamp, status }`.
+    *   Retrieve the current order history array from `localStorage` (key: `mm_order_history`).
+    *   Add the new order, ensure a maximum of 5 orders are stored, and save back to `localStorage` using `JSON.stringify`.
+    *   Create a new React state to hold and render the order history in a collapsible UI section within the tray.
+    *   Use a `useEffect` hook to implement polling (`setInterval`) that calls `GET /api/orders/[id]` for any non-finalized orders to update their status.
+*   **In `src/app/api/orders/[id]/route.ts`:**
+    *   Create a new public `GET` endpoint that takes an order `id` from the URL.
+    *   Implement logic to query the database for the order and return its current status (e.g., "Pending", "Approved", "Ready").
+
+**4. Edge Cases & Gotchas:**
+*   Ensure `JSON.parse` is wrapped in a `try...catch` block to handle corrupted `localStorage` data gracefully.
+*   The polling mechanism must be cleaned up (`clearInterval`) when the component unmounts to prevent memory leaks.
+*   The public `GET /api/orders/[id]` endpoint should only expose minimal, non-sensitive data (primarily the status).
+*   Order history must persist on page refresh, while the main tray/cart state is cleared after an order is sent.
+
+
+## Iteration 30 - Story: Customer Can View Previous Order History After Sending (US-048)
+
+### What was implemented
+- Created `src/app/api/orders/[id]/route.ts` — public GET endpoint returning `{id, status}` for a given order ID
+- Updated `src/components/menu/tray-widget.tsx`:
+  - Added `orderHistory` state backed by `localStorage` key `mm_order_history` (max 5 entries)
+  - On successful POST /api/orders, captures returned `id` and saves order entry to history
+  - Added collapsible "My Orders" section at bottom of tray panel (toggle with ChevronDown/Up)
+  - Each history entry shows: items + qty, total, timestamp, and StatusBadge (Pending/Approved/Ready)
+  - Polling via `setInterval(30s)` updates non-final order statuses from GET /api/orders/[id]
+  - Floating button now stays visible when orderHistory has entries (even when tray is empty)
+- `messages/en.json`: added `tray.orderHistory` = "My Orders"
+
+### Patterns discovered
+- MS and ZH message files already had `orderHistory`, `statusPending`, `statusApproved`, `statusReady` keys — only EN was missing
+- Menu item IDs are `string` type ("SF02", "BV01"), not `number` — HistoryItem.id must be `string`
+- API route params in Next.js App Router are `Promise<{ id: string }>` — must be awaited
+
+### Gotchas
+- `localStorage` access must be in useEffect or event handlers (not SSR-compatible)
+- Polling cleanup: `clearInterval` must be called in useEffect cleanup to avoid memory leaks
+- Python JSON read on Windows needs explicit `encoding='utf-8'` for files with CJK characters
+
+### Result
+- prd.json: US-048 passes = true
+- TypeScript check: PASS (exit 0)

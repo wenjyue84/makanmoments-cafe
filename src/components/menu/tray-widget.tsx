@@ -11,7 +11,7 @@ const MAX_HISTORY = 5;
 const POLL_INTERVAL_MS = 30_000;
 
 interface HistoryItem {
-  id: number;
+  id: string;
   name: string;
   price: number;
   quantity: number;
