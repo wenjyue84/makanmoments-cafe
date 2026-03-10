@@ -1,6 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import sql from "@/lib/db";
 import webpush from "web-push";
+import { createRateLimiter } from "@/lib/chat/rate-limit";
+
+// 5 orders per hour per IP
+const ordersRateLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 5,
+  name: "POST /api/orders",
+});
 
 // Configure VAPID — only if keys are present (skipped in dev without .env.local)
 const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
@@ -52,6 +60,20 @@ export const runtime = "nodejs";
 // Public endpoint — no auth required.
 // Called by order-form-modal when customer submits their pre-order.
 export async function POST(request: NextRequest) {
+  const ip =
+    request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    "127.0.0.1";
+  const rateCheck = ordersRateLimiter(ip);
+  if (!rateCheck.allowed) {
+    return NextResponse.json(
+      { error: "Too many orders. Please try again later." },
+      {
+        status: 429,
+        headers: { "Retry-After": String(rateCheck.retryAfter ?? 60) },
+      }
+    );
+  }
+
   try {
     const body = await request.json();
     const { items, total, contactNumber, estimatedArrival } = body as {

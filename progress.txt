@@ -9774,3 +9774,96 @@ This is a technical brief for implementing user story US-099 in a Next.js applic
 ## Iteration 11 - Tue, Mar 10, 2026  9:57:37 PM
 Completed: Admin Cookie Security: Verify Flags, Add Logout Endpoint, Gate Demo Credential (ID: US-099) in 4m
 
+## Iteration 7 - Tue, Mar 10, 2026  9:57:59 PM
+Completed: Admin Cookie Security: Verify Flags, Add Logout Endpoint, Gate Demo Credential (ID: US-099) in 3m
+
+
+## Pre-analysis for US-100 (Gemini 2.5 Pro)
+**Subject: Technical Brief for US-100: Rate Limiting Factory**
+
+**Note:** The user story provided is for a **Next.js/TypeScript** application, not a Frappe/Python project. The following brief is based on the Next.js context from the story.
+
+**1. Python Files to Modify (Translated to TypeScript):**
+- `src/lib/chat/rate-limit.ts`: To be refactored into a generic rate limiter factory.
+- `src/app/api/orders/route.ts`: To consume the new factory for order endpoint protection.
+- `src/app/api/admin/login/route.ts`: To consume the factory for login endpoint protection.
+
+**2. Frappe DocTypes/Hooks (Translated to Next.js Components):**
+- **Next.js API Routes:** The core logic will be implemented inside the route handlers for `POST /api/orders` and `POST /api/admin/login`.
+- **In-Memory Store:** A `Map` object will be used within a module-scoped singleton to track IPs and request counts.
+
+**3. Recommended Implementation Approach:**
+- Refactor `src/lib/chat/rate-limit.ts` to export a `createRateLimiter({ windowMs, max, name })` factory function.
+- This factory will manage a `Map` to track request timestamps for each IP address.
+- In the `orders` and `login` API routes, create separate instances of the rate limiter with their specific configurations (5/hour and 10/15min, respectively).
+- Before executing the main logic, call the rate limiter. If it returns a blocked status, respond immediately with an HTTP 429 status and a `Retry-After` header.
+
+**4. Edge Cases & Gotchas:**
+- **CRITICAL:** The admin login route (`src/app/api/admin/login/route.ts`) likely uses `runtime = 'edge'`. This **must be changed to `runtime = 'nodejs'`**, as the edge runtime is stateless and cannot support the in-memory `Map` required for this implementation.
+- IP address extraction from `request.headers` needs to be robust, correctly handling `x-forwarded-for` if behind a proxy.
+- The existing chat rate limiter must be tested to prevent regression.
+- Since the rate limiter is in-memory, the limits are per-server-instance, not globally synchronized across multiple pods/dynos.
+
+
+## Pre-analysis for US-100 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** application, not Frappe/Python. Here is the technical brief based on the actual story content.
+
+---
+
+### **Technical Brief: US-100 Rate Limiting**
+
+**1. Files to Modify:**
+- `src/lib/chat/rate-limit.ts`: Refactor the core logic into a reusable factory.
+- `src/app/api/orders/route.ts`: Apply a new rate limiter instance to this endpoint.
+- `src/app/api/admin/login/route.ts`: Apply a new rate limiter instance and change the runtime.
+
+**2. Key System Components:**
+- **API Routes:** The changes target the `POST` handlers for `/api/orders` and `/api/admin/login`.
+- **Custom Library:** The existing `rate-limit.ts` module will be generalized.
+
+**3. Implementation Approach:**
+- In `rate-limit.ts`, create and export a `createRateLimiter` factory that accepts `windowMs`, `max`, and an optional `name`.
+- The factory will manage its own `Map` for state and return a checking function.
+- Modify the existing `checkRateLimit` export to be an instance of the new factory to ensure backward compatibility for the `/api/chat` endpoint.
+- In `.../orders/route.ts`, import and instantiate the limiter with a 5-requests-per-hour configuration.
+- In `.../admin/login/route.ts`, instantiate the limiter for 10-requests-per-15-minutes and apply it before credential checks.
+- If a request is blocked, return a `NextResponse` with status 429 and a `Retry-After` header.
+
+**4. Gotchas & Edge Cases:**
+- **CRITICAL:** The admin login route (`.../admin/login/route.ts`) must be changed from `runtime = 'edge'` to `runtime = 'nodejs'`. The in-memory `Map` store will not work in the stateless edge runtime.
+- Ensure consistent IP address resolution from incoming requests.
+- Verify the `/api/chat` endpoint's rate limiting is not affected by the refactoring.
+
+
+## Iteration N - Story: US-100 Rate Limiting Reusable Factory
+
+### What was implemented
+- Refactored `src/lib/chat/rate-limit.ts`: added `createRateLimiter({ windowMs, max, name? })` factory
+- Factory creates single-window in-memory rate limiters; logs `console.warn` with format `[rate-limit] ${name} exceeded for IP: ${ip}`
+- Kept `checkRateLimit` (dual-window chat limiter) unchanged for backwards compatibility — now uses `chatStore` (renamed from `store`)
+- Applied `ordersRateLimiter` (5/hr) to `POST /api/orders` with `Retry-After` header
+- Applied `loginRateLimiter` (10/15min) to `POST /api/admin/login` with `Retry-After` header
+- Changed admin login route from `runtime = "edge"` to `runtime = "nodejs"` (required for in-memory state)
+
+### Patterns discovered
+- IP extraction: `request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "127.0.0.1"`
+- Retry-After header must be a string in `NextResponse` headers map
+
+### Gotchas
+- Edge runtime does NOT support in-memory Maps — admin login must use nodejs runtime
+- `setInterval` is called once per factory invocation at module load — multiple instances create multiple intervals (acceptable for few instances)
+
+## Iteration N - Story: US-100 Rate Limiting: Reusable Factory + Apply to Orders + Admin Login Endpoints
+
+### What was implemented
+- `src/lib/chat/rate-limit.ts`: `createRateLimiter({ windowMs, max, name? })` factory already present — logs `[rate-limit] ${name} exceeded for IP: ${ip}` on each exceeded event
+- `src/app/api/orders/route.ts`: `ordersRateLimiter` (5/hr per IP) applied before request body parsing, returns 429 + Retry-After header
+- `src/app/api/admin/login/route.ts`: Changed `runtime = 'edge'` → `runtime = 'nodejs'`; `loginRateLimiter` (10/15 min per IP) applied before credential check
+- `checkRateLimit` export preserved for /api/chat backwards compatibility (10/min + 100/day dual-window)
+
+### Patterns discovered
+- All three files were already updated when re-read — previous partial iteration had applied changes; TypeScript check confirmed clean
+- IP extracted from `x-forwarded-for` header with `?? '127.0.0.1'` fallback
+
+### Gotchas
+- Edge runtime does NOT support in-memory Map state — always change to `nodejs` before adding module-scope Maps
