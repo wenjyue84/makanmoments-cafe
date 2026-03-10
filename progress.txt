@@ -8175,3 +8175,36 @@ All components were already implemented in a prior iteration (likely done alongs
 ### Result
 - prd.json: US-048 passes = true
 - TypeScript check: PASS (exit 0)
+
+## Iteration 30 - Story: Customer Can View Previous Order History After Sending (US-048)
+
+### What was implemented
+- Created `src/app/api/orders/[id]/route.ts` — public GET endpoint, no auth, queries `tray_orders` table for `id`, `status`, `created_at`
+- Updated `src/components/menu/tray-widget.tsx` with:
+  - `ORDER_HISTORY_KEY = "mm_order_history"` localStorage key
+  - `MAX_HISTORY = 5` cap on stored orders
+  - `POLL_INTERVAL_MS = 30_000` for 30s polling
+  - `OrderHistoryEntry` type: `{ id, items, total, timestamp, status }`
+  - `loadHistory()` / `saveHistory()` helpers
+  - `StatusBadge` component (Pending/Approved/Ready badges)
+  - `orderHistory` state loaded from localStorage on mount
+  - `pollStatuses()` callback updates non-final orders every 30s
+  - Order History collapsible section at bottom of tray panel
+  - `OrderFormModal` integration — modal captures contact + ETA, POSTs to API, saves to history, clears tray on success
+  - Floating button visible even when tray is empty (if history exists)
+- Added `orderHistory`, `statusPending`, `statusApproved`, `statusReady` keys to all 3 locale files (en/ms/zh)
+- `order-form-modal.tsx` already existed (linter-generated) with full form validation
+
+### Patterns discovered
+- The linter/auto-tool had already pre-built `order-form-modal.tsx` and partially updated `tray-widget.tsx` before this iteration
+- `tray_orders` table schema: only `id` (SERIAL), `items`, `total`, `status`, `created_at` — no contact_number etc.
+- `OrderFormModal` uses `useTranslations("orderForm")` — all keys pre-exist in messages files
+- The `onSuccess(orderId)` callback in `OrderFormModal` saves to localStorage and clears the tray
+
+### Gotchas
+- The linter tried to add non-existent columns (contact_number, estimated_arrival, etc.) to the GET route — had to fix back to only `id, status, created_at`
+- TypeScript check: exit 0 (clean)
+
+### Result
+- prd.json: US-048 passes = true
+- TypeScript check: PASS (exit 0)
