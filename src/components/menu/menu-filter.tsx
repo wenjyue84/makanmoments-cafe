@@ -1,8 +1,10 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { Search } from "lucide-react";
+import { Search, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+const FAV_KEY = "__favorites__";
 
 interface MenuFilterProps {
   categories: string[];
@@ -13,6 +15,7 @@ interface MenuFilterProps {
   onSearchChange: (query: string) => void;
   itemCount: number;
   servingNowCategories?: string[];
+  favoritesCount?: number;
 }
 
 export function MenuFilter({
@@ -24,6 +27,7 @@ export function MenuFilter({
   onSearchChange,
   itemCount,
   servingNowCategories = [],
+  favoritesCount = 0,
 }: MenuFilterProps) {
   const t = useTranslations("menu");
   const tc = useTranslations("common");
@@ -109,6 +113,23 @@ export function MenuFilter({
             {cat}
           </button>
         ))}
+
+        {/* Favorites — shown only when the user has hearted at least one item */}
+        {favoritesCount > 0 && (
+          <button
+            onClick={() => onCategoryChange(FAV_KEY)}
+            className={cn(
+              "flex-shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
+              selectedCategory === FAV_KEY
+                ? "bg-red-500 text-white"
+                : "border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+            )}
+          >
+            <Heart className={cn("h-3.5 w-3.5", selectedCategory === FAV_KEY ? "fill-white text-white" : "fill-red-400 text-red-400")} />
+            {tc("favorites")}
+            <span className="rounded-full bg-current/20 px-1.5 py-0 text-xs">{favoritesCount}</span>
+          </button>
+        )}
       </div>
 
       {/* Count — desktop only */}

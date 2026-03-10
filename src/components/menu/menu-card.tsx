@@ -3,10 +3,10 @@
 import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Check, Info } from "lucide-react";
+import { Plus, Check, Info, Heart } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import type { MenuItemWithRules } from "@/types/menu";
-import { formatPrice, getLocalizedName } from "@/lib/utils";
+import { formatPrice, getLocalizedName, cn } from "@/lib/utils";
 import { DietaryBadge } from "./dietary-badge";
 import { RecipeModal } from "./recipe-modal";
 import { getRecipeInfo } from "@/data/recipe-info";
@@ -15,9 +15,11 @@ interface MenuCardProps {
   item: MenuItemWithRules;
   priority?: boolean;
   isHighlighted?: boolean;
+  isFavorited?: boolean;
+  onToggleFavorite?: () => void;
 }
 
-export function MenuCard({ item, priority = false, isHighlighted = false }: MenuCardProps) {
+export function MenuCard({ item, priority = false, isHighlighted = false, isFavorited = false, onToggleFavorite }: MenuCardProps) {
   const locale = useLocale();
   const tc = useTranslations("common");
   const { addItem, items } = useTray();
@@ -25,6 +27,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false }: Menu
   const [imgError, setImgError] = useState(false);
   const [recipeOpen, setRecipeOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
+  const [addScaling, setAddScaling] = useState(false);
   const prevQuantityRef = useRef<number>(0);
   const imgVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
   const hasPhoto = !!item.code && !imgError;
@@ -88,9 +91,28 @@ export function MenuCard({ item, priority = false, isHighlighted = false }: Menu
             </span>
           )}
           {item.discountPercent && (
-            <span className="absolute right-2 top-2 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
+            <span className="absolute left-2 bottom-2 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
               -{item.discountPercent}%
             </span>
+          )}
+          {/* Heart / Favorite toggle — top-right of image */}
+          {onToggleFavorite && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavorite();
+              }}
+              className="absolute top-2 right-2 z-10 rounded-full bg-black/40 p-1.5 transition-colors hover:bg-black/60"
+              aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
+            >
+              <Heart
+                className={cn(
+                  "h-4 w-4 transition-colors",
+                  isFavorited ? "fill-red-500 text-red-500" : "fill-transparent text-white"
+                )}
+              />
+            </button>
           )}
           {/* Info icon — only shown when recipe exists, appears on hover */}
           {hasRecipe && (
@@ -134,12 +156,18 @@ export function MenuCard({ item, priority = false, isHighlighted = false }: Menu
         <div className="mt-3 flex items-center justify-end border-t pt-3">
           <button
             type="button"
-            onClick={() => addItem({ id: item.code, name, price: item.price })}
-            className={`flex min-h-[36px] items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold transition-colors ${
+            onClick={() => {
+              addItem({ id: item.code, name, price: item.price });
+              setAddScaling(true);
+              setTimeout(() => setAddScaling(false), 150);
+            }}
+            className={cn(
+              "flex min-h-[44px] items-center gap-1 rounded-full px-3 py-1 text-sm font-semibold transition-all",
+              addScaling ? "scale-110" : "scale-100",
               isInTray
                 ? `bg-green-500 text-white hover:bg-green-600 ${pulsing ? "animate-pulse" : ""}`
                 : "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground"
-            }`}
+            )}
           >
             {isInTray ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
             {isInTray ? tc("added") : tc("add")}

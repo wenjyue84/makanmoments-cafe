@@ -8,9 +8,12 @@ import { ChefPickCard } from "./chef-pick-card";
 import { EditableMenuCard } from "./editable-menu-card";
 import { MenuFilter } from "./menu-filter";
 import { cn } from "@/lib/utils";
+import { useFavorites } from "@/hooks/use-favorites";
 
 // Display category values are prefixed with "__dc__" to distinguish from POS categories
 const DC_PREFIX = "__dc__";
+// Special filter key for user-favorited items
+const FAVORITES_FILTER = "__favorites__";
 
 interface MenuGridProps {
   items: MenuItem[];
@@ -49,6 +52,7 @@ export function MenuGrid({
   const previewMinute = previewTime ? parseInt(previewTime.split(":")[1], 10) : null;
   const hasPreviewTime = previewHour !== null && previewMinute !== null && !isNaN(previewHour) && !isNaN(previewMinute);
   const t = useTranslations("common");
+  const { favorites, toggleFavorite, isFavorite } = useFavorites();
   // Validate initialCategory — fall back to null if the category doesn't exist in known lists
   const [category, setCategory] = useState<string | null>(() => {
     if (!initialCategory) return null;
@@ -62,15 +66,18 @@ export function MenuGrid({
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const chipBarScrollRef = useRef<HTMLDivElement>(null);
 
-  // Resolve whether selected tab is a POS category or display category
-  const isDisplayCategorySelected = category?.startsWith(DC_PREFIX) ?? false;
+  // Resolve whether selected tab is a POS category or display category or favorites
+  const isFavoritesSelected = category === FAVORITES_FILTER;
+  const isDisplayCategorySelected = !isFavoritesSelected && (category?.startsWith(DC_PREFIX) ?? false);
   const selectedDisplayCat = isDisplayCategorySelected ? category!.slice(DC_PREFIX.length) : null;
-  const selectedPosCat = !isDisplayCategorySelected ? category : null;
+  const selectedPosCat = !isDisplayCategorySelected && !isFavoritesSelected ? category : null;
 
   const filtered = useMemo(() => {
     let result = items;
 
-    if (selectedDisplayCat) {
+    if (isFavoritesSelected) {
+      result = items.filter((i) => favorites.includes(i.code));
+    } else if (selectedDisplayCat) {
       const lc = selectedDisplayCat.toLowerCase();
       if (lc.includes("chef")) {
         // Chef's Picks: use junction table rows, fall back to featured=true items if empty
@@ -103,7 +110,7 @@ export function MenuGrid({
     }
 
     return result;
-  }, [items, selectedPosCat, selectedDisplayCat, search]);
+  }, [items, selectedPosCat, selectedDisplayCat, isFavoritesSelected, favorites, search]);
 
   const handleSetHighlight = useCallback(async (itemId: string, itemCategories: string[]) => {
     // Optimistic update
@@ -146,8 +153,8 @@ export function MenuGrid({
   }, [filtered, categories, selectedPosCat, selectedDisplayCat, highlights]);
 
   const isSearching = search.trim().length > 0;
-  // When a display category is selected, show flat grid (no grouping)
-  const isFlatView = isSearching || isDisplayCategorySelected;
+  // When a display category or favorites is selected, show flat grid (no grouping)
+  const isFlatView = isSearching || isDisplayCategorySelected || isFavoritesSelected;
 
   // IntersectionObserver: update active chip as user scrolls through sections
   useEffect(() => {
@@ -200,6 +207,7 @@ export function MenuGrid({
         onSearchChange={setSearch}
         itemCount={filtered.length}
         servingNowCategories={servingNowCategories}
+        favoritesCount={favorites.length}
       />
 
       {/* Quick-jump chip bar — mobile only, shown when browsing all sections */}
@@ -231,7 +239,9 @@ export function MenuGrid({
       {filtered.length === 0 ? (
         <div className="py-20 text-center">
           <p className="text-lg text-muted-foreground">
-            {selectedDisplayCat?.toLowerCase().includes("vegetarian")
+            {isFavoritesSelected
+              ? t("noFavorites")
+              : selectedDisplayCat?.toLowerCase().includes("vegetarian")
               ? t("noVegetarianItems")
               : t("noResults")}
           </p>
@@ -254,7 +264,13 @@ export function MenuGrid({
                 isUnavailableAtPreview={isUnavailableAtPreview}
               />
             ) : (
-              <MenuCard key={item.id} item={item} isHighlighted={isHighlighted} />
+              <MenuCard
+                key={item.id}
+                item={item}
+                isHighlighted={isHighlighted}
+                isFavorited={isFavorite(item.code)}
+                onToggleFavorite={() => toggleFavorite(item.code)}
+              />
             );
           })}
         </div>
@@ -301,7 +317,13 @@ export function MenuGrid({
                         isUnavailableAtPreview={isUnavailableAtPreview}
                       />
                     ) : (
-                      <MenuCard key={item.id} item={item} isHighlighted={isHighlighted} />
+                      <MenuCard
+                        key={item.id}
+                        item={item}
+                        isHighlighted={isHighlighted}
+                        isFavorited={isFavorite(item.code)}
+                        onToggleFavorite={() => toggleFavorite(item.code)}
+                      />
                     );
                   })}
                 </div>

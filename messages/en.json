@@ -22,7 +22,9 @@
     "new": "New",
     "popular": "Popular",
     "add": "Add",
-    "added": "Added"
+    "added": "Added",
+    "favorites": "Favorites",
+    "noFavorites": "No favorites yet — tap the heart icon on items you love"
   },
   "home": {
     "heroTitle": "Thai-Malaysian Fusion",

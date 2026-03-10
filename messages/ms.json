@@ -22,7 +22,9 @@
     "new": "Baru",
     "popular": "Popular",
     "add": "Tambah",
-    "added": "Ditambah"
+    "added": "Ditambah",
+    "favorites": "Kegemaran",
+    "noFavorites": "Tiada kegemaran lagi — ketik ikon hati pada item yang anda sukai"
   },
   "home": {
     "heroTitle": "Gabungan Thai-Malaysia",
