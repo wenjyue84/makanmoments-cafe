@@ -6151,3 +6151,33 @@ Completed: Menu Search Bar: Voice-to-Text Input Button (ID: US-068) in 8m
 ### Gotchas
 - TypeScript check: 0 errors
 - Arrow connector between steps uses inline SVG (simpler than importing a Lucide arrow icon in server context)
+
+## Pre-analysis for US-070 (Gemini 2.5 Pro)
+**Analysis:** The user story `US-070` describes a frontend change for a Next.js/TypeScript application, not a Frappe/Python one. The technical notes specify `.tsx` files, React components, and `i18n` JSON files. The following brief is based on the actual story content.
+
+---
+
+### **Technical Brief: US-070 Pre-Order Banner**
+
+**1. Files to Modify/Create:**
+*   **Create:** `src/components/home/preorder-banner.tsx` (New React component).
+*   **Modify:** `src/app/[locale]/page.tsx` (To insert the new component).
+*   **Modify:** `messages/en.json`, `messages/ms.json`, `messages/zh.json` (To add translation keys).
+
+**2. Key Framework Concepts:**
+*   **Component:** `preorder-banner.tsx` will be a React Server Component (RSC).
+*   **Page:** The main landing page at `src/app/[locale]/page.tsx` is the target for integration.
+*   **Internationalization (i18n):** Uses `next-intl` or a similar library sourcing from the `messages/` directory.
+
+**3. Implementation Approach:**
+*   Create the `PreorderBanner` component using Tailwind CSS for styling (`bg-amber-50`, `rounded-xl`, etc.).
+*   Implement a responsive 3-step visual (flex-row on desktop, stacked on mobile).
+*   Use a translation hook (e.g., `useTranslations`) to render text for the title, subtitle, steps, and CTA from the JSON message files.
+*   Insert the `<PreorderBanner />` component into the `page.tsx` file, specifically between the hero and highlights sections.
+*   The CTA button should use a Next.js `<Link>` component to navigate to `/[locale]/menu`.
+
+**4. Gotchas & Edge Cases:**
+*   Ensure the component is a Server Component to maintain landing page performance.
+*   Verify responsive styles on a ~390px viewport to confirm visibility and stacking.
+*   Confirm that all new translation keys are added to *all three* language files (`en`, `ms`, `zh`).
+
