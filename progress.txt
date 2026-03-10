@@ -5363,3 +5363,6 @@ This iteration: added the missing `?v=imgVersion` cache-buster to `ChefPickCard`
 ### Gotchas
 - Use `encoding='utf-8'` when reading/writing prd.json on Windows (cp1252 codec fails on em-dash characters in story text)
 - Always check git log to avoid re-implementing already-committed work
+## Iteration 12 - Tue, Mar 10, 2026  4:24:54 PM
+Completed: Admin Menu Preview: Show Time-Based Dynamic Menu Same as Customer View (ID: US-058) in 10m
+
