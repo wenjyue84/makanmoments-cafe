@@ -4176,3 +4176,84 @@ Here is the technical brief tailored to the actual technology stack described in
 ## Iteration 29 - Tue, Mar 10, 2026  3:06:08 PM
 FAILED quality gates: Fix Admin Page Dark Overlay Problem (ID: US-049) — attempt 1/3
 
+## Iteration 4 - Tue, Mar 10, 2026  3:06:41 PM
+Completed: Admin Settings Tab with System-Wide Configuration (ID: US-050) in 13m
+
+
+## Iteration - Story: US-050 Admin Settings Tab with System-Wide Configuration
+
+### What was implemented
+- All core files already committed by previous Ralph iteration (5fd9cf3):
+  - data/site-settings.json, src/lib/site-settings.ts, src/app/api/admin/settings/route.ts
+  - src/components/admin/admin-settings-panel.tsx, admin-tabs.tsx Settings tab
+- This iteration added the missing middleware locale redirect (commit e39de36):
+  - next.config.ts: `experimental.nodeMiddleware: true` (with @ts-expect-error)
+  - middleware.ts: `export const runtime = "nodejs"`, intercept `pathname === "/"` to redirect using getSiteSettings().defaultLocale
+
+### Patterns discovered
+- `nodeMiddleware` is supported in Next.js 15.1+ but NOT typed in `ExperimentalConfig` — use `@ts-expect-error` to suppress
+- middleware.ts must export `runtime = "nodejs"` AND next.config.ts must have `experimental.nodeMiddleware: true` for Node.js middleware to work
+- `createMiddleware` from next-intl is moved inside the function to avoid Edge-only module initialization issues, but can also stay at module level since we're in Node.js runtime
+- Intercepting `pathname === "/"` before intlMiddleware avoids any conflict with intl's own root redirect logic
+
+### Gotchas
+- When `passes: true` is already in prd.json, the story was partially committed — check git log for what was missed
+- `experimental.nodeMiddleware` type error requires `@ts-expect-error` comment; tsc still passes cleanly
+- TypeScript check: PASS (exit 0) with @ts-expect-error suppression
+
+## Pre-analysis for US-049 (Gemini 2.5 Pro)
+This is a technical brief for a **React/Next.js** user story, not Frappe/Python. The issue described is a frontend rendering problem.
+
+**1. Files to Modify:**
+*   `src/app/(app)/admin/layout.tsx`: Check for any wrapper components that might be rendering a persistent overlay.
+*   `src/components/admin/Rules/RulesTable.tsx`: Likely contains the "Edit Rule" dialog, a prime suspect for an orphaned modal.
+*   `src/components/admin/Rules/EditRuleDialog.tsx`: The most probable source of the bug. The dialog or its overlay is likely not unmounting correctly.
+*   `src/components/ui/dialog.tsx`: If a shared component is used, the issue might be in the base `Dialog` implementation itself.
+
+**2. Involved Frappe DocTypes/Hooks:**
+*   None. This is a frontend issue related to React components and CSS, not the Frappe framework.
+
+**3. Recommended Implementation:**
+*   The problem is almost certainly an unclosed modal/dialog leaving a persistent backdrop.
+*   Focus on `EditRuleDialog.tsx`. Investigate its open/close state management.
+*   The `open` prop of the Radix UI `Dialog` component is likely not being set back to `false` on closing, or the component controlling the state is not re-rendering.
+*   Ensure any `onOpenChange` or `setOpen(false)` logic is correctly implemented and triggered.
+
+**4. Gotchas & Edge Cases:**
+*   The issue might be in a different admin tab's modal; `RulesTable` is just the most likely suspect.
+*   It could be a global state issue (React Context or Zustand) where the modal state is not being reset properly.
+*   Less likely, it could be a `z-index` conflict from a different UI element (like a Toast or Command Palette) that has a background overlay. Use the DevTools `z-index` inspection script from the ticket to verify.
+
+
+## Pre-analysis for US-049 (Gemini 2.5 Pro)
+Based on the user story, here is a technical brief for the agent.
+
+**Project:** Makan Moments Cafe (Next.js/React)
+**User Story:** US-049: Fix Admin Page Dark Overlay Problem
+
+**Technical Brief:**
+
+The issue is a persistent dark overlay on the `/admin` page, which is a React client-side route. The problem is almost certainly a CSS z-index or a JavaScript state management bug within a modal/overlay component, not a backend issue.
+
+**1. Files to Investigate:**
+*   `src/app/admin/layout.tsx`: Check for any wrapper components that might be applying a global overlay.
+*   `src/app/admin/page.tsx`: The main entry point for the admin section.
+*   `src/components/admin/AdminTabs.tsx` or similar: The component managing the tabbed interface could have a rogue state.
+*   `src/components/ui/dialog.tsx` or `src/components/ui/modal.tsx`: The most likely source. A dialog's open/closed state is likely being mismanaged, leaving a backdrop element in the DOM.
+
+**2. Key Components & Hooks Involved:**
+*   **React Components:** Look for components using Radix UI's Dialog, Shadcn/ui's Dialog, or a custom-built modal.
+*   **React Hooks:** `useState` or `useEffect` hooks that control the visibility of modals. A cleanup function in `useEffect` may be missing.
+
+**3. Recommended Implementation:**
+1.  Navigate to `http://localhost:3030/admin`.
+2.  Use Chrome DevTools to inspect the DOM and identify the element causing the overlay. It will likely have a high `z-index` and some `opacity`.
+3.  Find the React component responsible for rendering this element.
+4.  Trace the state that controls its visibility.
+5.  Ensure the state is correctly toggled to `false` when the modal/dialog should be closed. If using a library, ensure the `onOpenChange` or equivalent prop is correctly implemented.
+
+**4. Gotchas & Edge Cases:**
+*   **React Portals:** The overlay might be rendered into a different part of the DOM via a portal, making it seem disconnected from its parent component.
+*   **Global State:** The overlay's visibility could be controlled by a global state manager (like Zustand or Context) rather than local component state.
+*   **Animation Libraries:** A Framer Motion or CSS transition `onExitComplete` or similar callback might not be firing, failing to unmount the overlay component.
+
