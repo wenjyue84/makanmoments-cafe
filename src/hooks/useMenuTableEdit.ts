@@ -8,6 +8,7 @@ export type EditableItem = MenuItemWithRules & { _dirty?: boolean; _new?: boolea
 export interface UseMenuTableEditResult {
   items: EditableItem[];
   editingId: string | null;
+  editForm: EditableItem | null;
   saving: string | null;
   error: string | null;
   suggesting: Record<string, boolean>;
@@ -15,6 +16,8 @@ export interface UseMenuTableEditResult {
   imagePickerCode: string | null;
   setImagePickerCode: (code: string | null) => void;
   handleImageChange: () => void;
+  handleSave: (item: EditableItem) => Promise<void>;
+  handleCancel: (item: EditableItem) => void;
   updateItem: (id: string, patch: Partial<EditableItem>) => void;
   saveItem: (item: EditableItem) => Promise<void>;
   deleteItem: (id: string) => Promise<void>;
@@ -183,9 +186,18 @@ export function useMenuTableEdit(initialItems: MenuItemWithRules[]): UseMenuTabl
     setImgVersion((v) => v + 1);
   }
 
+  function handleCancel(item: EditableItem) {
+    if (item._new) {
+      setItems((prev) => prev.filter((i) => i.id !== item.id));
+    }
+  }
+
+  const editForm = saving ? (items.find((i) => i.id === saving) ?? null) : null;
+
   return {
     items,
     editingId: saving,
+    editForm,
     saving,
     error,
     suggesting,
@@ -193,6 +205,8 @@ export function useMenuTableEdit(initialItems: MenuItemWithRules[]): UseMenuTabl
     imagePickerCode,
     setImagePickerCode,
     handleImageChange,
+    handleSave: saveItem,
+    handleCancel,
     updateItem,
     saveItem,
     deleteItem,

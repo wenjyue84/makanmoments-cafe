@@ -1,11 +1,11 @@
 "use client";
 
 import { Fragment, useState, useEffect } from "react";
-import type { MenuItemWithRules } from "@/types/menu";
-import { ImagePickerModal } from "./image-picker-modal";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { AdminMenuTableRow } from "./admin-menu-table-row";
 import { useMenuTableEdit, type EditableItem } from "@/hooks/useMenuTableEdit";
+import { AdminMenuTableRow } from "./admin-menu-table-row";
+import { ImagePickerModal } from "./image-picker-modal";
+import type { MenuItemWithRules } from "@/types/menu";
 
 const MISSING_PHOTOS_DISMISSED_KEY = "admin_missing_photos_dismissed";
 
@@ -37,25 +37,24 @@ function groupByPrimaryCategory(
   const catMap = new Map<string, EditableItem[]>();
   for (const cat of categories) catMap.set(cat, []);
   catMap.set("__none__", []);
+
   for (const item of items) {
     const primaryCat = item.categories[0] ?? "__none__";
     if (!catMap.has(primaryCat)) catMap.set(primaryCat, []);
     catMap.get(primaryCat)!.push(item);
   }
-  return [...catMap.entries()].map(([cat, catItems]) => ({
-    cat,
-    label: cat === "__none__" ? "Uncategorized" : cat,
-    items: catItems,
-  }));
+
+  const result: { cat: string; label: string; items: EditableItem[] }[] = [];
+  for (const [cat, catItems] of catMap) {
+    result.push({ cat, label: cat === "__none__" ? "Uncategorized" : cat, items: catItems });
+  }
+  return result;
 }
 
 function filterByDisplayCat(item: EditableItem, dc: string): boolean {
   const lc = dc.toLowerCase();
   if (lc.includes("rm15"))
-    return (
-      item.price < 15 &&
-      !item.displayCategories.some((d) => d === "Hot Drinks" || d === "Cold Drinks & Juice")
-    );
+    return item.price < 15 && !item.displayCategories.some((d) => d === "Hot Drinks" || d === "Cold Drinks & Juice");
   if (lc.includes("vegetarian"))
     return item.dietary?.some((d) => d.toLowerCase() === "vegetarian") ?? false;
   return item.displayCategories.includes(dc);
@@ -68,37 +67,21 @@ function groupByDisplayCategory(
   const catMap = new Map<string, EditableItem[]>();
   for (const dc of displayCategories) catMap.set(dc, []);
   catMap.set("__none__", []);
+
   for (const item of items) {
     const primaryDC = item.displayCategories[0] ?? "__none__";
     if (!catMap.has(primaryDC)) catMap.set(primaryDC, []);
     catMap.get(primaryDC)!.push(item);
   }
+
   return [...catMap.entries()]
     .map(([cat, catItems]) => ({
       cat,
       label: cat === "__none__" ? "Uncategorized" : cat,
       items: catItems,
     }))
-    .filter(({ cat, items: catItems }) => catItems.length > 0 || displayCategories.includes(cat));
+    .filter(({ cat: c, items: i }) => i.length > 0 || displayCategories.includes(c));
 }
-
-const TABLE_HEADER = (
-  <tr className="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.IMAGE} className="cursor-help border-b border-dashed border-gray-400">Image</span></th>
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CODE} className="cursor-help border-b border-dashed border-gray-400">Code</span></th>
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.NAME} className="cursor-help border-b border-dashed border-gray-400">Name EN / MS / ZH</span></th>
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.PRICE} className="cursor-help border-b border-dashed border-gray-400">Price</span></th>
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.ON} className="cursor-help border-b border-dashed border-gray-400">On</span></th>
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.STAR} className="cursor-help border-b border-dashed border-gray-400">★</span></th>
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CATEGORIES} className="cursor-help border-b border-dashed border-gray-400">Categories</span></th>
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DIETARY} className="cursor-help border-b border-dashed border-gray-400">Dietary</span></th>
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DAYS} className="cursor-help border-b border-dashed border-gray-400">Days</span></th>
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.TIME} className="cursor-help border-b border-dashed border-gray-400">Time</span></th>
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DATES} className="cursor-help border-b border-dashed border-gray-400">Dates</span></th>
-    <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.SORT} className="cursor-help border-b border-dashed border-gray-400">Sort</span></th>
-    <th className="px-3 py-3">Actions</th>
-  </tr>
-);
 
 export function AdminMenuTable({
   initialItems,
@@ -110,10 +93,14 @@ export function AdminMenuTable({
     saving,
     error,
     suggesting,
+    imgVersion,
+    imagePickerCode,
+    setImagePickerCode,
+    handleImageChange,
     updateItem,
+    addNewRow,
     saveItem,
     deleteItem,
-    addNewRow,
     toggleDay,
     toggleDietary,
     toggleCategory,
@@ -121,23 +108,20 @@ export function AdminMenuTable({
   } = useMenuTableEdit(initialItems);
 
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
-  const [imagePickerCode, setImagePickerCode] = useState<string | null>(null);
-  const [imgVersion, setImgVersion] = useState(0);
   const [missingPhotos, setMissingPhotos] = useState<{ id: string; code: string; nameEn: string }[]>([]);
-  const [photoAlertDismissed, setPhotoAlertDismissed] = useState(
-    () => typeof window !== "undefined" && !!sessionStorage.getItem(MISSING_PHOTOS_DISMISSED_KEY)
-  );
+  const [photoAlertDismissed, setPhotoAlertDismissed] = useState(false);
   const [isAlertExpanded, setIsAlertExpanded] = useState(false);
   const [highlightedCode, setHighlightedCode] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    if (photoAlertDismissed) return;
+    const dismissed = sessionStorage.getItem(MISSING_PHOTOS_DISMISSED_KEY);
+    if (dismissed) { setPhotoAlertDismissed(true); return; }
     fetch("/api/admin/menu/missing-photos")
       .then((r) => r.json())
       .then((data) => setMissingPhotos(data))
       .catch(() => {});
-  }, [photoAlertDismissed]);
+  }, []);
 
   function dismissPhotoAlert() {
     sessionStorage.setItem(MISSING_PHOTOS_DISMISSED_KEY, "1");
@@ -177,8 +161,7 @@ export function AdminMenuTable({
       ? groupByDisplayCategory(searchedItems, displayCategories)
       : groupByPrimaryCategory(searchedItems, categories);
 
-  const sharedRowProps = (item: EditableItem) => ({
-    item,
+  const rowProps = {
     categories,
     imgVersion,
     highlightedCode,
@@ -192,7 +175,27 @@ export function AdminMenuTable({
     onToggleDietary: toggleDietary,
     onToggleCategory: toggleCategory,
     onSuggestTranslation: suggestTranslation,
-  });
+  };
+
+  const desktopThead = (
+    <thead>
+      <tr className="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.IMAGE} className="cursor-help border-b border-dashed border-gray-400">Image</span></th>
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CODE} className="cursor-help border-b border-dashed border-gray-400">Code</span></th>
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.NAME} className="cursor-help border-b border-dashed border-gray-400">Name EN / MS / ZH</span></th>
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.PRICE} className="cursor-help border-b border-dashed border-gray-400">Price</span></th>
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.ON} className="cursor-help border-b border-dashed border-gray-400">On</span></th>
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.STAR} className="cursor-help border-b border-dashed border-gray-400">★</span></th>
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CATEGORIES} className="cursor-help border-b border-dashed border-gray-400">Categories</span></th>
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DIETARY} className="cursor-help border-b border-dashed border-gray-400">Dietary</span></th>
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DAYS} className="cursor-help border-b border-dashed border-gray-400">Days</span></th>
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.TIME} className="cursor-help border-b border-dashed border-gray-400">Time</span></th>
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DATES} className="cursor-help border-b border-dashed border-gray-400">Dates</span></th>
+        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.SORT} className="cursor-help border-b border-dashed border-gray-400">Sort</span></th>
+        <th className="px-3 py-3">Actions</th>
+      </tr>
+    </thead>
+  );
 
   return (
     <div className="space-y-4">
@@ -287,6 +290,7 @@ export function AdminMenuTable({
       )}
 
       {activeCategory === null ? (
+        /* ——— Grouped View (All Categories) ——— */
         <>
           {/* Mobile grouped */}
           <div className="md:hidden space-y-4">
@@ -297,15 +301,16 @@ export function AdminMenuTable({
                 </div>
                 {groupItems.length === 0 && <p className="px-2 text-xs italic text-gray-400">No items</p>}
                 {groupItems.map((item) => (
-                  <AdminMenuTableRow key={item.id} {...sharedRowProps(item)} variant="mobile" />
+                  <AdminMenuTableRow key={item.id} item={item} variant="mobile" {...rowProps} />
                 ))}
               </div>
             ))}
           </div>
-          {/* Desktop grouped table */}
+
+          {/* Desktop grouped */}
           <div className="hidden overflow-x-auto rounded-xl border bg-white md:block">
             <table className="min-w-full text-sm">
-              <thead>{TABLE_HEADER}</thead>
+              {desktopThead}
               <tbody className="divide-y divide-gray-100">
                 {groupedItems.map(({ cat, label, items: groupItems }) => (
                   <Fragment key={cat}>
@@ -317,7 +322,7 @@ export function AdminMenuTable({
                       </td>
                     </tr>
                     {groupItems.map((item) => (
-                      <AdminMenuTableRow key={item.id} {...sharedRowProps(item)} variant="desktop" />
+                      <AdminMenuTableRow key={item.id} item={item} variant="desktop" {...rowProps} />
                     ))}
                   </Fragment>
                 ))}
@@ -326,20 +331,22 @@ export function AdminMenuTable({
           </div>
         </>
       ) : (
+        /* ——— Filtered Flat View (Category selected) ——— */
         <>
           {/* Mobile flat */}
           <div className="md:hidden space-y-3">
             {filteredItems.map((item) => (
-              <AdminMenuTableRow key={item.id} {...sharedRowProps(item)} variant="mobile" />
+              <AdminMenuTableRow key={item.id} item={item} variant="mobile" {...rowProps} />
             ))}
           </div>
-          {/* Desktop flat table */}
+
+          {/* Desktop flat */}
           <div className="hidden overflow-x-auto rounded-xl border bg-white md:block">
             <table className="min-w-full text-sm">
-              <thead>{TABLE_HEADER}</thead>
+              {desktopThead}
               <tbody className="divide-y divide-gray-100">
                 {filteredItems.map((item) => (
-                  <AdminMenuTableRow key={item.id} {...sharedRowProps(item)} variant="desktop" />
+                  <AdminMenuTableRow key={item.id} item={item} variant="desktop" {...rowProps} />
                 ))}
               </tbody>
             </table>
@@ -351,7 +358,7 @@ export function AdminMenuTable({
         open={!!imagePickerCode}
         code={imagePickerCode || ""}
         onClose={() => setImagePickerCode(null)}
-        onImageChanged={() => setImgVersion((v) => v + 1)}
+        onImageChanged={handleImageChange}
       />
     </div>
   );

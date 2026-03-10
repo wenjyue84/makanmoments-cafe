@@ -12356,3 +12356,71 @@ Completed: Extract MenuGrid Filtering and Grouping into useMenuFiltering Hook (I
 ### Gotchas
 - The file was already partially refactored by a previous agent/tool but left in a broken state (imports present, but old inline row JSX still present)
 - After refactoring, table header must have exactly 13 columns to match row component output
+## Iteration 7 - Wed, Mar 11, 2026  2:49:51 AM
+Completed: Split AdminMenuTable into Row Component and Edit Hook (ID: US-139) in 6m
+
+
+## Pre-analysis for US-140 (Gemini 2.5 Pro)
+This user story (US-140) describes a **React/TypeScript refactoring task**, not a Frappe/Python one. The file paths (`.tsx`, `.ts`) and concepts (hooks, components) are specific to a modern frontend framework like React or Next.js.
+
+Here is the technical brief for the actual task described:
+
+**Project:** Makan Moments Cafe (Next.js/TypeScript)
+**User Story:** US-140: Extract AdminOrdersPanel into AdminOrderCard and useAdminOrders Hook
+
+**1. Files to Modify/Create:**
+*   `src/components/admin/admin-orders-panel.tsx`: Will be refactored to consume the new hook and component.
+*   `src/hooks/useAdminOrders.ts`: **New file** to encapsulate data fetching and state management logic.
+*   `src/components/admin/admin-order-card.tsx`: **New file** for rendering a single order's UI.
+
+**2. Core React Constructs Involved:**
+*   **Custom Hook:** `useAdminOrders` will manage all state (`useState`) and side-effects (`useEffect`) related to fetching and updating orders.
+*   **Components:**
+    *   `AdminOrdersPanel`: Becomes a "smart" container component.
+    *   `AdminOrderCard`: Becomes a "dumb" presentational component.
+*   **State:** Local component state (`useState`) will be lifted from the panel into the custom hook.
+
+**3. Implementation Approach:**
+1.  Create `src/hooks/useAdminOrders.ts`. Migrate all `useState`, `useEffect`, and data-fetching functions (e.g., `fetchOrders`, `approveOrder`) from `admin-orders-panel.tsx` into this hook.
+2.  The hook should return an object: `{ orders, loading, error, approveOrder, rejectOrder, ... }`.
+3.  Create `src/components/admin/admin-order-card.tsx`. Extract the JSX responsible for rendering a single order from the existing panel.
+4.  This component will receive props like `{ order, onApprove, onReject }` and will be responsible only for display and invoking the callback functions.
+5.  Refactor `admin-orders-panel.tsx` to call the `useAdminOrders()` hook.
+6.  In the panel's JSX, map over the `orders` array from the hook and render `<AdminOrderCard>` for each item, passing the data and action handlers.
+
+**4. Gotchas & Edge Cases:**
+*   **State Synchronization:** Ensure that after an action (approve, reject), the local state in the `useAdminOrders` hook is updated correctly, either via a refetch or an optimistic update.
+*   **Prop Drilling:** The action handlers from the hook must be correctly passed down to each `AdminOrderCard` instance.
+*   **Error/Loading States:** The `loading` and `error` states returned by the hook must be handled in the `AdminOrdersPanel` to provide clear UI feedback.
+*   **Function Memoization:** Consider wrapping the action handlers returned from the hook in `useCallback` to prevent unnecessary re-renders of `AdminOrderCard` components if performance is a concern.
+
+
+## Pre-analysis for US-140 (Gemini 2.5 Pro)
+This user story describes a **React/TypeScript** refactoring task, not a Frappe/Python one. The goal is to improve code structure by separating data logic from UI presentation.
+
+Here is the technical brief based on the provided JSON:
+
+**Objective:** Refactor the monolithic `admin-orders-panel.tsx` into a custom hook for logic and a dedicated component for presentation.
+
+**Files to Create/Modify:**
+
+1.  **`src/hooks/useAdminOrders.ts` (New):** This hook will encapsulate all business logic. It should handle fetching orders, managing state (loading, error, order data), and exposing functions to modify orders (approve, reject, update status).
+2.  **`src/components/admin/admin-order-card.tsx` (New):** A presentational component to render a single order's details and its associated action buttons.
+3.  **`src/components/admin/admin-orders-panel.tsx` (Modify):** This file will be simplified to use the `useAdminOrders` hook. Its responsibility will be to call the hook, iterate over the returned orders, and render an `AdminOrderCard` for each one.
+
+**Implementation Approach:**
+
+1.  Start by creating `useAdminOrders.ts`. Cut all state management (`useState`), data fetching (`useEffect`, API calls), and helper functions from `admin-orders-panel.tsx` and paste them into the new hook.
+2.  Define and export the hook's return signature: `{ orders, loading, error, approveOrder, rejectOrder, updateStatus, refresh }`.
+3.  Create the `AdminOrderCard.tsx` component. Copy the JSX that renders a single order from the original panel's `map` function.
+4.  Define its props interface: `{ order, onApprove, onReject, onStatusUpdate }`. Connect these props to the buttons within the card.
+5.  Refactor `admin-orders-panel.tsx` to be a lightweight container. It should now be under 200 lines.
+6.  Call `useAdminOrders()` at the top of the panel component to get the state and action handlers.
+7.  In the panel's return statement, map `orders` to render `<AdminOrderCard>`, passing the order object and the action handlers as props.
+
+**Gotchas to Watch For:**
+
+*   **Prop-Drilling:** Ensure the action handlers from the hook are passed correctly to the `AdminOrderCard`.
+*   **State Updates:** After an action (e.g., approve), the local state should update instantly for good UX, either by filtering the `orders` array or using the provided `refresh` function.
+*   **Type Safety:** Ensure all types for orders and function props are correctly defined and imported.
+
