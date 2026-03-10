@@ -11211,3 +11211,6 @@ This user story describes a **Next.js/TypeScript frontend task**, not a Frappe/P
 ### Gotchas
 - The auto-hook had already partially applied the changes (added imports, updated fetches) before we could edit manually
 - Always re-read files before editing — linter modifies them between reads
+## Iteration 1 - Wed, Mar 11, 2026  2:07:37 AM
+Completed: Add AbortController Fetch Timeout to Critical Client-Side Calls (ID: US-133) in 4m
+
