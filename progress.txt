@@ -10282,3 +10282,6 @@ MT01 Pineapple Fried Rice, AP01 Indonesia Ayam Penyet, BF01 KL Curry(Soup), BF02
 - PRD acceptance criteria lists specific codes that don't exist in DB (menu changed)
 - Use `.mjs` format for new scripts (not `.ts`) — hooks auto-convert
 - Under RM15 display category is computed client-side from price, not from junction table
+## Iteration 1 - Tue, Mar 10, 2026 11:17:58 PM
+Completed: Admin Categories — Seed Chef's Picks with Curated Food Items (ID: US-111) in 5m
+
