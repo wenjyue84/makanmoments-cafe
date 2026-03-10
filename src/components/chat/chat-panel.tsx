@@ -9,6 +9,8 @@ import { useTray } from "@/lib/tray-context";
 import { ChatBubble } from "./chat-bubble";
 import { cn } from "@/lib/utils";
 
+const NUDGE_DELAY_MS = 3 * 60 * 1000; // 3 minutes
+
 interface ChatPanelProps {
   onClose: () => void;
 }
@@ -30,7 +32,12 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
 
+  const nudgeSentRef = useRef(false);
+  const nudgeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [nudgeMessage, setNudgeMessage] = useState<string | null>(null);
+
   const welcomeText = t("welcome");
+  const nudgeText = t("nudge");
   const { messages, sendMessage, status, error } = useChat({
     transport: new DefaultChatTransport({ api: "/api/chat" }),
     messages: [
@@ -100,6 +107,30 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
       setIsListening(false);
     }
   }
+
+  // Inactivity nudge: after NUDGE_DELAY_MS with no user message, send one gentle prompt
+  const userMessageCount = messages.filter((m: any) => m.role === "user").length;
+  useEffect(() => {
+    if (nudgeSentRef.current) return;
+    // Clear any pending timer when user sends a message
+    if (nudgeTimerRef.current) {
+      clearTimeout(nudgeTimerRef.current);
+      nudgeTimerRef.current = null;
+    }
+    nudgeTimerRef.current = setTimeout(() => {
+      if (!nudgeSentRef.current) {
+        nudgeSentRef.current = true;
+        setNudgeMessage(nudgeText);
+      }
+    }, NUDGE_DELAY_MS);
+    return () => {
+      if (nudgeTimerRef.current) {
+        clearTimeout(nudgeTimerRef.current);
+        nudgeTimerRef.current = null;
+      }
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userMessageCount]);
 
   // Auto-scroll on new messages + process tool calls
   useEffect(() => {
@@ -183,6 +214,9 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
 
           return <ChatBubble key={msg.id} role={msg.role} content={text} />;
         })}
+        {nudgeMessage && (
+          <ChatBubble role="assistant" content={nudgeMessage} />
+        )}
         {isLoading && (
           <div className="flex items-center gap-1 text-sm text-muted-foreground">
             <span className="inline-block h-2 w-2 animate-bounce rounded-full bg-muted-foreground [animation-delay:0ms]" />
