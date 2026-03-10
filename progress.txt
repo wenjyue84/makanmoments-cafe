@@ -13623,3 +13623,29 @@ This story requires running automated or manual browser tests on critical pages 
 ### Gotchas
 - next.config.ts auto-updated between read and edit — always re-read before editing config files
 - Playwright console event listeners accumulate on same page object across multiple `check_page` calls — error count inflated; real errors are lower
+
+
+## Iteration 8 - Wed, Mar 11, 2026 - Story: Browser Test All Key Pages and Fix Errors (US-145)
+
+### What was implemented
+1. **CSP fix** (`next.config.ts`): Added `frame-src` directive to allow Google Maps embed on `/contact` page and Rainbow AI iframe (`localhost:3002`) in dev. Previously `default-src 'self'` was used as fallback for frame-src, blocking both.
+2. **AI Waiter health check fix** (`src/app/api/admin/ai-waiter/health/route.ts`): Added X-Frame-Options check - the health endpoint now fetches the root URL of the target service and checks its X-Frame-Options header. If SAMEORIGIN or DENY, returns `{online: false}` so the offline card is shown instead of a silently broken iframe.
+
+### Pages tested (all passing)
+- ✅ /en — no errors
+- ✅ /en/menu — no errors; chat widget opens correctly after dismissing welcome splash
+- ✅ /en/about — no errors
+- ✅ /en/contact — CSP fix resolves Google Maps iframe error
+- ✅ /admin/login — no errors
+- ✅ /admin (post-login) — no errors
+- ✅ /admin/ai-waiter — offline card shown, no errors
+
+### Bugs found and fixed
+- **Contact page CSP**: Google Maps `<iframe>` blocked by `default-src 'self'` fallback. Fix: explicit `frame-src https://www.google.com https://maps.google.com`
+- **AI Waiter false positive**: `localhost:3002` was actually running (pelangi-mcp-server), health check returned ok, iframe rendered but blocked by X-Frame-Options: SAMEORIGIN. Fix: health endpoint now verifies framing is allowed before returning `{online: true}`
+
+### Patterns discovered
+- Chrome DevTools MCP fails when chrome-headless-shell processes are lingering — use Playwright directly as alternative
+- Welcome splash modal on /en/menu uses `aria-label="Welcome splash"` and blocks pointer events to underlying elements — must dismiss before clicking chat widget
+- `AiWaiterPage` renders iframe only when status === "online" — correct pattern; health check is the gatekeeper
+- next.config.ts CSP was already being refactored when this story ran (file was modified by another tool before edit)
