@@ -3771,3 +3771,33 @@ This brief details the implementation plan for adding programmatic tests for use
 
 ### Gotchas
 - tray-widget.tsx uses `t("checkout")` for the old button label — preserved to avoid breaking anything that might reference it
+## Iteration 27 - Tue, Mar 10, 2026  2:27:22 PM
+Completed: Tests for US-041 to US-045 in Admin Tests Tab (ID: US-046) in 8m
+
+
+## Pre-analysis for US-048 (Gemini 2.5 Pro)
+Based on the user story `US-048`, here is the technical brief for implementation within the Next.js application:
+
+**Objective:** Implement a client-side order history feature that persists in the browser's `localStorage`.
+
+**1. Files to Modify / Create:**
+*   `src/components/menu/tray-widget.tsx`: Modify the "Send Order" success handler to save the submitted order to `localStorage`.
+*   `src/components/menu/order-history.tsx` (New File): Create this new client component to read from `localStorage` and display the list of past orders.
+*   `src/app/api/orders/[id]/route.ts` (New File): Create this new public API route to allow customers to fetch the status of their own order by its ID.
+
+**2. Key Next.js / React Elements:**
+*   **Hooks:** Use `useState` and `useEffect` in `order-history.tsx` to manage and render the list of orders from `localStorage`.
+*   **API Routes:** The new `GET` route (`/api/orders/[id]`) will query the database for an order's status. The existing `POST /api/orders` route must return the `id` of the newly created order.
+
+**3. Implementation Approach:**
+1.  In `tray-widget.tsx`, upon a successful `POST /api/orders` response, capture the order data (including the returned `id`).
+2.  Add a `timestamp` and an initial `status: 'Pending'` to the order object.
+3.  Retrieve the existing order history array from `localStorage` (key: `mm_order_history`), add the new order, and save it back. Ensure the history does not exceed 5 orders.
+4.  The new `order-history.tsx` component will render this data and use `setInterval` to periodically call `GET /api/orders/[id]` for any orders that are not yet marked 'Ready'.
+5.  The `GET /api/orders/[id]` endpoint should be public (no auth) and simply return the `status` field for the given order ID.
+
+**4. Edge Cases & Gotchas:**
+*   **Client-Side Only:** `localStorage` is not available on the server. All components accessing it must be marked with `'use client'` and access should occur within `useEffect` or event handlers.
+*   **Polling Cleanup:** The polling interval in `order-history.tsx` must be cleared in a `useEffect` cleanup function to prevent memory leaks when the component unmounts.
+*   **Data Integrity:** Wrap `localStorage.getItem()` and `JSON.parse()` in a `try...catch` block to handle potential malformed data.
+
