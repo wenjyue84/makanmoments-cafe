@@ -4331,3 +4331,105 @@ This is a technical brief for a **React/Next.js** user story, not Frappe/Python.
 ## Iteration 30 - Tue, Mar 10, 2026  3:11:25 PM
 Completed: Fix Admin Page Dark Overlay Problem (ID: US-049) in 3m
 
+## Iteration 5 - Tue, Mar 10, 2026  3:11:38 PM
+Completed: Fix Admin Page Dark Overlay Problem (ID: US-049) in 3m
+
+
+## Pre-analysis for US-051 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-051, tailored for the project's Next.js/TypeScript architecture.
+
+**Project:** Makan Moments Cafe (Next.js)
+**User Story:** US-051: Pre-Order DB Schema + Order Submission Form
+
+**Objective:** Implement a pre-order submission flow where users provide contact info and an ETA via a modal before the order is placed.
+
+**1. Python/Frappe Files to Modify:**
+*   This story is for a **Next.js/TypeScript** project, not Frappe/Python. The implementation will be in TypeScript (`.ts`/`.tsx`).
+
+**2. Key DocTypes/Hooks (Next.js/React Equivalents):**
+*   **API Route:** `src/app/api/orders/route.ts` will handle the incoming POST request.
+*   **React Components:**
+    *   Create a new client component: `src/components/menu/order-form-modal.tsx`.
+    *   Modify the existing "Tray" or "Cart" component that contains the 'Send Order' button to trigger this new modal.
+*   **Database:** A PostgreSQL database (likely via Neon/Vercel) with an `orders` table.
+
+**3. Recommended Implementation Approach:**
+1.  **Database Migration:** Create and run a script (e.g., in `/scripts`) to apply the `ALTER TABLE orders` changes from the technical notes to add pre-order columns.
+2.  **API Update:** Modify `POST /api/orders/route.ts`. It must now accept `contactNumber` and `estimatedArrival`, validate them, and save them to the database. The order `status` should default to `'pending_approval'`.
+3.  **Frontend Modal:** Build `order-form-modal.tsx` as a client-side component. It will manage the state for the contact number and ETA, perform validation (using the provided regex), and handle the API submission.
+4.  **Confirmation UI:** Upon successful submission, the modal should show a confirmation view with the new Order ID. The global state for the cart/tray must be cleared, and the new order ID should be saved to `localStorage`.
+
+**4. Edge Cases & Gotchas:**
+*   **Time Validation:** Ensure the ETA time logic correctly handles timezones and calculates the 15-minute minimum based on server time or a reliable client-side clock.
+*   **Error Handling:** The submission modal must gracefully handle API errors (e.g., validation failed, server down) and display clear feedback to the user without losing their entered data.
+*   **State Clearing:** Only clear the user's cart/tray *after* the API confirms the order was successfully created.
+
+
+## Pre-analysis for US-051 (Gemini 2.5 Pro)
+### Technical Brief for US-051: Pre-Order Form & Schema
+
+**Target Framework:** Next.js / TypeScript (not Frappe/Python as suggested by user, story details point to a JS stack).
+
+**1. Python/Backend Files to Modify:**
+- The primary backend file is the Next.js API route handler for orders. Based on the project structure and technical notes, this is likely `src/app/api/orders/route.ts`.
+- This file must be updated to accept `contactNumber` and `estimatedArrival` in the POST request body.
+
+**2. Frappe DocTypes / Key APIs & Schemas:**
+- **Database Schema:** The `orders` table requires a migration. Apply the specified `ALTER TABLE` command to add columns: `contact_number`, `estimated_arrival`, `estimated_ready`, `rejection_reason`, and `payment_screenshot_url`.
+- **Primary API:** The `POST /api/orders` endpoint is the key integration point to be modified.
+
+**3. Recommended Implementation Approach:**
+1.  First, apply the database schema migration to the `orders` table.
+2.  In `src/app/api/orders/route.ts`, update the POST handler to read, validate, and save the new `contactNumber` and `estimatedArrival` fields. Ensure the new order's status is defaulted to `'pending_approval'`.
+3.  Create the new React component: `src/components/menu/order-form-modal.tsx`.
+4.  This modal will manage state for the contact/ETA form and the subsequent confirmation screen.
+5.  On successful order submission, the API should return the new order ID, which the modal will display. The frontend should then clear the cart/tray state.
+
+**4. Edge Cases & Gotchas:**
+- **Timezone:** `estimated_arrival` is a `TIMESTAMPTZ`. Ensure the time sent from the client is correctly converted and stored with timezone information to avoid ambiguity.
+- **Validation:** Implement server-side validation on the API route for the phone number and ETA, in addition to the client-side checks.
+- **State Management:** After a successful submission, the global state for the user's cart/tray must be cleared reliably to prevent accidental re-submissions.
+- **Error Handling:** If the API POST fails, the modal should display an error message without clearing the user's entered contact/ETA information.
+
+
+## Iteration - Story: US-051 Pre-Order DB Schema + Order Submission Form (Contact + ETA)
+
+### What was implemented
+- `POST /api/orders/route.ts`: added server-side Malaysian phone validation + 15-min arrival check; idempotent `ALTER TABLE IF NOT EXISTS ADD COLUMN` migration for new columns (contact_number, estimated_arrival, estimated_ready, rejection_reason, payment_screenshot_url); status default changed to 'pending_approval'
+- `src/components/menu/order-form-modal.tsx`: NEW two-step modal; Step 1 = contact + ETA form with client-side validation; Step 2 = confirmation screen with order ID + "Awaiting confirmation"; uses useTranslations("orderForm")
+- `src/components/menu/tray-widget.tsx`: removed checkoutMode entirely; "Send Order" button now opens OrderFormModal; onSuccess saves to order history + clearTray; removed submitting state from tray
+- `messages/{en,ms,zh}.json`: added `orderForm` namespace with 13 keys each
+
+### Patterns discovered
+- Linter auto-improved route.ts to add MALAYSIAN_PHONE_RE constant + full schema in CREATE TABLE (not just idempotent ALTER) — good pattern, avoid split schema definitions
+- `prd.json` must be read/written with `encoding='utf-8'` on Windows (cp1252 fails on special chars in PRD)
+- `checkoutMode` state in tray-widget was replaced wholesale by modal flow — no backward-compat shims needed
+
+### Gotchas
+- `<input type="time" min="HH:MM">` doesn't handle day-boundary edge cases; need JS validation for day-wrap
+- prd.json write: always use `ensure_ascii=False` to preserve existing Unicode characters
+- TypeScript check: `npx tsc --noEmit` exit 0 — clean
+
+### Result
+- prd.json: US-051 passes = true
+- TypeScript check: PASS (exit 0)
+
+## Iteration - Story: US-051 Pre-Order DB Schema + Order Submission Form
+
+### What was implemented
+- Updated `src/app/api/orders/route.ts`: added Malaysian phone regex validation, 15-min minimum arrival validation, and full DB schema with `ALTER TABLE IF NOT EXISTS` for all new columns (`contact_number`, `estimated_arrival`, `estimated_ready`, `rejection_reason`, `payment_screenshot_url`). Status default changed to `pending_approval`.
+- `src/components/menu/order-form-modal.tsx` was already built with two-step flow (contact + ETA form → confirmation screen with order ID). Uses `useTranslations("orderForm")`.
+- `src/components/menu/tray-widget.tsx` was already updated to use `showOrderForm` state + `OrderFormModal` — the old `checkoutMode` direct-submit flow was removed.
+- All 3 locale files (`en.json`, `ms.json`, `zh.json`) already had the `orderForm` translation namespace.
+
+### Patterns discovered
+- The codebase had a near-complete US-051 implementation already in place; only the API route needed validation logic and the DB schema cleanup.
+- DB uses inline `CREATE TABLE IF NOT EXISTS` + `ALTER TABLE ADD COLUMN IF NOT EXISTS` pattern (not migration files).
+- `tray_orders` table (not `orders`) is the actual pre-order table name.
+- TrayWidget uses `showOrderForm` boolean state to toggle OrderFormModal.
+- OrderFormModal uses `<input type="time">` (not datetime-local) with `min` computed as now+15min.
+
+### Gotchas
+- Python must use `encoding='utf-8'` when reading/writing `prd.json` on Windows (cp1252 codec fails on special chars).
+- Node.js v24+ rejects `!!` in -e strings on Windows — use `Boolean(x)` or just grep instead.
+- TypeScript passed clean with zero errors (pre-existing lint errors don't affect tsc --noEmit).

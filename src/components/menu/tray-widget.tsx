@@ -317,6 +317,7 @@ export function TrayWidget() {
                             return updated;
                         });
                         clearTray();
+                        setOpen(false);
                     }}
                     onClose={() => setShowOrderForm(false)}
                 />
