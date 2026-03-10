@@ -151,6 +151,37 @@ export function MenuGrid({
     }
   }, [highlights]);
 
+  const handleRemoveHighlight = useCallback(async (itemId: string, itemCategories: string[]) => {
+    const prevHighlights = { ...highlights };
+    // Optimistic update: remove this item from highlights for its categories
+    const newHighlights = { ...highlights };
+    for (const cat of itemCategories) {
+      if (newHighlights[cat] === itemId) {
+        delete newHighlights[cat];
+      }
+    }
+    setHighlights(newHighlights);
+    setHighlightError(null);
+
+    try {
+      const categoriesToClear = itemCategories.filter((cat) => prevHighlights[cat] === itemId);
+      await Promise.all(
+        categoriesToClear.map(async (cat) => {
+          const res = await fetch("/api/admin/highlights", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ category: cat }),
+          });
+          if (!res.ok) throw new Error("Failed to remove highlight");
+        })
+      );
+    } catch {
+      // Rollback on error
+      setHighlights(prevHighlights);
+      setHighlightError("Failed to remove Chef's Pick — change reverted");
+    }
+  }, [highlights]);
+
   // Build category sections for grouped view (used when no search text)
   // Note: isFlatView is used in effects below — computed after categorySections
   const categorySections = useMemo(() => {
@@ -349,6 +380,8 @@ export function MenuGrid({
                     isHighlighted={isHighlighted}
                     isFavorited={isFavorite(item.code)}
                     onToggleFavorite={() => toggleFavorite(item.code)}
+                    isAdmin={isAdmin}
+                    onRemoveHighlight={isHighlighted ? () => handleRemoveHighlight(item.id, item.categories) : undefined}
                   />
                 </FadeUp>
               );
@@ -406,6 +439,8 @@ export function MenuGrid({
                           isHighlighted={isHighlighted}
                           isFavorited={isFavorite(item.code)}
                           onToggleFavorite={() => toggleFavorite(item.code)}
+                          isAdmin={isAdmin}
+                          onRemoveHighlight={isHighlighted ? () => handleRemoveHighlight(item.id, item.categories) : undefined}
                         />
                       </FadeUp>
                     );

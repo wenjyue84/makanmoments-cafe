@@ -32,9 +32,11 @@ interface MenuCardProps {
   isHighlighted?: boolean;
   isFavorited?: boolean;
   onToggleFavorite?: () => void;
+  isAdmin?: boolean;
+  onRemoveHighlight?: () => void;
 }
 
-export function MenuCard({ item, priority = false, isHighlighted = false, isFavorited = false, onToggleFavorite }: MenuCardProps) {
+export function MenuCard({ item, priority = false, isHighlighted = false, isFavorited = false, onToggleFavorite, isAdmin = false, onRemoveHighlight }: MenuCardProps) {
   const locale = useLocale();
   const tc = useTranslations("common");
   const { addItem, decrementItem, items } = useTray();
@@ -118,9 +120,23 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
             </div>
           )}
           {isHighlighted && (
-            <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-amber-900 shadow">
-              ★ Chef&apos;s Pick
-            </span>
+            isAdmin && onRemoveHighlight ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRemoveHighlight();
+                }}
+                className="absolute left-2 top-2 rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-amber-900 shadow cursor-pointer hover:opacity-75 transition-opacity"
+                title="Click to remove from Chef's Pick"
+              >
+                ★ Chef&apos;s Pick ✕
+              </button>
+            ) : (
+              <span className="absolute left-2 top-2 rounded-full bg-amber-400 px-2.5 py-0.5 text-xs font-bold text-amber-900 shadow">
+                ★ Chef&apos;s Pick
+              </span>
+            )
           )}
           {!isHighlighted && item.featured && (
             <span className="absolute left-2 top-2 rounded-full bg-primary px-2.5 py-0.5 text-xs font-medium text-primary-foreground">

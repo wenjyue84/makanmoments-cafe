@@ -39,3 +39,15 @@ export async function POST(request: NextRequest) {
   `;
   return NextResponse.json({ ok: true, category, itemId });
 }
+
+// DELETE /api/admin/highlights — body: { category }
+export async function DELETE(request: NextRequest) {
+  await ensureTable();
+  const body = await request.json() as { category?: string };
+  const { category } = body;
+  if (!category) {
+    return NextResponse.json({ error: "category required" }, { status: 400 });
+  }
+  await sql`DELETE FROM category_highlights WHERE category = ${category}`;
+  return NextResponse.json({ ok: true, category });
+}
