@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
   images: {
     formats: ["image/avif", "image/webp"],
     minimumCacheTTL: 86400,
+    localPatterns: [
+      { pathname: "/images/**", search: "" },
+      { pathname: "/images/**", search: "v=*" },
+    ],
     remotePatterns: [
       { protocol: "https", hostname: "*.amazonaws.com" },
       { protocol: "https", hostname: "images.unsplash.com" },
