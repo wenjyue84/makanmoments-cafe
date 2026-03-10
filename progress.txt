@@ -10354,3 +10354,52 @@ This user story describes a frontend issue in a React/TypeScript file, not a Fra
 
 ### Gotchas
 - prd.json uses utf-8 encoding — read/write with `encoding='utf-8'` in Python
+## Iteration 2 - Tue, Mar 10, 2026 11:23:54 PM
+Completed: Fix React Key Prop Warning in AdminMenuTable (ID: US-112) in 4m
+
+
+## Pre-analysis for US-113 (Gemini 2.5 Pro)
+Here is the technical brief for user story US-113.
+
+**Project:** Makan Moments Cafe (Next.js)
+**User Story:** US-113: Fix US-042 Test — Translate Route Source Must Contain Literal String key
+
+### Technical Brief
+
+This task addresses a brittle test (US-042) that performs a static source code check instead of a functional one. The test requires the literal string `"translation"` (including quotes) to be present in an API route handler's source file.
+
+**File to Modify:**
+*   `src/app/api/admin/menu/translate/route.ts`
+
+**Framework & API Concepts:**
+*   Next.js App Router: API Route Handler
+*   JavaScript object literals and property shorthand
+*   `Response.json()` Web API
+
+**Implementation Approach:**
+1.  Navigate to the specified `route.ts` file.
+2.  Locate the `POST` request handler function.
+3.  Find the return statement: `return Response.json({ translation });`
+4.  Modify this line to use an explicit, quoted key: `return Response.json({ "translation": translation });`
+
+**Gotchas & Verification:**
+*   The core issue is the test's implementation, not a functional bug. It statically checks the file content for a quoted key.
+*   The change is purely syntactic. The API's JSON output will remain identical, preserving the `{ translation: ... }` structure as required by the acceptance criteria.
+*   Ensure the `nf-042-admin-translation-fields` test passes after the change.
+
+
+## Iteration N - Story: US-112 - Fix React Key Prop Warning in AdminMenuTable
+
+### What was implemented
+- Verified all `.map()` calls in `src/components/admin/admin-menu-table.tsx`
+- All 17 `key=` props were already present in the file
+- No changes needed — story was already implemented in a prior session
+
+### Patterns discovered
+- All list renderings in admin-menu-table.tsx already have stable keys: `key={item.id}`, `key={cat}`, `key={d}`, `key={day}`
+- Fragment key used for grouped table rows: `<Fragment key={cat}>`
+- TypeScript check: `npx tsc --noEmit` passes cleanly with 0 errors
+
+### Gotchas
+- Story was pre-implemented; prd.json just needed `passes: true`
+- Use utf-8 encoding when reading/writing prd.json on Windows (cp1252 fails due to unicode chars)
