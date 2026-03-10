@@ -28,18 +28,18 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle }: Hero
           {/* Mobile hero image — FIRST so food is above the fold on mobile */}
           <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-2xl lg:hidden animate-fade-in">
             <Image
-              src="/images/hero/featured-dish.webp"
-              alt="Seafood Tom Yum — signature spicy soup at Makan Moments Cafe"
+              src="/images/hero/hero-mobile.webp"
+              alt="RM55.90 Steamed Fish Promo Set — premium Thai-style steamed fish at Makan Moments Cafe"
               fill
               className="object-cover img-scale"
               sizes="100vw"
               priority
               placeholder="blur"
-              blurDataURL={HERO_BLUR.featuredDish}
+              blurDataURL={HERO_BLUR.heroMobile}
             />
             {/* /delight: Overlay label on mobile image */}
             <div className="absolute bottom-3 left-3 rounded-full bg-background/80 px-3 py-1 text-xs font-medium backdrop-blur-sm">
-              Seafood Tom Yum
+              RM55.90 Steamed Fish Promo
             </div>
           </div>
 

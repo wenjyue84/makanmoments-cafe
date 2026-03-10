@@ -1,7 +1,10 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import { HERO_BLUR } from "@/data/hero-blur";
 import type { MenuItem } from "@/types/menu";
 import { MenuCard } from "@/components/menu/menu-card";
 
@@ -108,6 +111,23 @@ export function HomeInlineEditor({ content, featuredItems }: HomeInlineEditorPro
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/8 via-background to-accent/15">
         <div className="mx-auto max-w-6xl px-4 py-8 sm:py-16">
           <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-center lg:gap-16">
+            {/* Mobile hero image — FIRST so food is above the fold on mobile */}
+            <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-2xl lg:hidden animate-fade-in">
+              <Image
+                src="/images/hero/hero-mobile.webp"
+                alt="RM55.90 Steamed Fish Promo Set — premium Thai-style steamed fish at Makan Moments Cafe"
+                fill
+                className="object-cover img-scale"
+                sizes="100vw"
+                priority
+                placeholder="blur"
+                blurDataURL={HERO_BLUR.heroMobile}
+              />
+              <div className="absolute bottom-3 left-3 rounded-full bg-background/80 px-3 py-1 text-xs font-medium backdrop-blur-sm">
+                RM55.90 Steamed Fish Promo
+              </div>
+            </div>
+
             <div>
               {/* Hero title */}
               <div className="mb-3">
@@ -168,11 +188,64 @@ export function HomeInlineEditor({ content, featuredItems }: HomeInlineEditorPro
               </div>
             </div>
 
-            <div className="hidden lg:block">
-              <div className="rounded-xl border border-dashed border-border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
-                Hero images are managed via the filesystem
-                <br />
-                <code className="text-xs">/public/images/hero/</code>
+            {/* Desktop photo grid */}
+            <div className="relative hidden w-full lg:block lg:pl-8">
+              <div className="grid grid-cols-2 gap-5">
+                <div className="flex flex-col gap-5 pt-10">
+                  <div
+                    className="relative h-[230px] w-full overflow-hidden rounded-2xl shadow-xl hover-lift"
+                    style={{ "--delay": "0ms" } as CSSProperties}
+                  >
+                    <Image
+                      src="/images/hero/featured-dish.webp"
+                      alt="Seafood Tom Yum — signature spicy soup at Makan Moments Cafe"
+                      fill
+                      className="object-cover img-scale"
+                      sizes="(max-width: 1024px) 50vw, 300px"
+                      priority
+                      placeholder="blur"
+                      blurDataURL={HERO_BLUR.featuredDish}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                    <span className="absolute bottom-2 left-3 text-xs font-medium text-white/90">Tom Yum</span>
+                  </div>
+                  <div
+                    className="relative h-[170px] w-full overflow-hidden rounded-2xl shadow-xl hover-lift"
+                    style={{ "--delay": "60ms" } as CSSProperties}
+                  >
+                    <Image
+                      src="/images/hero/pineapple-fried-rice.webp"
+                      alt="Pineapple Fried Rice — tropical Thai favourite"
+                      fill
+                      className="object-cover img-scale"
+                      sizes="(max-width: 1024px) 50vw, 300px"
+                      priority
+                      placeholder="blur"
+                      blurDataURL={HERO_BLUR.pineappleFriedRice}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/25 to-transparent" />
+                    <span className="absolute bottom-2 left-3 text-xs font-medium text-white/90">Pineapple Rice</span>
+                  </div>
+                </div>
+                <div className="flex flex-col pb-10">
+                  <div
+                    className="relative h-[420px] w-full overflow-hidden rounded-2xl shadow-xl hover-lift"
+                    style={{ "--delay": "120ms" } as CSSProperties}
+                  >
+                    <Image
+                      src="/images/hero/green-curry-rice.webp"
+                      alt="Thai Green Curry Rice — rich aromatic curry at Makan Moments Cafe"
+                      fill
+                      className="object-cover img-scale"
+                      sizes="(max-width: 1024px) 50vw, 380px"
+                      priority
+                      placeholder="blur"
+                      blurDataURL={HERO_BLUR.greenCurryRice}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+                    <span className="absolute bottom-2 left-3 text-xs font-medium text-white/90">Green Curry Rice</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
