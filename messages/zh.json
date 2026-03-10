@@ -160,7 +160,10 @@
     "readySoon": "即将完成！",
     "titleExpired": "订单已过期",
     "expiredTitle": "您的订单已过期",
-    "expiredMsg": "30分钟内未收到付款。请重新下单。"
+    "expiredMsg": "30分钟内未收到付款。请重新下单。",
+    "maxRetriesTitle": "找不到订单",
+    "maxRetriesMsg": "我们无法找到您的订单。请直接联系咖啡馆。",
+    "contactCafe": "通过WhatsApp联系咖啡馆"
   },
   "orderForm": {
     "title": "完成预订",

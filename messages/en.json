@@ -160,7 +160,10 @@
     "readySoon": "Ready soon!",
     "titleExpired": "Order Expired",
     "expiredTitle": "Your order has expired",
-    "expiredMsg": "No payment was received within 30 minutes. Please start a new order."
+    "expiredMsg": "No payment was received within 30 minutes. Please start a new order.",
+    "maxRetriesTitle": "Order Not Found",
+    "maxRetriesMsg": "We could not find your order. Please contact the cafe directly.",
+    "contactCafe": "Contact Cafe on WhatsApp"
   },
   "orderForm": {
     "title": "Complete Your Pre-Order",

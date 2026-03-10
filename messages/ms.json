@@ -160,7 +160,10 @@
     "readySoon": "Hampir siap!",
     "titleExpired": "Pesanan Tamat",
     "expiredTitle": "Pesanan anda telah tamat tempoh",
-    "expiredMsg": "Tiada pembayaran diterima dalam masa 30 minit. Sila buat pesanan baru."
+    "expiredMsg": "Tiada pembayaran diterima dalam masa 30 minit. Sila buat pesanan baru.",
+    "maxRetriesTitle": "Pesanan Tidak Dijumpai",
+    "maxRetriesMsg": "Kami tidak dapat mencari pesanan anda. Sila hubungi kafe secara terus.",
+    "contactCafe": "Hubungi Kafe di WhatsApp"
   },
   "orderForm": {
     "title": "Lengkapkan Pra-Pesanan Anda",

@@ -266,6 +266,9 @@ function StepBar({
   );
 }
 
+const MAX_FAIL_COUNT = 40;
+const TERMINAL_STATUSES: OrderStatus[] = ["ready", "rejected", "cancelled", "expired"];
+
 export default function OrderStatusPage() {
   const params = useParams();
   const orderId = params.id as string;
@@ -277,28 +280,56 @@ export default function OrderStatusPage() {
   const [loading, setLoading] = useState(true);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [countdown, setCountdown] = useState<string | null>(null);
+  const [notFound, setNotFound] = useState(false);
+
+  const failCount = useRef(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopPolling = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
 
   const fetchOrder = useCallback(async () => {
     try {
       const res = await fetch(`/api/orders/${orderId}`, { cache: "no-store" });
-      if (res.status === 404) {
-        setError(t("notFound"));
-        return;
-      }
       if (!res.ok) {
-        setError(t("fetchError"));
+        failCount.current += 1;
+        if (failCount.current >= MAX_FAIL_COUNT) {
+          stopPolling();
+          setNotFound(true);
+          setLoading(false);
+        } else if (res.status === 404) {
+          setError(t("notFound"));
+        } else {
+          setError(t("fetchError"));
+        }
         return;
       }
+      // Successful response — reset fail counter
+      failCount.current = 0;
       const data = (await res.json()) as OrderData;
       setOrder(data);
       setLastUpdated(new Date());
       setError(null);
+      // Stop polling on terminal statuses
+      if (TERMINAL_STATUSES.includes(data.status)) {
+        stopPolling();
+      }
     } catch {
-      setError(t("fetchError"));
+      failCount.current += 1;
+      if (failCount.current >= MAX_FAIL_COUNT) {
+        stopPolling();
+        setNotFound(true);
+      } else {
+        setError(t("fetchError"));
+      }
     } finally {
       setLoading(false);
     }
-  }, [orderId, t]);
+  }, [orderId, t, stopPolling]);
 
   // Fetch TnG settings once on mount
   useEffect(() => {
@@ -310,9 +341,9 @@ export default function OrderStatusPage() {
 
   useEffect(() => {
     void fetchOrder();
-    const interval = setInterval(() => void fetchOrder(), 15_000);
-    return () => clearInterval(interval);
-  }, [fetchOrder]);
+    intervalRef.current = setInterval(() => void fetchOrder(), 15_000);
+    return () => stopPolling();
+  }, [fetchOrder, stopPolling]);
 
   // Countdown timer for preparing status
   const estimatedReady = order?.estimatedReady ?? null;
@@ -344,6 +375,32 @@ export default function OrderStatusPage() {
         <div className="flex flex-col items-center gap-3 text-stone-500">
           <Clock className="h-10 w-10 animate-spin" />
           <p>{t("loading")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (notFound) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center px-4">
+        <div className="rounded-2xl border border-stone-200 bg-white p-8 text-center shadow-sm">
+          <XCircle className="mx-auto mb-3 h-10 w-10 text-stone-400" />
+          <p className="font-semibold text-stone-700">{t("maxRetriesTitle")}</p>
+          <p className="mt-1 text-sm text-stone-500">{t("maxRetriesMsg")}</p>
+          <Link
+            href={`https://wa.me/${phoneToWaMe("012-708 8789")}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-4 inline-flex min-h-[44px] items-center gap-2 rounded-xl bg-amber-600 px-5 py-2 text-sm font-semibold text-white hover:bg-amber-700"
+          >
+            <PhoneCall className="h-4 w-4" />
+            {t("contactCafe")}
+          </Link>
+          <div className="mt-3">
+            <Link href="/" className="text-sm text-amber-700 underline">
+              {t("backHome")}
+            </Link>
+          </div>
         </div>
       </div>
     );

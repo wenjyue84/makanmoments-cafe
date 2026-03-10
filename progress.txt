@@ -10978,3 +10978,89 @@ Refactor admin API routes to use a shared helper for standardized JSON error and
 ## Iteration 1 - Wed, Mar 11, 2026  1:53:50 AM
 Completed: Standardize API Error Response Format with createErrorResponse Helper (ID: US-131) in 5m
 
+## Iteration 2 - Wed, Mar 11, 2026  1:54:41 AM
+Completed: Standardize API Error Response Format with createErrorResponse Helper (ID: US-131) in 4m
+
+
+## Pre-analysis for US-132 (Gemini 2.5 Pro)
+This technical brief is for a **Next.js/TypeScript** implementation, based on the specific file paths and technical notes in the provided JSON.
+
+---
+
+### **Technical Brief: US-132 - Order Status Polling Limit**
+
+**1. Primary File to Modify:**
+*   `src/app/[locale]/order/[id]/page.tsx`
+
+**2. Key Framework/Library Concepts:**
+*   **React Hooks:** `useRef` to persist the failure counter across re-renders, `useState` to manage the order status (including a new `'not_found'` state), and `useEffect` to handle the `setInterval` logic for polling.
+*   **Next.js:** This is a client-side implementation within a Next.js page component (`'use client'`).
+
+**3. Recommended Implementation Approach:**
+*   In the component, create a ref: `const failCount = useRef(0);`.
+*   Modify the `useEffect` hook that contains the polling `setInterval`.
+*   Inside the fetch logic:
+    *   On a successful API response, reset the counter: `failCount.current = 0;`.
+    *   In the `catch` block or after checking for a non-ok response, increment the counter: `failCount.current++;`.
+    *   If `failCount.current` reaches the limit (40), clear the interval and update the component's state to show a "not found" message.
+*   Ensure the `useEffect` also clears the interval if the returned order status is terminal ('ready', 'rejected').
+
+**4. Edge Cases & Gotchas:**
+*   **Cleanup:** The `useEffect` hook must return a cleanup function (`() => clearInterval(intervalId);`) to prevent memory leaks when the component unmounts.
+*   **Test-Specific Limit:** The AC mentions a 2-poll limit for testing. The max retry value should be a constant that can be easily configured or replaced for tests.
+*   **UI State:** Add `'not_found'` to the union type for the status state variable to ensure type safety when rendering the new error message.
+
+
+## Pre-analysis for US-132 (Gemini 2.5 Pro)
+Here is a technical brief for the user story, tailored for a Frappe/Python developer.
+
+***
+
+### **Technical Brief: US-132 - Order Status Polling Limit**
+
+**Objective:** Implement a max-retry limit (40 attempts) for the client-side order status polling mechanism to prevent indefinite requests for non-existent or failed orders.
+
+**1. Primary Files to Modify:**
+*   **`lhdn_payroll_integration/doctype/sales_order/sales_order.js`**: The client-side JavaScript file for the `Sales Order` DocType. This is the most likely location for the polling logic (`setInterval` and `frappe.call`).
+*   **`lhdn_payroll_integration/doctype/sales_order/sales_order.py`**: The server-side controller. While the API logic may not change, this file defines the whitelisted `get_order_status` function being polled.
+
+**2. Frappe Components Involved:**
+*   **DocType:** `Sales Order` (or a similar custom DocType for orders).
+*   **Client Script:** The logic is purely client-side, using `frappe.call` to invoke a server method.
+*   **Controller Method:** A whitelisted Python function (e.g., `@frappe.whitelist def get_order_status(...)`) that the client script calls.
+
+**3. Recommended Implementation:**
+1.  In `sales_order.js`, locate the `setInterval` that triggers the status poll.
+2.  Initialize a counter variable outside the interval's scope: `let retry_count = 0;`.
+3.  In the `frappe.call` error/failure callback, increment `retry_count`.
+4.  If `retry_count >= 40`, stop polling using `clearInterval()` and use `frm.dashboard.set_headline_alert` or update a custom HTML field to display the "Order not found" message.
+5.  On a successful `frappe.call`, reset `retry_count = 0`.
+6.  Also in the success callback, if the returned status is terminal ('ready', 'rejected'), call `clearInterval()` to stop polling.
+
+**4. Gotchas & Edge Cases:**
+*   **State Management:** Ensure the `retry_count` and interval ID are managed correctly within the script's scope to prevent leaks.
+*   **Cleanup:** The `setInterval` should be cleared in the `frm.page.on_page_leave` event to prevent background polling after the user navigates away.
+*   **Error vs. Not Found:** The API failure logic should differentiate between a server error (5xx) and a "not found" response (404) if the API provides it.
+*   **Configuration:** Avoid hardcoding "40". Consider fetching this limit from a `Custom Settings` DocType to make it configurable.
+
+
+## Iteration N - Story: Add Max-Retry Limit to Order Status Polling (US-132)
+
+### What was implemented
+- Added `failCount = useRef(0)` and `intervalRef = useRef<...>(null)` to `src/app/[locale]/order/[id]/page.tsx`
+- Added `notFound` state (useState(false)) to show a "not found" UI after max retries
+- Added `stopPolling()` callback that clears `intervalRef`
+- Updated `fetchOrder`: increments `failCount.current` on non-OK/catch; resets to 0 on success; calls `stopPolling()` when failCount >= 40 and sets `notFound = true`; calls `stopPolling()` on terminal statuses (ready, rejected, cancelled, expired)
+- Stores interval in `intervalRef` instead of a local variable so it can be cleared from within `fetchOrder`
+- Added `notFound` render block with WhatsApp contact link and "back home" link
+- Added `maxRetriesTitle`, `maxRetriesMsg`, `contactCafe` keys to all 3 locale files (en/ms/zh)
+- Added `MAX_FAIL_COUNT = 40` and `TERMINAL_STATUSES` constants before the component
+
+### Patterns discovered
+- Interval must be stored in a ref (not local variable) to be clearable from inside async callbacks
+- `useCallback` with `stopPolling` as dependency in `fetchOrder` keeps the dependency chain clean
+- The `finally { setLoading(false) }` must still fire on first load even when we detect max retries
+
+### Gotchas
+- TypeScript check passes cleanly (no errors in the modified file)
+- Pre-existing lint errors in repo — don't try to fix them
