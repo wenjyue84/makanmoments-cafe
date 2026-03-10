@@ -6426,3 +6426,23 @@ Completed: Mobile Homepage: Prominent 'View Menu' CTA Above Fold (ID: US-072)
 - Tailwind `max-h-[80vh]` + `overflow-hidden` on section: safe since content fits within 80vh after layout changes
 - `sm:max-h-none` needed to remove the mobile-only max-height constraint on tablet/desktop
 - TypeScript: 0 errors (no type changes needed — all Tailwind className changes)
+
+## Iteration - Story: US-072 Mobile Homepage: Prominent 'View Menu' CTA Above Fold
+
+### What was implemented
+- `src/components/home/hero-section.tsx` updated (changes were partially in place from a prior incomplete iteration)
+- Section: `max-h-[80vh] sm:max-h-none` keeps hero within 80vh on mobile
+- Mobile hero image: `aspect-[2/1]` (was `aspect-[4/3]`) — saves ~100px height
+- H1 reduced: `text-4xl sm:text-6xl lg:text-7xl` (was `text-5xl`)
+- Padding reduced: `py-3 sm:py-16 lg:py-24` (was `py-8`)
+- View Menu button: `w-full sm:w-auto min-h-[52px] text-lg font-bold bg-orange-500 hover:bg-orange-600 text-white rounded-xl border-0 shadow-md`
+- Secondary "Order Now" button: `hidden sm:inline-flex` (hidden on mobile)
+- Flex column on mobile: `flex-col gap-3 sm:flex-row`
+
+### Patterns discovered
+- hero-section.tsx had been partially edited by a prior failed iteration — verify file state before editing
+- On 390px: image at ~195px + badge + h1 at ~86px + tagline + subtitle + CTA = ~540px, well above ~750px fold
+
+### Gotchas
+- `max-h-[80vh]` on section could clip content; make sure all content fits within 80vh naturally
+- CLAUDE.md rule: never hide hero imagery; only reduce its aspect ratio on mobile
