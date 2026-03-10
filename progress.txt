@@ -611,3 +611,86 @@ This is a Quality Assurance story. No new features will be added. The primary go
 - Security hook blocks heredoc content containing certain strings — use Edit/Write tools for progress.txt updates
 - curl piped directly to python is blocked by security hook — save to file first, then process separately
 
+## Iteration 11 - Tue, Mar 10, 2026  3:23:37 AM
+Completed: Chrome DevTools Verification for All Features (ID: US-010) in 19m
+
+
+## Pre-analysis for US-011 (Gemini 2.5 Pro)
+This user story describes a frontend change for a React/Next.js application, not a Frappe/Python one. The technical notes clearly reference `.tsx` components and CSS classes.
+
+Here is the technical brief based on the actual story content for a **React/Next.js** implementation:
+
+**Project:** Makan Moments Cafe (Frontend)
+
+**Objective:** Implement US-011, highlighting a "Chef's Pick" item in each menu category.
+
+**1. Primary Files to Modify/Create:**
+*   `src/components/menu/menu-grid.tsx`: Add logic here to find and separate the Chef's Pick item from the others within each category group.
+*   `src/components/menu/chef-pick-card.tsx` **(New File)**: Create this new, larger presentational component for the hero item.
+*   `src/components/menu/menu-card.tsx`: This existing component will be used for rendering the standard grid items.
+
+**2. Key Components & Data:**
+*   The logic will operate on the `menu` data prop, which is likely an array of categories, each containing an array of menu items.
+*   It assumes an item object has a boolean `isChefsPick` property (or similar).
+
+**3. Implementation Approach:**
+*   In `menu-grid.tsx`, map over each category.
+*   For each category's items, find the `isChefsPick: true` item. If none exists, use the first item as the default hero.
+*   Render this single "hero" item using the new `<ChefPickCard />`.
+*   Render the remaining items below it in the standard grid layout, using `<MenuCard />`.
+*   The `<ChefPickCard />` should apply larger visual styles (image, text, and badge) as per the technical notes.
+
+**4. Gotchas & Edge Cases:**
+*   **Fallback:** The logic must correctly select the *first* item if no Chef's Pick is explicitly set in a category.
+*   **Empty Categories:** Ensure the component renders gracefully if a category has no items.
+*   **Data Integrity:** Handle the rare case where data might contain multiple Chef's Picks for one category (e.g., just pick the first one found).
+*   **Styling:** Pay close attention to the responsive layout, ensuring the hero card is full-width on mobile but spans two columns on desktop without breaking the grid.
+
+
+## Pre-analysis for US-011 (Gemini 2.5 Pro)
+Based on the user story's technical notes, this is a **Next.js/React** feature, not a Frappe/Python one. The implementation will be on the frontend.
+
+Here is the technical brief for a frontend developer:
+
+**Objective:** Implement a hero card display for the "Chef's Pick" item within each menu category.
+
+**Files to Modify/Create:**
+*   `src/components/menu/menu-grid.tsx`: Logic will be added here to separate the featured item from the rest.
+*   `src/components/menu/chef-pick-card.tsx` (New File): A new, larger presentation component for the featured item.
+*   `src/components/menu/menu-card.tsx`: The existing card, which will be used for all non-featured items.
+
+**Data & State:**
+*   This implementation relies on a boolean field (e.g., `isChefsPick` or `isHighlighted`) on the menu item data object to identify the featured dish for a category.
+
+**Implementation Approach:**
+1.  In `menu-grid.tsx`, for each category's item list, find the one item where `isChefsPick` is true.
+2.  Render this single item using the new `<ChefPickCard />` component at the top of the section.
+3.  Filter the original list to exclude the Chef's Pick item.
+4.  Render the remaining items below the hero card using the existing `<MenuCard />` in a standard grid.
+5.  The `<ChefPickCard />` should feature a larger image (e.g., `aspect-video`), bigger text, and a distinct visual badge.
+
+**Edge Cases & Gotchas:**
+*   **Default Hero:** If no item in a category has the `isChefsPick` flag, the logic must default to using the *first* item as the hero.
+*   **Responsiveness:** The `ChefPickCard` must be full-width on mobile and span two columns on desktop without breaking the layout.
+*   **Styling:** Ensure the "Chef's Pick" badge and larger styling are visually distinct and don't cause cumulative layout shift (CLS).
+
+
+## Iteration 12 - Story: Chef's Pick Item Displayed Bigger at Top of Each Category (US-011)
+
+### What was implemented
+- CREATED `src/components/menu/chef-pick-card.tsx` — full-width hero card with aspect-video image, gold "★ Chef's Pick" badge (larger), bigger text (text-xl title, text-base description, line-clamp-3), dietary badges, and add-to-tray button; reuses RecipeModal like MenuCard
+- UPDATED `src/components/menu/menu-grid.tsx` — changed from flat grid to category-grouped sections when not searching:
+  - `categorySections` memo: groups filtered items by active categories; picks highlighted item as chef's pick (fallback: first item); separates rest into regular grid
+  - When `search` is non-empty: falls back to flat grid (search results don't need category grouping)
+  - Each section: category heading (`<h2>`), ChefPickCard (full-width), then `grid-cols-2 sm:grid-cols-3` for remaining items
+  - Admin mode: uses EditableMenuCard for the chef's pick slot with `isHighlighted={true}`
+
+### Patterns discovered
+- `MenuItem` type uses `categories: string[]` (plural, multi-category array) — items can belong to multiple categories
+- `highlights` Record<string, string> maps category name → item.id for chef's pick; same pattern used throughout
+- Items can appear in multiple category sections (e.g., "Thai Mains" and "Rice Dishes") — this is intentional for menu browsing
+- `sectionIdx === 0` passed as `priority` to first section's chef's pick for LCP optimization
+
+### Gotchas
+- prd.json has unicode chars (emoji); must open with `encoding='utf-8'` in Python
+- TypeScript check passes clean (npx tsc --noEmit exits 0)

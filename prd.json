@@ -302,6 +302,808 @@
       ],
       "estimatedComplexity": "medium",
       "passes": true
+    },
+    {
+      "id": "US-011",
+      "title": "Chef's Pick Item Displayed Bigger at Top of Each Category",
+      "priority": 11,
+      "description": "On the menu page, the highlighted/Chef's Pick item for each category should appear as a prominent hero card at the top of its category section — larger than regular cards, with a full-width or wider layout. Regular items follow below in the standard grid. This makes the featured dish immediately obvious and visually striking.",
+      "acceptanceCriteria": [
+        "Each category section starts with the Chef's Pick item displayed as a wide/tall hero card (full-width on mobile, 2-column span on desktop)",
+        "The Chef's Pick card is visually larger: bigger image (aspect-[16/9] or [4/3] full-width), larger text, and a gold '★ Chef's Pick' badge",
+        "Regular items appear in the standard 2-3 column grid below the hero card",
+        "If no Chef's Pick is set for a category, the first item is used as default hero",
+        "Admin can still click 'Set as Highlight' on any card to change the Chef's Pick",
+        "Verify on mobile (390px): hero card full-width, no overflow"
+      ],
+      "technicalNotes": [
+        "Modify src/components/menu/menu-grid.tsx — for each category, separate first highlighted item from rest",
+        "Create src/components/menu/chef-pick-card.tsx — a larger variant of MenuCard",
+        "Chef pick card: full-width image (w-full aspect-video), larger font, gold ring + badge",
+        "Regular items below: standard grid (grid-cols-2 sm:grid-cols-3)",
+        "Pass isChefPick prop to card component for visual differentiation"
+      ],
+      "dependencies": [
+        "US-002"
+      ],
+      "estimatedComplexity": "small",
+      "passes": true
+    },
+    {
+      "id": "US-012",
+      "title": "Mobile-First Bottom Navigation: Category Filter and Search at Bottom",
+      "priority": 12,
+      "description": "On mobile, the category filter tabs and search bar on the menu page should be docked to the bottom of the screen (thumb-friendly zone) instead of the top. This follows mobile-first best practices where primary interactive controls are within thumb reach. On desktop (md+), keep the current top layout.",
+      "acceptanceCriteria": [
+        "On mobile (< 768px): category tabs and search bar appear as a sticky bottom bar",
+        "The bottom bar is above the tray widget button (z-index layered correctly)",
+        "On desktop (md+): category tabs and search remain at top as currently",
+        "Bottom bar has a subtle background blur (backdrop-blur) for readability over content",
+        "Category filter chips in the bottom bar are horizontally scrollable",
+        "No content is hidden behind the bottom bar (body has padding-bottom equal to bar height)",
+        "Verify at 390px: categories visible at bottom, scrollable, content not hidden"
+      ],
+      "technicalNotes": [
+        "Modify src/components/menu/menu-filter.tsx — add 'fixed bottom-[calc(4rem+env(safe-area-inset-bottom))] left-0 right-0' on mobile, remove on md+",
+        "Wrap with 'md:relative md:bottom-auto md:sticky md:top-0' for desktop fallback",
+        "Add 'pb-32 md:pb-0' to the menu page container to prevent content hidden behind sticky bar",
+        "Use 'overflow-x-auto' on the category chips row for horizontal scrolling",
+        "Ensure z-index: 40 (below tray button z-50 and chat z-50)"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-013",
+      "title": "Mobile Header: Language Selector Beside Hamburger, Replace Dark/Light Toggle",
+      "priority": 13,
+      "description": "On mobile, the header currently shows a dark/light toggle. Replace it with the language selector (EN/MS/ZH) positioned beside the hamburger menu icon. The dark/light toggle can still be accessible via the mobile menu drawer or a secondary location, but language selection takes priority since some customers cannot read the page without switching language first.",
+      "acceptanceCriteria": [
+        "On mobile (< 768px): header shows [Logo] [spacer] [Language Selector] [Hamburger]",
+        "The dark/light mode toggle is moved inside the mobile drawer menu or removed from mobile header",
+        "Language selector in mobile header is compact (shows current locale code or flag icon)",
+        "Tapping language selector opens a dropdown/sheet with EN/MS/ZH options",
+        "On desktop (md+): header layout unchanged — all items in nav bar",
+        "Verify at 390px: language selector visible beside hamburger, not dark/light toggle"
+      ],
+      "technicalNotes": [
+        "Read src/components/layout/header.tsx to understand current mobile header structure",
+        "Move ThemeToggle from mobile header to inside the mobile nav drawer",
+        "Add compact LocaleSwitcher in mobile header (before hamburger button)",
+        "Use short locale labels: 'EN', 'MY', 'ZH' or flag emoji: 🇬🇧/🇲🇾/🇨🇳",
+        "Ensure it does not overlap with Logo or push content off-screen"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-014",
+      "title": "Language Selector Icons for Each Language",
+      "priority": 14,
+      "description": "Replace text-only language labels (EN/MS/ZH) with icon-based selectors. Use flag emojis or SVG flag icons: 🇬🇧 for English, 🇲🇾 for Bahasa Malaysia, 🇨🇳 for Chinese. Show the flag icon alongside or instead of the text label. Works in both mobile header (US-013) and desktop nav.",
+      "acceptanceCriteria": [
+        "Language switcher shows flag icons: 🇬🇧 EN, 🇲🇾 MY, 🇨🇳 ZH (or equivalent SVG flags)",
+        "Current active language is visually indicated (bold, underline, or highlighted)",
+        "Flag icons are accessible (aria-label on each option)",
+        "Works in mobile header compact mode AND desktop nav dropdown",
+        "Consistent styling across light/dark themes",
+        "Verify: flag icons visible and correctly mapped to each language"
+      ],
+      "technicalNotes": [
+        "Use flag emojis (🇬🇧 🇲🇾 🇨🇳) — works cross-platform without external deps",
+        "Or use country-flag-icons npm package for SVG flags",
+        "Update locale switcher component (find in src/components/layout/header.tsx or a dedicated locale-switcher.tsx)",
+        "Add aria-label='Switch to English' etc. for accessibility"
+      ],
+      "dependencies": [
+        "US-013"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-015",
+      "title": "Blog Content: Use Only Operator-Perspective Posts, Remove Metadata",
+      "priority": 15,
+      "description": "The blog currently imports from content/blog/ (ai-posts folder). Replace with posts from the 'operator perspective' folders: C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\posts\\operations, stories, and promotions. Remove customer-perspective posts (engagement/, stories written as 'I was a customer'). Also strip post metadata sections (Post Type, Expected Engagement, Perspective, Response Strategy, References, Best Posting Time) — show only the main content. Copy chosen posts to content/blog/.",
+      "acceptanceCriteria": [
+        "content/blog/ contains only operator-perspective posts from: operations/, stories/, promotions/",
+        "Customer-perspective posts (engagement/, ai-posts written from customer viewpoint) are excluded",
+        "Each blog post body shows ONLY the main content — no '## Post Type', '## Response Strategy', '## Best Posting Time', '## References' sections",
+        "Post excerpt on listing page is clean content (no metadata leaking)",
+        "Blog detail page renders clean article without metadata headers",
+        "Verify: /en/blog shows only operator posts; click one — no metadata visible in body"
+      ],
+      "technicalNotes": [
+        "Copy posts from: C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\posts\\operations\\, stories\\, promotions\\ to project content/blog/",
+        "Exclude: engagement/ folder entirely, any ai-posts written from 'customer/visitor' perspective",
+        "In src/lib/blog-local.ts readLocalPosts(): after parsing markdown, strip sections matching: /^##\\s+(Post Type|Expected Engagement|Perspective|Response Strategy|Best Posting Time|References|Source)/im",
+        "Use regex replace or gray-matter remark plugin to remove those heading sections and their content",
+        "Clear old content/blog/ files first, then copy new operator posts",
+        "Total blog posts target: 15-30 curated posts"
+      ],
+      "dependencies": [
+        "US-004"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-016",
+      "title": "Fix Recipe Modal Close Button Visibility on Mobile",
+      "priority": 16,
+      "description": "When a user taps a menu item image to view key ingredients (recipe modal), the close button (X) is positioned at the top-right but is not visible on mobile without scrolling/shrinking the page (see Image #1). Fix this by ensuring the X button is always visible — either sticky at the top of the modal or positioned absolutely within the visible viewport area.",
+      "acceptanceCriteria": [
+        "The close (X) button is always visible without any scrolling when the recipe modal opens on mobile",
+        "The X button is sticky or fixed within the modal (not scrolled away)",
+        "Tapping X or tapping outside the modal closes it",
+        "Modal content (ingredients list) is scrollable if too long, but X stays visible",
+        "Works on both mobile (390px) and desktop",
+        "Verify on mobile: open recipe modal → X button immediately visible → tap X → modal closes"
+      ],
+      "technicalNotes": [
+        "Find src/components/menu/recipe-modal.tsx (or wherever RecipeModal is defined)",
+        "Make the close button sticky: use 'sticky top-0' or 'fixed' within the modal header",
+        "Ensure the modal container has 'overflow-y-auto' and a max-height, with the header outside the scrollable area",
+        "Pattern: <div class='flex flex-col h-full'><header class='flex justify-end p-2 sticky top-0 bg-background z-10'><X button/></header><div class='overflow-y-auto flex-1 p-4'>content</div></div>",
+        "Test on 390px viewport height to confirm button is above the fold"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-017",
+      "title": "Admin WYSIWYG Editing on Landing Page /en",
+      "priority": 17,
+      "description": "The landing page (http://localhost:3030/en) currently has no admin editing mode. When admin is logged in, show an edit banner and allow inline editing of: hero headline, tagline, hero description text, and the 'highlights' section items. The editing pattern should match the menu page's admin edit banner approach.",
+      "acceptanceCriteria": [
+        "Admin edit banner appears at top of /en when admin is logged in",
+        "Hero headline, tagline, and description text are contenteditable in admin mode",
+        "Clicking on the highlights section allows admin to reorder or change highlighted items",
+        "A floating 'Save Changes' button appears in edit mode",
+        "Changes persist and survive page reload",
+        "Non-admin users see no editing UI",
+        "Verify: admin edits hero tagline, saves, refreshes → updated text appears"
+      ],
+      "technicalNotes": [
+        "Read src/app/[locale]/page.tsx (home page) to understand current structure",
+        "Add isAdmin check via cookies in the home server component (same pattern as menu page)",
+        "Create src/components/admin/admin-home-editor.tsx — client component for inline editing",
+        "Create content/home.md with editable fields: hero_title, hero_tagline, hero_description",
+        "Add API route src/app/api/admin/content/home/route.ts",
+        "Inject AdminHomeEditor only when isAdmin=true"
+      ],
+      "dependencies": [
+        "US-006"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-018",
+      "title": "Hero Image Improvements: Better Food Photos + Sharp Compression",
+      "priority": 18,
+      "description": "The landing page hero section shows food images on the right side (see Image #2). The current images include a building shot showing other businesses (EasyAds, BaiLee above our cafe), which looks unprofessional. Replace with high-quality food photos: use the named menu photos from 3-resources/photos/Frequently used (pineapple fried rice, seafood tomyum, etc.). Compress all hero images with Sharp for fast loading. Remove repetition — each hero slot should show a unique dish.",
+      "acceptanceCriteria": [
+        "Hero section right side shows 2-3 unique, professional food photos (no building shots showing other businesses)",
+        "Photos used: mt01 pineapple fried rice, mt04 seafood tomyum, and one more appetising dish",
+        "All images are Sharp-compressed WebP at ≤ 100KB each for fast mobile loading",
+        "The 'Our Corner Shop' building image is replaced with an interior/ambiance shot or a food close-up",
+        "Hero images are unique (no duplicate dishes shown)",
+        "LCP (Largest Contentful Paint) image has priority={true} prop",
+        "Verify: hero section shows 3 distinct food photos, no building shot, images load fast"
+      ],
+      "technicalNotes": [
+        "Copy from C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used: mt01 pineapple fried rice a5.jpg, mt04 seafood tomyum soup with rice a5.jpg",
+        "Run Sharp compression script: create scripts/compress-hero.mjs using sharp npm package to convert to WebP at quality 80, max 1200px wide",
+        "Install sharp: npm install sharp",
+        "Output compressed images to public/images/hero/ replacing existing ones",
+        "Update src/components/home/hero-section.tsx to reference new image filenames",
+        "Use next/image with sizes prop for responsive loading"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-019",
+      "title": "Add Cafe Logo to Header and Footer",
+      "priority": 19,
+      "description": "Use the cafe logo at C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used\\logo.jpg in the website header and footer. Process the logo to remove the white background (make it transparent) using Sharp or a script, then save as logo.png or logo.webp. Place in public/images/logo.png. Update header to use the image logo instead of text wordmark.",
+      "acceptanceCriteria": [
+        "logo.jpg is copied to public/images/logo.png (or .webp) with white background removed/made transparent",
+        "Header shows the logo image instead of just text wordmark 'Makan Moments'",
+        "Footer also shows the logo",
+        "Logo is appropriately sized: 40-48px height in header, max 80px in footer",
+        "Logo has proper alt text: 'Makan Moments Cafe logo'",
+        "Logo renders well on both light and dark themes",
+        "Verify: header shows logo image on http://localhost:3030/en"
+      ],
+      "technicalNotes": [
+        "Copy logo.jpg from C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used\\logo.jpg to project",
+        "Create scripts/process-logo.mjs: use sharp to remove white background via threshold or use jimp",
+        "Alternative: use sharp to convert to PNG with transparency: .png().toFile('public/images/logo.png')",
+        "For white background removal: use sharp with flatten(false) then threshold the white pixels, or just save as PNG and rely on CSS mix-blend-mode: multiply for light bg, or use CSS filter: invert for dark mode",
+        "Update src/components/layout/header.tsx — replace text logo with <Image> component",
+        "Update src/components/layout/footer.tsx similarly"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-020",
+      "title": "Replace Menu Item Images with High-Quality Food Photos",
+      "priority": 20,
+      "description": "Copy specific high-quality food photos from 3-resources/photos to public/images/menu/ with the correct item code filenames so they display on the menu cards. Photos to use: tm03 gyudon a5.jpg, mt04 seafood tomyum soup with rice a5.jpg, mt01 pineapple fried rice a5.jpg, dd02 bubur cha cha a5.jpg, bf22 thai styled green curry rice.jpg, ap01 nasi ayam penyet a5.jpg, sf11 A4 CHICKEN.png, bf02 fish slices noodles.jpg, and a5 kl curry mee.png. Map each to its menu item code in the DB.",
+      "acceptanceCriteria": [
+        "Each of the 9 named photos is copied to public/images/menu/ with the correct item code as filename (e.g., TM03.jpg, MT04.jpg etc.)",
+        "Menu cards for those items now show the high-quality photos",
+        "Images are Sharp-compressed (WebP, ≤ 150KB) for fast loading",
+        "Fallback emoji (🍽️) no longer shows for those items",
+        "Verify: /en/menu shows food photos for gyudon, tom yum, pineapple rice, etc."
+      ],
+      "technicalNotes": [
+        "Source photos in: C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used\\ and C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\menu-pages\\ver-4.5\\",
+        "Map filenames to item codes by querying DB: rtk SELECT code, name_en FROM menu_items WHERE name_en ILIKE '%gyudon%' etc.",
+        "Run: npm run dev then check DB to find item codes for: gyudon, seafood tomyum, pineapple fried rice, bubur cha cha, thai green curry rice, nasi ayam penyet, chicken (sf11), fish slices noodles, kl curry mee",
+        "Create scripts/copy-menu-photos.mjs — reads mapping, uses sharp to compress & save to public/images/menu/{CODE}.jpg",
+        "Run the script after confirming the item code → filename mapping is correct"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-021",
+      "title": "Green Theme Using Logo Colors + Impeccable Tool",
+      "priority": 21,
+      "description": "The current website uses a warm terracotta/red color scheme. Update the primary theme color to use green (inspired by the logo.jpg colors). Use the /impeccable skill to gather design context, then update the Tailwind CSS variables in globals.css. The green should be earthy/natural (not neon), matching the cafe's botanical/organic aesthetic. Apply consistently across buttons, active states, borders, and accents.",
+      "acceptanceCriteria": [
+        "Primary color is changed from red/terracotta to a natural green (e.g., OKLCH equivalent of #2d6a4f or similar forest green)",
+        "All primary buttons, active nav links, and accent elements use the new green",
+        "The change is in src/app/globals.css CSS variables (--primary, --primary-foreground etc.)",
+        "Both light and dark mode green variants are defined",
+        "The green complements the earthy/linen background — not clashing",
+        "Verify: /en homepage — View Menu button is green, active nav item is green"
+      ],
+      "technicalNotes": [
+        "Run /teach-impeccable skill first to gather design context for this project (saves to .ai/impeccable.md or similar)",
+        "Read src/app/globals.css to understand current OKLCH color variables",
+        "Change --primary in :root from current red OKLCH to green OKLCH: e.g., oklch(0.42 0.14 145) (dark forest green)",
+        "Change --primary-foreground to near-white: oklch(0.98 0.01 145)",
+        "For dark mode .dark: adjust to a slightly lighter green: oklch(0.55 0.16 145)",
+        "Test on both light and dark modes in Chrome DevTools",
+        "Also check logo.jpg colors with sharp to extract dominant color if needed"
+      ],
+      "dependencies": [
+        "US-019"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-022",
+      "title": "Add Cover Page Image to About Page",
+      "priority": 22,
+      "description": "Add the menu cover page image (C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\menu-pages\\ver-4.4\\COVER PAGE.png) as a visual element on the about page (/en/about). It should be displayed prominently — either as a hero/banner at the top or as a featured image within the page content.",
+      "acceptanceCriteria": [
+        "COVER PAGE.png is copied to public/images/about/cover-page.png (Sharp-compressed WebP)",
+        "The about page shows this image — full-width banner at top or prominent section within page",
+        "Image has proper alt text describing the cafe menu cover",
+        "Image is responsive and looks good on both mobile and desktop",
+        "Verify: /en/about shows the cover page image"
+      ],
+      "technicalNotes": [
+        "Source: C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\menu-pages\\ver-4.4\\COVER PAGE.png",
+        "Compress with Sharp: convert to WebP, max 1400px wide, quality 85",
+        "Copy to public/images/about/cover-page.webp",
+        "Read src/app/[locale]/about/page.tsx and add <Image> component for the cover",
+        "Place as a full-width rounded image with shadow: className='w-full rounded-2xl shadow-lg'"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-023",
+      "title": "Add Paintings Photo to About Page",
+      "priority": 23,
+      "description": "Add the wall paintings photo (C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used\\paintings.jpg) to the about page. This photo shows the hand-drawn wall art in the cafe, which reinforces the brand's artistic/soulful personality.",
+      "acceptanceCriteria": [
+        "paintings.jpg is compressed and copied to public/images/about/paintings.webp",
+        "The about page shows the paintings image in an appropriate section (e.g., 'Our Space' or 'Ambiance' section)",
+        "Image has caption/alt text about the hand-drawn wall art",
+        "Responsive and visually well-placed (not just dumped on the page)",
+        "Verify: /en/about shows the paintings image with good presentation"
+      ],
+      "technicalNotes": [
+        "Source: C:\\Users\\Jyue\\Documents\\2-areas\\makan-moments-cafe\\3-resources\\photos\\Frequently used\\paintings.jpg",
+        "Compress with Sharp: WebP, max 1200px, quality 82",
+        "Copy to public/images/about/paintings.webp",
+        "Add to about page — create an 'Our Ambiance' section if not present, or insert after the cover image (US-022)",
+        "Use a 2-column layout on desktop: text on left, paintings image on right"
+      ],
+      "dependencies": [
+        "US-022"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-024",
+      "title": "Menu Add Button: 'Added' State with Background Color Change",
+      "priority": 24,
+      "description": "When a user clicks '+ Add' on a menu item, the button text should change to '✓ Added' and the menu card's background should subtly change color (e.g., a light green tint) to indicate the item is in the tray. If the user adds again (quantity increase), the button briefly flashes. Removing the item from the tray reverts the card to normal.",
+      "acceptanceCriteria": [
+        "Clicking '+ Add' immediately changes the button to '✓ Added' (or with a checkmark icon)",
+        "The button background changes from primary/10 to a green/teal to indicate 'in tray' state",
+        "The menu card background gets a subtle tint (e.g., bg-green-50/50 or ring-2 ring-green-400/30)",
+        "Adding again (tapping Added again) increments quantity and briefly pulses the button",
+        "Removing the item from the tray panel reverts the card to normal '+ Add' state",
+        "This uses the TrayContext to determine if an item is in the tray",
+        "Verify: add item → card turns tinted, button shows 'Added'; remove from tray → card reverts"
+      ],
+      "technicalNotes": [
+        "In src/components/menu/menu-card.tsx: use useTray() to get items, check if item.code is in items array",
+        "const isInTray = items.some(i => i.id === item.code)",
+        "Conditionally apply classes: card wrapper gets 'ring-2 ring-green-400/40 bg-green-50/30' when isInTray",
+        "Button gets 'bg-green-500 text-white' state when isInTray, shows checkmark + 'Added'",
+        "Add a pulse animation on quantity increment: useEffect to add/remove animate-pulse class",
+        "Add i18n keys: common.added = 'Added' / 'Ditambah' / '已加入'"
+      ],
+      "dependencies": [
+        "US-001"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-025",
+      "title": "Chat Widget Settings Button: Admin Only",
+      "priority": 25,
+      "description": "The gear/settings button on the chat widget (added in US-007) is currently visible to all users. It should only be visible when an admin is logged in. Non-admin customers should never see the settings button — it creates confusion and is an internal tool only.",
+      "acceptanceCriteria": [
+        "Settings gear icon on chat widget is NOT visible to non-admin users",
+        "Settings gear icon IS visible when admin is logged in",
+        "The admin check is done on the client side by calling GET /api/admin/verify",
+        "No flash of the settings icon for non-admin users on page load",
+        "Verify: logged-out user → no gear icon; admin logged in → gear icon visible"
+      ],
+      "technicalNotes": [
+        "Read src/components/chat/chat-widget.tsx — find the gear icon render",
+        "Add a useEffect that calls fetch('/api/admin/verify') on mount, sets isAdmin state",
+        "Only render the gear icon when isAdmin === true",
+        "src/app/api/admin/verify/route.ts should already exist (created in US-007); if not, create it",
+        "Use a loading state to avoid flash: don't render gear icon until verify response received"
+      ],
+      "dependencies": [
+        "US-007"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-026",
+      "title": "Set Appropriate AI Waiter System Prompt",
+      "priority": 26,
+      "description": "Configure a proper system prompt for the AI waiter in /admin/chat-settings. The prompt should make the AI act as a friendly, knowledgeable waiter at Makan Moments Cafe — able to recommend dishes, explain the menu, answer questions about halal/dietary status, give directions, and handle small talk in English, Malay, and Chinese. The prompt should reflect the cafe's warm, soulful brand personality.",
+      "acceptanceCriteria": [
+        "Navigate to /admin/chat-settings — system prompt textarea contains a well-crafted prompt",
+        "The prompt instructs the AI to: introduce itself as the Makan Moments AI waiter, recommend dishes, explain dietary info, give operating hours, and respond in customer's language",
+        "The AI should NOT make up prices — it should refer to the knowledge/ files",
+        "The prompt sets a warm, friendly, local Malaysian tone (not overly formal)",
+        "Save the prompt → chat widget responds with the updated persona",
+        "Test: open chat widget, ask 'What do you recommend?' — AI gives a relevant, warm recommendation"
+      ],
+      "technicalNotes": [
+        "Write the system prompt and save it to data/chat-settings.json via POST /api/admin/chat-settings",
+        "The prompt should include: role (AI waiter at Makan Moments Cafe), personality (friendly, warm, multilingual), capabilities (menu recommendations, dietary info, directions, operating hours), and limitations (no POS integration, no reservations)",
+        "Include cafe facts: Taman Impian Emas, Skudai, Johor | 11AM-11PM | No pork, No lard, Halal-friendly | Tel: 012-7088789",
+        "Language instruction: 'Reply in the same language the customer uses. Support English, Bahasa Malaysia, and Chinese (Simplified).'",
+        "Read knowledge/cafe-facts.md and knowledge/menu-knowledge.md to align with existing knowledge base"
+      ],
+      "dependencies": [
+        "US-007"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-027",
+      "title": "Admin Panel Mobile-First Redesign: No Horizontal Scroll",
+      "priority": 27,
+      "description": "The /admin panel currently requires horizontal scrolling on mobile (see context). All admin tabs (Menu, Categories, Rules, Blog, Tests) must be redesigned to be mobile-first: no horizontal scroll, stacked layouts, and touch-friendly controls. Tables should become card lists on mobile.",
+      "acceptanceCriteria": [
+        "At 390px viewport: no horizontal scrollbar on any admin tab",
+        "Menu tab: items shown as stacked cards (not a wide table) on mobile",
+        "Tables collapse to card/list layout on mobile using responsive Tailwind classes",
+        "All buttons are ≥ 44px touch targets",
+        "Admin header (title + sign out) is single row, no overflow",
+        "Tab navigation does not require horizontal scrolling (tabs wrap or use a scrollable row with scroll-snap)",
+        "Verify at 390px: all tabs navigable, content readable, no horizontal scroll"
+      ],
+      "technicalNotes": [
+        "Read src/components/admin/admin-menu-table.tsx and admin-rules-panel.tsx",
+        "Replace <table> layouts with responsive card list: 'hidden md:table' for table, 'md:hidden' for mobile card list",
+        "For menu items on mobile: each row becomes a card with name + price + actions stacked",
+        "Admin header: use 'flex items-center justify-between gap-2' with text truncation",
+        "Tab bar: use 'flex overflow-x-auto scroll-snap-x' with 'scroll-snap-align-start' on each tab",
+        "All action buttons: 'min-h-[44px] min-w-[44px]'"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-028",
+      "title": "Admin Rules Mobile View Fix: Horizontal Rule Name + Buttons",
+      "priority": 28,
+      "description": "In the Rules tab on mobile (see Image #3), the rule name 'Close Coffee & Tea after 7pm (except Lemon Tea)' is stacking vertically word-by-word because it's in a narrow column beside the status badges. The layout cuts off the Active/Edit/Delete buttons on the right. Fix: show the full rule name on one line (or wrap cleanly), then show the status + action buttons on a separate line below, all within the card width.",
+      "acceptanceCriteria": [
+        "Rule name displays horizontally (wrapping only when necessary, not stacking word-by-word)",
+        "Active/Disable badges and Edit/Delete buttons appear below the rule name, not beside it in a cramped column",
+        "No content is cut off at the right edge",
+        "Each rule card fits within 390px with comfortable padding",
+        "Actions (Active, Edit, Delete) are full-width or at least 44px touch target",
+        "Verify at 390px: rule name readable, buttons visible and tappable"
+      ],
+      "technicalNotes": [
+        "Read src/components/admin/admin-rules-panel.tsx",
+        "Current layout likely uses flex-row with name on left, badges on right — causing name to get too little space",
+        "Change to: rule card with 'flex flex-col gap-2'",
+        "Top row: rule name (font-medium, full width, allow wrap)",
+        "Bottom row: flex-row gap-2 with status badge + action buttons",
+        "Remove any fixed widths on rule name column that might cause word-stacking",
+        "Action buttons: 'flex gap-2 flex-wrap' to handle wrap if needed"
+      ],
+      "dependencies": [
+        "US-027"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-029",
+      "title": "Admin: Set 6 Homepage Highlights",
+      "priority": 29,
+      "description": "The homepage highlights section shows featured menu items. Set exactly 6 items as homepage highlights in the admin panel. These should be the best-looking, most photogenic items that represent the cafe's signature dishes. Mark them as featured=true in the DB with the correct sort_order.",
+      "acceptanceCriteria": [
+        "Exactly 6 menu items are marked as featured=true in the database",
+        "The homepage at /en shows exactly 6 highlighted items",
+        "The 6 items are a representative selection: e.g., seafood tomyum, pineapple fried rice, gyudon, green curry rice, nasi ayam penyet, and one dessert/drink",
+        "Admin can change which 6 items are highlighted via the Menu tab (toggle featured flag)",
+        "The highlights section on the homepage renders correctly with 6 items",
+        "Verify: /en homepage shows exactly 6 highlight cards"
+      ],
+      "technicalNotes": [
+        "Query DB to find item codes for the 6 chosen signature dishes",
+        "Run SQL: UPDATE menu_items SET featured = true WHERE code IN ('MT04', 'MT01', 'TM03', 'BF22', 'AP01', 'DD02') -- adjust codes to match actual codes",
+        "Run SQL: UPDATE menu_items SET featured = false WHERE code NOT IN (above list)",
+        "Verify with: SELECT code, name_en, featured FROM menu_items WHERE featured = true",
+        "Check that getFeaturedItems() in src/lib/menu.ts returns exactly these 6",
+        "Min highlights constant is MIN_HIGHLIGHTS = 6 in menu.ts — confirm this is set"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-030",
+      "title": "Admin Alerts: Notify About Items Without Photos",
+      "priority": 30,
+      "description": "In the admin panel, show a prominent alert/banner listing all menu items that have no photo (no image file in public/images/menu/{code}.jpg). This reminds the admin to upload photos. The alert should be dismissible per session but always re-appear on next visit.",
+      "acceptanceCriteria": [
+        "A yellow/amber alert banner appears at the top of the admin Menu tab",
+        "The alert lists item names (or count) that have no corresponding photo file",
+        "The alert has a 'Dismiss' button that hides it for the current session",
+        "Alert text: 'X items have no photo. Consider adding photos to improve the menu page.'",
+        "Clicking an item name in the alert scrolls to or highlights that item in the list",
+        "Verify: navigate to /admin → alert shows items without photos"
+      ],
+      "technicalNotes": [
+        "Create API route src/app/api/admin/menu/missing-photos/route.ts — reads menu items from DB, checks if public/images/menu/{code}.jpg or .webp or .png exists using fs.existsSync",
+        "Return list of items with missing photos",
+        "In AdminMenuTable component, fetch missing photos list on mount, show alert if list not empty",
+        "Use sessionStorage to persist 'dismissed' state so it reappears on next page visit",
+        "Alert style: bg-amber-50 border-amber-400 text-amber-800 with a warning icon"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-031",
+      "title": "Admin: Non-POS Display Categories (New Items, Vegetarian, etc.)",
+      "priority": 31,
+      "description": "Current categories are synced from the POS system (e.g., Rice, Noodles, Drinks). Add a separate set of 'display categories' that are website-only (not tied to POS): 'New Items', 'Vegetarian', 'Chef's Picks', 'Under RM15'. These display categories allow flexible menu curation without breaking the POS sync. Admin can assign menu items to display categories in addition to their POS categories.",
+      "acceptanceCriteria": [
+        "A new 'Display Categories' section exists in the admin Categories tab",
+        "Default display categories: 'New Items', 'Vegetarian', 'Chef's Picks', 'Under RM15'",
+        "Admin can add/remove display categories",
+        "Admin can assign any menu item to one or more display categories",
+        "The menu page /en/menu shows display categories as filter tabs alongside POS categories",
+        "Items can belong to both a POS category AND display categories simultaneously",
+        "Verify: admin adds 'New Items' display category, assigns 3 items → /en/menu shows 'New Items' filter tab"
+      ],
+      "technicalNotes": [
+        "Add a new DB table `display_categories` (id, name, sort_order, active)",
+        "Add a junction table `item_display_categories` (item_id, display_category_id)",
+        "Create API routes: GET/POST/DELETE /api/admin/display-categories, POST /api/admin/display-categories/[id]/items",
+        "Update src/components/admin/admin-categories-panel.tsx to show both POS categories (read-only) and Display Categories (editable)",
+        "Update menu filter component to include display categories as filter tabs",
+        "Update getMenuItems() to accept optional display_category filter param"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "large",
+      "passes": false
+    },
+    {
+      "id": "US-032",
+      "title": "Admin: List All Items for a Particular Category",
+      "priority": 32,
+      "description": "In the admin Menu tab, when filtering by a category, show all items belonging to that category clearly. Currently all items are shown in a flat list. Add a category filter/selector in the admin Menu tab that shows only items from the selected category, making it easier to manage items per category.",
+      "acceptanceCriteria": [
+        "Admin Menu tab has a category dropdown/filter at the top",
+        "Selecting a category shows only items belonging to that category",
+        "The item count per category is shown in the dropdown (e.g., 'Rice (8 items)')",
+        "An 'All Categories' option shows all items (default)",
+        "The filter is responsive and works on mobile",
+        "Verify: admin selects 'Noodles' category → only noodle items shown in the list"
+      ],
+      "technicalNotes": [
+        "Read src/components/admin/admin-menu-table.tsx — add category filter state",
+        "Add a <select> or tab filter component above the items list",
+        "Filter items client-side: filteredItems = activeCategory ? items.filter(i => i.categories.includes(activeCategory)) : items",
+        "Show item count: categories.map(c => ({ name: c, count: items.filter(i => i.categories.includes(c)).length }))",
+        "Pass categories prop (already available) to the component"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-033",
+      "title": "Admin: Drag and Drop Items Between Categories",
+      "priority": 33,
+      "description": "In the admin Menu tab (with category filter from US-032), allow drag-and-drop to move items from one category to another. Dragging an item and dropping it onto a different category reassigns it. This makes category management visual and intuitive.",
+      "acceptanceCriteria": [
+        "Items in the admin menu list are draggable",
+        "Category sections (when showing all) have drop zones",
+        "Dragging an item to a category section moves it to that category",
+        "The move persists via PATCH /api/admin/menu/[id] to update the item's categories array",
+        "Works on both mouse (desktop) and touch (mobile)",
+        "Visual feedback: item shows drag ghost, drop zone highlights on hover",
+        "Verify: drag 'Tom Yum Soup' from 'Soups' to 'Chef's Picks' → item appears in new category"
+      ],
+      "technicalNotes": [
+        "Use @dnd-kit/core and @dnd-kit/sortable: npm install @dnd-kit/core @dnd-kit/sortable",
+        "Wrap admin menu table items in DraggableItem components",
+        "Create DroppableCategory containers for each category section",
+        "On drop: call PATCH /api/admin/menu/[id] with updated categories array",
+        "Touch support is built into @dnd-kit — use TouchSensor alongside PointerSensor"
+      ],
+      "dependencies": [
+        "US-032"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-034",
+      "title": "Admin: Duplicate Item to Multiple Categories",
+      "priority": 34,
+      "description": "In the admin Menu tab, allow an item to be duplicated (added) to one or more additional categories. This is different from moving — the item appears in all assigned categories simultaneously. Useful for items like 'Iced Lemon Tea' that belong to both 'Drinks' and 'Lunch Sets' categories.",
+      "acceptanceCriteria": [
+        "Each item in the admin list has a 'Copy to Category' button (or a multi-select categories dropdown on edit)",
+        "Admin can select multiple categories for an item",
+        "The item appears in all selected categories on the public menu page",
+        "Changes persist to DB (categories is already a text[] array column)",
+        "The edit modal/form shows all currently assigned categories as a checklist",
+        "Verify: item assigned to ['Drinks', 'Lunch Sets'] → appears under both filter tabs on /en/menu"
+      ],
+      "technicalNotes": [
+        "Menu items already support multi-category: MenuItem.categories is string[]",
+        "In the admin item edit form/modal: show a multi-select checklist of all categories",
+        "Use a checkboxes list: categories.map(c => <Checkbox checked={item.categories.includes(c)} onChange=...>)",
+        "On save: PATCH /api/admin/menu/[id] with updated categories array",
+        "Update admin-menu-table.tsx edit modal to show the multi-category selector"
+      ],
+      "dependencies": [
+        "US-032"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-035",
+      "title": "Menu Page: Dynamic Display Based on Time of Day",
+      "priority": 35,
+      "description": "On the menu page, the default active category/filter should change based on the current time. Breakfast items (if available) are prioritized before 11AM, lunch items from 11AM-3PM, dinner items from 3PM-close. This is determined by the item's existing timeFrom/timeUntil fields. The admin can configure the time-based category priorities in /admin. Items outside their time window are still visible but shown lower in the list.",
+      "acceptanceCriteria": [
+        "The default active category tab on /en/menu changes based on Malaysia time",
+        "If current time is lunch hours (11AM-3PM): 'Lunch Sets' or 'Rice' category is selected by default",
+        "If current time is dinner (3PM-10:30PM): 'Mains' or similar is default",
+        "A subtle 'Serving now' indicator shows which categories are currently available",
+        "Admin can configure time-based category priorities in a new 'Time Display' section in /admin",
+        "This does NOT hide any items — just changes the default selected filter",
+        "Verify: at lunch time, menu page loads with lunch category pre-selected"
+      ],
+      "technicalNotes": [
+        "In menu page server component: get current Malaysia time (UTC+8), determine which time-slot is active",
+        "Create a simple time-slot config in src/lib/time-slots.ts: { breakfast: { start: '07:00', end: '11:00', defaultCategory: 'Breakfast' }, lunch: ..., dinner: ... }",
+        "Pass defaultCategory to MenuGrid which passes to MenuFilter as initialCategory",
+        "Store time-slot config in DB or a JSON config file (data/time-slots.json) so admin can edit it",
+        "Add API route GET/POST /api/admin/time-slots for admin to configure",
+        "Add a new 'Time Settings' section in admin Categories tab"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-036",
+      "title": "Operating Hours Alert for Non-Admin Users Outside Ordering Time",
+      "priority": 36,
+      "description": "If a non-admin user views the menu page (or any page) outside operating hours (11AM-11PM, last order 10:30PM), show a friendly banner/alert informing them the cafe is currently closed. The operating hours are based on Malaysia time (UTC+8). This should be configured in the Rules system so admin can update the hours without code changes.",
+      "acceptanceCriteria": [
+        "Outside 11AM-11PM Malaysia time: a non-dismissible banner appears at top of /en/menu: 'We're currently closed. Open daily 11AM-11PM. Last order 10:30PM.'",
+        "Inside 11AM-10:30PM: no alert, menu shows normally",
+        "Between 10:30PM-11PM: show 'Last order has passed for today. Come back tomorrow!'",
+        "Non-admin users see the alert; admin users do not (to allow editing anytime)",
+        "Operating hours are stored as a Rule in the Rules system so admin can change them",
+        "Verify: manually change system time or mock time → alert appears outside hours"
+      ],
+      "technicalNotes": [
+        "Create a new Rule type 'operating_hours' or use a config in data/operating-hours.json",
+        "In menu page server component: get Malaysia time, check against operating hours, pass closedStatus to page",
+        "Add OperatingHoursAlert component: shown only when !isAdmin && closedStatus !== 'open'",
+        "Closed statuses: 'before_open' (before 11AM), 'after_last_order' (10:30PM-11PM), 'closed' (after 11PM)",
+        "Create admin UI in Rules tab to configure operating hours (start, last_order, close times)"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-037",
+      "title": "AI Helper in Admin Rules Tab for Complex Rule Configuration",
+      "priority": 37,
+      "description": "Rules can be complex (time-based, category-based, discount cascades). Add an AI helper in the Rules tab that admin can describe in natural language what they want ('disable all drinks after 7PM except lemon tea') and the AI suggests a rule configuration. The AI uses the existing rule schema to generate a pre-filled rule form.",
+      "acceptanceCriteria": [
+        "The Rules tab has an 'AI Helper' button or collapsible panel at the top",
+        "Admin types a natural language rule description and clicks 'Generate Rule'",
+        "The AI returns a structured rule suggestion (ruleType, targetType, targetCategories, timeFrom, timeUntil, etc.)",
+        "The suggested rule is pre-filled into the 'Add Rule' form for admin to review and save",
+        "The AI understands the cafe context: knows category names, operating hours, item types",
+        "Verify: type 'Give 10% discount on all rice dishes at lunch time' → AI generates a discount rule pre-filled"
+      ],
+      "technicalNotes": [
+        "Create src/components/admin/admin-rules-ai-helper.tsx — chat input + suggested rule display",
+        "Create API route src/app/api/admin/rules/ai-suggest/route.ts",
+        "Use existing AI SDK (Groq/OpenRouter via src/lib/chat/provider.ts) with a rules-specific system prompt",
+        "System prompt: explain the Rule schema (RuleType: disable/discount/featured, TargetType: category/items, fields) and tell AI to return JSON",
+        "Parse AI JSON response and populate the rule form state",
+        "Include current categories in the AI context so it knows valid category names"
+      ],
+      "dependencies": [],
+      "estimatedComplexity": "medium",
+      "passes": false
+    },
+    {
+      "id": "US-038",
+      "title": "Blog Post Content Cleanup: Remove Metadata Sections",
+      "priority": 38,
+      "description": "The imported blog posts contain metadata sections like '## Post Type', '## Expected Engagement', '## Perspective', '## Response Strategy', '## Best Posting Time', '## References', '## Source'. These are internal content planning notes and should not be shown to cafe customers. Strip these sections from the rendered blog post content, showing only the main article body.",
+      "acceptanceCriteria": [
+        "Blog detail pages do NOT show any of: Post Type, Expected Engagement, Perspective, Response Strategy, Best Posting Time, References, Source sections",
+        "The post intro metadata block (Type/Created/Tags frontmatter text) is also stripped",
+        "The main content (the actual post copy, story, or announcement) renders cleanly",
+        "Blog listing excerpts also show clean content (first paragraph of actual content)",
+        "Verify: click any blog post → no metadata headers visible, only the actual content"
+      ],
+      "technicalNotes": [
+        "In src/lib/blog-local.ts — after parsing markdown, apply a cleanContent() function",
+        "Strip sections by regex: remove everything from a ## heading that matches the metadata list through to the next ## or end of string",
+        "Regex pattern: /\\n##\\s+(Post Type|Expected Engagement|Perspective|Response Strategy|Best Posting Time|References|Source|Content)[\\s\\S]*?(?=\\n##|$)/gi",
+        "Also strip YAML-like lines: /^\\*\\*(Type|Created|Tags|Status|Notion):\\*\\*.*$/gm",
+        "Also strip the first frontmatter section (the --- ... --- block at top) before the actual content",
+        "Test with 2-3 post files to confirm clean output before committing"
+      ],
+      "dependencies": [
+        "US-015"
+      ],
+      "estimatedComplexity": "small",
+      "passes": false
+    },
+    {
+      "id": "US-039",
+      "title": "Add Tests for All New Features (US-011 to US-038) + Fix Errors",
+      "priority": 39,
+      "description": "Extend the admin Tests tab (US-009) with new tests covering all features added in US-011 through US-038. Run the tests programmatically. For any failing tests, write the error as a new user story in prd.json and continue fixing. This creates a self-healing development loop.",
+      "acceptanceCriteria": [
+        "New test cases added in src/lib/tests/ for each new feature: chef pick card, bottom nav, language icons, blog cleanup, recipe modal close, admin mobile, etc.",
+        "All smoke tests pass (all pages return 200)",
+        "All unit tests pass (blog content cleanup, time-slot logic, operating hours check)",
+        "At least 80% of integration tests pass",
+        "Any failing tests have their root cause identified and a new user story added to prd.json",
+        "Test results visible in /admin > Tests tab",
+        "Verify: 'Run All' in Tests tab shows green for most tests"
+      ],
+      "technicalNotes": [
+        "Add new test cases to src/lib/tests/smoke.ts: test /en/menu filter, /en/blog detail page, /admin/chat-settings, /en/about",
+        "Add to src/lib/tests/unit.ts: test cleanContent() strips metadata, test getMalaysiaTime() returns UTC+8, test operating hours check function",
+        "Add to src/lib/tests/integration.ts: test GET /api/admin/highlights, GET /api/admin/display-categories, GET /api/admin/time-slots",
+        "Add to src/lib/tests/e2e.ts: test recipe modal close button visible on mobile, test language switcher in mobile header, test 'Added' button state",
+        "If any test fails: append a new US-040+ story to prd.json with error details and fix steps",
+        "Use the 'Generate Stories' button in Tests tab to auto-create stories for failures"
+      ],
+      "dependencies": [
+        "US-009"
+      ],
+      "estimatedComplexity": "large",
+      "passes": false
+    },
+    {
+      "id": "US-040",
+      "title": "Chrome DevTools + Agent Browser Verification for All New Features",
+      "priority": 40,
+      "description": "Use Chrome DevTools MCP tools and/or the agent-browser skill to visually verify all features from US-011 to US-038 are working correctly in the browser. Capture screenshots for key views. Fix any visual regressions or console errors found.",
+      "acceptanceCriteria": [
+        "Take screenshot of /en/menu on mobile (390px) — chef pick visible at top, bottom nav visible, no horizontal scroll",
+        "Take screenshot of /en/blog — clean posts, no metadata, featured post at top",
+        "Take screenshot of /en/about — cover page image visible, paintings image visible",
+        "Take screenshot of /en header on mobile — language flag beside hamburger",
+        "Take screenshot of /admin/rules on mobile (390px) — rule names horizontal, no clipping",
+        "No console errors on any page",
+        "No 404 image errors",
+        "Verify 'Added' button state on menu items",
+        "Verify recipe modal has accessible close button on mobile"
+      ],
+      "technicalNotes": [
+        "Use mcp__chrome-devtools__navigate_page, mcp__chrome-devtools__take_screenshot, mcp__chrome-devtools__list_console_messages",
+        "Use mcp__chrome-devtools__emulate to set mobile viewport (width: 390, height: 844)",
+        "Use mcp__chrome-devtools__resize_page for desktop view (1280x800)",
+        "Run rtk next build first to ensure no build errors",
+        "For any visual issues found: create targeted fix commits",
+        "Document all screenshots in progress.txt with descriptions"
+      ],
+      "dependencies": [
+        "US-011",
+        "US-012",
+        "US-013",
+        "US-014",
+        "US-015",
+        "US-016",
+        "US-017",
+        "US-018",
+        "US-019",
+        "US-020",
+        "US-021",
+        "US-022",
+        "US-023",
+        "US-024",
+        "US-025",
+        "US-026",
+        "US-027",
+        "US-028",
+        "US-029",
+        "US-030",
+        "US-031",
+        "US-032",
+        "US-033",
+        "US-034",
+        "US-035",
+        "US-036",
+        "US-037",
+        "US-038",
+        "US-039"
+      ],
+      "estimatedComplexity": "medium",
+      "passes": false
     }
   ]
 }
