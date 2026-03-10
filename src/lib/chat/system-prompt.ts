@@ -3,7 +3,9 @@ import { join } from "path";
 import { readChatSettings } from "./settings";
 import sql from "@/lib/db";
 
-let cachedKnowledge: string | null = null;
+// Static file cache — cleared on invalidation only
+let staticKnowledgeCache: { cafeFacts: string; faq: string } | null = null;
+// Menu DB cache — auto-expires after 5 minutes
 let menuCache: { text: string; expiresAt: number } | null = null;
 
 const MENU_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
@@ -60,26 +62,29 @@ async function fetchMenuFromDB(): Promise<string> {
 }
 
 async function buildKnowledgeBlock(): Promise<string> {
-  if (cachedKnowledge) return cachedKnowledge;
+  // Static files cached until manually invalidated
+  if (!staticKnowledgeCache) {
+    staticKnowledgeCache = {
+      cafeFacts: loadKnowledge("cafe-facts.md"),
+      faq: loadKnowledge("faq.md"),
+    };
+  }
 
+  // Menu fetched from DB with 5-min TTL
   const menuKnowledge = await fetchMenuFromDB();
-  const cafeFacts = loadKnowledge("cafe-facts.md");
-  const faq = loadKnowledge("faq.md");
 
-  cachedKnowledge = `## Cafe Facts
-${cafeFacts}
+  return `## Cafe Facts
+${staticKnowledgeCache.cafeFacts}
 
 ## Menu Knowledge (Live from Database)
 ${menuKnowledge}
 
 ## FAQ
-${faq}`;
-
-  return cachedKnowledge;
+${staticKnowledgeCache.faq}`;
 }
 
 export function invalidateSystemPromptCache(): void {
-  cachedKnowledge = null;
+  staticKnowledgeCache = null;
   menuCache = null;
 }
 

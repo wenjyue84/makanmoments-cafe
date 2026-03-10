@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
 import sql from "@/lib/db";
+import { invalidateSystemPromptCache } from "@/lib/chat/system-prompt";
 
 export const runtime = "nodejs";
 
@@ -64,6 +65,9 @@ export async function PATCH(
   revalidatePath("/en/menu");
   revalidatePath("/ms/menu");
   revalidatePath("/zh/menu");
+
+  // Invalidate AI system prompt cache so new menu data is picked up immediately
+  invalidateSystemPromptCache();
 
   return NextResponse.json(rows[0]);
 }
