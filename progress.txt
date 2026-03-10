@@ -1980,3 +1980,6 @@ Here is the technical brief based on the JSON for ticket US-028:
 
 ### Gotchas
 - TypeScript clean: `npx tsc --noEmit` passes with no errors
+## Iteration 12 - Tue, Mar 10, 2026 11:49:19 AM
+Completed: Admin Rules Mobile View Fix: Horizontal Rule Name + Buttons (ID: US-028) in 4m
+
