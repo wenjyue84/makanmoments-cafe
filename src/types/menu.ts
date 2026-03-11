@@ -20,6 +20,7 @@ export interface MenuItem {
   specialDates: string[];
   imagePosition: string;   // CSS object-position, e.g. '50% 30%'
   updatedAt: string;       // ISO timestamp — used for image cache-busting
+  isSignature: boolean;    // true = this dish appears as the hero on the landing page (max 1 at a time)
 }
 
 export interface DisplayCategory {

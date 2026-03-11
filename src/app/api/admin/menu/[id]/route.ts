@@ -29,10 +29,17 @@ export async function PATCH(
     timeUntil,
     specialDates,
     imagePosition,
+    isSignature,
   } = body;
 
-  // Ensure image_position column exists (idempotent migration)
+  // Ensure columns exist (idempotent migrations)
   await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_position TEXT DEFAULT '50% 50%'`;
+  await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS is_signature BOOLEAN DEFAULT false`;
+
+  // Only one item can be the signature dish — clear others before setting this one
+  if (isSignature === true) {
+    await sql`UPDATE menu_items SET is_signature = false WHERE is_signature = true AND id != ${id}`;
+  }
 
   const rows = await sql`
     UPDATE menu_items SET
@@ -52,6 +59,7 @@ export async function PATCH(
       time_until = COALESCE(${timeUntil ?? null}, time_until),
       special_dates = COALESCE(${specialDates ?? null}, special_dates),
       image_position = COALESCE(${imagePosition ?? null}, image_position),
+      is_signature = COALESCE(${isSignature ?? null}, is_signature),
       updated_at = now()
     WHERE id = ${id}
     RETURNING *
@@ -61,10 +69,15 @@ export async function PATCH(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Revalidate ISR cache for menu pages across all locales
+  // Revalidate ISR cache for menu and home pages across all locales
   revalidatePath("/en/menu");
   revalidatePath("/ms/menu");
   revalidatePath("/zh/menu");
+  if (isSignature !== undefined) {
+    revalidatePath("/en");
+    revalidatePath("/ms");
+    revalidatePath("/zh");
+  }
 
   // Invalidate AI system prompt cache so new menu data is picked up immediately
   invalidateSystemPromptCache();

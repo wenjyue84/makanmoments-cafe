@@ -3,10 +3,9 @@ import path from "path";
 import matter from "gray-matter";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
-import { getFeaturedItems } from "@/lib/menu";
+import { getFeaturedItems, getSignatureDish } from "@/lib/menu";
 import { HeroSection } from "@/components/home/hero-section";
 import { Highlights } from "@/components/home/highlights";
-import { InfoStrip } from "@/components/home/info-strip";
 import { PreorderBanner } from "@/components/home/preorder-banner";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 import { HomeInlineEditor, type HomeContent } from "@/components/admin/home-inline-editor";
@@ -49,15 +48,16 @@ export default async function HomePage({
 
   const content = readHomeContent(fallback);
 
-  const [cookieStore, featured] = await Promise.all([
+  const [cookieStore, featured, signatureDish] = await Promise.all([
     cookies(),
     getFeaturedItems(),
+    getSignatureDish(),
   ]);
   const token = cookieStore.get(COOKIE_NAME)?.value;
   const isAdmin = token ? await verifyAdminToken(token) : false;
 
   if (isAdmin) {
-    return <HomeInlineEditor content={content} featuredItems={featured} />;
+    return <HomeInlineEditor content={content} featuredItems={featured} signatureDish={signatureDish} />;
   }
 
   return (
@@ -66,14 +66,12 @@ export default async function HomePage({
         heroTitle={content.heroTitle}
         heroTagline={content.heroTagline}
         heroSubtitle={content.heroSubtitle}
+        signatureDish={signatureDish}
       />
       <FadeUp>
         <PreorderBanner />
       </FadeUp>
       <FadeUp delay={100}>
-        <InfoStrip />
-      </FadeUp>
-      <FadeUp delay={150}>
         <Highlights
           items={featured}
           highlightsTitle={content.highlightsTitle}

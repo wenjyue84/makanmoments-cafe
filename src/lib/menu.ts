@@ -59,6 +59,7 @@ function rowToMenuItem(row: any, displayCatMap: Record<string, string[]> = {}, s
     specialDates: row.special_dates ?? [],
     imagePosition: row.image_position ?? "50% 50%",
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
+    isSignature: row.is_signature ?? false,
   };
 }
 
@@ -156,6 +157,23 @@ export async function getAllMenuItemsWithRulesForAdmin(): Promise<MenuItemWithRu
   const secondaryPhotosMap = getSecondaryPhotosMap();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return applyRules(rows.map((r: any) => rowToMenuItem(r, displayCatMap, secondaryPhotosMap)), rules);
+}
+
+// Signature dish — the one item marked is_signature=true (used as hero on landing page)
+export async function getSignatureDish(): Promise<MenuItem | null> {
+  try {
+    const rows = await sql`SELECT * FROM menu_items WHERE is_signature = true LIMIT 1`;
+    if (!rows[0]) return null;
+    const [displayCatMap, secondaryPhotosMap] = await Promise.all([
+      getItemDisplayCategoryMap(),
+      Promise.resolve(getSecondaryPhotosMap()),
+    ]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return rowToMenuItem(rows[0] as any, displayCatMap, secondaryPhotosMap);
+  } catch {
+    // Column may not exist yet (migration runs on first PATCH)
+    return null;
+  }
 }
 
 // Category list for filter bar and admin
