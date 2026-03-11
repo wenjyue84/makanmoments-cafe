@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { Search, X, Heart, Mic } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useScrolling } from "@/lib/scrolling-context";
 
 const speechSupported =
   typeof window !== "undefined" &&
@@ -11,12 +12,25 @@ const speechSupported =
 
 const FAV_KEY = "__favorites__";
 
+// IMPORTANT: POS categories are now rendered as NAVIGATION pills (scroll-to anchors), not filters.
+// Clicking a POS category pill scrolls to that section in the all-items view, and the pill
+// auto-highlights as the user scrolls through that section (activeSection prop from MenuGrid).
+// Display categories that are NOT Chef's Picks (e.g., Vegetarian, Under RM15) remain as filter pills.
 interface MenuFilterProps {
+  // POS categories — rendered as navigation pills (scroll to section)
   categories: string[];
+  // Display categories — non-Chef's-Picks ones shown as filter pills
   displayCategories?: string[];
+  // Whether to show a Chef's Picks navigation pill (scroll to top section)
+  hasChefsPicks?: boolean;
+  // Currently visible section from scroll detection (null = above all sections, "__chefs__" = Chef's Picks)
+  activeSection: string | null;
+  // Called when a navigation pill is clicked (null = scroll to top)
+  onScrollToSection: (cat: string | null) => void;
+  // Active filter (null = all sections, "__dc__Vegetarian" = vegetarian, "__favorites__" = favs)
   selectedCategory: string | null;
-  searchQuery: string;
   onCategoryChange: (category: string | null) => void;
+  searchQuery: string;
   onSearchChange: (query: string) => void;
   itemCount: number;
   servingNowCategories?: string[];
@@ -26,60 +40,58 @@ interface MenuFilterProps {
 export function MenuFilter({
   categories,
   displayCategories = [],
+  hasChefsPicks = false,
+  activeSection,
+  onScrollToSection,
   selectedCategory,
-  searchQuery,
   onCategoryChange,
+  searchQuery,
   onSearchChange,
   itemCount,
-  servingNowCategories = [],
   favoritesCount = 0,
 }: MenuFilterProps) {
   const t = useTranslations("menu");
   const tc = useTranslations("common");
   const [isListening, setIsListening] = useState(false);
   const [voiceReady, setVoiceReady] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  // US-108: show category bar only after scrolling past threshold
-  const [isBarVisible, setIsBarVisible] = useState(false);
+  // Search bar open on mobile — auto-open if there's already a query (e.g. from URL ?q=)
+  const [searchOpen, setSearchOpen] = useState(() => !!searchQuery);
+  const searchInputRef = useRef<HTMLInputElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const { scrollPhase } = useScrolling();
 
   // Reveal mic after hydration to avoid SSR mismatch
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setVoiceReady(speechSupported); }, []);
 
-  // US-108: show bar when scrolled past 100px, hide when back at top
+  // Focus search input when it opens
   useEffect(() => {
-    function onScroll() {
-      setIsBarVisible(window.scrollY > 100);
+    if (searchOpen) {
+      // Small delay so the expand animation completes first
+      const t = setTimeout(() => searchInputRef.current?.focus(), 150);
+      return () => clearTimeout(t);
     }
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [searchOpen]);
 
-  // Auto-focus search input when expanded on mobile
+  // Auto-scroll the pills bar to keep the active pill in view.
+  // Uses manual scrollLeft instead of scrollIntoView to avoid interfering with
+  // any ongoing page-level smooth scroll (e.g. scrolling to a category section).
   useEffect(() => {
-    if (isSearchOpen && searchInputRef.current) {
-      searchInputRef.current.focus();
+    const container = scrollContainerRef.current;
+    if (!container) return;
+    const activeBtn = container.querySelector('[data-active="true"]') as HTMLElement | null;
+    if (!activeBtn) return;
+    const btnLeft = activeBtn.offsetLeft;
+    const btnRight = btnLeft + activeBtn.offsetWidth;
+    const visibleLeft = container.scrollLeft;
+    const visibleRight = visibleLeft + container.clientWidth;
+    if (btnLeft < visibleLeft) {
+      container.scrollTo({ left: btnLeft - 8, behavior: "smooth" });
+    } else if (btnRight > visibleRight) {
+      container.scrollTo({ left: btnRight - container.clientWidth + 8, behavior: "smooth" });
     }
-  }, [isSearchOpen]);
-
-  // Escape key collapses search
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && isSearchOpen) {
-        setIsSearchOpen(false);
-      }
-    }
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isSearchOpen]);
-
-  function closeSearch() {
-    setIsSearchOpen(false);
-    onSearchChange("");
-  }
+  }, [activeSection, selectedCategory]);
 
   function toggleVoice() {
     if (!speechSupported) return;
@@ -122,51 +134,79 @@ export function MenuFilter({
     }
   }
 
+  const isFilterActive = !!selectedCategory;
+
+  // Display categories that are NOT Chef's Picks → shown as filter pills
+  const filterDisplayCats = displayCategories.filter(
+    (dc) => !dc.toLowerCase().includes("chef")
+  );
+
+  function handleNavPillClick(cat: string | null) {
+    if (isFilterActive) onCategoryChange(null); // clear any active filter first
+    onScrollToSection(cat);
+  }
+
+  const pillBase =
+    "flex-shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1";
+  const pillActive = "bg-primary text-primary-foreground scale-[1.04]";
+  const pillInactive = "bg-secondary text-secondary-foreground hover:bg-secondary/80";
+
   return (
     <div
       className={cn(
-        // Mobile: fixed bottom bar above tray/chat widgets (bottom-16 = 4rem gap)
-        // US-108: slide up when visible, slide down (off-screen) when at top
-        "fixed bottom-16 left-0 right-0 z-40 transition-transform duration-300",
-        isBarVisible ? "translate-y-0" : "translate-y-full",
-        "border-t border-border bg-background/95 backdrop-blur-sm",
-        "px-4 pt-3",
-        // Desktop: always visible, no slide animation
-        "md:relative md:bottom-auto md:left-auto md:right-auto md:translate-y-0",
-        "md:border-0 md:bg-transparent md:backdrop-blur-none",
-        "md:px-0 md:pt-0 md:pb-0 md:mb-6 md:space-y-4"
+        // Mobile: sticky top bar below site header
+        "sticky top-16 left-0 right-0 z-40 transition-opacity",
+        scrollPhase === "scrolling" && "opacity-0 transition-opacity duration-150 pointer-events-none",
+        scrollPhase === "resting" && "scroll-fade-in",
+        "border-b border-border bg-background",
+        "px-4",
+        // Desktop: always visible, non-sticky
+        "md:relative md:top-auto md:opacity-100 md:pointer-events-auto",
+        "md:border-0 md:bg-transparent",
+        "md:px-0 md:pb-0 md:mb-6 md:space-y-4"
       )}
-      style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
+      style={{ paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))" }}
     >
-      {/* Search — always visible on desktop; collapsible on mobile */}
+      {/* Search bar — hidden on mobile until toggled; always visible on desktop */}
       <div
         className={cn(
-          "md:block",
-          isSearchOpen ? "block mb-2" : "hidden"
+          "overflow-hidden transition-all duration-200",
+          searchOpen ? "max-h-16 opacity-100 pt-2 pb-2" : "max-h-0 opacity-0 pt-0 pb-0",
+          "md:max-h-none md:opacity-100 md:pt-0 md:pb-0"
         )}
       >
-        <div className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <input
-              ref={searchInputRef}
-              id="menu-search"
-              name="menu-search"
-              type="text"
-              placeholder={isListening ? t("listening") : t("searchPlaceholder")}
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className={cn(
-                "w-full rounded-lg border border-input bg-background py-2.5 pl-10 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary",
-                voiceReady ? "pr-10" : "pr-4"
-              )}
-            />
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            ref={searchInputRef}
+            id="menu-search"
+            name="menu-search"
+            type="text"
+            placeholder={isListening ? t("listening") : t("searchPlaceholder")}
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className={cn(
+              "w-full rounded-lg border border-input bg-background py-2.5 pl-10 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary",
+              (voiceReady || searchQuery) ? "pr-16" : "pr-4"
+            )}
+          />
+          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => { onSearchChange(""); setSearchOpen(false); }}
+                className="rounded-full p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label="Clear search"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
             {voiceReady && (
               <button
                 type="button"
                 onClick={toggleVoice}
                 className={cn(
-                  "absolute right-2 top-1/2 -translate-y-1/2 rounded-full p-1.5 transition-colors",
+                  "rounded-full p-1.5 transition-colors",
                   isListening
                     ? "animate-pulse text-red-500"
                     : "text-muted-foreground hover:text-foreground"
@@ -177,101 +217,104 @@ export function MenuFilter({
               </button>
             )}
           </div>
-          {/* X button — mobile only, closes the search */}
-          <button
-            type="button"
-            onClick={closeSearch}
-            className="md:hidden flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-secondary/80 active:scale-95"
-            aria-label="Close search"
-          >
-            <X className="h-4 w-4" />
-          </button>
         </div>
       </div>
 
-      {/* Category pills — horizontally scrollable on mobile, wrapping on desktop */}
-      <div className="flex flex-nowrap items-center gap-2 overflow-x-auto pb-0.5 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:overflow-visible md:snap-none">
-        {/* Search icon — mobile only, visible when search is collapsed */}
-        {!isSearchOpen && (
-          <button
-            type="button"
-            onClick={() => setIsSearchOpen(true)}
-            className="md:hidden flex-shrink-0 flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-secondary/80 active:scale-95"
-            aria-label="Open search"
-          >
-            <Search className="h-4 w-4" />
-          </button>
-        )}
-        {/* All button */}
-        <button
-          onClick={() => onCategoryChange(null)}
-          className={cn(
-            "flex-shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
-            selectedCategory === null
-              ? "bg-primary text-primary-foreground scale-[1.04]"
-              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-          )}
+      {/* Category pills row + search toggle icon (mobile) */}
+      <div className="flex items-center gap-2 py-2">
+        {/* Scrollable pills */}
+        <div
+          ref={scrollContainerRef}
+          className="flex flex-nowrap items-center gap-2 overflow-x-auto flex-1 min-w-0 pb-0.5 scrollbar-hide snap-x snap-mandatory md:flex-wrap md:overflow-visible md:snap-none"
         >
-          {tc("allCategories")}
-        </button>
+          {/* All — scroll to top */}
+          <button
+            onClick={() => handleNavPillClick(null)}
+            data-active={(!isFilterActive && activeSection === null) ? "true" : "false"}
+            className={cn(pillBase, !isFilterActive && activeSection === null ? pillActive : pillInactive)}
+          >
+            {tc("allCategories")}
+          </button>
 
-        {/* POS categories */}
-        {categories.map((cat) => {
-          const isServingNow = servingNowCategories.includes(cat);
-          return (
+          {/* Chef's Picks — scroll to Chef's Picks section */}
+          {hasChefsPicks && (
+            <button
+              onClick={() => handleNavPillClick("__chefs__")}
+              data-active={(!isFilterActive && activeSection === "__chefs__") ? "true" : "false"}
+              className={cn(pillBase, !isFilterActive && activeSection === "__chefs__" ? pillActive : pillInactive)}
+            >
+              ★ Chef&apos;s Picks
+            </button>
+          )}
+
+          {/* POS category navigation pills */}
+          {categories.map((cat) => (
             <button
               key={cat}
-              onClick={() => onCategoryChange(cat)}
-              className={cn(
-                "flex-shrink-0 snap-start inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95",
-                selectedCategory === cat
-                  ? "bg-primary text-primary-foreground scale-[1.04]"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              )}
+              onClick={() => handleNavPillClick(cat)}
+              data-active={(!isFilterActive && activeSection === cat) ? "true" : "false"}
+              className={cn(pillBase, !isFilterActive && activeSection === cat ? pillActive : pillInactive)}
             >
-              {isServingNow && (
-                <span
-                  className="inline-block h-1.5 w-1.5 flex-shrink-0 rounded-full bg-green-500"
-                  title="Serving now"
-                />
-              )}
               {cat}
             </button>
-          );
-        })}
+          ))}
 
-        {/* Display categories — visually distinct with amber styling */}
-        {displayCategories.map((cat) => (
-          <button
-            key={`dc-${cat}`}
-            onClick={() => onCategoryChange(`__dc__${cat}`)}
-            className={cn(
-              "flex-shrink-0 snap-start rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95",
-              selectedCategory === `__dc__${cat}`
-                ? "bg-amber-500 text-white scale-[1.04]"
-                : "border border-amber-300 bg-amber-50 text-amber-700 hover:bg-amber-100"
-            )}
-          >
-            {cat}
-          </button>
-        ))}
+          {/* Display category filter pills (Vegetarian, Under RM15, etc.) — not Chef's Picks */}
+          {filterDisplayCats.map((dc) => {
+            const filterKey = `__dc__${dc}`;
+            return (
+              <button
+                key={filterKey}
+                onClick={() =>
+                  selectedCategory === filterKey
+                    ? onCategoryChange(null)
+                    : onCategoryChange(filterKey)
+                }
+                data-active={selectedCategory === filterKey ? "true" : "false"}
+                className={cn(pillBase, selectedCategory === filterKey ? pillActive : pillInactive)}
+              >
+                {dc}
+              </button>
+            );
+          })}
 
-        {/* Favorites — shown only when the user has hearted at least one item */}
-        {favoritesCount > 0 && (
-          <button
-            onClick={() => onCategoryChange(FAV_KEY)}
-            className={cn(
-              "flex-shrink-0 snap-start inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95",
-              selectedCategory === FAV_KEY
-                ? "bg-red-500 text-white scale-[1.04]"
-                : "border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
-            )}
-          >
-            <Heart className={cn("h-3.5 w-3.5", selectedCategory === FAV_KEY ? "fill-white text-white" : "fill-red-400 text-red-400")} />
-            {tc("favorites")}
-            <span className="rounded-full bg-current/20 px-1.5 py-0 text-xs">{favoritesCount}</span>
-          </button>
-        )}
+          {/* Favorites filter pill */}
+          {favoritesCount > 0 && (
+            <button
+              onClick={() =>
+                selectedCategory === FAV_KEY
+                  ? onCategoryChange(null)
+                  : onCategoryChange(FAV_KEY)
+              }
+              data-active={selectedCategory === FAV_KEY ? "true" : "false"}
+              className={cn(
+                "flex-shrink-0 snap-start inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-all duration-200 active:scale-95",
+                selectedCategory === FAV_KEY
+                  ? "bg-red-500 text-white scale-[1.04]"
+                  : "border border-red-300 bg-red-50 text-red-600 hover:bg-red-100"
+              )}
+            >
+              <Heart className={cn("h-3.5 w-3.5", selectedCategory === FAV_KEY ? "fill-white text-white" : "fill-red-400 text-red-400")} />
+              {tc("favorites")}
+              <span className="rounded-full bg-current/20 px-1.5 py-0 text-xs">{favoritesCount}</span>
+            </button>
+          )}
+        </div>
+
+        {/* Search toggle button — mobile only */}
+        <button
+          type="button"
+          onClick={() => setSearchOpen((v) => !v)}
+          className={cn(
+            "flex-shrink-0 rounded-full p-2 transition-colors md:hidden",
+            searchOpen || searchQuery
+              ? "bg-primary text-primary-foreground"
+              : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+          )}
+          aria-label={searchOpen ? "Close search" : "Search dishes"}
+        >
+          {searchOpen && !searchQuery ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
+        </button>
       </div>
 
       {/* Count — desktop only */}
