@@ -317,7 +317,7 @@ export function TrayWidget() {
                     ref={buttonRef}
                     onClick={() => setOpen(true)}
                     className={cn(
-                        "fixed bottom-4 left-4 sm:left-auto sm:right-20 z-40 flex h-14 items-center justify-center rounded-full bg-orange-500 px-4 text-white shadow-lg transition-[transform,opacity] hover:scale-105 gap-2",
+                        "fixed bottom-4 right-20 z-40 flex h-14 items-center justify-center rounded-full bg-orange-500 px-4 text-white shadow-lg transition-[transform,opacity] hover:scale-105 gap-2",
                         open && "hidden",
                         isScrolling && "opacity-20"
                     )}
