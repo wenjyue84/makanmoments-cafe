@@ -46,7 +46,10 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
   const [recipeOpen, setRecipeOpen] = useState(false);
   const [pulsing, setPulsing] = useState(false);
   const [showDesc, setShowDesc] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
   const prevQuantityRef = useRef<number>(0);
   const imgVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
   const hasPhoto = !!item.code && !imgError;
@@ -67,24 +70,53 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
   }, [trayItem?.quantity]);
 
   const cardClass = isInTray
-    ? `group w-full overflow-hidden rounded-xl border p-4 hover-lift transition-colors bg-green-50/40 dark:bg-green-900/10 ring-2 ring-green-400/40 ${isHighlighted ? "border-amber-400" : "border-green-300/60"}`
-    : `group w-full overflow-hidden rounded-xl border bg-card p-4 hover-lift ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-border"}`;
+    ? `group w-full overflow-hidden rounded-xl border hover-lift transition-colors bg-green-50/40 dark:bg-green-900/10 ring-2 ring-green-400/40 ${isHighlighted ? "border-amber-400" : "border-green-300/60"}`
+    : `group w-full overflow-hidden rounded-xl border bg-card hover-lift ${isHighlighted ? "border-amber-400 ring-2 ring-amber-400/60" : "border-border"}`;
 
   return (
     <>
-      <div className={cardClass}>
-        {/* Photo — click/hover to reveal description */}
+      <div
+        className={cardClass}
+        onMouseEnter={() => {
+          setShowInfo(true);
+          hoverTimer.current = setTimeout(() => setShowDesc(true), 2000);
+        }}
+        onMouseLeave={() => {
+          setShowInfo(false);
+          if (hoverTimer.current) clearTimeout(hoverTimer.current);
+        }}
+      >
+        {/* Photo — click to toggle description, touch-hold 2s to reveal info */}
         <div
           className={cn(
-            "mb-3 relative aspect-[4/3] overflow-hidden rounded-lg cursor-pointer",
+            "relative aspect-[4/3] overflow-hidden cursor-pointer",
             imgLoaded || !hasPhoto ? "bg-muted" : "bg-muted animate-pulse"
           )}
-          onClick={() => setShowDesc((v) => !v)}
-          onMouseEnter={() => {
-            hoverTimer.current = setTimeout(() => setShowDesc(true), 2000);
+          onClick={() => {
+            if (longPressTriggered.current) {
+              longPressTriggered.current = false;
+              return;
+            }
+            setShowDesc((v) => !v);
           }}
-          onMouseLeave={() => {
-            if (hoverTimer.current) clearTimeout(hoverTimer.current);
+          onTouchStart={() => {
+            longPressTriggered.current = false;
+            longPressTimer.current = setTimeout(() => {
+              longPressTriggered.current = true;
+              setShowInfo(true);
+            }, 2000);
+          }}
+          onTouchEnd={() => {
+            if (longPressTimer.current) clearTimeout(longPressTimer.current);
+            if (longPressTriggered.current) {
+              longPressTriggered.current = false;
+              setShowInfo(false);
+            }
+          }}
+          onTouchCancel={() => {
+            if (longPressTimer.current) clearTimeout(longPressTimer.current);
+            longPressTriggered.current = false;
+            setShowInfo(false);
           }}
           role="button"
           aria-label={`Toggle description for ${name}`}
@@ -183,78 +215,89 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
           )}
         </div>
 
-        {/* Content */}
-        <div className="space-y-1.5">
-          {item.code && (
-            <span className="text-xs font-mono text-muted-foreground/60">{item.code}</span>
+        {/* Collapsible info drawer — slides down on hover (desktop) / 2s hold (mobile) */}
+        <div
+          className={cn(
+            "overflow-hidden transition-[max-height,opacity] duration-300 ease-out",
+            showInfo ? "max-h-48 opacity-100" : "max-h-0 opacity-0"
           )}
-          <h3 className="font-semibold leading-snug break-words">{name}</h3>
-          {item.description && (
-            <div
-              className={cn(
-                "text-sm text-muted-foreground overflow-hidden transition-all duration-300",
-                showDesc ? "max-h-40 opacity-100 mt-1" : "max-h-0 opacity-0"
-              )}
-            >
-              {item.description}
-            </div>
-          )}
-          {item.dietary.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {item.dietary.map((d) => (
-                <DietaryBadge key={d} label={d} />
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Price + Action row */}
-        <div className="mt-3 flex items-center justify-between border-t pt-3">
-          <span className="text-sm font-bold text-primary">
-            {item.originalPrice ? (
-              <>
-                <s className="text-muted-foreground text-xs font-normal mr-1">
-                  {formatPrice(item.originalPrice)}
-                </s>
-                {formatPrice(item.price)}
-              </>
-            ) : (
-              formatPrice(item.price)
+        >
+          <div
+            className={cn(
+              "px-4 pt-3 pb-4 transition-transform duration-300",
+              showInfo ? "translate-y-0" : "-translate-y-2"
             )}
-          </span>
+          >
+            <div className="flex items-start justify-between gap-3">
+              {/* Left: name + price + description + dietary */}
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="font-semibold leading-snug text-sm text-foreground truncate">{name}</p>
+                <p className="text-xs font-bold text-primary">
+                  {item.originalPrice ? (
+                    <>
+                      <s className="text-muted-foreground font-normal mr-1">{formatPrice(item.originalPrice)}</s>
+                      {formatPrice(item.price)}
+                    </>
+                  ) : (
+                    formatPrice(item.price)
+                  )}
+                </p>
+                {item.description && (
+                  <div
+                    className={cn(
+                      "text-xs text-muted-foreground overflow-hidden transition-all duration-300",
+                      showDesc ? "max-h-40 opacity-100 pt-0.5" : "max-h-0 opacity-0"
+                    )}
+                  >
+                    {item.description}
+                  </div>
+                )}
+                {item.dietary.length > 0 && (
+                  <div className="flex flex-wrap gap-1 pt-0.5">
+                    {item.dietary.map((d) => (
+                      <DietaryBadge key={d} label={d} />
+                    ))}
+                  </div>
+                )}
+              </div>
 
-          {isInTray ? (
-            <div className={cn("flex items-center gap-1", pulsing ? "animate-pulse" : "")}>
-              <button
-                type="button"
-                onClick={() => decrementItem(item.code)}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all active:scale-95 hover:bg-primary hover:text-primary-foreground"
-                aria-label="Remove one"
-              >
-                <Minus className="h-4 w-4" />
-              </button>
-              <span className="w-6 text-center text-sm font-semibold tabular-nums">
-                {trayItem?.quantity}
-              </span>
-              <button
-                type="button"
-                onClick={() => addItem({ id: item.code, name, price: item.price })}
-                className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all active:scale-95 hover:bg-primary/90"
-                aria-label="Add one more"
-              >
-                <Plus className="h-4 w-4" />
-              </button>
+              {/* Right: action buttons */}
+              <div className="shrink-0">
+                {isInTray ? (
+                  <div className={cn("flex items-center gap-1", pulsing ? "animate-pulse" : "")}>
+                    <button
+                      type="button"
+                      onClick={() => decrementItem(item.code)}
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-all active:scale-95 hover:bg-primary hover:text-primary-foreground"
+                      aria-label="Remove one"
+                    >
+                      <Minus className="h-3.5 w-3.5" />
+                    </button>
+                    <span className="w-5 text-center text-sm font-semibold tabular-nums">
+                      {trayItem?.quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => addItem({ id: item.code, name, price: item.price })}
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all active:scale-95 hover:bg-primary/90"
+                      aria-label="Add one more"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => addItem({ id: item.code, name, price: item.price })}
+                    className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary transition-all active:scale-95 hover:bg-primary hover:text-primary-foreground"
+                    aria-label={tc("add")}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => addItem({ id: item.code, name, price: item.price })}
-              className="flex h-11 w-11 items-center justify-center rounded-full bg-primary/10 text-primary transition-all active:scale-95 hover:bg-primary hover:text-primary-foreground"
-              aria-label={tc("add")}
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          )}
+          </div>
         </div>
       </div>
 

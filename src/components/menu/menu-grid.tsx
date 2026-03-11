@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useTranslations } from "next-intl";
-import { Eye, EyeOff, X } from "lucide-react";
+import { Eye, EyeOff, X, GripHorizontal } from "lucide-react";
 import type { MenuItem } from "@/types/menu";
 import { MenuCard } from "./menu-card";
 import { ChefPickCard } from "./chef-pick-card";
@@ -57,6 +57,25 @@ export function MenuGrid({
   const debouncedSearch = useDebounce(search, 300);
   const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
   const [removedFromChefsPick, setRemovedFromChefsPick] = useState<Set<string>>(new Set());
+  const [chefPickOrder, setChefPickOrder] = useState<string[]>([]);
+  const [dragHeroIdx, setDragHeroIdx] = useState<number | null>(null);
+  const [dragOverHeroIdx, setDragOverHeroIdx] = useState<number | null>(null);
+  const [signatureItemId, setSignatureItemId] = useState<string | null>(
+    () => items.find((i) => i.isSignature)?.id ?? null
+  );
+
+  // Fetch saved Chef's Pick order from DB (admin mode only)
+  useEffect(() => {
+    if (!isAdmin || !chefsCatId) return;
+    fetch(`/api/admin/display-categories/${chefsCatId}/items`)
+      .then((r) => r.json())
+      .then((data: unknown) => {
+        if (Array.isArray(data)) {
+          setChefPickOrder((data as { id: string }[]).map((i) => i.id));
+        }
+      })
+      .catch(() => {});
+  }, [isAdmin, chefsCatId]);
 
   const handleRemoveChefsPick = useCallback(
     async (itemId: string) => {
@@ -67,6 +86,15 @@ export function MenuGrid({
     },
     [chefsCatId]
   );
+  const handleSetSignature = useCallback(async (itemId: string) => {
+    setSignatureItemId(itemId); // optimistic update
+    await fetch(`/api/admin/menu/${itemId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isSignature: true }),
+    });
+  }, []);
+
   const [highlightError, setHighlightError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const chipBarScrollRef = useRef<HTMLDivElement>(null);
@@ -90,6 +118,41 @@ export function MenuGrid({
     favorites,
     removedFromChefsPick,
   });
+
+  // Apply saved DB order to heroItems (admin only; falls back to natural order)
+  const orderedHeroItems = useMemo(() => {
+    if (!isAdmin || chefPickOrder.length === 0) return heroItems;
+    return [...heroItems].sort((a, b) => {
+      const ai = chefPickOrder.indexOf(a.id);
+      const bi = chefPickOrder.indexOf(b.id);
+      if (ai === -1 && bi === -1) return 0;
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    });
+  }, [heroItems, chefPickOrder, isAdmin]);
+
+  // Persist new Chef's Pick hero order after drag-and-drop
+  const handleHeroDrop = useCallback(
+    async (dropIdx: number) => {
+      if (dragHeroIdx === null || dragHeroIdx === dropIdx) return;
+      const newOrder = [...orderedHeroItems];
+      const [removed] = newOrder.splice(dragHeroIdx, 1);
+      newOrder.splice(dropIdx, 0, removed);
+      const newIds = newOrder.map((i) => i.id);
+      setChefPickOrder(newIds); // optimistic update
+      setDragHeroIdx(null);
+      setDragOverHeroIdx(null);
+      if (chefsCatId) {
+        await fetch(`/api/admin/display-categories/${chefsCatId}/items`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ itemIds: newIds }),
+        });
+      }
+    },
+    [dragHeroIdx, orderedHeroItems, chefsCatId]
+  );
 
   const handleSetHighlight = useCallback(async (itemId: string, itemCategories: string[]) => {
     const prevHighlights = { ...highlights };
@@ -275,20 +338,72 @@ export function MenuGrid({
       ) : isFlatView ? (
         /* Search results or display category: hero cards + flat grid */
         <div className="mt-6">
-          {/* Chef's Pick hero cards — customer mode only, not while searching */}
-          {(!isAdmin || !isEditMode) && heroItems.length > 0 && (
-            <div className="space-y-4 mb-6">
-              {heroItems.map((item, idx) => (
-                <FadeUp key={item.id} delay={idx * 50}>
-                  <ChefPickCard item={item} priority={idx === 0} />
-                </FadeUp>
-              ))}
+          {/* Chef's Pick hero cards — shown in all modes; admin sees remove button + drag handle */}
+          {orderedHeroItems.length > 0 && (
+            <div className={cn(
+              "mb-6",
+              orderedHeroItems.length === 2
+                ? "grid grid-cols-2 gap-3 items-stretch"
+                : "space-y-4"
+            )}>
+              {orderedHeroItems.map((item, idx) => {
+                const removeCallback = isAdmin && isEditMode
+                  ? (isChefsPick(item)
+                    ? () => handleRemoveChefsPick(item.id)
+                    : item.categories.some((cat) => highlights[cat] === item.id)
+                      ? () => handleRemoveHighlight(item.id, item.categories)
+                      : undefined)
+                  : undefined;
+                const isDraggable = isAdmin && isEditMode && orderedHeroItems.length > 1 && isChefsPick(item);
+                return (
+                  <FadeUp key={item.id} delay={idx * 50} className={orderedHeroItems.length === 2 ? "h-full" : ""}>
+                    <div
+                      draggable={isDraggable}
+                      onDragStart={(e) => {
+                        if (!isDraggable) return;
+                        setDragHeroIdx(idx);
+                        e.dataTransfer.effectAllowed = "move";
+                      }}
+                      onDragOver={(e) => {
+                        if (!isDraggable) return;
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "move";
+                        if (dragHeroIdx !== null && dragHeroIdx !== idx) setDragOverHeroIdx(idx);
+                      }}
+                      onDrop={(e) => { e.preventDefault(); handleHeroDrop(idx); }}
+                      onDragEnd={() => { setDragHeroIdx(null); setDragOverHeroIdx(null); }}
+                      className={cn(
+                        "relative",
+                        orderedHeroItems.length === 2 ? "h-full" : "",
+                        isDraggable && "cursor-grab active:cursor-grabbing",
+                        dragOverHeroIdx === idx && dragHeroIdx !== idx && "ring-2 ring-primary ring-offset-2 rounded-xl",
+                        dragHeroIdx === idx && "opacity-50"
+                      )}
+                    >
+                      {isDraggable && (
+                        <div className="absolute bottom-3 left-3 z-20 pointer-events-none rounded-md bg-black/50 p-1.5 text-white opacity-60">
+                          <GripHorizontal className="h-4 w-4" />
+                        </div>
+                      )}
+                      <ChefPickCard
+                        item={item}
+                        priority={idx === 0}
+                        compact={orderedHeroItems.length === 2}
+                        isAdmin={isAdmin && isEditMode}
+                        isSignature={signatureItemId === item.id}
+                        onRemoveChefsPick={removeCallback}
+                        onSetSignature={isAdmin && isEditMode ? () => handleSetSignature(item.id) : undefined}
+                      />
+                    </div>
+                  </FadeUp>
+                );
+              })}
             </div>
           )}
 
-          {/* Regular grid */}
+          {/* Regular grid — heroes excluded via regularFlatItems in both admin and customer mode */}
           <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {(isAdmin && isEditMode ? filtered : regularFlatItems).map((item, index) => {
+            {regularFlatItems.map((item, index) => {
               const isHighlighted =
                 item.categories.some((cat) => highlights[cat] === item.id) ||
                 isChefsPick(item);
@@ -333,32 +448,35 @@ export function MenuGrid({
                 {cat}
               </h2>
 
-              {/* Chef's Pick hero cards — up to 2 per category */}
-              {isAdmin && isEditMode ? (
-                <div className="space-y-4">
-                  {sectionHeroItems.map((hero, heroIdx) => (
-                    <EditableMenuCard
-                      key={hero.id}
-                      item={hero}
-                      isHighlighted={true}
-                      priority={sectionIdx === 0 && heroIdx === 0}
-                      onSetHighlight={() => handleSetHighlight(hero.id, hero.categories)}
-                      onRemoveChefsPick={isChefsPick(hero) ? () => handleRemoveChefsPick(hero.id) : undefined}
-                      isUnavailableAtPreview={
-                        hasPreviewTime ? !isAvailableAtTime(hero, previewHour!, previewMinute!) : false
-                      }
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {sectionHeroItems.map((hero, heroIdx) => (
-                    <FadeUp key={hero.id}>
-                      <ChefPickCard item={hero} priority={sectionIdx === 0 && heroIdx === 0} />
+              {/* Chef's Pick hero cards — up to 2 per category, shown in all modes */}
+              <div className={cn(
+                sectionHeroItems.length === 2
+                  ? "grid grid-cols-2 gap-3 items-stretch"
+                  : "space-y-4"
+              )}>
+                {sectionHeroItems.map((hero, heroIdx) => {
+                  const removeCallback = isAdmin && isEditMode
+                    ? (isChefsPick(hero)
+                      ? () => handleRemoveChefsPick(hero.id)
+                      : hero.categories.some((cat) => highlights[cat] === hero.id)
+                        ? () => handleRemoveHighlight(hero.id, hero.categories)
+                        : undefined)
+                    : undefined;
+                  return (
+                    <FadeUp key={hero.id} className={sectionHeroItems.length === 2 ? "h-full" : ""}>
+                      <ChefPickCard
+                        item={hero}
+                        priority={sectionIdx === 0 && heroIdx === 0}
+                        compact={sectionHeroItems.length === 2}
+                        isAdmin={isAdmin && isEditMode}
+                        isSignature={signatureItemId === hero.id}
+                        onRemoveChefsPick={removeCallback}
+                        onSetSignature={isAdmin && isEditMode ? () => handleSetSignature(hero.id) : undefined}
+                      />
                     </FadeUp>
-                  ))}
-                </div>
-              )}
+                  );
+                })}
+              </div>
 
               {/* Remaining items in standard grid (overflow Chef's Picks appear at top-left with badge) */}
               {rest.length > 0 && (

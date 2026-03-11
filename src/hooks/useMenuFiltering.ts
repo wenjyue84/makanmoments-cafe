@@ -176,17 +176,24 @@ export function useMenuFiltering({
   }, [filtered, categories, selectedPosCat, selectedDisplayCat, highlights]);
 
   // In flat view (customer mode): items tagged as Chef's Picks float to top as hero cards.
+  // When a specific display category is selected, also elevate items highlighted for their POS category.
   const heroItems = useMemo(() => {
     if (!isFlatView || isSearching || isFavoritesSelected) return [];
     if (selectedDisplayCat === SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS)
       return filtered.slice(0, 2);
-    const chefs = filtered.filter(
-      (i) =>
-        i.displayCategories.includes(SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) &&
-        !removedFromChefsPick.has(i.id)
-    );
-    return selectedDisplayCat ? chefs.slice(0, 2) : chefs;
-  }, [filtered, isFlatView, isSearching, isFavoritesSelected, selectedDisplayCat, removedFromChefsPick]);
+    const isChefPick = (i: MenuItem) =>
+      i.displayCategories.includes(SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) &&
+      !removedFromChefsPick.has(i.id);
+    const isCategoryHighlighted = (i: MenuItem) =>
+      i.categories.some((cat) => highlights[cat] === i.id) &&
+      !removedFromChefsPick.has(i.id);
+    if (selectedDisplayCat) {
+      // Specific category view: elevate Chef's Picks AND category-highlighted items, max 2
+      return filtered.filter((i) => isChefPick(i) || isCategoryHighlighted(i)).slice(0, 2);
+    }
+    // "All" view: only explicit Chef's Picks as heroes (no limit needed, all are intentional)
+    return filtered.filter((i) => isChefPick(i));
+  }, [filtered, isFlatView, isSearching, isFavoritesSelected, selectedDisplayCat, removedFromChefsPick, highlights]);
 
   const regularFlatItems = useMemo(() => {
     const heroIds = new Set(heroItems.map((i) => i.id));

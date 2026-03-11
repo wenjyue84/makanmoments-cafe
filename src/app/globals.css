@@ -335,6 +335,21 @@
     }
   }
 
+  /* Chef's Pick compact hero image — fixed height for side-by-side layout */
+  .chef-pick-compact-img {
+    height: 140px;
+  }
+  @media (min-width: 640px) {
+    .chef-pick-compact-img {
+      height: 190px;
+    }
+  }
+  @media (min-width: 1024px) {
+    .chef-pick-compact-img {
+      height: 220px;
+    }
+  }
+
   /* US-106: Hide scrollbar while keeping scroll functional */
   .scrollbar-hide {
     -ms-overflow-style: none;
