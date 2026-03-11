@@ -14224,3 +14224,192 @@ Here is the technical brief based on the React codebase:
 ## Iteration 2 - Wed, Mar 11, 2026 11:44:06 AM
 Completed: Menu Card Favorite Icon — Scroll-Aware Visibility (ID: US-150) in 3m
 
+## Iteration 4 - Wed, Mar 11, 2026 11:44:47 AM
+Completed: Menu Card Favorite Icon — Scroll-Aware Visibility (ID: US-150) in 3m
+
+
+## Pre-analysis for US-152 (Gemini 2.5 Pro)
+### Technical Brief for US-152: Scroll-Based Category Chip Auto-Highlight
+
+**Primary Files for Modification:**
+*   `src/hooks/useMenuFiltering.ts`: Core logic for view-state switching.
+*   `src/components/menu/MenuGrid.tsx`: Contains the `IntersectionObserver` and section refs.
+*   `src/app/menu/page.tsx` (or parent component): Responsible for rendering the chip bar.
+*   `src/components/menu/CategoryChipBar.tsx`: Manages chip highlighting and scrolling.
+
+**Key React/Browser Primitives:**
+*   **Custom Hook:** `useMenuFiltering` controls the rendering mode.
+*   **Component State:** `activeSection` state managed in the parent menu component.
+*   **Browser API:** `IntersectionObserver` to track which category section is on screen.
+
+**Recommended Implementation Approach:**
+1.  In `useMenuFiltering.ts`, alter the logic to ensure `isFlatView` returns `false` when `category` is `null` and the search query is empty. This will render the category sections by default.
+2.  This change will trigger the rendering of the `CategoryChipBar` on the initial, unfiltered menu view.
+3.  The `IntersectionObserver` in `MenuGrid`, which is already set up, will update the `activeSection` state.
+4.  Prop-drill the `activeSection` state down into `CategoryChipBar`.
+5.  Inside `CategoryChipBar`, use this prop to apply highlighting to the currently active chip and ensure the `chip.scrollIntoView()` logic correctly brings it into the viewport.
+
+**Edge Cases to Monitor:**
+*   Confirm the scroll-spy functionality is disabled when a search is active (as `isFlatView` should become `true`).
+*   Test `scrollIntoView` behavior on mobile to ensure the active chip is always visible in the horizontal list.
+*   The chip bar should be sticky; verify it doesn't cause layout shift (CLS) on load.
+
+
+## Pre-analysis for US-152 (Gemini 2.5 Pro)
+Here is the technical brief for the Claude Code agent:
+
+**Technical Brief: US-152 Scroll-Based Category Chip Auto-Highlight**
+
+This user story focuses on enhancing the menu's user experience by implementing scroll-spy functionality for the category chips. It is a pure frontend task involving React components and hooks, with no direct interaction with Frappe DocTypes or backend hooks.
+
+**1. Key Files to Modify:**
+
+*   **`src/components/menu/MenuGrid.tsx`**: This component likely contains the main layout for the menu, including the `IntersectionObserver` logic that tracks the currently visible category section. The logic for rendering the chip bar based on `isFlatView` will need to be adjusted here.
+*   **`src/hooks/useMenuFiltering.ts`**: This hook is responsible for the filtering logic that determines the `isFlatView` state. The core of the fix will be to ensure this hook returns `isFlatView=false` when no category is selected and there's no search query.
+*   **`src/components/menu/CategoryChipBar.tsx`**: This component renders the horizontal list of category chips. The `scrollIntoView` logic is likely implemented here and should be verified.
+
+**2. Frappe DocTypes & Hooks:**
+
+*   None. This is a frontend-only change.
+
+**3. Recommended Implementation Approach:**
+
+1.  **Modify `useMenuFiltering.ts`**: The primary task is to adjust the logic that sets `isFlatView`. Currently, it likely defaults to `true` when no category is selected. Change this so that `isFlatView` is `false` when `category` is `null` and the search term is empty, ensuring the categorized view is the default.
+2.  **Update `MenuGrid.tsx`**: The rendering condition for the category chip bar needs to be updated. It should be rendered whenever `!isFlatView` is true, which, after the hook modification, will include the default "all items" view.
+3.  **Verify `IntersectionObserver`**: The existing `IntersectionObserver` in `MenuGrid.tsx` should already be correctly setting the `activeSection`. Ensure this state is correctly passed to the `CategoryChipBar` to highlight the active chip.
+4.  **Confirm Chip Scrolling**: The `scrollIntoView` functionality, likely within a `useEffect` in `CategoryChipBar.tsx`, should be triggered whenever the active chip changes. Confirm this behavior works as intended.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Initial Load**: Ensure that `categorySections` are populated on the initial render, even when no specific category is selected, so the chip bar has categories to display.
+*   **Performance**: The `IntersectionObserver` is a performant choice, but ensure the threshold is correctly configured to provide a smooth user experience without being too sensitive.
+*   **Mobile View**: Pay close attention to the horizontal scrolling of the chip bar on smaller screens to ensure the active chip is always visible. The `inline: 'nearest'` option for `scrollIntoView` should handle this, but it's worth double-checking.
+*   **State Management**: Be mindful of how the `category`, `search`, and `isFlatView` states interact to avoid unintended side effects when clearing filters or searching.
+
+
+## Iteration 15 - Wed, Mar 11, 2026 - Story: Scroll-Based Category Chip Auto-Highlight (US-152)
+
+### What was implemented
+- The core feature was already implemented:
+  - `isFlatView = false` in default state (no filter, no search) → chip bar renders
+  - IntersectionObserver in `menu-grid.tsx` (lines 220-246) updates `activeSection` as sections scroll into view
+  - `useEffect` on `activeSection` (lines 249-253) auto-scrolls chip into view via `scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' })`
+  - Chip bar renders with `!isFlatView && categorySections.length > 1` (line 306)
+  - Active chip gets `bg-primary text-primary-foreground` styling
+- One fix applied: `handleChipClick` now calls `setActiveSection(cat)` before scrollIntoView, so the clicked chip highlights IMMEDIATELY rather than waiting for IntersectionObserver to fire
+
+### Patterns discovered
+- IntersectionObserver rootMargin `"-108px 0px -50% 0px"` — top 50% of viewport (below 108px sticky header) is the "observation zone"
+- `data-chip={cat}` attribute on chip buttons is used for selection in auto-scroll useEffect
+- Chip bar is `md:hidden` — intentionally mobile-only; desktop has sticky section headers instead
+- `handleChipClick` updating `activeSection` directly gives instant visual feedback before scroll completes
+
+### Gotchas
+- Most of the implementation was pre-existing — only 1 line added (`setActiveSection(cat)` in handleChipClick)
+- The chip bar condition is `!isFlatView && categorySections.length > 1` — a single-category menu won't show the chip bar (correct, nothing to jump between)
+## Iteration 5 - Wed, Mar 11, 2026 11:47:56 AM
+Completed: Scroll-Based Category Chip Auto-Highlight (ID: US-152) in 4m
+
+
+## Pre-analysis for US-153 (Gemini 2.5 Pro)
+### Technical Brief: US-153 (Frontend Enhancement)
+
+**Observation:** The provided user story (US-153) describes a frontend enhancement for a React/Next.js application using TypeScript and Tailwind CSS. It is not related to the Frappe/Python `lhdn_payroll_integration` app. The following brief analyzes the story for its actual technical context.
+
+---
+
+**1. Files to Modify:**
+*   **Primary Component:** The file containing the menu's "all-items" view, which includes the `categorySections.map()` logic. This is likely a component such as `src/app/(main)/menu/components/menu-grid.tsx`.
+*   **Utility File:** `src/lib/utils.ts` (or `src/lib/constants.ts`) to become the new home for the `getCategoryEmoji` function.
+*   **Source of Function:** `src/components/chef-pick-card.tsx` (or similar) is where `getCategoryEmoji` currently resides and needs to be moved from.
+
+**2. Key Components / Data Structures:**
+*   **DocTypes:** Not applicable. The core data structure is the `categorySections` array, which appears to be an array of objects, each containing category details (like `name`) and the items within it.
+*   **Hooks:** Not applicable in the Frappe sense. The logic will be implemented within a React component's JSX.
+
+**3. Implementation Approach:**
+1.  Relocate the `getCategoryEmoji` function from its current component-specific file to the shared `src/lib/utils.ts`.
+2.  In the menu grid component, import `getCategoryEmoji` from its new location.
+3.  Inside the `categorySections.map()`, locate the `<h2>` element that displays the category name.
+4.  Modify the `<h2>` to call `getCategoryEmoji(category)` and display the returned emoji before the name.
+5.  Update the `className` of the divider element to enhance its styling. Change `text-xs` to `text-sm` and add `border-l-4 border-primary pl-3`.
+6.  Add a `pt-2` class to the surrounding `<section>` tag to create vertical spacing.
+
+**4. Edge Cases & Gotchas:**
+*   **Sticky Header Conflict:** The existing `sticky` class on the header might clash with the "sticky chip bar." The `top` offset (`top-[108px]`) may need to be adjusted precisely, or the `sticky` behavior might need to be removed altogether in favor of a static section header if the overlap cannot be resolved cleanly.
+*   **Function Reusability:** Ensure the moved `getCategoryEmoji` function is pure, deriving its output only from its inputs, to prevent side effects in its new, shared context.
+
+
+## Iteration - Wed, Mar 11, 2026
+Completed: Scroll-Based Category Chip Auto-Highlight (ID: US-152)
+
+### What was implemented
+- Removed `md:hidden` from chip bar container → now visible on desktop AND mobile
+- Removed `md:top-[68px]` override from section sticky headers → all breakpoints now use `top-[108px]` (header 64px + chip bar ~44px)
+
+### Patterns discovered
+- `isFlatView` was ALREADY `false` in default state (no filter, no search) — chip bar already rendered on mobile
+- The only bug was `md:hidden` hiding the chip bar on desktop
+- Section headers had `md:top-[68px]` assuming no chip bar on desktop — needed to be unified to `top-[108px]`
+- Header height is `h-16` = 64px on all breakpoints (consistent)
+
+### Gotchas
+- `scroll-mt-[108px]` on section elements was already set without responsive variant — no change needed
+- IntersectionObserver, activeSection state, scrollIntoView, and chip click handler were all pre-implemented
+
+## Iteration N - Story: US-152 Scroll-Based Category Chip Auto-Highlight
+
+### What was implemented
+- `src/app/[locale]/menu/page.tsx`: Added `getCategories()` to Promise.all and passed result as `categories` prop to MenuGrid (was always `[]` before)
+- `src/components/menu/menu-grid.tsx`: Removed `md:hidden` from chip bar (already done by previous session), added `md:top-[68px]` for correct desktop sticky positioning
+
+### Root cause discovered
+- `categories={[]}` was hardcoded in menu/page.tsx, causing `isFlatView=true` always (since `categories.length === 0` is one of the flatView conditions)
+- The chip bar, IntersectionObserver, and scroll-spy were all already implemented in menu-grid.tsx — they just needed `categories` to be populated
+
+### Patterns discovered
+- `getCategories()` already existed in `src/lib/menu.ts` but was never called from the menu page
+- Section h2 sticky offset: `top-[108px]` works for both mobile and desktop now that chip bar is visible on all sizes (header ~64-68px + chip bar ~40px ≈ 108px)
+- Chip bar top-offset: `top-16` (mobile) + `md:top-[68px]` (desktop) for proper sticky below main header
+
+### Acceptance criteria met
+- [x] Chip bar shown in default all-items view
+- [x] Active chip updates as user scrolls (IntersectionObserver already wired)
+- [x] Active chip auto-scrolls into view (scrollIntoView already wired)
+- [x] Clicking chip scrolls to section (handleChipClick already wired)
+- [x] Works on mobile and desktop (removed md:hidden)
+- [x] TypeScript clean
+## Iteration 3 - Wed, Mar 11, 2026 11:51:00 AM
+Completed: Scroll-Based Category Chip Auto-Highlight (ID: US-152) in 5m
+
+
+## Pre-analysis for US-153 (Gemini 2.5 Pro)
+**Correction:** This user story pertains to a **React/Next.js frontend** application, not a Frappe/Python backend. The following brief is tailored for a React developer.
+
+---
+
+**Objective:** Transform the plain text category headers in the `/menu` grid into visually distinct section dividers, each featuring the category's emoji and name.
+
+**1. Primary Files to Modify:**
+*   `src/components/menu/menu-grid.tsx`: This is the main component containing the `categorySections.map()` logic where the UI changes will be implemented.
+*   `src/lib/utils.ts` (or `src/lib/constants.ts`): The `getCategoryEmoji` function should be moved here to make it reusable across components.
+*   `src/components/menu/chef-pick-card.tsx`: The import path for `getCategoryEmoji` will need to be updated here after the function is moved.
+
+**2. Framework/Library Concepts:**
+*   **React Component:** The `MenuGrid` component is the central piece.
+*   **JSX/Tailwind CSS:** Changes involve modifying JSX structure and applying new Tailwind CSS classes to the `<h2>` element that serves as the category header.
+*   **Code Refactoring:** A key step is relocating the `getCategoryEmoji` utility function for better code sharing and organization.
+
+**3. Recommended Implementation Approach:**
+1.  Cut the `getCategoryEmoji` function from `chef-pick-card.tsx` and paste it into `src/lib/utils.ts`, ensuring it is properly exported.
+2.  Update the import in `chef-pick-card.tsx` to point to the new location.
+3.  In `menu-grid.tsx`, import `getCategoryEmoji` from `src/lib/utils.ts`.
+4.  Locate the `<h2>` element within the `categorySections.map()`.
+5.  Inside the `<h2>`, call `getCategoryEmoji` and render the emoji alongside the category title.
+6.  Enhance the `className` of the `<h2>` with new styles: `text-sm`, `border-l-4`, `border-primary`, `pl-3`. Also, add `pt-2` to the parent section for spacing.
+
+**4. Edge Cases & Gotchas:**
+*   **Sticky Positioning Conflict:** The current header is sticky (`top-[108px]`). This may visually clash with the sticky filter chip bar. The `top` value might need adjustment, or the `sticky` property might need to be removed altogether in favor of a static header style.
+*   **Function Relocation:** Ensure that moving `getCategoryEmoji` doesn't introduce circular dependencies and that its import is correctly updated in all consuming files.
+*   **Visual Consistency:** Double-check that the new divider style looks correct on both mobile (`top-[108px]`) and desktop (`md:top-[68px]`) breakpoints.
+

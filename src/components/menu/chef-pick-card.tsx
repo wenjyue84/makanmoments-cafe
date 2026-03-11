@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Plus, Minus, Info, X, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Check, Loader2, Crown } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import type { MenuItemWithRules } from "@/types/menu";
-import { formatPrice, getLocalizedName, cn } from "@/lib/utils";
+import { formatPrice, getLocalizedName, cn, getCategoryEmoji } from "@/lib/utils";
 import { DietaryBadge } from "./dietary-badge";
 import { RecipeModal } from "./recipe-modal";
 import { getRecipeInfo } from "@/data/recipe-info";
@@ -14,20 +14,6 @@ import { getRecipeInfo } from "@/data/recipe-info";
 function parsePosition(pos: string): [number, number] {
   const parts = pos.split(" ").map((p) => parseInt(p, 10));
   return [isNaN(parts[0]) ? 50 : parts[0], isNaN(parts[1]) ? 50 : parts[1]];
-}
-
-function getCategoryEmoji(categories: string[]): string {
-  const cat = (categories[0] ?? "").toLowerCase();
-  if (cat.includes("beverage") || cat.includes("drink") || cat.includes("juice")) return "🧋";
-  if (cat.includes("noodle") || cat.includes("fried noodle")) return "🍜";
-  if (cat.includes("soup")) return "🍲";
-  if (cat.includes("rice") || cat.includes("nanyang")) return "🍚";
-  if (cat.includes("toast") || cat.includes("bread")) return "🍞";
-  if (cat.includes("snack")) return "🍟";
-  if (cat.includes("ice cream") || cat.includes("dessert")) return "🍨";
-  if (cat.includes("ayam") || cat.includes("chicken")) return "🍗";
-  if (cat.includes("fish") || cat.includes("thai")) return "🐟";
-  return "🍽️";
 }
 
 interface ChefPickCardProps {

@@ -6,26 +6,12 @@ import { useLocale, useTranslations } from "next-intl";
 import { Plus, Minus, Info, Heart } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import type { MenuItemWithRules } from "@/types/menu";
-import { formatPrice, getLocalizedName, cn } from "@/lib/utils";
+import { formatPrice, getLocalizedName, cn, getCategoryEmoji } from "@/lib/utils";
 import { DietaryBadge } from "./dietary-badge";
 import { RecipeModal } from "./recipe-modal";
 import { getRecipeInfo } from "@/data/recipe-info";
 import { ImageCarousel } from "./image-carousel";
 import { useScrolling } from "@/lib/scrolling-context";
-
-function getCategoryEmoji(categories: string[]): string {
-  const cat = (categories[0] ?? "").toLowerCase();
-  if (cat.includes("beverage") || cat.includes("drink") || cat.includes("juice")) return "🧋";
-  if (cat.includes("noodle") || cat.includes("fried noodle")) return "🍜";
-  if (cat.includes("soup")) return "🍲";
-  if (cat.includes("rice") || cat.includes("nanyang")) return "🍚";
-  if (cat.includes("toast") || cat.includes("bread")) return "🍞";
-  if (cat.includes("snack")) return "🍟";
-  if (cat.includes("ice cream") || cat.includes("dessert")) return "🍨";
-  if (cat.includes("ayam") || cat.includes("chicken")) return "🍗";
-  if (cat.includes("fish") || cat.includes("thai")) return "🐟";
-  return "🍽️";
-}
 
 interface MenuCardProps {
   item: MenuItemWithRules;

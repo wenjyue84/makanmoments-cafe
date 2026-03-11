@@ -9,7 +9,7 @@ import { ChefPickCard } from "./chef-pick-card";
 import { EditableMenuCard } from "./editable-menu-card";
 import { MenuFilter } from "./menu-filter";
 import { FadeUp } from "@/components/ui/fade-up";
-import { cn } from "@/lib/utils";
+import { cn, getCategoryEmoji } from "@/lib/utils";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SPECIAL_DISPLAY_CATEGORIES } from "@/lib/constants";
@@ -253,6 +253,7 @@ export function MenuGrid({
   }, [activeSection]);
 
   const handleChipClick = useCallback((cat: string) => {
+    setActiveSection(cat);
     document.getElementById(`section-${cat}`)?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
@@ -302,10 +303,10 @@ export function MenuGrid({
         </div>
       )}
 
-      {/* Quick-jump chip bar — mobile only, shown when browsing all sections */}
+      {/* Quick-jump chip bar — shown when browsing all sections (mobile + desktop) */}
       {!isFlatView && categorySections.length > 1 && (
         <div className={cn(
-          "sticky top-16 z-30 md:hidden bg-background/95 backdrop-blur-sm border-b border-border -mx-4 px-4 py-2 mb-2 transition-opacity duration-150",
+          "sticky top-16 md:top-[68px] z-30 bg-background/95 backdrop-blur-sm border-b border-border -mx-4 px-4 py-2 mb-2 transition-opacity duration-150",
           isScrolling && "opacity-30"
         )}>
           <div
@@ -446,12 +447,15 @@ export function MenuGrid({
         /* Category sections: Chef's Pick hero cards (max 2) + regular grid */
         <div className="mt-6 space-y-10">
           {categorySections.map(({ cat, heroItems: sectionHeroItems, rest }, sectionIdx) => (
-            <section key={cat} id={`section-${cat}`} aria-labelledby={`cat-${cat}`} className="scroll-mt-[108px]">
+            <section key={cat} id={`section-${cat}`} aria-labelledby={`cat-${cat}`} className="scroll-mt-[108px] pt-2">
               <h2
                 id={`cat-${cat}`}
-                className="sticky top-[108px] md:top-[68px] z-10 bg-background/95 backdrop-blur-sm -mx-4 px-4 py-3 mb-4 text-xs font-semibold tracking-widest uppercase text-muted-foreground border-b border-dashed border-border"
+                className="bg-muted/30 -mx-4 px-4 py-3 mb-4 border-b border-border"
               >
-                {cat}
+                <span className="flex items-center gap-2 border-l-4 border-primary pl-3 text-sm font-semibold tracking-widest uppercase text-foreground">
+                  <span aria-hidden="true">{getCategoryEmoji([cat])}</span>
+                  {cat}
+                </span>
               </h2>
 
               {/* Chef's Pick hero cards — up to 2 per category, shown in all modes */}

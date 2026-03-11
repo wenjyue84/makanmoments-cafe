@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
-import { getMenuItems, getAllMenuItemsWithRulesForAdmin, getDisplayCategories } from "@/lib/menu";
+import { getMenuItems, getAllMenuItemsWithRulesForAdmin, getDisplayCategories, getCategories } from "@/lib/menu";
 import { getHighlightsFromDB, computeEffectiveHighlights } from "@/lib/highlights";
 import { MenuGrid } from "@/components/menu/menu-grid";
 import { MenuPageJsonLd } from "@/components/seo/json-ld";
@@ -37,10 +37,11 @@ export default async function MenuPage({
   // previewTime is admin-only; strip it for customers
   const previewTime = isAdmin ? (resolvedParams.previewTime ?? null) : null;
 
-  const [items, displayCats, persistedHighlights] = await Promise.all([
+  const [items, displayCats, persistedHighlights, categories] = await Promise.all([
     isAdmin ? getAllMenuItemsWithRulesForAdmin() : getMenuItems(),
     getDisplayCategories(),
     getHighlightsFromDB(),
+    getCategories(),
   ]);
 
   const highlightedByCategory = computeEffectiveHighlights(items, persistedHighlights);
@@ -62,7 +63,7 @@ export default async function MenuPage({
         <MenuPageHeader />
         <MenuGrid
           items={items}
-          categories={[]}
+          categories={categories}
           displayCategories={displayCategoryNames}
           isAdmin={isAdmin}
           highlightedByCategory={highlightedByCategory}
