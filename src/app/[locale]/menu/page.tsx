@@ -47,9 +47,12 @@ export default async function MenuPage({
   const highlightedByCategory = computeEffectiveHighlights(items, persistedHighlights);
   const activeDisplayCats = displayCats.filter((dc) => dc.active);
   const displayCategoryNames = activeDisplayCats.map((dc) => dc.name);
-  const chefsCatId = activeDisplayCats.find((dc) => dc.name.toLowerCase().includes("chef"))?.id?.toString() ?? null;
-
-  const initialCategory = getDefaultCategoryForTime(previewTime);
+  // Default to Chef's Pick display category on first load; fall back to time-based default
+  const chefsCat = activeDisplayCats.find((dc) => dc.name.toLowerCase().includes("chef"));
+  const chefsCatId = chefsCat?.id?.toString() ?? null;
+  const initialCategory = chefsCat
+    ? `__dc__${chefsCat.name}`
+    : getDefaultCategoryForTime(previewTime);
   const servingNowCategories = getServingNowCategories(previewTime);
   const currentTime = getMalaysiaTimeString();
 

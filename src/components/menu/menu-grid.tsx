@@ -252,6 +252,42 @@ export function MenuGrid({
     chip?.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
   }, [activeSection]);
 
+  // Background image prefetch — silently load non-hero images after mount so category switches feel instant
+  useEffect(() => {
+    const heroIds = new Set(heroItems.map((h) => h.id));
+    const codes = items
+      .filter((item) => !heroIds.has(item.id) && item.code)
+      .map((item) => item.code);
+
+    let idx = 0;
+    function fetchNext() {
+      if (idx >= codes.length) return;
+      const img = new window.Image();
+      img.src = `/images/menu/${codes[idx++]}.jpg`;
+      schedule();
+    }
+    function schedule() {
+      if (idx >= codes.length) return;
+      if (typeof requestIdleCallback !== "undefined") {
+        requestIdleCallback(fetchNext);
+      } else {
+        setTimeout(fetchNext, 16);
+      }
+    }
+
+    // Wait 1s after mount before starting prefetch to avoid competing with initial render
+    const start = setTimeout(() => {
+      if (typeof requestIdleCallback !== "undefined") {
+        requestIdleCallback(fetchNext);
+      } else {
+        setTimeout(fetchNext, 0);
+      }
+    }, 1000);
+
+    return () => clearTimeout(start);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleChipClick = useCallback((cat: string) => {
     setActiveSection(cat);
     document.getElementById(`section-${cat}`)?.scrollIntoView({ behavior: "smooth" });

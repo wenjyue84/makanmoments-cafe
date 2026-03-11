@@ -14457,3 +14457,100 @@ Completed: Scroll-Based Category Chip Auto-Highlight (ID: US-152) in 6m
 **4. Gotchas to Watch For:**
 *   **Sticky Positioning Conflict:** The current `sticky` styling on the header (`top-[108px]`) may visually clash with the separate sticky chip bar. This must be tested by scrolling. If they overlap, adjust the `top` offset value or remove the `sticky` property from the header entirely, converting it into a static section divider.
 
+## Iteration 6 - Wed, Mar 11, 2026 11:54:51 AM
+Completed: Category Section Dividers with Labels in All-Items View (ID: US-153) in 5m
+
+
+## Pre-analysis for US-154 (Gemini 2.5 Pro)
+Based on the user story, this is a **Next.js/TypeScript** task, not a Frappe/Python one. Here is the technical brief for the frontend implementation:
+
+**Project:** Next.js / TypeScript
+**Objective:** Default the menu page to a "Chef's Pick" category for a faster initial load, then prefetch other item images in the background.
+
+**1. Files to Modify:**
+*   `src/app/[locale]/menu/page.tsx`: To implement the server-side logic for determining the initial category.
+*   `src/components/menu/MenuGrid.tsx` (or a similar client component): To add the client-side `useEffect` for background image prefetching.
+
+**2. Key Frappe/Platform Concepts:**
+*   This is a Next.js project. The core concepts are:
+*   **React Server Component (`page.tsx`):** For data fetching and initial render logic on the server.
+*   **Client Component (`MenuGrid.tsx`):** For client-side interactivity and lifecycle effects (`useEffect`).
+*   **Browser API:** `requestIdleCallback` for non-blocking background tasks.
+
+**3. Implementation Approach:**
+1.  In `menu/page.tsx`, fetch all display categories. Find the category named "Chef's Pick".
+2.  Construct the initial category ID (e.g., `dc:Chef's Pick`) and pass it as a prop to the `<MenuGrid>` component.
+3.  In `MenuGrid.tsx`, use a `useEffect` hook with an empty dependency array `[]` to run logic once after the component mounts.
+4.  Inside the effect, get a list of all menu items *not* in the "Chef's Pick" category.
+5.  Use `requestIdleCallback` to loop through these non-visible items and create `new Image()` instances, setting their `src` to prefetch and cache them.
+
+**4. Edge Cases & Gotchas:**
+*   **Fallback:** The logic in `page.tsx` must gracefully handle cases where the "Chef's Pick" category doesn't exist, falling back to the default time-based category selection.
+*   **Non-Blocking:** Ensure the prefetching loop is wrapped in `requestIdleCallback` to avoid jank or blocking the main thread during initial interaction.
+*   **Image Paths:** Double-check the image path construction logic (e.g., `/images/menu/${item.code}.jpg`) to ensure it's correct.
+
+
+## Iteration N - Story: US-153 + US-154
+
+### US-153: Category Section Dividers
+- Already fully implemented and committed (aef3d89) — just needed prd.json marked passes=true
+- getCategoryEmoji already in utils.ts; divider uses border-l-4 border-primary, text-sm, uppercase, emoji prefix
+- Section has scroll-mt-[108px] and pt-2; h2 is NOT sticky (per spec)
+
+### US-154: Default Chef's Pick + Background Image Prefetch
+**What was implemented:**
+- `src/app/[locale]/menu/page.tsx`: Consolidated chefsCatId lookup into single chefsCat find(); initialCategory set to `__dc__${chefsCat.name}` when chef's pick exists, falls back to getDefaultCategoryForTime()
+- `src/components/menu/menu-grid.tsx`: Added useEffect that prefetches all non-hero item images via requestIdleCallback (or setTimeout fallback) with 1s initial delay to avoid competing with render
+
+### Patterns discovered
+- DC_PREFIX = "__dc__" — constructed as string literal in server component to avoid client hook import issues
+- requestIdleCallback is not defined in TS types by default — use typeof check guard
+- Two consecutive find() calls on same array → consolidate to single variable
+
+### Gotchas
+- Don't import from useMenuFiltering.ts in server components even for constants — use string literal instead
+- `// eslint-disable-next-line react-hooks/exhaustive-deps` needed for intentional empty deps array when items/heroItems are stable props
+
+## Iteration N - Story: US-154 - Default to Chef's Pick on Menu Load + Background Image Prefetch
+
+### What was implemented
+- `src/app/[locale]/menu/page.tsx`: defaulted `initialCategory` to `__dc__${chefsCat.name}` when a Chef's Pick display category exists; falls back to `getDefaultCategoryForTime()` if none found. Also consolidated two separate `find()` calls into a single `chefsCat` variable.
+- `src/components/menu/menu-grid.tsx`: Added `useEffect(() => {...}, [])` with a chained `requestIdleCallback` prefetch loop — starts 1s after mount to avoid competing with initial render; prefetches `/images/menu/${code}.jpg` for all non-hero items one at a time via idle callbacks.
+
+### Patterns discovered
+- File is frequently auto-modified between reads (linter or formatter) — always re-read before editing
+- The chained idle callback pattern (fetch one → schedule next) is better than firing all at once, as it avoids creating hundreds of simultaneous Image() objects
+
+### Gotchas
+- Do NOT import DC_PREFIX or SPECIAL_DISPLAY_CATEGORIES from hook files in server components — use string literal `__dc__` directly in page.tsx
+- `// eslint-disable-next-line react-hooks/exhaustive-deps` required for empty deps array when `items` and `heroItems` are stable server props
+## Iteration 4 - Wed, Mar 11, 2026 11:58:18 AM
+Completed: Category Section Dividers with Labels in All-Items View (ID: US-153) in 6m
+
+
+## Pre-analysis for US-155 (Gemini 2.5 Pro)
+This story is for a Next.js/TypeScript frontend, not a Frappe/Python app. The following technical brief is based on the provided JSON, re-interpreting the request for the correct technology stack.
+
+**Technical Brief: US-155 Admin Feature Tests**
+
+**1. Files to Modify:**
+*   `src/components/admin/admin-tests-panel.tsx`: The primary file for adding the new test case functions and UI.
+*   `prd.json`: The file to programmatically append new bug stories to if tests fail.
+*   Possibly a new helper file in `src/lib/` for test utilities or DOM assertions.
+
+**2. Components & API Routes Involved:**
+*   **Target Page:** The `/menu` page is the main subject of most tests.
+*   **Components:** `SignatureDishCard`, `AdminGearIcon`, `Tray`, `FavoriteIcon`, `BottomSearchBar`, and `CategoryChipBar`.
+*   **State/Context:** `isScrolling` context, cart state management.
+
+**3. Recommended Implementation Approach:**
+*   Within `admin-tests-panel.tsx`, create an async function to orchestrate the tests for US-146 through US-154.
+*   For each test, use `document.querySelector()` or similar DOM inspection methods to check for element presence, styles (e.g., `opacity-0`), and attributes.
+*   Simulate user actions where necessary (e.g., adding an item to the cart to check the tray's visibility).
+*   Create a robust failure-handler function that reads `prd.json`, adds a new JSON object for the bug, and writes the updated content back to the file.
+
+**4. Edge Cases & Gotchas:**
+*   **Asynchronicity:** Tests must `await` UI updates. For example, wait for the cart state to update before checking the tray's visibility.
+*   **File I/O:** Writing to `prd.json` from a client-side component is not feasible. This will require an API route (e.g., `POST /api/create-bug-report`) to handle the file system update securely on the server.
+*   **Authentication:** Admin-specific tests require the test runner to be executed by a logged-in administrator. The test logic should verify this state.
+
