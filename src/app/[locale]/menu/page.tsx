@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
-import { getMenuItems, getAllMenuItemsWithRulesForAdmin, getDisplayCategories, getCategories } from "@/lib/menu";
+import { getMenuItems, getAllMenuItemsWithRulesForAdmin, getDisplayCategories } from "@/lib/menu";
 import { getHighlightsFromDB, computeEffectiveHighlights } from "@/lib/highlights";
 import { MenuGrid } from "@/components/menu/menu-grid";
 import { MenuPageJsonLd } from "@/components/seo/json-ld";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
-import { getDefaultCategoryForTime, getServingNowCategories, getMalaysiaTimeString } from "@/lib/time-slots";
+import { getServingNowCategories, getMalaysiaTimeString } from "@/lib/time-slots";
 import { AdminPreviewBanner } from "@/components/menu/admin-preview-banner";
 
 export const revalidate = 3600;
@@ -27,7 +28,7 @@ export async function generateMetadata({
 export default async function MenuPage({
   searchParams,
 }: {
-  searchParams: Promise<{ previewTime?: string }>;
+  searchParams: Promise<{ previewTime?: string; q?: string }>;
 }) {
   const cookieStore = await cookies();
   const token = cookieStore.get(COOKIE_NAME)?.value;
@@ -36,41 +37,41 @@ export default async function MenuPage({
   const resolvedParams = await searchParams;
   // previewTime is admin-only; strip it for customers
   const previewTime = isAdmin ? (resolvedParams.previewTime ?? null) : null;
+  const initialSearch = resolvedParams.q ?? "";
 
-  const [items, displayCats, persistedHighlights, categories] = await Promise.all([
+  const [items, displayCats, persistedHighlights] = await Promise.all([
     isAdmin ? getAllMenuItemsWithRulesForAdmin() : getMenuItems(),
     getDisplayCategories(),
     getHighlightsFromDB(),
-    getCategories(),
   ]);
 
   const highlightedByCategory = computeEffectiveHighlights(items, persistedHighlights);
   const activeDisplayCats = displayCats.filter((dc) => dc.active);
   const displayCategoryNames = activeDisplayCats.map((dc) => dc.name);
-  // Default to Chef's Pick display category on first load; fall back to time-based default
+  // Default to All — all category sections shown on one page; Chef's Picks section is at the top
   const chefsCat = activeDisplayCats.find((dc) => dc.name.toLowerCase().includes("chef"));
   const chefsCatId = chefsCat?.id?.toString() ?? null;
-  const initialCategory = chefsCat
-    ? `__dc__${chefsCat.name}`
-    : getDefaultCategoryForTime(previewTime);
+  const initialCategory: string | null = null;
   const servingNowCategories = getServingNowCategories(previewTime);
   const currentTime = getMalaysiaTimeString();
 
   return (
     <>
       <MenuPageJsonLd />
-      <div className="mx-auto max-w-6xl px-4 py-12 pb-40 md:pb-12">
+      <div className="mx-auto max-w-6xl px-4 py-12">
         {isAdmin && (
-          <AdminPreviewBanner currentTime={currentTime} previewTime={previewTime} />
+          <Suspense fallback={null}>
+            <AdminPreviewBanner currentTime={currentTime} previewTime={previewTime} />
+          </Suspense>
         )}
         <MenuPageHeader />
         <MenuGrid
           items={items}
-          categories={categories}
           displayCategories={displayCategoryNames}
           isAdmin={isAdmin}
           highlightedByCategory={highlightedByCategory}
           initialCategory={initialCategory}
+          initialSearch={initialSearch}
           servingNowCategories={servingNowCategories}
           previewTime={previewTime}
           chefsCatId={chefsCatId}

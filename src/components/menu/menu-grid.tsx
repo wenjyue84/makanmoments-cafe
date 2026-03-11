@@ -1,12 +1,18 @@
 "use client";
 
 import { useState, useCallback, useEffect, useMemo, useTransition } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import { useTranslations, useLocale } from "next-intl";
+import dynamic from "next/dynamic";
 import { Eye, EyeOff, X, ArchiveRestore, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import type { MenuItem } from "@/types/menu";
 import { getLocalizedName, formatPrice } from "@/lib/utils";
 import { MenuCard } from "./menu-card";
-import { EditableMenuCard } from "./editable-menu-card";
+
+const EditableMenuCard = dynamic(
+  () => import("./editable-menu-card").then(m => m.EditableMenuCard),
+  { ssr: false }
+);
 import { MenuFilter } from "./menu-filter";
 import { FadeUp } from "@/components/ui/fade-up";
 import { cn } from "@/lib/utils";
@@ -33,6 +39,7 @@ interface MenuGridProps {
   isAdmin?: boolean;
   highlightedByCategory?: Record<string, string>;
   initialCategory?: string | null;
+  initialSearch?: string;
   servingNowCategories?: string[];
   previewTime?: string | null;
   chefsCatId?: string | null;
@@ -44,6 +51,7 @@ export function MenuGrid({
   isAdmin = false,
   highlightedByCategory: initialHighlights = {},
   initialCategory = null,
+  initialSearch = "",
   servingNowCategories = [],
   previewTime = null,
   chefsCatId = null,
@@ -54,6 +62,9 @@ export function MenuGrid({
   const hasPreviewTime = previewHour !== null && previewMinute !== null && !isNaN(previewHour) && !isNaN(previewMinute);
   const t = useTranslations("common");
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
+
+  const router = useRouter();
+  const pathname = usePathname();
 
   const [isPending, startTransition] = useTransition();
 
@@ -69,7 +80,20 @@ export function MenuGrid({
     return null;
   });
   const [isEditMode, setIsEditMode] = useState(true);
-  const [search, setSearch] = useState("");
+  // Initialise search from server-passed ?q= value so it survives page refresh
+  const [search, setSearch] = useState(initialSearch);
+
+  // Keep URL ?q= param in sync with search state.
+  // Build params explicitly from known props — avoids useSearchParams() which requires Suspense
+  // and can cause NextIntlClientProvider context to be missing during SSR hydration.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (search) params.set("q", search);
+    if (previewTime) params.set("previewTime", previewTime);
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    router.replace(newUrl, { scroll: false });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
   const debouncedSearch = useDebounce(search, 300);
   const [highlights] = useState<Record<string, string>>(initialHighlights);
 

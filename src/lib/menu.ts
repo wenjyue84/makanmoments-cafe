@@ -26,7 +26,12 @@ const PHOTOS_CACHE_TTL = 5 * 60 * 1000;
 function buildPhotosCache(): { primary: Record<string, string>; secondary: Record<string, string[]> } {
   try {
     const files = readdirSync(MENU_IMAGES_DIR);
-    const primary: Record<string, string> = {};
+    // Use separate maps: descriptive names (newer uploads) take priority over exact names (legacy).
+    // '-' (ASCII 45) sorts before '.' (ASCII 46) so descriptive files like {code}-slug.webp appear
+    // before {code}.webp in directory order. Without this split, the exactMatch pass would
+    // re-override a freshly uploaded descriptive file with the old {code}.webp.
+    const primaryExact: Record<string, string> = {};
+    const primaryDesc: Record<string, string> = {};
     const secondary: Record<string, string[]> = {};
 
     for (const file of files) {
@@ -44,25 +49,26 @@ function buildPhotosCache(): { primary: Record<string, string>; secondary: Recor
         continue;
       }
 
-      // Primary exact: {code}.ext  (no hyphen in name before extension)
-      const exactMatch = file.match(/^([^-]+)\.(jpe?g|png|webp)$/i);
-      if (exactMatch) {
-        const code = exactMatch[1];
-        const ext = file.split(".").pop()!.toLowerCase();
-        // Prefer webp over jpg/jpeg/png
-        if (!primary[code] || ext === "webp") primary[code] = `/images/menu/${file}`;
-        continue;
-      }
-
       // Primary descriptive: {code}-{name-starting-with-non-digit}.ext
       const descMatch = file.match(/^([^-]+)-([^0-9].+)\.(jpe?g|png|webp)$/i);
       if (descMatch) {
         const code = descMatch[1];
         const ext = file.split(".").pop()!.toLowerCase();
-        if (!primary[code] || ext === "webp") primary[code] = `/images/menu/${file}`;
+        if (!primaryDesc[code] || ext === "webp") primaryDesc[code] = `/images/menu/${file}`;
+        continue;
+      }
+
+      // Primary exact: {code}.ext  (no hyphen slug)
+      const exactMatch = file.match(/^([^-]+)\.(jpe?g|png|webp)$/i);
+      if (exactMatch) {
+        const code = exactMatch[1];
+        const ext = file.split(".").pop()!.toLowerCase();
+        if (!primaryExact[code] || ext === "webp") primaryExact[code] = `/images/menu/${file}`;
       }
     }
 
+    // Merge: descriptive wins over exact (descriptive = named upload = most recent)
+    const primary = { ...primaryExact, ...primaryDesc };
     for (const code in secondary) secondary[code].sort();
     return { primary, secondary };
   } catch {
@@ -89,7 +95,8 @@ export function invalidatePhotosCache() {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function rowToMenuItem(row: any, displayCatMap: Record<string, string[]> = {}, primaryPhotosMap: Record<string, string> = {}, secondaryPhotosMap: Record<string, string[]> = {}): MenuItem {
   const code = row.code as string;
-  const primary = primaryPhotosMap[code] ?? `/images/menu/${code}.jpg`;
+  // null when no real image file exists — lets the card show placeholder immediately
+  const primary = primaryPhotosMap[code] ?? null;
   const secondary = secondaryPhotosMap[code] ?? [];
   return {
     id: row.id,
@@ -105,7 +112,7 @@ function rowToMenuItem(row: any, displayCatMap: Record<string, string[]> = {}, p
     available: row.available,
     featured: row.featured,
     photo: primary,
-    photos: [primary, ...secondary],
+    photos: primary ? [primary, ...secondary] : secondary,
     sortOrder: row.sort_order ?? 0,
     availableDays: row.available_days ?? [],
     timeFrom: row.time_from ?? "",
