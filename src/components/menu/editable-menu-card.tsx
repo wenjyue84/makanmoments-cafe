@@ -3,13 +3,14 @@
 import Image from "next/image";
 import { useState, useRef } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus, Camera, Pencil, Check, X, Loader2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ImagePlus, Eye, EyeOff } from "lucide-react";
+import { Plus, Camera, Pencil, Check, X, Loader2, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ImagePlus, Eye, EyeOff, Crown, Archive, Star } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
 import type { MenuItemWithRules } from "@/types/menu";
 import { formatPrice, getLocalizedName, cn } from "@/lib/utils";
 import { DietaryBadge } from "./dietary-badge";
 import { RecipeModal } from "./recipe-modal";
 import { getRecipeInfo } from "@/data/recipe-info";
+import { useMenuItemEdit } from "@/hooks/use-menu-item-edit";
 
 interface EditableMenuCardProps {
   item: MenuItemWithRules;
@@ -18,20 +19,12 @@ interface EditableMenuCardProps {
   onSetHighlight?: () => void;
   onRemoveChefsPick?: () => void;
   isUnavailableAtPreview?: boolean;
-}
-
-type EditTarget = "description" | "price" | null;
-
-function parsePosition(pos: string): [number, number] {
-  const parts = pos.split(" ").map((p) => parseInt(p, 10));
-  return [isNaN(parts[0]) ? 50 : parts[0], isNaN(parts[1]) ? 50 : parts[1]];
-}
-
-function shiftPosition(pos: string, dx: number, dy: number): string {
-  const [x, y] = parsePosition(pos);
-  const nx = Math.max(0, Math.min(100, x + dx));
-  const ny = Math.max(0, Math.min(100, y + dy));
-  return `${nx}% ${ny}%`;
+  /** Whether this item is currently the hero/signature dish on the home page */
+  isSignature?: boolean;
+  /** Called when admin clicks "Set as Hero" */
+  onSetSignature?: () => void;
+  /** Called after item is successfully archived */
+  onArchive?: (itemId: string) => void;
 }
 
 export function EditableMenuCard({
@@ -41,216 +34,72 @@ export function EditableMenuCard({
   onSetHighlight,
   onRemoveChefsPick,
   isUnavailableAtPreview = false,
+  isSignature = false,
+  onSetSignature,
+  onArchive,
 }: EditableMenuCardProps) {
   const locale = useLocale();
   const tc = useTranslations("common");
   const { addItem } = useTray();
 
-  const [localItem, setLocalItem] = useState<MenuItemWithRules>(item);
-  const imgInitVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
-  const [imgSrc, setImgSrc] = useState(
-    `/images/menu/${item.code}.jpg${imgInitVersion ? `?v=${imgInitVersion}` : ""}`
-  );
-  const [imgError, setImgError] = useState(false);
-  const [isLocalUpload, setIsLocalUpload] = useState(false);
+  const {
+    localItem,
+    imgSrc,
+    imgError,
+    setImgError,
+    isLocalUpload,
+    editing,
+    draftValue,
+    setDraftValue,
+    draftNameEn,
+    setDraftNameEn,
+    draftNameMs,
+    setDraftNameMs,
+    draftNameZh,
+    setDraftNameZh,
+    saving,
+    errorMsg,
+    setErrorMsg,
+    successMsg,
+    setSuccessMsg,
+    isTouchDevice,
+    showSignatureConfirm,
+    setShowSignatureConfirm,
+    imagePosition,
+    setImagePosition,
+    positionDirty,
+    setPositionDirty,
+    savingPosition,
+    secondaryPhotos,
+    nextSecondaryIndex,
+    fileRef,
+    archiveItem,
+    startEdit,
+    commitEdit,
+    cancelEdit,
+    toggleAvailable,
+    adjustPosition,
+    savePosition,
+    uploadPrimaryFile,
+    handleImageUpload,
+    handlePrimaryDelete,
+    uploadSecondaryFile,
+    handleSecondaryUpload,
+    handleSecondaryDelete,
+    promoteSecondaryToPrimary,
+  } = useMenuItemEdit(item);
 
-  const [editing, setEditing] = useState<EditTarget>(null);
-  const [draftValue, setDraftValue] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const addPhotoRef = useRef<HTMLInputElement>(null);
+  const slotRefs = useRef<Record<number, HTMLInputElement | null>>({});
 
   const [recipeOpen, setRecipeOpen] = useState(false);
-
-  // Focal point state
-  const [imagePosition, setImagePosition] = useState(item.imagePosition || "50% 50%");
-  const [positionDirty, setPositionDirty] = useState(false);
-  const [savingPosition, setSavingPosition] = useState(false);
-
-  const fileRef = useRef<HTMLInputElement>(null);
-  const fileRef2 = useRef<HTMLInputElement>(null);
-  const fileRef3 = useRef<HTMLInputElement>(null);
-
-  // Secondary photos: track URLs so we can show previews without a page reload
-  const [secondaryPhotos, setSecondaryPhotos] = useState<(string | null)[]>(() => {
-    const all = item.photos ?? [];
-    return [all[1] ?? null, all[2] ?? null];
-  });
+  const [isDragOver, setIsDragOver] = useState(false);
+  // null = not dragging; number = dragging over that imageIndex; "new" = dragging over the Add slot
+  const [dragOverSecondary, setDragOverSecondary] = useState<number | "new" | null>(null);
 
   const name = getLocalizedName(localItem, locale);
   const hasPhoto = !imgError;
   const hasRecipe = !!getRecipeInfo(localItem.nameEn);
-
-  async function patchItem(updates: Record<string, unknown>) {
-    setSaving(true);
-    setErrorMsg(null);
-    try {
-      const res = await fetch(`/api/admin/menu/${localItem.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updates),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error || "Save failed");
-      }
-      const row = await res.json();
-      setLocalItem((prev) => ({
-        ...prev,
-        price: row.price !== undefined ? Number(row.price) : prev.price,
-        description: row.description ?? prev.description,
-        available: row.available !== undefined ? Boolean(row.available) : prev.available,
-      }));
-    } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "Save failed");
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  function startEdit(target: EditTarget) {
-    if (target === "description") setDraftValue(localItem.description || "");
-    if (target === "price") setDraftValue(String(localItem.price));
-    setEditing(target);
-  }
-
-  async function commitEdit() {
-    if (!editing) return;
-    if (editing === "price") {
-      const val = parseFloat(draftValue);
-      if (isNaN(val) || val <= 0) { cancelEdit(); return; }
-      await patchItem({ price: val });
-    }
-    if (editing === "description") {
-      await patchItem({ description: draftValue.trim() });
-    }
-    setEditing(null);
-  }
-
-  function cancelEdit() {
-    setEditing(null);
-    setErrorMsg(null);
-  }
-
-  async function toggleAvailable() {
-    await patchItem({ available: !localItem.available });
-  }
-
-  function adjustPosition(dx: number, dy: number) {
-    const newPos = shiftPosition(imagePosition, dx, dy);
-    setImagePosition(newPos);
-    setPositionDirty(true);
-  }
-
-  async function savePosition() {
-    setSavingPosition(true);
-    setErrorMsg(null);
-    try {
-      const res = await fetch(`/api/admin/menu/${localItem.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imagePosition }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error || "Save failed");
-      }
-      setLocalItem((prev) => ({ ...prev, imagePosition }));
-      setPositionDirty(false);
-    } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "Save failed");
-    } finally {
-      setSavingPosition(false);
-    }
-  }
-
-  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSaving(true);
-    setErrorMsg(null);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("code", localItem.code);
-      const res = await fetch("/api/admin/images", { method: "POST", body: fd });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error || "Upload failed");
-      }
-      const { path } = (await res.json()) as { path: string };
-      setImgError(false);
-      setImgSrc(`${path}?v=${Date.now()}`);
-      setIsLocalUpload(true);
-      setSuccessMsg("Image saved — menu page cache cleared");
-      setTimeout(() => setSuccessMsg(null), 4000);
-    } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "Upload failed");
-    } finally {
-      setSaving(false);
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  }
-
-  async function handleSecondaryUpload(
-    e: React.ChangeEvent<HTMLInputElement>,
-    imageIndex: 2 | 3
-  ) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setSaving(true);
-    setErrorMsg(null);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("code", localItem.code);
-      fd.append("imageIndex", String(imageIndex));
-      const res = await fetch("/api/admin/images", { method: "POST", body: fd });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error || "Upload failed");
-      }
-      const { path } = (await res.json()) as { path: string };
-      setSecondaryPhotos((prev) => {
-        const next = [...prev];
-        next[imageIndex - 2] = `${path}?v=${Date.now()}`;
-        return next;
-      });
-      setSuccessMsg("Secondary image saved");
-      setTimeout(() => setSuccessMsg(null), 3000);
-    } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "Upload failed");
-    } finally {
-      setSaving(false);
-      if (imageIndex === 2 && fileRef2.current) fileRef2.current.value = "";
-      if (imageIndex === 3 && fileRef3.current) fileRef3.current.value = "";
-    }
-  }
-
-  async function handleSecondaryDelete(imageIndex: 2 | 3) {
-    setSaving(true);
-    setErrorMsg(null);
-    try {
-      const res = await fetch("/api/admin/images", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code: localItem.code, imageIndex }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error((data as { error?: string }).error || "Delete failed");
-      }
-      setSecondaryPhotos((prev) => {
-        const next = [...prev];
-        next[imageIndex - 2] = null;
-        return next;
-      });
-    } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "Delete failed");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <>
@@ -300,7 +149,7 @@ export function EditableMenuCard({
           </div>
         )}
 
-        {/* Hidden file inputs — primary and secondary */}
+        {/* Hidden file input — primary */}
         <input
           ref={fileRef}
           type="file"
@@ -308,29 +157,37 @@ export function EditableMenuCard({
           className="hidden"
           onChange={handleImageUpload}
         />
+        {/* Hidden file input — add new secondary */}
         <input
-          ref={fileRef2}
+          ref={addPhotoRef}
           type="file"
           accept="image/jpeg,image/png,image/webp"
           className="hidden"
-          onChange={(e) => void handleSecondaryUpload(e, 2)}
-        />
-        <input
-          ref={fileRef3}
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          className="hidden"
-          onChange={(e) => void handleSecondaryUpload(e, 3)}
+          onChange={(e) => {
+            void handleSecondaryUpload(e, nextSecondaryIndex);
+            if (addPhotoRef.current) addPhotoRef.current.value = "";
+          }}
         />
 
         {/* Image area */}
-        <div className="mb-3 relative aspect-[4/3] overflow-hidden rounded-lg bg-muted">
+        <div
+          className={cn("mb-3 relative aspect-[4/3] overflow-hidden rounded-lg bg-muted transition-[box-shadow]", isDragOver && "ring-2 ring-primary ring-offset-1")}
+          onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setIsDragOver(true); }}
+          onDragLeave={(e) => { e.stopPropagation(); setIsDragOver(false); }}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setIsDragOver(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file && file.type.startsWith("image/")) void uploadPrimaryFile(file);
+          }}
+        >
           {hasPhoto ? (
             <Image
               src={imgSrc}
               alt={name}
               fill
-              className="object-cover img-scale"
+              className={cn("object-cover img-scale transition-[filter]", !localItem.available && "grayscale")}
               style={{ objectPosition: imagePosition }}
               sizes="(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 50vw, 33vw"
               priority={priority}
@@ -339,9 +196,36 @@ export function EditableMenuCard({
               unoptimized={isLocalUpload}
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-3xl text-muted-foreground/30">
+            <div className={cn("flex h-full items-center justify-center text-3xl text-muted-foreground/30", !localItem.available && "grayscale")}>
               🍽️
             </div>
+          )}
+          {/* Drag-over overlay */}
+          {isDragOver && (
+            <div className="absolute inset-0 z-40 flex flex-col items-center justify-center gap-1 rounded-lg bg-primary/20 backdrop-blur-[1px] pointer-events-none">
+              <Camera className="h-6 w-6 text-primary" />
+              <span className="text-xs font-semibold text-primary">Drop to upload</span>
+            </div>
+          )}
+
+          {/* Delete primary image — top-right X */}
+          {hasPhoto && (
+            <button
+              type="button"
+              onClick={() => void handlePrimaryDelete()}
+              className={cn(
+                "absolute right-1 top-1 z-20 rounded-full bg-red-500 p-1 text-white transition-opacity hover:bg-red-600",
+                isTouchDevice ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"
+              )}
+              title="Remove primary photo"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          )}
+
+          {/* Light overlay for hidden items — makes image look washed out */}
+          {!localItem.available && (
+            <div className="absolute inset-0 z-[1] bg-background/40 pointer-events-none" />
           )}
 
           {isHighlighted && (
@@ -365,18 +249,40 @@ export function EditableMenuCard({
               ★
             </span>
           )}
-          {localItem.discountPercent && (
+          {localItem.discountPercent && !isSignature && (
             <span className="absolute right-2 top-2 rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white">
               -{localItem.discountPercent}%
             </span>
           )}
 
-          {/* Set as Chef's Pick button — visible on hover in admin mode */}
+          {/* Set as Hero / Hero badge — top-right corner */}
+          {isSignature ? (
+            <span className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full bg-yellow-400 px-2 py-0.5 text-xs font-bold text-yellow-900 shadow">
+              <Crown className="h-3 w-3" /> Hero
+            </span>
+          ) : onSetSignature ? (
+            <button
+              type="button"
+              onClick={() => setShowSignatureConfirm(true)}
+              className={cn(
+                "absolute right-2 top-2 z-10 flex items-center gap-1 rounded-full bg-yellow-300/90 px-2 py-0.5 text-xs font-bold text-yellow-900 shadow transition-opacity hover:bg-yellow-400",
+                isTouchDevice ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"
+              )}
+              title="Set as Hero Dish (appears on the landing page)"
+            >
+              <Crown className="h-3 w-3" /> Set Hero
+            </button>
+          ) : null}
+
+          {/* Set as Chef's Pick button — hover on desktop, always on touch */}
           {!isHighlighted && onSetHighlight && (
             <button
               type="button"
               onClick={onSetHighlight}
-              className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-amber-400/90 px-2.5 py-1.5 text-xs font-bold text-amber-900 opacity-0 transition-opacity group-hover/card:opacity-100 hover:bg-amber-400"
+              className={cn(
+                "absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-amber-400/90 px-2.5 py-1.5 text-xs font-bold text-amber-900 transition-opacity hover:bg-amber-400",
+                isTouchDevice ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"
+              )}
               title="Set as Chef's Pick for this category"
             >
               ★ Chef&apos;s Pick
@@ -394,7 +300,7 @@ export function EditableMenuCard({
             Photo
           </button>
 
-          {/* Focal point arrow controls — always visible in edit mode */}
+          {/* Focal point arrow controls */}
           {hasPhoto && (
             <div className="absolute inset-0 flex flex-col items-center justify-center opacity-40 transition-opacity group-hover/card:opacity-100 pointer-events-none">
               <div className="pointer-events-auto flex flex-col items-center gap-0.5">
@@ -436,62 +342,137 @@ export function EditableMenuCard({
               </div>
             </div>
           )}
-        </div>
 
-        {/* Secondary image slots */}
-        <div className="mb-2 flex gap-2">
-          {([2, 3] as const).map((idx) => {
-            const photo = secondaryPhotos[idx - 2];
-            const fileRefN = idx === 2 ? fileRef2 : fileRef3;
-            return (
-              <div key={idx} className="relative">
-                <div className="relative h-14 w-20 overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-gray-50">
-                  {photo ? (
-                    <>
-                      <Image
-                        src={photo}
-                        alt={`Photo ${idx}`}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
-                      <button
-                        type="button"
-                        onClick={() => void handleSecondaryDelete(idx)}
-                        className="absolute right-0.5 top-0.5 rounded-full bg-red-500 p-0.5 text-white hover:bg-red-600"
-                        title={`Delete photo ${idx}`}
-                      >
-                        <X className="h-2.5 w-2.5" />
-                      </button>
-                    </>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => fileRefN.current?.click()}
-                      className="flex h-full w-full flex-col items-center justify-center gap-0.5 text-gray-400 hover:text-orange-500"
-                      title={`Add photo ${idx}`}
-                    >
-                      <ImagePlus className="h-4 w-4" />
-                      <span className="text-[10px]">Photo {idx}</span>
-                    </button>
-                  )}
+          {/* Signature confirm overlay */}
+          {showSignatureConfirm && (
+            <div
+              className="absolute inset-0 z-30 flex items-center justify-center bg-black/65 rounded-lg p-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-full max-w-[200px] space-y-3 rounded-xl bg-background p-4 shadow-xl">
+                <div className="flex items-center gap-2">
+                  <Crown className="h-4 w-4 shrink-0 text-yellow-500" />
+                  <p className="text-xs font-bold">Set as Hero?</p>
                 </div>
-                {photo && (
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  <span className="font-semibold text-foreground">{name}</span> will appear as the hero image on the landing page.
+                </p>
+                <div className="flex gap-2">
                   <button
                     type="button"
-                    onClick={() => fileRefN.current?.click()}
-                    className="absolute -bottom-0.5 left-0 right-0 flex justify-center rounded-b-lg bg-black/60 py-0.5 text-[10px] text-white hover:bg-black/80"
-                    title={`Replace photo ${idx}`}
+                    onClick={() => { onSetSignature?.(); setShowSignatureConfirm(false); }}
+                    className="flex-1 rounded-lg bg-primary py-1.5 text-xs font-bold text-primary-foreground hover:bg-primary/90 transition-colors"
                   >
-                    <Camera className="h-2.5 w-2.5" />
+                    Confirm
                   </button>
-                )}
+                  <button
+                    type="button"
+                    onClick={() => setShowSignatureConfirm(false)}
+                    className="flex-1 rounded-lg bg-secondary py-1.5 text-xs text-secondary-foreground hover:bg-secondary/80 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Secondary image slots — unlimited */}
+        <div className="mb-2 flex flex-wrap gap-2">
+          {secondaryPhotos.map((photo, i) => {
+            const imageIndex = i + 2;
+            const isOver = dragOverSecondary === imageIndex;
+            return (
+              <div
+                key={imageIndex}
+                className="relative"
+                onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverSecondary(imageIndex); }}
+                onDragLeave={(e) => { e.stopPropagation(); setDragOverSecondary(null); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setDragOverSecondary(null);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file && file.type.startsWith("image/")) void uploadSecondaryFile(file, imageIndex);
+                }}
+              >
+                <div className={cn("relative h-14 w-20 overflow-hidden rounded-lg border-2 border-dashed bg-gray-50 transition-[box-shadow,border-color]", isOver ? "border-primary ring-1 ring-primary" : "border-gray-300")}>
+                  <Image
+                    src={photo}
+                    alt={`Photo ${imageIndex}`}
+                    fill
+                    className="object-cover"
+                    unoptimized
+                  />
+                  {isOver && (
+                    <div className="absolute inset-0 z-10 flex items-center justify-center bg-primary/20 pointer-events-none">
+                      <Camera className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void promoteSecondaryToPrimary(imageIndex)}
+                    className="absolute left-0.5 top-0.5 z-20 rounded-full bg-amber-400 p-0.5 text-amber-900 hover:bg-amber-500"
+                    title="Set as primary photo"
+                  >
+                    <Star className="h-2.5 w-2.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleSecondaryDelete(imageIndex)}
+                    className="absolute right-0.5 top-0.5 z-20 rounded-full bg-red-500 p-0.5 text-white hover:bg-red-600"
+                    title={`Delete photo ${imageIndex}`}
+                  >
+                    <X className="h-2.5 w-2.5" />
+                  </button>
+                </div>
+                <input
+                  ref={(el) => { slotRefs.current[imageIndex] = el; }}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={(e) => void handleSecondaryUpload(e, imageIndex)}
+                />
+                <button
+                  type="button"
+                  onClick={() => slotRefs.current[imageIndex]?.click()}
+                  className="absolute -bottom-0.5 left-0 right-0 flex justify-center rounded-b-lg bg-black/60 py-0.5 text-[10px] text-white hover:bg-black/80"
+                  title={`Replace photo ${imageIndex}`}
+                >
+                  <Camera className="h-2.5 w-2.5" />
+                </button>
               </div>
             );
           })}
-          <p className="self-center text-[10px] text-muted-foreground">
-            Up to 3 photos
-          </p>
+          {/* Add new photo — also accepts drag-and-drop */}
+          <div
+            className="relative"
+            onDragOver={(e) => { e.preventDefault(); e.stopPropagation(); setDragOverSecondary("new"); }}
+            onDragLeave={(e) => { e.stopPropagation(); setDragOverSecondary(null); }}
+            onDrop={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setDragOverSecondary(null);
+              const file = e.dataTransfer.files?.[0];
+              if (file && file.type.startsWith("image/")) void uploadSecondaryFile(file, nextSecondaryIndex);
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => addPhotoRef.current?.click()}
+              className={cn(
+                "flex h-14 w-20 flex-col items-center justify-center gap-0.5 rounded-lg border-2 border-dashed bg-gray-50 transition-colors",
+                dragOverSecondary === "new"
+                  ? "border-primary text-primary"
+                  : "border-gray-300 text-gray-400 hover:border-orange-400 hover:text-orange-500"
+              )}
+              title="Add another photo"
+            >
+              <ImagePlus className="h-4 w-4" />
+              <span className="text-[10px]">{dragOverSecondary === "new" ? "Drop!" : "Add"}</span>
+            </button>
+          </div>
         </div>
 
         {/* Save position button — shown when position changed */}
@@ -519,7 +500,65 @@ export function EditableMenuCard({
         {/* Content */}
         <div className="space-y-1.5">
           <div className="space-y-0.5">
-            <h3 className="font-semibold leading-snug">{name}</h3>
+            {/* Name — click pencil to edit (EN / MS / ZH) */}
+            {editing === "names" ? (
+              <div className="space-y-1">
+                <div>
+                  <span className="mb-0.5 block text-[10px] font-medium uppercase tracking-wide text-muted-foreground">EN</span>
+                  <input
+                    autoFocus
+                    value={draftNameEn}
+                    onChange={(e) => setDraftNameEn(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") void commitEdit();
+                      if (e.key === "Escape") cancelEdit();
+                    }}
+                    className="w-full rounded border bg-background px-2 py-1 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Name in English"
+                  />
+                </div>
+                <div>
+                  <span className="mb-0.5 block text-[10px] font-medium uppercase tracking-wide text-muted-foreground">MS</span>
+                  <input
+                    value={draftNameMs}
+                    onChange={(e) => setDraftNameMs(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Escape") cancelEdit(); }}
+                    placeholder="(same as EN)"
+                    className="w-full rounded border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div>
+                  <span className="mb-0.5 block text-[10px] font-medium uppercase tracking-wide text-muted-foreground">ZH</span>
+                  <input
+                    value={draftNameZh}
+                    onChange={(e) => setDraftNameZh(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Escape") cancelEdit(); }}
+                    placeholder="(same as EN)"
+                    className="w-full rounded border bg-background px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                  />
+                </div>
+                <div className="flex justify-end gap-2 pt-1">
+                  <button type="button" onClick={cancelEdit} className="rounded px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground">
+                    Cancel
+                  </button>
+                  <button type="button" onClick={() => void commitEdit()} className="flex items-center gap-1 rounded bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+                    <Check className="h-3 w-3" /> Save
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <h3 className="font-semibold leading-snug">{name}</h3>
+                <button
+                  type="button"
+                  onClick={() => startEdit("names")}
+                  className="rounded p-0.5 text-amber-600 hover:bg-amber-100 dark:hover:bg-amber-900/30"
+                  title="Edit name (EN / MS / ZH)"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+              </div>
+            )}
 
             {/* Price — click pencil to edit */}
             {editing === "price" ? (
@@ -533,12 +572,12 @@ export function EditableMenuCard({
                   value={draftValue}
                   onChange={(e) => setDraftValue(e.target.value)}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter") commitEdit();
+                    if (e.key === "Enter") void commitEdit();
                     if (e.key === "Escape") cancelEdit();
                   }}
                   className="w-16 rounded border bg-background px-1 py-0.5 text-right text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 />
-                <button type="button" onClick={commitEdit} className="rounded bg-primary p-0.5 text-primary-foreground">
+                <button type="button" onClick={() => void commitEdit()} className="rounded bg-primary p-0.5 text-primary-foreground">
                   <Check className="h-3 w-3" />
                 </button>
                 <button type="button" onClick={cancelEdit} className="rounded bg-muted p-0.5 text-muted-foreground">
@@ -586,7 +625,7 @@ export function EditableMenuCard({
                 <button type="button" onClick={cancelEdit} className="rounded px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground">
                   Cancel
                 </button>
-                <button type="button" onClick={commitEdit} className="flex items-center gap-1 rounded bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+                <button type="button" onClick={() => void commitEdit()} className="flex items-center gap-1 rounded bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
                   <Check className="h-3 w-3" /> Save
                 </button>
               </div>
@@ -619,24 +658,34 @@ export function EditableMenuCard({
         </div>
 
         <div className="mt-3 flex items-center justify-between border-t pt-3">
-          {/* Availability toggle */}
-          <button
-            type="button"
-            onClick={() => void toggleAvailable()}
-            className={cn(
-              "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold border transition-colors",
-              localItem.available
-                ? "text-green-700 bg-green-50 border-green-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
-                : "text-red-700 bg-red-100 border-red-300 hover:bg-red-200"
-            )}
-            title={localItem.available ? "Click to hide from menu" : "Click to show on menu"}
-          >
-            {localItem.available ? (
-              <><Eye className="h-3 w-3" /> Live</>
-            ) : (
-              <><EyeOff className="h-3 w-3" /> Hidden</>
-            )}
-          </button>
+          {/* Left: availability toggle + archive button */}
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => void toggleAvailable()}
+              className={cn(
+                "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold border transition-colors",
+                localItem.available
+                  ? "text-green-700 bg-green-50 border-green-300 hover:bg-red-50 hover:text-red-700 hover:border-red-300"
+                  : "text-red-700 bg-red-100 border-red-300 hover:bg-red-200"
+              )}
+              title={localItem.available ? "Click to hide from menu" : "Click to show on menu"}
+            >
+              {localItem.available ? (
+                <><Eye className="h-3 w-3" /> Live</>
+              ) : (
+                <><EyeOff className="h-3 w-3" /> Hidden</>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => void archiveItem(onArchive)}
+              className="flex items-center gap-1 rounded-full border border-gray-300 px-2 py-1 text-xs text-gray-500 transition-colors hover:border-orange-400 hover:bg-orange-50 hover:text-orange-700 dark:border-gray-600 dark:text-gray-400 dark:hover:border-orange-500 dark:hover:bg-orange-950/30 dark:hover:text-orange-400"
+              title="Archive this item (remove from menu; restore from Archived Items section)"
+            >
+              <Archive className="h-3 w-3" />
+            </button>
+          </div>
 
           <button
             type="button"

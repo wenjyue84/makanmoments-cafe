@@ -11,21 +11,27 @@ export async function POST(request: NextRequest) {
 
   if (targetType === "category" && targetCategories.length > 0) {
     if (excludeItemIds.length > 0) {
-      const rows = await sql`
-        SELECT COUNT(*)::int AS count FROM menu_items
-        WHERE categories && ${targetCategories}::text[]
-          AND NOT (id = ANY(${excludeItemIds}::uuid[]))
+      const rows = await sql<{ count: number }>`
+        SELECT COUNT(DISTINCT mi.id)::int AS count
+        FROM menu_items mi
+        JOIN item_display_categories idc ON mi.id = idc.item_id
+        JOIN display_categories dc ON idc.display_category_id = dc.id
+        WHERE dc.name = ANY(${targetCategories}::text[])
+          AND NOT (mi.id = ANY(${excludeItemIds}::uuid[]))
       `;
       count = rows[0]?.count ?? 0;
     } else {
-      const rows = await sql`
-        SELECT COUNT(*)::int AS count FROM menu_items
-        WHERE categories && ${targetCategories}::text[]
+      const rows = await sql<{ count: number }>`
+        SELECT COUNT(DISTINCT mi.id)::int AS count
+        FROM menu_items mi
+        JOIN item_display_categories idc ON mi.id = idc.item_id
+        JOIN display_categories dc ON idc.display_category_id = dc.id
+        WHERE dc.name = ANY(${targetCategories}::text[])
       `;
       count = rows[0]?.count ?? 0;
     }
   } else if (targetType === "items" && targetItemIds.length > 0) {
-    const rows = await sql`
+    const rows = await sql<{ count: number }>`
       SELECT COUNT(*)::int AS count FROM menu_items
       WHERE id = ANY(${targetItemIds}::uuid[])
     `;

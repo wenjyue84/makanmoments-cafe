@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { revalidatePath } from "next/cache";
 import sql from "@/lib/db";
+import { revalidateLocalePaths } from "@/lib/cache-utils";
 import { invalidateSystemPromptCache } from "@/lib/chat/system-prompt";
 
 export const runtime = "nodejs";
@@ -30,11 +30,13 @@ export async function PATCH(
     specialDates,
     imagePosition,
     isSignature,
+    archived,
   } = body;
 
   // Ensure columns exist (idempotent migrations)
   await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS image_position TEXT DEFAULT '50% 50%'`;
   await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS is_signature BOOLEAN DEFAULT false`;
+  await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT false`;
 
   // Only one item can be the signature dish — clear others before setting this one
   if (isSignature === true) {
@@ -60,6 +62,7 @@ export async function PATCH(
       special_dates = COALESCE(${specialDates ?? null}, special_dates),
       image_position = COALESCE(${imagePosition ?? null}, image_position),
       is_signature = COALESCE(${isSignature ?? null}, is_signature),
+      archived = COALESCE(${archived ?? null}, archived),
       updated_at = now()
     WHERE id = ${id}
     RETURNING *
@@ -70,13 +73,9 @@ export async function PATCH(
   }
 
   // Revalidate ISR cache for menu and home pages across all locales
-  revalidatePath("/en/menu");
-  revalidatePath("/ms/menu");
-  revalidatePath("/zh/menu");
+  revalidateLocalePaths("/menu");
   if (isSignature !== undefined) {
-    revalidatePath("/en");
-    revalidatePath("/ms");
-    revalidatePath("/zh");
+    revalidateLocalePaths("");
   }
 
   // Invalidate AI system prompt cache so new menu data is picked up immediately

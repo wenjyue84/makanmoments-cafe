@@ -109,7 +109,7 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
   }
 
   // Inactivity nudge: after NUDGE_DELAY_MS with no user message, send one gentle prompt
-  const userMessageCount = messages.filter((m: any) => m.role === "user").length;
+  const userMessageCount = messages.filter((m: { role: string }) => m.role === "user").length;
   useEffect(() => {
     if (nudgeSentRef.current) return;
     // Clear any pending timer when user sends a message
@@ -139,9 +139,9 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
     }
 
     // Process tool calls (AI SDK v6: tool calls are in msg.parts)
-    messages.forEach((msg: any) => {
+    messages.forEach((msg) => {
       if (msg.parts) {
-        msg.parts.forEach((part: any) => {
+        (msg.parts as Array<{ type: string; toolInvocation?: { toolName: string; state: string; toolCallId: string; args: { id: string; name: string; price: number } } }>).forEach((part) => {
           if (
             part.type === "tool-invocation" &&
             part.toolInvocation?.toolName === "addToTray" &&
@@ -198,18 +198,15 @@ export function ChatPanel({ onClose }: ChatPanelProps) {
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.map((msg: any) => {
+        {messages.map((msg) => {
           const text =
-            msg.parts
-              ?.filter(
-                (p: any): p is { type: "text"; text: string } =>
-                  p.type === "text"
-              )
-              .map((p: any) => p.text)
+            (msg.parts as Array<{ type: string; text?: string }>)
+              ?.filter((p) => p.type === "text")
+              .map((p) => p.text ?? "")
               .join("") ?? "";
 
           const hasPureToolCall =
-            !text && msg.parts?.some((p: any) => p.type === "tool-invocation");
+            !text && (msg.parts as Array<{ type: string }>)?.some((p) => p.type === "tool-invocation");
           if (hasPureToolCall) return null;
 
           return <ChatBubble key={msg.id} role={msg.role} content={text} />;

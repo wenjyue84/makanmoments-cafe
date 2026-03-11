@@ -131,10 +131,10 @@ export function HubAutomatedTests() {
     <div>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "1.25rem", gap: "1rem" }}>
         <div>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#1e293b", marginBottom: "0.25rem" }}>
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#111827", marginBottom: "0.25rem" }}>
             Automated Tests
           </h2>
-          <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>
+          <p style={{ color: "#6b7280", fontSize: "0.875rem", margin: 0 }}>
             Run preset questions against the live AI and verify responses contain expected keywords.
           </p>
         </div>
@@ -167,7 +167,7 @@ export function HubAutomatedTests() {
         {TEST_CASES.map(tc => {
           const r = results[tc.id];
           return (
-            <div key={tc.id} style={{ background: "#fff", borderRadius: "0.75rem", border: `1px solid ${r.status === "pass" ? "#bbf7d0" : r.status === "fail" ? "#fecaca" : "#e2e8f0"}`, overflow: "hidden" }}>
+            <div key={tc.id} style={{ background: "#fff", borderRadius: "1rem", border: `1px solid ${r.status === "pass" ? "#bbf7d0" : r.status === "fail" ? "#fecaca" : "#e5e7eb"}`, overflow: "hidden" }}>
               {/* Header row */}
               <div style={{ padding: "0.875rem 1.25rem", display: "flex", alignItems: "center", gap: "0.75rem", background: r.status === "pass" ? "#f0fdf4" : r.status === "fail" ? "#fef2f2" : "#f8fafc" }}>
                 {/* Status badge */}

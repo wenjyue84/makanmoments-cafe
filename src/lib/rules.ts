@@ -67,7 +67,7 @@ export async function getActiveRules(): Promise<Rule[]> {
 function doesRuleTarget(rule: Rule, item: MenuItem): boolean {
   if (rule.excludeItemIds.includes(item.id)) return false;
   if (rule.targetType === "category") {
-    return rule.targetCategories.some((cat) => item.categories.includes(cat));
+    return rule.targetCategories.some((cat) => item.displayCategories.includes(cat));
   }
   return rule.targetItemIds.includes(item.id);
 }

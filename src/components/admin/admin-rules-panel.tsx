@@ -1,29 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { Rule, RuleType, TargetType } from "@/types/menu";
 import { cn } from "@/lib/utils";
 import { AdminRulesAiHelper } from "./admin-rules-ai-helper";
+import { useRuleForm } from "@/hooks/use-rule-form";
+import type { RuleRow } from "@/hooks/use-rule-form";
+import type { RuleType, TargetType } from "@/types/menu";
 
 interface AdminRulesPanelProps {
-  categories: string[];
-}
-
-interface RuleRow {
-  id: string;
-  name: string;
-  rule_type: RuleType;
-  target_type: TargetType;
-  target_categories: string[];
-  target_item_ids: string[];
-  exclude_item_ids: string[];
-  value: number;
-  active: boolean;
-  starts_at: string | null;
-  ends_at: string | null;
-  time_from: string;
-  time_until: string;
-  priority: number;
+  displayCategories: string[];
 }
 
 interface MenuItemOption {
@@ -45,39 +30,36 @@ const RULE_TYPE_COLORS: Record<RuleType, string> = {
   featured: "bg-amber-100 text-amber-700",
 };
 
-const EMPTY_FORM = {
-  name: "",
-  ruleType: "disable" as RuleType,
-  targetType: "category" as TargetType,
-  targetCategories: [] as string[],
-  targetItemIds: [] as string[],
-  excludeItemIds: [] as string[],
-  value: 0,
-  active: true,
-  startsAt: "",
-  endsAt: "",
-  timeFrom: "",
-  timeUntil: "",
-  priority: 0,
-};
-
-export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
+export function AdminRulesPanel({ displayCategories }: AdminRulesPanelProps) {
   const [rules, setRules] = useState<RuleRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Form state
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState(EMPTY_FORM);
-  const [preview, setPreview] = useState<number | null>(null);
+  const {
+    showForm,
+    editingId,
+    form,
+    setForm,
+    preview,
+    setPreview,
+    itemSearch,
+    setItemSearch,
+    excludeSearch,
+    setExcludeSearch,
+    showExclusions,
+    setShowExclusions,
+    openNew,
+    openEdit,
+    applyAiSuggestion,
+    cancelForm,
+    toggleCategory,
+    toggleItem,
+    toggleExcludeItem,
+  } = useRuleForm();
 
   // Menu items for item-level targeting and exclusions
   const [menuItems, setMenuItems] = useState<MenuItemOption[]>([]);
-  const [itemSearch, setItemSearch] = useState("");
-  const [excludeSearch, setExcludeSearch] = useState("");
-  const [showExclusions, setShowExclusions] = useState(false);
 
   // ── Fetch rules ─────────────────────────────────────────────────────────
 
@@ -140,78 +122,9 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [form.targetType, form.targetCategories, form.targetItemIds, form.excludeItemIds]);
+  }, [form.targetType, form.targetCategories, form.targetItemIds, form.excludeItemIds, setPreview]);
 
   // ── Handlers ────────────────────────────────────────────────────────────
-
-  function openNew() {
-    setForm(EMPTY_FORM);
-    setEditingId(null);
-    setShowForm(true);
-    setShowExclusions(false);
-    setPreview(null);
-    setItemSearch("");
-    setExcludeSearch("");
-  }
-
-  function handleAiSuggestion(s: {
-    name: string;
-    ruleType: RuleType;
-    targetType: TargetType;
-    targetCategories: string[];
-    value: number;
-    timeFrom: string;
-    timeUntil: string;
-    active: boolean;
-  }) {
-    setForm({
-      ...EMPTY_FORM,
-      name: s.name,
-      ruleType: s.ruleType,
-      targetType: s.targetType,
-      targetCategories: s.targetCategories,
-      value: s.value,
-      timeFrom: s.timeFrom,
-      timeUntil: s.timeUntil,
-      active: s.active,
-    });
-    setEditingId(null);
-    setShowForm(true);
-    setShowExclusions(false);
-    setPreview(null);
-    setItemSearch("");
-    setExcludeSearch("");
-  }
-
-  function openEdit(rule: RuleRow) {
-    const hasExclusions = (rule.exclude_item_ids?.length ?? 0) > 0;
-    setForm({
-      name: rule.name,
-      ruleType: rule.rule_type,
-      targetType: rule.target_type,
-      targetCategories: rule.target_categories,
-      targetItemIds: rule.target_item_ids,
-      excludeItemIds: rule.exclude_item_ids ?? [],
-      value: rule.value,
-      active: rule.active,
-      startsAt: rule.starts_at ? rule.starts_at.slice(0, 16) : "",
-      endsAt: rule.ends_at ? rule.ends_at.slice(0, 16) : "",
-      timeFrom: rule.time_from ?? "",
-      timeUntil: rule.time_until ?? "",
-      priority: rule.priority,
-    });
-    setEditingId(rule.id);
-    setShowForm(true);
-    setShowExclusions(hasExclusions);
-    setItemSearch("");
-    setExcludeSearch("");
-  }
-
-  function cancelForm() {
-    setShowForm(false);
-    setEditingId(null);
-    setPreview(null);
-  }
 
   async function saveRule() {
     setSaving(true);
@@ -279,33 +192,6 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
     }
   }
 
-  function toggleCategory(cat: string) {
-    setForm((f) => ({
-      ...f,
-      targetCategories: f.targetCategories.includes(cat)
-        ? f.targetCategories.filter((c) => c !== cat)
-        : [...f.targetCategories, cat],
-    }));
-  }
-
-  function toggleItem(id: string) {
-    setForm((f) => ({
-      ...f,
-      targetItemIds: f.targetItemIds.includes(id)
-        ? f.targetItemIds.filter((i) => i !== id)
-        : [...f.targetItemIds, id],
-    }));
-  }
-
-  function toggleExcludeItem(id: string) {
-    setForm((f) => ({
-      ...f,
-      excludeItemIds: f.excludeItemIds.includes(id)
-        ? f.excludeItemIds.filter((i) => i !== id)
-        : [...f.excludeItemIds, id],
-    }));
-  }
-
   // ── Render ──────────────────────────────────────────────────────────────
 
   if (loading) return <p className="text-sm text-gray-500">Loading rules...</p>;
@@ -323,7 +209,7 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
       )}
 
       {/* AI Helper */}
-      <AdminRulesAiHelper categories={categories} onApply={handleAiSuggestion} />
+      <AdminRulesAiHelper displayCategories={displayCategories} onApply={applyAiSuggestion} />
 
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -402,7 +288,7 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Categories</label>
                 <div className="flex flex-wrap gap-2">
-                  {categories.map((cat) => (
+                  {displayCategories.map((cat) => (
                     <label
                       key={cat}
                       className={cn(
@@ -447,9 +333,6 @@ export function AdminRulesPanel({ categories }: AdminRulesPanelProps) {
                       />
                       <div className="max-h-48 overflow-y-auto rounded-md border p-2 space-y-1">
                         {menuItems
-                          .filter((m) =>
-                            m.categories?.some((c) => form.targetCategories.includes(c))
-                          )
                           .filter(
                             (m) =>
                               m.name_en.toLowerCase().includes(excludeSearch.toLowerCase()) ||

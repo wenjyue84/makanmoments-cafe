@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { revalidatePath } from "next/cache";
-import { readdir, writeFile, unlink } from "fs/promises";
+import { readdir, writeFile, unlink, rename } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
 import sharp from "sharp";
@@ -130,4 +130,60 @@ export async function DELETE(request: NextRequest) {
   }
 
   return NextResponse.json({ error: "Image not found" }, { status: 404 });
+}
+
+/** PATCH /api/admin/images — promote a secondary image to primary (swap) */
+export async function PATCH(request: NextRequest) {
+  const body = (await request.json()) as { code?: string; imageIndex?: number };
+  const { code, imageIndex } = body;
+
+  if (!code || !imageIndex || imageIndex < 2) {
+    return NextResponse.json(
+      { error: "code and imageIndex (>= 2) are required" },
+      { status: 400 }
+    );
+  }
+
+  const files = await readdir(MENU_IMAGES_DIR);
+
+  // Find the secondary file to promote
+  const secondaryPatterns = ["webp", "jpg", "jpeg", "png"].map(
+    (ext) => `${code}-${imageIndex}.${ext}`
+  );
+  const secondaryFile = secondaryPatterns.find((f) => files.includes(f));
+  if (!secondaryFile) {
+    return NextResponse.json({ error: "Secondary image not found" }, { status: 404 });
+  }
+
+  // Find current primary file (exact: {code}.ext or descriptive: {code}-{non-digit-slug}.ext)
+  let primaryFile: string | null = null;
+  for (const file of files) {
+    if (!/\.(jpe?g|png|webp)$/i.test(file)) continue;
+    const exactMatch = file.match(/^([^-]+)\.(jpe?g|png|webp)$/i);
+    if (exactMatch && exactMatch[1] === code) { primaryFile = file; break; }
+    const descMatch = file.match(/^([^-]+)-([^0-9].+)\.(jpe?g|png|webp)$/i);
+    if (descMatch && descMatch[1] === code) primaryFile = file;
+  }
+
+  const secondaryPath = join(MENU_IMAGES_DIR, secondaryFile);
+  const newPrimaryPath = join(MENU_IMAGES_DIR, `${code}.webp`);
+
+  if (primaryFile) {
+    const primaryPath = join(MENU_IMAGES_DIR, primaryFile);
+    const newSecondaryPath = join(MENU_IMAGES_DIR, `${code}-${imageIndex}.webp`);
+    const tempPath = join(MENU_IMAGES_DIR, `${code}-swap-temp.webp`);
+    await rename(secondaryPath, tempPath);
+    await rename(primaryPath, newSecondaryPath);
+    await rename(tempPath, newPrimaryPath);
+  } else {
+    await rename(secondaryPath, newPrimaryPath);
+  }
+
+  invalidatePhotosCache();
+  await sql`UPDATE menu_items SET updated_at = NOW() WHERE code = ${code}`;
+  revalidatePath("/en/menu");
+  revalidatePath("/ms/menu");
+  revalidatePath("/zh/menu");
+
+  return NextResponse.json({ success: true, newPrimaryPath: `/images/menu/${code}.webp` });
 }

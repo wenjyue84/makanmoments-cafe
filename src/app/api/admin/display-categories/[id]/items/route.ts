@@ -1,5 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import sql from "@/lib/db";
+import { revalidateLocalePaths } from "@/lib/cache-utils";
+
+function revalidateMenu() {
+  revalidateLocalePaths("/menu");
+}
 
 export const runtime = "nodejs";
 
@@ -46,6 +51,7 @@ export async function POST(
     VALUES (${itemId}, ${id})
     ON CONFLICT DO NOTHING
   `;
+  revalidateMenu();
   return NextResponse.json({ ok: true }, { status: 201 });
 }
 
@@ -72,6 +78,7 @@ export async function PATCH(
     )
   );
 
+  revalidateMenu();
   return NextResponse.json({ ok: true });
 }
 
@@ -92,5 +99,6 @@ export async function DELETE(
     DELETE FROM item_display_categories
     WHERE item_id = ${itemId} AND display_category_id = ${id}
   `;
+  revalidateMenu();
   return NextResponse.json({ ok: true });
 }

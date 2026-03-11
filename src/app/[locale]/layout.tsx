@@ -14,6 +14,7 @@ import { RestaurantJsonLd } from "@/components/seo/json-ld";
 import { OperatingHoursAlert } from "@/components/menu/operating-hours-alert";
 import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 import { getOperatingStatus } from "@/lib/availability";
+import { AdminFloatingToolbar } from "@/components/admin/admin-floating-toolbar";
 import "../globals.css";
 import { TrayProvider } from "@/lib/tray-context";
 import { ScrollingProvider } from "@/lib/scrolling-context";
@@ -136,6 +137,7 @@ export default async function LocaleLayout({
               </div>
               <ErrorBoundary fallback={null}><ChatWidgetLoader /></ErrorBoundary>
               <ErrorBoundary fallback={null}><TrayWidget /></ErrorBoundary>
+              {isAdmin && <AdminFloatingToolbar locale={locale} />}
             </ScrollingProvider>
             <PwaInit />
             <SplashOnboarding />

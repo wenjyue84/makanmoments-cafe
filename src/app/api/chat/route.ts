@@ -41,7 +41,7 @@ export async function POST(req: Request) {
   let body: ChatRequestBody;
   try {
     body = await req.json() as ChatRequestBody;
-  } catch (e) {
+  } catch {
     return new Response(JSON.stringify({ error: "Invalid JSON" }), { status: 400 });
   }
   const { messages } = body;
@@ -93,16 +93,15 @@ export async function POST(req: Request) {
     }),
   });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const checkOrderStatusTool = tool({
     description: "Look up a pre-order status by numeric order ID.",
     parameters: z.object({
       orderId: z.string().describe("Numeric order ID, e.g. '42'"),
     }),
     execute: async ({ orderId }: { orderId: string }) => checkOrderStatusHandler(orderId),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const submitOrderTool = tool({
     description: "Submit a pre-order. Only call after confirming items, phone number, and arrival time (min 15 min from now).",
     parameters: z.object({
@@ -128,6 +127,7 @@ export async function POST(req: Request) {
       contactNumber: string;
       estimatedArrival: string;
     }) => submitOrderHandler({ items, contactNumber, estimatedArrival }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } as any);
 
   const toolSet = { addToTray: addToTrayTool, checkOrderStatus: checkOrderStatusTool, submitOrder: submitOrderTool } as ToolSet;

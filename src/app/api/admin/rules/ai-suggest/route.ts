@@ -105,10 +105,10 @@ export async function POST(req: NextRequest) {
   }
 
   // Sanitize — only allow valid enum values
-  const ruleType = (["disable", "discount", "featured"] as const).includes(raw.ruleType as any)
+  const ruleType = (["disable", "discount", "featured"] as const).includes(raw.ruleType as SuggestedRule["ruleType"])
     ? (raw.ruleType as SuggestedRule["ruleType"])
     : "disable";
-  const targetType = (["category", "items"] as const).includes(raw.targetType as any)
+  const targetType = (["category", "items"] as const).includes(raw.targetType as SuggestedRule["targetType"])
     ? (raw.targetType as SuggestedRule["targetType"])
     : "category";
 

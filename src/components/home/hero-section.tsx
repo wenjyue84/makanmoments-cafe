@@ -32,7 +32,7 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle, signat
             <HeroDishCard
               item={signatureDish ?? null}
               className="aspect-[2/1] shadow-2xl"
-              sizes="100vw"
+              sizes="calc(100vw - 2rem)"
               priority
               fallbackBlurDataURL={HERO_BLUR.heroMobile}
             />
@@ -113,6 +113,7 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle, signat
               item={signatureDish ?? null}
               className="aspect-[4/3] shadow-xl hover-lift"
               sizes="(max-width: 1024px) 50vw, 800px"
+              priority
               fallbackBlurDataURL={HERO_BLUR.heroMobile}
             />
           </div>

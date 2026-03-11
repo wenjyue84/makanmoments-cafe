@@ -74,7 +74,7 @@ export function TrayWidget() {
     const [historyOpen, setHistoryOpen] = useState(false);
     const [badgeBounce, setBadgeBounce] = useState(false);
     const { items, addItem, removeItem, clearTray, totalPrice } = useTray();
-    const { isScrolling } = useScrolling();
+    const { scrollPhase } = useScrolling();
     const t = useTranslations("tray");
 
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -311,15 +311,35 @@ export function TrayWidget() {
                 )}
             </div>
 
-            {/* Floating button */}
+            {/* Sticky bottom cart bar — mobile only */}
+            {showFloatingButton && !open && (
+                <div className="fixed bottom-0 left-0 right-0 z-40 sm:hidden animate-in slide-in-from-bottom-4 duration-300">
+                    <button
+                        onClick={() => setOpen(true)}
+                        className="w-full flex items-center gap-3 bg-orange-500 text-white px-5 active:bg-orange-600 transition-colors"
+                        style={{ paddingTop: "0.875rem", paddingBottom: "max(0.875rem, env(safe-area-inset-bottom))" }}
+                        aria-label="View Tray"
+                    >
+                        <ShoppingCart className="h-5 w-5 shrink-0" />
+                        <span className={cn("flex-1 text-left text-sm font-semibold", badgeBounce && "badge-bounce")}>
+                            {totalItems} {totalItems === 1 ? "item" : "items"}
+                        </span>
+                        <span className="text-sm font-bold">RM {totalPrice.toFixed(2)}</span>
+                        <span className="ml-1 text-sm font-semibold opacity-90">View →</span>
+                    </button>
+                </div>
+            )}
+
+            {/* Floating button — hidden on mobile when sticky bar is shown */}
             {showFloatingButton && (
                 <button
                     ref={buttonRef}
                     onClick={() => setOpen(true)}
                     className={cn(
-                        "fixed bottom-4 right-20 z-40 flex h-14 items-center justify-center rounded-full bg-orange-500 px-4 text-white shadow-lg transition-[transform,opacity] hover:scale-105 gap-2",
-                        open && "hidden",
-                        isScrolling && "opacity-20"
+                        "hidden sm:flex fixed bottom-4 right-20 z-40 h-14 items-center justify-center rounded-full bg-orange-500 px-4 text-white shadow-lg transition-[transform,opacity] hover:scale-105 gap-2",
+                        open && "!hidden",
+                        scrollPhase === "scrolling" && "opacity-0 transition-opacity duration-150 pointer-events-none",
+                        scrollPhase === "resting" && "scroll-fade-in"
                     )}
                     aria-label="View Tray"
                 >

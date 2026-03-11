@@ -59,7 +59,6 @@ const AdminOrdersPanel = dynamic(
 
 interface AdminTabsProps {
   items: MenuItemWithRules[];
-  categories: string[];
   displayCategories: string[];
   posts: BlogPost[];
 }
@@ -112,7 +111,7 @@ const SLUG_TO_TAB: Record<string, Tab> = {
   settings: "Settings",
 };
 
-export function AdminTabs({ items, categories, displayCategories, posts }: AdminTabsProps) {
+export function AdminTabs({ items, displayCategories, posts }: AdminTabsProps) {
   const pathname = usePathname();
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -220,15 +219,15 @@ export function AdminTabs({ items, categories, displayCategories, posts }: Admin
           {activeTab === "Orders" && <AdminOrdersPanel />}
           {activeTab === "AI Waiter" && <AiWaiterPage />}
           {activeTab === "Menu" && (
-            <AdminMenuTable initialItems={items} categories={categories} displayCategories={displayCategories} />
+            <AdminMenuTable initialItems={items} displayCategories={displayCategories} />
           )}
           {activeTab === "Categories" && (
-            <AdminCategoriesPanel initialCategories={categories} allItems={items} />
+            <AdminCategoriesPanel allItems={items} />
           )}
-          {activeTab === "Rules" && <AdminRulesPanel categories={categories} />}
+          {activeTab === "Rules" && <AdminRulesPanel displayCategories={displayCategories} />}
           {activeTab === "Blog" && <AdminBlogTable initialPosts={posts} />}
           {activeTab === "Tests" && <AdminTestsPanel />}
-          {activeTab === "Settings" && <AdminSettingsPanel categories={categories} />}
+          {activeTab === "Settings" && <AdminSettingsPanel displayCategories={displayCategories} />}
         </main>
       </div>
     </div>

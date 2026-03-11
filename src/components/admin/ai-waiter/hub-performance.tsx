@@ -15,9 +15,9 @@ interface Props {
 
 function StatCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ background: "#fff", borderRadius: "0.75rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-      <div style={{ padding: "0.875rem 1.25rem", borderBottom: "1px solid #f1f5f9", background: "#f8fafc" }}>
-        <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "#1e293b", margin: 0 }}>{title}</h3>
+    <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e5e7eb", overflow: "hidden" }}>
+      <div style={{ padding: "0.875rem 1.25rem", borderBottom: "1px solid #f3f4f6", background: "#f9fafb" }}>
+        <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "#374151", margin: 0 }}>{title}</h3>
       </div>
       <div style={{ padding: "1.25rem" }}>{children}</div>
     </div>
@@ -46,10 +46,10 @@ export function HubPerformance({ hubStatus }: Props) {
 
   return (
     <div>
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#1e293b", marginBottom: "0.25rem" }}>
+      <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#111827", marginBottom: "0.25rem" }}>
         Performance
       </h2>
-      <p style={{ color: "#64748b", fontSize: "0.875rem", marginBottom: "1.5rem" }}>
+      <p style={{ color: "#6b7280", fontSize: "0.875rem", marginBottom: "1.5rem", marginTop: 0 }}>
         Rate limits, capacity estimates, and model configuration.
       </p>
 

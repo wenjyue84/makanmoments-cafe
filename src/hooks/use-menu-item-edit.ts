@@ -22,9 +22,9 @@ export function useMenuItemEdit(item: MenuItemWithRules) {
 
   const imgInitVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
   const [imgSrc, setImgSrc] = useState(
-    `${item.photo}${imgInitVersion ? `?v=${imgInitVersion}` : ""}`
+    item.photo ? `${item.photo}${imgInitVersion ? `?v=${imgInitVersion}` : ""}` : ""
   );
-  const [imgError, setImgError] = useState(false);
+  const [imgError, setImgError] = useState(!item.photo);
   const [isLocalUpload, setIsLocalUpload] = useState(false);
 
   const [editing, setEditing] = useState<EditTarget>(null);
@@ -198,12 +198,7 @@ export function useMenuItemEdit(item: MenuItemWithRules) {
     await uploadPrimaryFile(file);
   }
 
-  async function handleSecondaryUpload(
-    e: React.ChangeEvent<HTMLInputElement>,
-    imageIndex: number
-  ) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function uploadSecondaryFile(file: File, imageIndex: number) {
     setSaving(true);
     setErrorMsg(null);
     try {
@@ -217,15 +212,12 @@ export function useMenuItemEdit(item: MenuItemWithRules) {
         throw new Error((data as { error?: string }).error || "Upload failed");
       }
       const { path } = (await res.json()) as { path: string };
-      // Add or replace in the secondary photos list
-      const slotIndex = imageIndex - 2; // secondaryPhotos[0] = image index 2
+      const slotIndex = imageIndex - 2;
       setSecondaryPhotos((prev) => {
         const next = [...prev];
         if (slotIndex >= next.length) {
-          // Adding a new photo
           next.push(`${path}?v=${Date.now()}`);
         } else {
-          // Replacing existing
           next[slotIndex] = `${path}?v=${Date.now()}`;
         }
         return next;
@@ -237,6 +229,15 @@ export function useMenuItemEdit(item: MenuItemWithRules) {
     } finally {
       setSaving(false);
     }
+  }
+
+  async function handleSecondaryUpload(
+    e: React.ChangeEvent<HTMLInputElement>,
+    imageIndex: number
+  ) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await uploadSecondaryFile(file, imageIndex);
   }
 
   async function handlePrimaryDelete() {
@@ -256,6 +257,43 @@ export function useMenuItemEdit(item: MenuItemWithRules) {
       setIsLocalUpload(false);
     } catch (e) {
       setErrorMsg(e instanceof Error ? e.message : "Delete failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function promoteSecondaryToPrimary(imageIndex: number) {
+    const slotIndex = imageIndex - 2;
+    if (slotIndex < 0 || slotIndex >= secondaryPhotos.length) return;
+    setSaving(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch("/api/admin/images", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: localItem.code, imageIndex }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error || "Promote failed");
+      }
+      const v = Date.now();
+      setImgSrc(`/images/menu/${localItem.code}.webp?v=${v}`);
+      setIsLocalUpload(true);
+      setImgError(false);
+      setSecondaryPhotos((prev) => {
+        const next = [...prev];
+        if (imgError) {
+          next.splice(slotIndex, 1);
+        } else {
+          next[slotIndex] = `/images/menu/${localItem.code}-${imageIndex}.webp?v=${v}`;
+        }
+        return next;
+      });
+      setSuccessMsg("Set as primary photo");
+      setTimeout(() => setSuccessMsg(null), 3000);
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "Promote failed");
     } finally {
       setSaving(false);
     }
@@ -328,7 +366,9 @@ export function useMenuItemEdit(item: MenuItemWithRules) {
     uploadPrimaryFile,
     handleImageUpload,
     handlePrimaryDelete,
+    uploadSecondaryFile,
     handleSecondaryUpload,
     handleSecondaryDelete,
+    promoteSecondaryToPrimary,
   };
 }

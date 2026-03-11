@@ -70,6 +70,7 @@ export function useMenuTableEdit(initialItems: MenuItemWithRules[]): UseMenuTabl
         imagePosition: "50% 50%",
         updatedAt: new Date().toISOString(),
         isSignature: false,
+        archived: false,
         _new: true,
         _dirty: true,
       },

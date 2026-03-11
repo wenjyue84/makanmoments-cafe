@@ -40,7 +40,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const prevQuantityRef = useRef<number>(0);
   const imgVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
-  const hasPhoto = !!item.code && !imgError;
+  const hasPhoto = !!item.photo && !imgError;
 
   const isInTray = trayCount > 0;
 
@@ -91,6 +91,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
                 priority={priority}
                 imagePosition={item.imagePosition}
                 version={imgVersion || undefined}
+                onLoad={() => setImgLoaded(true)}
               />
             ) : (
               <Image

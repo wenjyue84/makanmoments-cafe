@@ -102,15 +102,15 @@ export function HubUnderstanding() {
 
   return (
     <div>
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#1e293b", marginBottom: "0.25rem" }}>
+      <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#111827", marginBottom: "0.25rem" }}>
         Understanding
       </h2>
-      <p style={{ color: "#64748b", fontSize: "0.875rem", marginBottom: "1.25rem" }}>
+      <p style={{ color: "#6b7280", fontSize: "0.875rem", marginBottom: "1.25rem", marginTop: 0 }}>
         Edit the knowledge files that shape what the AI Waiter knows. Changes take effect on the next chat message.
       </p>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: "0.25rem", borderBottom: "2px solid #e2e8f0", marginBottom: "1.25rem" }}>
+      <div style={{ display: "flex", gap: "0.25rem", borderBottom: "2px solid #e5e7eb", marginBottom: "1.25rem" }}>
         {TABS.map(tab => (
           <button
             key={tab.slug}
@@ -147,9 +147,9 @@ export function HubUnderstanding() {
       )}
 
       {/* Editor card */}
-      <div style={{ background: "#fff", borderRadius: "0.75rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e5e7eb", overflow: "hidden" }}>
         {/* Meta bar */}
-        <div style={{ padding: "0.75rem 1.25rem", borderBottom: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", alignItems: "center", gap: "1rem" }}>
+        <div style={{ padding: "0.75rem 1.25rem", borderBottom: "1px solid #f3f4f6", background: "#f9fafb", display: "flex", alignItems: "center", gap: "1rem" }}>
           <span style={{ fontSize: "0.8125rem", color: "#94a3b8" }}>
             {file.lastModified ? `Last modified: ${formatDate(file.lastModified)}` : ""}
           </span>
@@ -176,10 +176,10 @@ export function HubUnderstanding() {
                 width: "100%",
                 padding: "0.75rem",
                 borderRadius: "0.5rem",
-                border: "1px solid #e2e8f0",
+                border: "1px solid #e5e7eb",
                 fontSize: "0.8125rem",
                 fontFamily: "ui-monospace, 'Cascadia Code', monospace",
-                color: "#1e293b",
+                color: "#111827",
                 lineHeight: 1.65,
                 resize: "vertical",
                 outline: "none",
@@ -190,7 +190,7 @@ export function HubUnderstanding() {
         </div>
 
         {/* Footer / Save */}
-        <div style={{ padding: "0.75rem 1.25rem", borderTop: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <div style={{ padding: "0.75rem 1.25rem", borderTop: "1px solid #f3f4f6", background: "#f9fafb", display: "flex", alignItems: "center", gap: "0.75rem" }}>
           {saveStatus === "saved" && <span style={{ fontSize: "0.8125rem", color: "#16a34a", fontWeight: 500 }}>✓ Saved — AI prompt cache cleared</span>}
           {saveStatus === "error" && <span style={{ fontSize: "0.8125rem", color: "#dc2626", fontWeight: 500 }}>Save failed</span>}
           <button

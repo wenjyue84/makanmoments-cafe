@@ -26,7 +26,7 @@ export const DEFAULT_TIME_SLOTS: TimeSlotsConfig = {
       startMinute: 0,
       endHour: 11,
       endMinute: 0,
-      defaultCategory: "Break-Lunch",
+      defaultCategory: "Chef's Picks",
     },
     {
       id: "lunch",
@@ -35,7 +35,7 @@ export const DEFAULT_TIME_SLOTS: TimeSlotsConfig = {
       startMinute: 0,
       endHour: 15,
       endMinute: 0,
-      defaultCategory: "7 Lunch Lovers",
+      defaultCategory: "Chef's Picks",
     },
     {
       id: "dinner",
@@ -44,7 +44,7 @@ export const DEFAULT_TIME_SLOTS: TimeSlotsConfig = {
       startMinute: 0,
       endHour: 22,
       endMinute: 30,
-      defaultCategory: "Must-Try",
+      defaultCategory: "Chef's Picks",
     },
   ],
 };
@@ -128,7 +128,8 @@ export function getDefaultCategoryForTime(overrideTime?: string | null): string 
 }
 
 /**
- * Returns the set of "serving now" default categories.
+ * Returns the set of "serving now" default categories (Display Category names).
+ * Falls back to Chef's Picks when outside all time windows.
  * @param overrideTime - Optional "HH:MM" string for admin preview.
  */
 export function getServingNowCategories(overrideTime?: string | null): string[] {
@@ -136,9 +137,9 @@ export function getServingNowCategories(overrideTime?: string | null): string[] 
     const [h, m] = overrideTime.split(":").map(Number);
     if (!isNaN(h) && !isNaN(m)) {
       const slot = getActiveSlotForTime(h, m);
-      return slot ? [slot.defaultCategory] : [];
+      return slot ? [slot.defaultCategory] : ["Chef's Picks"];
     }
   }
   const slot = getActiveSlot();
-  return slot ? [slot.defaultCategory] : [];
+  return slot ? [slot.defaultCategory] : ["Chef's Picks"];
 }

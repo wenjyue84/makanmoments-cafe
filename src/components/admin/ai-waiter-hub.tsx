@@ -49,7 +49,7 @@ const GROUPS = ["Overview", "Intelligence", "Quality & Tests", "Management"];
 // --- Icons ---
 function NavIcon({ id, active }: { id: string; active: boolean }) {
   const c = active ? "#0ea5e9" : "currentColor";
-  const p = { width: 20, height: 20, fill: "none", stroke: c, viewBox: "0 0 24 24", style: { flexShrink: 0, opacity: active ? 1 : 0.75 } as React.CSSProperties };
+  const p = { width: 20, height: 20, fill: "none", stroke: c, viewBox: "0 0 24 24", style: { flexShrink: 0, opacity: active ? 1 : 0.8 } as React.CSSProperties };
   const lp = { strokeLinecap: "round" as const, strokeLinejoin: "round" as const, strokeWidth: 2 };
   switch (id) {
     case "dashboard":
@@ -91,9 +91,9 @@ function NavBtn({ item, isActive, collapsed, onClick }: { item: NavItem; isActiv
         display: "flex",
         alignItems: "center",
         gap: "0.75rem",
-        padding: collapsed ? "0.75rem 0" : "0.55rem 0.75rem",
+        padding: collapsed ? "0.75rem 0" : "0.6rem 0.75rem",
         borderRadius: "0.5rem",
-        fontSize: "0.875rem",
+        fontSize: "0.9rem",
         fontWeight: 500,
         color: isActive ? "#0369a1" : hovered ? "#0f172a" : "#64748b",
         background: isActive ? "#eff6ff" : hovered ? "#f1f5f9" : "transparent",
@@ -102,27 +102,35 @@ function NavBtn({ item, isActive, collapsed, onClick }: { item: NavItem; isActiv
         width: "100%",
         textAlign: "left",
         justifyContent: collapsed ? "center" : "flex-start",
-        transition: "background 0.15s ease, color 0.15s ease",
+        transition: "background 0.2s ease, color 0.2s ease",
+        position: "relative",
       }}
     >
       <NavIcon id={item.id} active={isActive} />
-      {!collapsed && <span style={{ whiteSpace: "nowrap" }}>{item.label}</span>}
+      {!collapsed && (
+        <span style={{ whiteSpace: "nowrap", transition: "opacity 0.3s ease" }}>{item.label}</span>
+      )}
     </button>
   );
 }
 
-function GroupLabel({ label, first }: { label: string; first?: boolean }) {
+function GroupLabel({ label, first, hidden }: { label: string; first?: boolean; hidden: boolean }) {
   return (
     <div style={{
-      fontSize: "0.65rem",
+      fontSize: "0.7rem",
       fontWeight: 700,
       color: "#9ca3af",
       textTransform: "uppercase",
-      letterSpacing: "0.06em",
+      letterSpacing: "0.05em",
       padding: "0 0.75rem",
       marginTop: first ? "0.5rem" : "1.5rem",
-      marginBottom: "0.25rem",
+      marginBottom: "0.35rem",
       whiteSpace: "nowrap",
+      overflow: "hidden",
+      opacity: hidden ? 0 : 1,
+      visibility: hidden ? "hidden" : "visible",
+      height: hidden ? 0 : undefined,
+      transition: "all 0.3s ease",
     }}>
       {label}
     </div>
@@ -141,11 +149,9 @@ export function AiWaiterHub() {
   }, []);
 
   const sidebarW = collapsed ? 72 : 260;
+  const activeLabel = NAV_ITEMS.find(n => n.id === activeTab)?.label ?? "Dashboard";
 
-  const handleNavClick = (tabId: string) => {
-    setActiveTab(tabId);
-  };
-
+  const handleNavClick = (tabId: string) => setActiveTab(tabId);
   const toggleCollapse = () => setCollapsed(c => !c);
 
   function renderContent(tab: string) {
@@ -169,13 +175,17 @@ export function AiWaiterHub() {
       case "performance":
         return <HubPerformance hubStatus={hubStatus} />;
       case "settings":
-        return hubSettings ? (
+        return (
           <div>
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#1e293b", marginBottom: "1.5rem" }}>Settings</h2>
-            <ChatSettingsPanel initialSettings={hubSettings} />
+            <div style={{ marginBottom: "1rem" }}>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#1e293b", margin: "0 0 0.25rem 0" }}>Settings</h2>
+              <p style={{ color: "#64748b", fontSize: "0.875rem", margin: 0 }}>Configure the AI model, temperature, and system prompt.</p>
+            </div>
+            {hubSettings
+              ? <ChatSettingsPanel initialSettings={hubSettings} />
+              : <div style={{ color: "#94a3b8", padding: "2rem", textAlign: "center" }}>Loading settings…</div>
+            }
           </div>
-        ) : (
-          <div style={{ color: "#94a3b8", padding: "2rem", textAlign: "center" }}>Loading settings…</div>
         );
       case "help":
         return <HubHelp />;
@@ -194,8 +204,11 @@ export function AiWaiterHub() {
 
       {/* ── Sidebar ── */}
       <aside style={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        bottom: 0,
         width: sidebarW,
-        flexShrink: 0,
         background: "#ffffff",
         borderRight: "1px solid #e5e7eb",
         display: "flex",
@@ -203,9 +216,11 @@ export function AiWaiterHub() {
         transition: "width 0.3s cubic-bezier(0.4,0,0.2,1)",
         overflow: "hidden",
         zIndex: 50,
+        fontWeight: 500,
+        color: "#64748b",
       }}>
 
-        {/* Header */}
+        {/* Sidebar Header */}
         <div style={{
           height: 64,
           display: "flex",
@@ -213,6 +228,8 @@ export function AiWaiterHub() {
           padding: "0 1.25rem",
           borderBottom: "1px solid #f3f4f6",
           flexShrink: 0,
+          transition: "all 0.3s cubic-bezier(0.4,0,0.2,1)",
+          overflow: "hidden",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, overflow: "hidden" }}>
             <span style={{ fontSize: "1.5rem", flexShrink: 0 }}>🌈</span>
@@ -255,14 +272,14 @@ export function AiWaiterHub() {
         <nav style={{
           flex: 1,
           overflowY: "auto",
-          padding: "0.75rem",
+          padding: "1rem 1rem 2rem 1rem",
           display: "flex",
           flexDirection: "column",
-          gap: "0.15rem",
+          gap: "0.35rem",
         }}>
           {GROUPS.map((group, gi) => (
             <div key={group}>
-              {!collapsed && <GroupLabel label={group} first={gi === 0} />}
+              <GroupLabel label={group} first={gi === 0} hidden={collapsed} />
               {collapsed && gi > 0 && <div style={{ height: "0.5rem" }} />}
               {NAV_ITEMS.filter(item => item.group === group).map(item => (
                 <NavBtn
@@ -276,10 +293,11 @@ export function AiWaiterHub() {
             </div>
           ))}
 
+          {/* Spacer */}
           <div style={{ flex: 1 }} />
 
           {/* System group */}
-          {!collapsed && <GroupLabel label="System" />}
+          <GroupLabel label="System" hidden={collapsed} />
           {collapsed && <div style={{ height: "0.5rem" }} />}
           {NAV_ITEMS.filter(item => item.group === "System").map(item => (
             <NavBtn
@@ -294,25 +312,96 @@ export function AiWaiterHub() {
 
         {/* Footer */}
         <div style={{
-          padding: "0.75rem 1rem",
+          padding: "1rem",
           borderTop: "1px solid #f3f4f6",
           background: "#f9fafb",
           textAlign: "center",
-          fontSize: "0.7rem",
+          fontSize: "0.75rem",
           color: "#9ca3af",
           overflow: "hidden",
           whiteSpace: "nowrap",
           flexShrink: 0,
+          transition: "all 0.3s ease",
+          opacity: collapsed ? 0 : 1,
+          visibility: collapsed ? "hidden" : "visible",
+          height: collapsed ? 0 : undefined,
         }}>
-          {collapsed ? "v2" : "v2.1.0"}
+          v2.1.0
         </div>
       </aside>
 
-      {/* ── Main content ── */}
-      <div style={{ flex: 1, overflowY: "auto", background: "#f8fafc" }}>
-        <div style={{ maxWidth: 960, margin: "0 auto", padding: "2rem 1.5rem" }}>
+      {/* ── Main content area ── */}
+      <div style={{
+        marginLeft: sidebarW,
+        minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        background: "#f8fafc",
+        transition: "margin-left 0.3s cubic-bezier(0.4,0,0.2,1)",
+        flex: 1,
+      }}>
+
+        {/* ── Topbar ── */}
+        <header style={{
+          height: 64,
+          background: "#fff",
+          borderBottom: "1px solid #e5e7eb",
+          padding: "0 2rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexShrink: 0,
+          position: "sticky",
+          top: 0,
+          zIndex: 40,
+        }}>
+          {/* Breadcrumb */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.375rem", fontSize: "0.875rem", color: "#94a3b8" }}>
+            <span>Admin</span>
+            <span>›</span>
+            <span>AI Waiter Hub</span>
+            <span>›</span>
+            <span style={{ color: "#1e293b", fontWeight: 500 }}>{activeLabel}</span>
+          </div>
+
+          {/* Status badges */}
+          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem" }}>
+            {hubStatus && (
+              <span style={{
+                fontSize: "0.75rem",
+                fontWeight: 600,
+                padding: "0.2rem 0.625rem",
+                borderRadius: "9999px",
+                background: "#f0fdf4",
+                color: "#166534",
+                border: "1px solid #bbf7d0",
+                display: "flex",
+                alignItems: "center",
+                gap: "0.375rem",
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#22c55e" }} />
+                {hubStatus.model === "groq" ? "Groq" : "OpenRouter"} Active
+              </span>
+            )}
+            {!hubStatus && (
+              <span style={{
+                fontSize: "0.75rem",
+                padding: "0.2rem 0.625rem",
+                borderRadius: "9999px",
+                background: "#f1f5f9",
+                color: "#64748b",
+                border: "1px solid #e2e8f0",
+              }}>
+                Connecting…
+              </span>
+            )}
+          </div>
+        </header>
+
+        {/* ── Tab Content ── */}
+        <main style={{ flex: 1, padding: "1.5rem", overflowY: "auto" }}>
           {renderContent(activeTab)}
-        </div>
+        </main>
       </div>
 
     </div>

@@ -1,10 +1,10 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import sql from "@/lib/db";
 
 export const runtime = "nodejs";
 
 // Protected by middleware — KDS auth cookie required.
-export async function GET(_req: NextRequest) {
+export async function GET() {
   try {
     const rows = await sql`
       SELECT

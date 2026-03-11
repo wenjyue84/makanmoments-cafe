@@ -8,7 +8,7 @@ import { AdminPushSettings } from "./admin-push-settings";
 import { cn } from "@/lib/utils";
 
 interface AdminSettingsPanelProps {
-  categories: string[];
+  displayCategories: string[];
 }
 
 const DEFAULT_SETTINGS: SiteSettings = {
@@ -26,7 +26,7 @@ const DEFAULT_SETTINGS: SiteSettings = {
 const SETTINGS_TABS = ["General", "Operating Hours", "Pre-Order", "Notifications", "AI"] as const;
 type SettingsTab = (typeof SETTINGS_TABS)[number];
 
-export function AdminSettingsPanel({ categories }: AdminSettingsPanelProps) {
+export function AdminSettingsPanel({ displayCategories }: AdminSettingsPanelProps) {
   const [activeTab, setActiveTab] = useState<SettingsTab>("General");
   const [settings, setSettings] = useState<SiteSettings>(DEFAULT_SETTINGS);
   const [loading, setLoading] = useState(true);
@@ -197,7 +197,7 @@ export function AdminSettingsPanel({ categories }: AdminSettingsPanelProps) {
             <AdminOperatingHours />
           </section>
           <section className="rounded-xl border border-gray-200 bg-white p-6">
-            <AdminTimeSettings categories={categories} />
+            <AdminTimeSettings displayCategories={displayCategories} />
           </section>
         </div>
       )}
@@ -281,6 +281,7 @@ export function AdminSettingsPanel({ categories }: AdminSettingsPanelProps) {
                   Link or path to a QR code image. Leave blank to show phone number only.
                 </p>
                 {settings.tng_qr_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={settings.tng_qr_url}
                     alt="TnG QR preview"

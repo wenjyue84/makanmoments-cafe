@@ -4,20 +4,29 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
+// "idle"     → never scrolled, or reduced-motion: show normally
+// "scrolling" → actively scrolling: hide completely
+// "resting"  → just stopped: play fade-in animation (0.15 → 1 over 2s)
+export type ScrollPhase = "idle" | "scrolling" | "resting";
+
 interface ScrollingContextValue {
-  isScrolling: boolean;
+  scrollPhase: ScrollPhase;
+  isScrolling: boolean; // kept for any legacy consumers
 }
 
-const ScrollingContext = createContext<ScrollingContextValue>({ isScrolling: false });
+const ScrollingContext = createContext<ScrollingContextValue>({
+  scrollPhase: "idle",
+  isScrolling: false,
+});
 
 export function ScrollingProvider({ children }: { children: ReactNode }) {
-  const [isScrolling, setIsScrolling] = useState(false);
+  const [scrollPhase, setScrollPhase] = useState<ScrollPhase>("idle");
   const pathname = usePathname();
   const isMenuPage = pathname?.includes("/menu") ?? false;
 
   useEffect(() => {
     if (!isMenuPage) {
-      setIsScrolling(false);
+      setScrollPhase("idle");
       return;
     }
 
@@ -26,21 +35,22 @@ export function ScrollingProvider({ children }: { children: ReactNode }) {
 
     let timer: ReturnType<typeof setTimeout>;
     const handleScroll = () => {
-      setIsScrolling(true);
+      setScrollPhase("scrolling");
       clearTimeout(timer);
-      timer = setTimeout(() => setIsScrolling(false), 200);
+      // Wait 1s after scroll stops, then trigger fade-in from 15%
+      timer = setTimeout(() => setScrollPhase("resting"), 1000);
     };
 
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", handleScroll);
       clearTimeout(timer);
-      setIsScrolling(false);
+      setScrollPhase("idle");
     };
   }, [isMenuPage]);
 
   return (
-    <ScrollingContext.Provider value={{ isScrolling }}>
+    <ScrollingContext.Provider value={{ scrollPhase, isScrolling: scrollPhase === "scrolling" }}>
       {children}
     </ScrollingContext.Provider>
   );

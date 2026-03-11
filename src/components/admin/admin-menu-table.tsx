@@ -16,7 +16,6 @@ const COLUMN_TOOLTIPS: Record<string, string> = {
   PRICE: "Selling price in RM — displayed on the public menu",
   ON: "Toggle item visibility on the public menu (on/off switch)",
   STAR: "Featured — marks item for the homepage highlights section",
-  CATEGORIES: "POS categories this item belongs to (e.g. Rice, Noodles, Drinks)",
   DIETARY: "Dietary tags shown to customers (Spicy, Vegetarian, Vegan, Gluten Free)",
   DAYS: "Days of week this item is available (e.g., Mon-Fri only)",
   TIME: "Time window this item is served (e.g., 11:00-15:00)",
@@ -26,29 +25,7 @@ const COLUMN_TOOLTIPS: Record<string, string> = {
 
 interface AdminMenuTableProps {
   initialItems: MenuItemWithRules[];
-  categories: string[];
   displayCategories?: string[];
-}
-
-function groupByPrimaryCategory(
-  items: EditableItem[],
-  categories: string[]
-): { cat: string; label: string; items: EditableItem[] }[] {
-  const catMap = new Map<string, EditableItem[]>();
-  for (const cat of categories) catMap.set(cat, []);
-  catMap.set("__none__", []);
-
-  for (const item of items) {
-    const primaryCat = item.categories[0] ?? "__none__";
-    if (!catMap.has(primaryCat)) catMap.set(primaryCat, []);
-    catMap.get(primaryCat)!.push(item);
-  }
-
-  const result: { cat: string; label: string; items: EditableItem[] }[] = [];
-  for (const [cat, catItems] of catMap) {
-    result.push({ cat, label: cat === "__none__" ? "Uncategorized" : cat, items: catItems });
-  }
-  return result;
 }
 
 function filterByDisplayCat(item: EditableItem, dc: string): boolean {
@@ -85,7 +62,6 @@ function groupByDisplayCategory(
 
 export function AdminMenuTable({
   initialItems,
-  categories,
   displayCategories = [],
 }: AdminMenuTableProps) {
   const {
@@ -103,7 +79,6 @@ export function AdminMenuTable({
     deleteItem,
     toggleDay,
     toggleDietary,
-    toggleCategory,
     suggestTranslation,
   } = useMenuTableEdit(initialItems);
 
@@ -146,23 +121,13 @@ export function AdminMenuTable({
           )
         );
 
-  const DC_PREFIX = "__dc__";
-  const isDisplayCatFilter = !!(activeCategory?.startsWith(DC_PREFIX));
-  const selectedDcName = isDisplayCatFilter ? activeCategory!.slice(DC_PREFIX.length) : null;
-
   const filteredItems = activeCategory
-    ? isDisplayCatFilter
-      ? searchedItems.filter((i) => filterByDisplayCat(i, selectedDcName!))
-      : searchedItems.filter((i) => i.categories.includes(activeCategory))
+    ? searchedItems.filter((i) => filterByDisplayCat(i, activeCategory))
     : searchedItems;
 
-  const groupedItems =
-    displayCategories.length > 0
-      ? groupByDisplayCategory(searchedItems, displayCategories)
-      : groupByPrimaryCategory(searchedItems, categories);
+  const groupedItems = groupByDisplayCategory(searchedItems, displayCategories);
 
   const rowProps = {
-    categories,
     imgVersion,
     highlightedCode,
     saving,
@@ -173,7 +138,6 @@ export function AdminMenuTable({
     onDelete: deleteItem,
     onToggleDay: toggleDay,
     onToggleDietary: toggleDietary,
-    onToggleCategory: toggleCategory,
     onSuggestTranslation: suggestTranslation,
   };
 
@@ -186,7 +150,6 @@ export function AdminMenuTable({
         <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.PRICE} className="cursor-help border-b border-dashed border-gray-400">Price</span></th>
         <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.ON} className="cursor-help border-b border-dashed border-gray-400">On</span></th>
         <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.STAR} className="cursor-help border-b border-dashed border-gray-400">★</span></th>
-        <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.CATEGORIES} className="cursor-help border-b border-dashed border-gray-400">Categories</span></th>
         <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DIETARY} className="cursor-help border-b border-dashed border-gray-400">Dietary</span></th>
         <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.DAYS} className="cursor-help border-b border-dashed border-gray-400">Days</span></th>
         <th className="px-3 py-3"><span title={COLUMN_TOOLTIPS.TIME} className="cursor-help border-b border-dashed border-gray-400">Time</span></th>
@@ -268,32 +231,18 @@ export function AdminMenuTable({
           className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-orange-400"
         >
           <option value="">All Categories ({items.length} items)</option>
-          {displayCategories.length > 0 && (
-            <optgroup label="Display Categories">
-              {displayCategories.map((dc) => {
-                const count = items.filter((i) => filterByDisplayCat(i, dc)).length;
-                return (
-                  <option key={`__dc__${dc}`} value={`__dc__${dc}`}>
-                    {dc} ({count} item{count !== 1 ? "s" : ""})
-                  </option>
-                );
-              })}
-            </optgroup>
-          )}
-          <optgroup label="POS Categories (internal)">
-            {categories.map((cat) => {
-              const count = items.filter((i) => i.categories.includes(cat)).length;
-              return (
-                <option key={cat} value={cat}>
-                  {cat} ({count} item{count !== 1 ? "s" : ""})
-                </option>
-              );
-            })}
-          </optgroup>
+          {displayCategories.map((dc) => {
+            const count = items.filter((i) => filterByDisplayCat(i, dc)).length;
+            return (
+              <option key={dc} value={dc}>
+                {dc} ({count} item{count !== 1 ? "s" : ""})
+              </option>
+            );
+          })}
         </select>
         <h2 className="flex-1 text-lg font-semibold text-gray-900">
           {activeCategory
-            ? `${selectedDcName ?? activeCategory} (${filteredItems.length} item${filteredItems.length !== 1 ? "s" : ""})`
+            ? `${activeCategory} (${filteredItems.length} item${filteredItems.length !== 1 ? "s" : ""})`
             : `Menu Items (${items.length})`}
         </h2>
         <button
@@ -336,7 +285,7 @@ export function AdminMenuTable({
                 {groupedItems.map(({ cat, label, items: groupItems }) => (
                   <Fragment key={cat}>
                     <tr className="border-t border-b border-gray-200 bg-amber-50/60">
-                      <td colSpan={13} className="px-3 py-1.5">
+                      <td colSpan={12} className="px-3 py-1.5">
                         <div className="rounded px-2 py-1 text-xs font-semibold uppercase tracking-wide text-amber-800">
                           {label} ({groupItems.length})
                         </div>

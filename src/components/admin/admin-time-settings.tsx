@@ -4,14 +4,14 @@ import { useState, useEffect } from "react";
 import type { TimeSlotsConfig, TimeSlot } from "@/lib/time-slots";
 
 interface AdminTimeSettingsProps {
-  categories: string[];
+  displayCategories: string[];
 }
 
 function pad(n: number): string {
   return String(n).padStart(2, "0");
 }
 
-export function AdminTimeSettings({ categories }: AdminTimeSettingsProps) {
+export function AdminTimeSettings({ displayCategories }: AdminTimeSettingsProps) {
   const [config, setConfig] = useState<TimeSlotsConfig | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -121,7 +121,7 @@ export function AdminTimeSettings({ categories }: AdminTimeSettingsProps) {
                     onChange={(e) => updateSlot(idx, { defaultCategory: e.target.value })}
                     className="rounded border border-gray-300 px-2 py-1.5 text-sm"
                   >
-                    {categories.map((c) => (
+                    {displayCategories.map((c) => (
                       <option key={c} value={c}>
                         {c}
                       </option>

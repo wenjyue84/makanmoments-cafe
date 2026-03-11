@@ -14,7 +14,7 @@ if (vapidPublicKey && vapidPrivateKey) {
 export async function sendPushToAllAdmins(itemCount: number, total: number): Promise<void> {
   if (!vapidPublicKey || !vapidPrivateKey) return;
   try {
-    const subs = await sql`SELECT endpoint, p256dh, auth FROM push_subscriptions`;
+    const subs = await sql<{ endpoint: string; p256dh: string; auth: string }>`SELECT endpoint, p256dh, auth FROM push_subscriptions`;
     const payload = JSON.stringify({
       title: "🍽 New Order — Makan Moments",
       body: `${itemCount} item${itemCount !== 1 ? "s" : ""} — RM ${total.toFixed(2)}`,
@@ -50,7 +50,7 @@ export async function checkOrderStatusHandler(orderId: string): Promise<string> 
   const id = parseInt(orderId, 10);
   if (isNaN(id)) return JSON.stringify({ error: "Invalid order ID — must be a number" });
 
-  const rows = await sql`
+  const rows = await sql<{ id: number; status: string; estimated_ready: string | null; created_at: string }>`
     SELECT id, status, estimated_ready, created_at
     FROM tray_orders
     WHERE id = ${id}

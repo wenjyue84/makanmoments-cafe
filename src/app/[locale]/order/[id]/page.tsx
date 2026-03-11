@@ -6,32 +6,16 @@ import { useTranslations } from "next-intl";
 import { CheckCircle2, Circle, Clock, XCircle, PhoneCall, Upload } from "lucide-react";
 import Link from "next/link";
 import { fetchWithTimeout } from "@/lib/utils";
+import { formatDateTime } from "@/lib/date-utils";
+import type { OrderStatus } from "@/types/orders";
+import { STATUS_STEPS, TERMINAL_STATUSES } from "@/types/orders";
 // Phone formatted for wa.me (strip non-digits, ensure 60 prefix)
 function phoneToWaMe(phone: string): string {
   const digits = phone.replace(/\D/g, "");
   return digits.startsWith("60") ? digits : `60${digits.replace(/^0/, "")}`;
 }
 
-// Status step ordering — rejected is a terminal side-state, not in the linear flow
-const STATUS_STEPS = [
-  "pending_approval",
-  "approved",
-  "payment_pending",
-  "payment_uploaded",
-  "preparing",
-  "ready",
-] as const;
-
-type OrderStatus =
-  | "pending_approval"
-  | "approved"
-  | "payment_pending"
-  | "payment_uploaded"
-  | "preparing"
-  | "ready"
-  | "rejected"
-  | "cancelled"
-  | "expired";
+// Status step ordering — imported from @/types/orders
 
 interface OrderData {
   id: number;
@@ -141,6 +125,7 @@ function PaymentSection({
       {tng.tngQrUrl && (
         <div className="mb-4">
           <p className="mb-1 text-xs font-medium text-amber-700">{t("tngScanQrLabel")}</p>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={tng.tngQrUrl} alt="Touch & Go QR Code" className="h-36 w-36 rounded-xl border border-amber-200 object-contain" />
         </div>
       )}
@@ -162,6 +147,7 @@ function PaymentSection({
         </button>
 
         {preview && (
+          // eslint-disable-next-line @next/next/no-img-element
           <img src={preview} alt="Preview" className="mt-3 h-24 w-24 rounded-xl border border-stone-200 object-cover" />
         )}
 
@@ -189,14 +175,6 @@ function PaymentSection({
       </div>
     </div>
   );
-}
-
-function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  return d.toLocaleString("en-MY", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  });
 }
 
 function StepBar({
@@ -268,7 +246,6 @@ function StepBar({
 }
 
 const MAX_FAIL_COUNT = 40;
-const TERMINAL_STATUSES: OrderStatus[] = ["ready", "rejected", "cancelled", "expired"];
 
 export default function OrderStatusPage() {
   const params = useParams();

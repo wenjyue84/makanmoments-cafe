@@ -17,16 +17,16 @@ export function HubStaffReview({ hubStatus }: Props) {
 
   return (
     <div>
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#1e293b", marginBottom: "0.25rem" }}>
+      <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#111827", marginBottom: "0.25rem" }}>
         Staff Review
       </h2>
-      <p style={{ color: "#64748b", fontSize: "0.875rem", marginBottom: "1.5rem" }}>
+      <p style={{ color: "#6b7280", fontSize: "0.875rem", marginBottom: "1.5rem", marginTop: 0 }}>
         Privacy policy and session statistics for customer interactions.
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
         {/* Privacy card */}
-        <div style={{ background: "#fff", borderRadius: "0.75rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+        <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e5e7eb", overflow: "hidden" }}>
           <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid #f1f5f9", background: "#f0fdf4", display: "flex", alignItems: "center", gap: "0.625rem" }}>
             <span style={{ fontSize: "1.25rem" }}>🔒</span>
             <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "#166534", margin: 0 }}>
@@ -53,8 +53,8 @@ export function HubStaffReview({ hubStatus }: Props) {
         </div>
 
         {/* Session statistics */}
-        <div style={{ background: "#fff", borderRadius: "0.75rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-          <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid #f1f5f9", background: "#f8fafc", display: "flex", alignItems: "center", gap: "0.625rem" }}>
+        <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e5e7eb", overflow: "hidden" }}>
+          <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid #f3f4f6", background: "#f9fafb", display: "flex", alignItems: "center", gap: "0.625rem" }}>
             <span style={{ fontSize: "1.25rem" }}>📊</span>
             <h3 style={{ fontSize: "0.9375rem", fontWeight: 600, color: "#1e293b", margin: 0 }}>
               Session Statistics

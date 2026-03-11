@@ -17,10 +17,10 @@ export function HubChatSimulator() {
 
   return (
     <div>
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#1e293b", marginBottom: "0.25rem" }}>
+      <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#111827", marginBottom: "0.25rem" }}>
         Chat Simulator
       </h2>
-      <p style={{ color: "#64748b", fontSize: "0.875rem", marginBottom: "1.25rem" }}>
+      <p style={{ color: "#6b7280", fontSize: "0.875rem", marginBottom: "1.25rem", marginTop: 0 }}>
         Test the AI Waiter with preset questions or type your own.
       </p>
 
@@ -36,7 +36,7 @@ export function HubChatSimulator() {
 
         {/* Preset panel — 30% */}
         <div style={{ flex: "0 0 calc(30% - 1rem)", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          <div style={{ padding: "0.875rem 1rem", background: "#f8fafc", borderRadius: "0.75rem", border: "1px solid #e2e8f0" }}>
+          <div style={{ padding: "0.875rem 1rem", background: "#f9fafb", borderRadius: "1rem", border: "1px solid #e5e7eb" }}>
             <h3 style={{ fontSize: "0.8125rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em", margin: "0 0 0.875rem 0" }}>
               Preset Questions
             </h3>
@@ -66,7 +66,7 @@ export function HubChatSimulator() {
             </div>
           </div>
 
-          <div style={{ padding: "0.75rem 1rem", background: "#f0f9ff", borderRadius: "0.5rem", border: "1px solid #bae6fd", fontSize: "0.75rem", color: "#0369a1", lineHeight: 1.6 }}>
+          <div style={{ padding: "0.75rem 1rem", background: "#eff6ff", borderRadius: "0.5rem", border: "1px solid #bfdbfe", fontSize: "0.75rem", color: "#1d4ed8", lineHeight: 1.6 }}>
             Clicking a preset sends it directly to the AI — same as a customer typing it.
           </div>
         </div>

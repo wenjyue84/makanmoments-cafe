@@ -10,14 +10,14 @@ interface BottomSearchBarProps {
 }
 
 export function BottomSearchBar({ search, onSearchChange }: BottomSearchBarProps) {
-  const { isScrolling } = useScrolling();
+  const { scrollPhase } = useScrolling();
 
   return (
     <div
       className={cn(
         "fixed bottom-6 left-4 z-50 lg:hidden",
-        "transition-opacity duration-150",
-        isScrolling && "opacity-30"
+        scrollPhase === "scrolling" && "opacity-0 transition-opacity duration-150 pointer-events-none",
+        scrollPhase === "resting" && "scroll-fade-in"
       )}
     >
       <div className="flex items-center gap-2 rounded-full bg-background border border-input shadow-md px-3 py-2 text-sm">

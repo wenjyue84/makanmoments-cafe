@@ -23,7 +23,7 @@ if (vapidPublicKey && vapidPrivateKey) {
 async function sendPushToAllAdmins(itemCount: number, total: number) {
   if (!vapidPublicKey || !vapidPrivateKey) return;
   try {
-    const subs = await sql`SELECT endpoint, p256dh, auth FROM push_subscriptions`;
+    const subs = await sql<{ endpoint: string; p256dh: string; auth: string }>`SELECT endpoint, p256dh, auth FROM push_subscriptions`;
     const payload = JSON.stringify({
       title: "🍽 New Order — Makan Moments",
       body: `${itemCount} item${itemCount !== 1 ? "s" : ""} — RM ${total.toFixed(2)}`,

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, X, Clock, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { formatDateTimeCompact as formatDateTime, formatTime } from "@/lib/date-utils";
 import type { AdminOrder, ActionResult } from "@/hooks/useAdminOrders";
 
 export const STATUS_LABELS: Record<string, string> = {
@@ -30,16 +31,6 @@ export const STATUS_COLORS: Record<string, string> = {
   seen: "bg-gray-100 text-gray-600",
   pending: "bg-yellow-100 text-yellow-800",
 };
-
-function formatDateTime(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleString("en-MY", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
-}
-
-function formatTime(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleTimeString("en-MY", { hour: "2-digit", minute: "2-digit" });
-}
 
 function defaultReadyTime() {
   const d = new Date(Date.now() + 30 * 60 * 1000);
@@ -212,6 +203,7 @@ function PaymentModal({ orderId, screenshotUrl, onClose, onStatusUpdate }: Payme
           </button>
         </div>
 
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={screenshotUrl}
           alt="Payment screenshot"

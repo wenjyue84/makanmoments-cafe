@@ -48,7 +48,7 @@ function ModelBox({
     <div style={{
       flex: 1,
       border: `2px solid ${isActive ? "#0ea5e9" : "#e2e8f0"}`,
-      borderRadius: "0.75rem",
+      borderRadius: "1rem",
       padding: "1.25rem",
       background: isActive ? "#f0f9ff" : "#fff",
       position: "relative",
@@ -101,15 +101,15 @@ export function HubSmartRouting({ hubStatus }: Props) {
 
   return (
     <div>
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, color: "#1e293b", marginBottom: "0.25rem" }}>
+      <h2 style={{ fontSize: "1.5rem", fontWeight: 700, color: "#111827", marginBottom: "0.25rem" }}>
         Smart Routing
       </h2>
-      <p style={{ color: "#64748b", fontSize: "0.875rem", marginBottom: "1.5rem" }}>
+      <p style={{ color: "#6b7280", fontSize: "0.875rem", marginBottom: "1.5rem", marginTop: 0 }}>
         Automatic fallback chain — if the primary model fails or hits rate limits, the system silently switches to the backup.
       </p>
 
       {/* Routing diagram */}
-      <div style={{ background: "#fff", borderRadius: "0.75rem", border: "1px solid #e2e8f0", padding: "2rem" }}>
+      <div style={{ background: "#fff", borderRadius: "1rem", border: "1px solid #e5e7eb", padding: "2rem" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexWrap: "wrap" }}>
           {/* Customer */}
           <div style={{ textAlign: "center", minWidth: 80 }}>
@@ -172,7 +172,7 @@ export function HubSmartRouting({ hubStatus }: Props) {
       </div>
 
       {/* Config hint */}
-      <div style={{ marginTop: "1rem", padding: "0.875rem 1rem", background: "#fff", borderRadius: "0.75rem", border: "1px solid #e2e8f0", fontSize: "0.8125rem", color: "#475569" }}>
+      <div style={{ marginTop: "1rem", padding: "0.875rem 1rem", background: "#fff", borderRadius: "1rem", border: "1px solid #e5e7eb", fontSize: "0.8125rem", color: "#4b5563" }}>
         To switch which model is primary, go to <strong>Settings → AI Model</strong>.
       </div>
     </div>

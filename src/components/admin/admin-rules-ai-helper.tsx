@@ -16,7 +16,7 @@ interface SuggestedRule {
 }
 
 interface AdminRulesAiHelperProps {
-  categories: string[];
+  displayCategories: string[];
   onApply: (suggestion: SuggestedRule) => void;
 }
 
@@ -30,7 +30,7 @@ const TEMPLATE_PROMPTS = [
   { label: "Dinner only", prompt: "Show dinner set items only after 6:00 PM daily" },
 ];
 
-export function AdminRulesAiHelper({ categories, onApply }: AdminRulesAiHelperProps) {
+export function AdminRulesAiHelper({ displayCategories, onApply }: AdminRulesAiHelperProps) {
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
@@ -47,7 +47,7 @@ export function AdminRulesAiHelper({ categories, onApply }: AdminRulesAiHelperPr
       const res = await fetch("/api/admin/rules/ai-suggest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ description, categories }),
+        body: JSON.stringify({ description, categories: displayCategories }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to generate suggestion");

@@ -120,7 +120,7 @@ export const SharedChat = forwardRef<SharedChatHandle, Props>(
     };
 
     return (
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fff", borderRadius: "0.75rem", border: "1px solid #e2e8f0", overflow: "hidden", ...style }}>
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#fff", borderRadius: "1rem", border: "1px solid #e5e7eb", overflow: "hidden", ...style }}>
         {/* Messages */}
         <div style={{ flex: 1, overflowY: "auto", padding: "1rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
           {messages.length === 0 && (

@@ -12,6 +12,7 @@ interface ImageCarouselProps {
   version?: number;
   className?: string;
   sizes?: string;
+  onLoad?: () => void;
 }
 
 /**
@@ -26,6 +27,7 @@ export function ImageCarousel({
   version,
   className,
   sizes = "(max-width: 640px) calc(100vw - 32px), (max-width: 1024px) 50vw, 33vw",
+  onLoad,
 }: ImageCarouselProps) {
   const [current, setCurrent] = useState(0);
 
@@ -56,11 +58,12 @@ export function ImageCarousel({
         src={src}
         alt={alt}
         fill
-        className={`object-cover img-scale transition-opacity duration-200 ${className ?? ""}`}
+        className={`object-cover img-scale ${className ?? ""}`}
         style={{ objectPosition: imagePosition || "50% 50%" }}
         sizes={sizes}
         priority={priority && current === 0}
         loading={priority && current === 0 ? "eager" : "lazy"}
+        onLoad={current === 0 ? onLoad : undefined}
       />
 
       {multiplePhotos && (

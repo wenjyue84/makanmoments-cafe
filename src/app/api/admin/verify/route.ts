@@ -1,7 +1,12 @@
-// This route is protected by middleware — if the request reaches here the
-// admin JWT was already validated. It simply returns 200 so client code can
-// check whether the current session is authenticated without needing to
-// redirect to a page route.
+import { cookies } from "next/headers";
+import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
+
 export async function GET() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get(COOKIE_NAME)?.value;
+  const valid = token ? await verifyAdminToken(token) : false;
+  if (!valid) {
+    return Response.json({ ok: false }, { status: 401 });
+  }
   return Response.json({ ok: true });
 }

@@ -1,4 +1,4 @@
-import { getAllMenuItemsWithRulesForAdmin, getCategories, getDisplayCategories } from "@/lib/menu";
+import { getAllMenuItemsWithRulesForAdmin, getDisplayCategories } from "@/lib/menu";
 import { getAllBlogPostsForAdmin } from "@/lib/blog";
 import { AdminTabs } from "@/components/admin/admin-tabs";
 import { AdminOrdersBell } from "@/components/admin/admin-orders-bell";
@@ -19,9 +19,8 @@ export default async function AdminTabPage({ params }: { params: Promise<{ tab: 
   const { tab } = await params;
   if (!VALID_TABS.includes(tab)) redirect("/admin/menu");
 
-  const [items, categories, displayCategories, posts] = await Promise.all([
+  const [items, displayCategories, posts] = await Promise.all([
     getAllMenuItemsWithRulesForAdmin(),
-    getCategories(),
     getDisplayCategories(),
     getAllBlogPostsForAdmin(),
   ]);
@@ -36,7 +35,7 @@ export default async function AdminTabPage({ params }: { params: Promise<{ tab: 
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <AdminTabs items={items} categories={categories} displayCategories={displayCategories.filter((dc) => dc.active).map((dc) => dc.name)} posts={posts} />
+        <AdminTabs items={items} displayCategories={displayCategories.filter((dc) => dc.active).map((dc) => dc.name)} posts={posts} />
       </main>
     </div>
   );

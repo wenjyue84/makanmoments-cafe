@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Settings } from "lucide-react";
+import { Camera, Loader2, Check, X } from "lucide-react";
+import { Link } from "@/i18n/navigation";
 import type { MenuItem } from "@/types/menu";
-import { MenuCard } from "@/components/menu/menu-card";
 import { HeroDishCard } from "@/components/home/hero-dish-card";
 import { HERO_BLUR } from "@/data/hero-blur";
+import { cn } from "@/lib/utils";
 
 export interface HomeContent {
   heroTitle: string;
@@ -23,225 +23,339 @@ interface HomeInlineEditorProps {
   signatureDish?: MenuItem | null;
 }
 
-export function HomeInlineEditor({ content, featuredItems, signatureDish }: HomeInlineEditorProps) {
-  const router = useRouter();
-  const [editing, setEditing] = useState(false);
-  const [fields, setFields] = useState<HomeContent>(content);
+// ── Per-field inline editable text ──────────────────────────────────────────
+interface InlineFieldProps {
+  value: string;
+  onSave: (v: string) => Promise<void>;
+  multiline?: boolean;
+  /** className applied to the read-mode span */
+  displayClassName?: string;
+  /** className applied to the input/textarea */
+  inputClassName?: string;
+  placeholder?: string;
+}
+
+function InlineField({ value, onSave, multiline = false, displayClassName, inputClassName, placeholder }: InlineFieldProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  function setField<K extends keyof HomeContent>(key: K, value: HomeContent[K]) {
-    setFields((prev) => ({ ...prev, [key]: value }));
-  }
-
-  async function handleSave() {
+  async function save() {
+    const trimmed = draft.trim();
+    if (!trimmed || trimmed === value) {
+      setIsEditing(false);
+      return;
+    }
     setSaving(true);
-    setError(null);
-    setSaved(false);
     try {
-      const res = await fetch("/api/admin/content/home", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save");
+      await onSave(trimmed);
       setSaved(true);
-      setEditing(false);
-      router.refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error saving");
+      setTimeout(() => setSaved(false), 2000);
     } finally {
       setSaving(false);
+      setIsEditing(false);
     }
   }
 
-  function handleCancel() {
-    setFields(content);
-    setError(null);
-    setEditing(false);
+  function startEdit() {
+    setDraft(value);
+    setIsEditing(true);
+  }
+
+  if (isEditing) {
+    return multiline ? (
+      <textarea
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => void save()}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") { setDraft(value); setIsEditing(false); }
+        }}
+        rows={3}
+        className={cn(
+          "w-full rounded-lg border-2 border-amber-400 bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-amber-400",
+          inputClassName
+        )}
+        placeholder={placeholder}
+      />
+    ) : (
+      <input
+        autoFocus
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => void save()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") void save();
+          if (e.key === "Escape") { setDraft(value); setIsEditing(false); }
+        }}
+        className={cn(
+          "w-full rounded-lg border-2 border-amber-400 bg-background px-3 py-2 outline-none focus:ring-1 focus:ring-amber-400",
+          inputClassName
+        )}
+        placeholder={placeholder}
+      />
+    );
+  }
+
+  return (
+    <span
+      role="button"
+      tabIndex={0}
+      onClick={startEdit}
+      onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && startEdit()}
+      className={cn(
+        "cursor-text rounded border-b-2 border-transparent transition-colors hover:border-amber-400/60 focus:border-amber-400 focus:outline-none",
+        displayClassName
+      )}
+      title="Click to edit"
+    >
+      {value}
+      {saving && <Loader2 className="ml-1 inline h-3 w-3 animate-spin text-amber-500" />}
+      {saved && !saving && <Check className="ml-1 inline h-3 w-3 text-green-500" />}
+    </span>
+  );
+}
+
+// ── Main component ───────────────────────────────────────────────────────────
+export function HomeInlineEditor({ content, featuredItems, signatureDish }: HomeInlineEditorProps) {
+  const router = useRouter();
+  const heroFileRef = useRef<HTMLInputElement>(null);
+  const [heroUploading, setHeroUploading] = useState(false);
+  const [heroError, setHeroError] = useState<string | null>(null);
+  const [heroSuccessMsg, setHeroSuccessMsg] = useState<string | null>(null);
+
+  // Save a single field to the backend
+  async function saveField(key: keyof HomeContent, value: string) {
+    const res = await fetch("/api/admin/content/home", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ...content, [key]: value }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error((data as { error?: string }).error || "Failed to save");
+    }
+    router.refresh();
+  }
+
+  async function handleHeroImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !signatureDish) return;
+    setHeroUploading(true);
+    setHeroError(null);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("code", signatureDish.code);
+      const res = await fetch("/api/admin/images", { method: "POST", body: fd });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error((data as { error?: string }).error || "Upload failed");
+      }
+      setHeroSuccessMsg("Hero image updated");
+      setTimeout(() => setHeroSuccessMsg(null), 3000);
+      router.refresh();
+    } catch (err) {
+      setHeroError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setHeroUploading(false);
+      if (heroFileRef.current) heroFileRef.current.value = "";
+    }
   }
 
   return (
     <div>
-      {/* Admin banner */}
-      <div className="sticky top-0 z-40 flex items-center gap-3 border-b border-amber-400/50 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-500/40 dark:bg-amber-950/30 dark:text-amber-300">
-        <span className="text-base">✎</span>
-        <span>
-          <strong>Admin</strong> — you can edit the landing page content.
-        </span>
-        {!editing && (
-          <button
-            onClick={() => setEditing(true)}
-            className="ml-auto rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700"
-          >
-            Edit Mode
-          </button>
-        )}
-        {editing && (
-          <div className="ml-auto flex gap-2">
-            <button
-              onClick={handleCancel}
-              className="rounded-md border border-amber-600 px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 dark:text-amber-300"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              className="rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
-            >
-              {saving ? "Saving…" : "Save Changes"}
-            </button>
-          </div>
-        )}
-        {saved && !editing && (
-          <span className="ml-auto text-xs font-medium text-green-700 dark:text-green-400">
-            Saved!
-          </span>
-        )}
+      {/* Small admin hint bar — not the full sticky banner */}
+      <div className="flex items-center gap-2 border-b border-amber-200/60 bg-amber-50/80 px-4 py-2 text-xs text-amber-700 dark:border-amber-700/40 dark:bg-amber-950/40 dark:text-amber-400">
+        <span className="font-semibold">Admin view</span>
+        <span className="text-amber-500">·</span>
+        <span>Click any text to edit in-place. Saves automatically on blur.</span>
+        <Link href="/admin" className="ml-auto rounded bg-amber-100 px-2 py-0.5 font-medium hover:bg-amber-200 dark:bg-amber-900/40 dark:hover:bg-amber-900/60">
+          Admin Panel →
+        </Link>
       </div>
 
-      {error && (
-        <div className="mx-4 mt-3 rounded-lg border border-red-300 bg-red-50 px-4 py-2.5 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      {/* Hero section preview */}
+      {/* Hero section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary/8 via-background to-accent/15">
         <div className="mx-auto max-w-6xl px-4 py-8 sm:py-16">
           <div className="flex flex-col gap-6 lg:grid lg:grid-cols-2 lg:items-center lg:gap-16">
-            {/* Mobile hero image — FIRST so food is above the fold on mobile */}
-            <div className="lg:hidden animate-fade-in">
-              <HeroDishCard
-                item={signatureDish ?? null}
-                className="aspect-[4/3] shadow-2xl"
-                sizes="100vw"
-                priority
-                fallbackBlurDataURL={HERO_BLUR.heroMobile}
-              />
+
+            {/* Mobile hero image — with "Change Photo" overlay */}
+            <div className="lg:hidden">
+              <div className="relative">
+                <HeroDishCard
+                  item={signatureDish ?? null}
+                  className="aspect-[4/3] shadow-2xl"
+                  sizes="100vw"
+                  priority
+                  fallbackBlurDataURL={HERO_BLUR.heroMobile}
+                />
+                {/* Hidden file input */}
+                <input
+                  ref={heroFileRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleHeroImageUpload}
+                />
+                {/* Overlay */}
+                <div className="absolute inset-0 flex flex-col items-center justify-end gap-2 rounded-2xl pb-4 opacity-0 transition-opacity hover:opacity-100 focus-within:opacity-100">
+                  {signatureDish ? (
+                    <button
+                      type="button"
+                      onClick={() => heroFileRef.current?.click()}
+                      disabled={heroUploading}
+                      className="flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white hover:bg-black/90 disabled:opacity-50"
+                    >
+                      {heroUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                      Change Hero Photo
+                    </button>
+                  ) : (
+                    <Link
+                      href="/menu"
+                      className="flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600"
+                    >
+                      ⭐ Select a Hero Dish →
+                    </Link>
+                  )}
+                </div>
+                {heroSuccessMsg && (
+                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-center rounded-b-2xl bg-green-600/90 py-2 text-sm font-medium text-white">
+                    <Check className="mr-1.5 h-3.5 w-3.5" /> {heroSuccessMsg}
+                  </div>
+                )}
+                {heroError && (
+                  <div className="absolute inset-x-0 bottom-0 flex items-center justify-between rounded-b-2xl bg-red-600/90 px-3 py-2 text-sm font-medium text-white">
+                    <span>{heroError}</span>
+                    <button type="button" onClick={() => setHeroError(null)}><X className="h-3.5 w-3.5" /></button>
+                  </div>
+                )}
+              </div>
             </div>
 
+            {/* Text content — all fields are inline-editable */}
             <div>
-              {/* Hero title */}
-              <div className="mb-3">
-                <label className="mb-1 block text-xs font-medium uppercase tracking-widest text-muted-foreground">
-                  Hero Title
-                </label>
-                {editing ? (
-                  <input
-                    value={fields.heroTitle}
-                    onChange={(e) => setField("heroTitle", e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 font-display text-4xl font-bold text-primary outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                    placeholder="Thai-Malaysian Fusion"
-                  />
-                ) : (
-                  <h1 className="font-display text-5xl font-bold tracking-tight text-primary">
-                    {fields.heroTitle}
-                  </h1>
-                )}
+              <div className="mb-4">
+                <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+                  Hero Title <span className="text-amber-500">(click to edit)</span>
+                </p>
+                <InlineField
+                  value={content.heroTitle}
+                  onSave={(v) => saveField("heroTitle", v)}
+                  displayClassName="block font-display text-4xl font-bold tracking-tight text-primary sm:text-6xl"
+                  inputClassName="font-display text-4xl font-bold text-primary"
+                />
               </div>
 
-              {/* Hero tagline */}
               <div className="mb-3">
-                <label className="mb-1 block text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
                   Tagline (italic)
-                </label>
-                {editing ? (
-                  <input
-                    value={fields.heroTagline}
-                    onChange={(e) => setField("heroTagline", e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 font-display text-lg italic text-primary/75 outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                    placeholder="Thai Begins, Moments Stay"
-                  />
-                ) : (
-                  <p className="font-display text-lg italic text-primary/75">
-                    {fields.heroTagline}
-                  </p>
-                )}
+                </p>
+                <InlineField
+                  value={content.heroTagline}
+                  onSave={(v) => saveField("heroTagline", v)}
+                  displayClassName="block font-display text-base italic text-primary/75 sm:text-lg"
+                  inputClassName="font-display text-lg italic text-primary/75"
+                />
               </div>
 
-              {/* Hero subtitle */}
               <div className="mb-3">
-                <label className="mb-1 block text-xs font-medium uppercase tracking-widest text-muted-foreground">
+                <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
                   Description
-                </label>
-                {editing ? (
-                  <textarea
-                    value={fields.heroSubtitle}
-                    onChange={(e) => setField("heroSubtitle", e.target.value)}
-                    rows={3}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-base leading-8 text-muted-foreground outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                    placeholder="Bold Thai flavours, Johor soul…"
-                  />
-                ) : (
-                  <p className="text-base leading-8 text-muted-foreground">
-                    {fields.heroSubtitle}
-                  </p>
-                )}
+                </p>
+                <InlineField
+                  value={content.heroSubtitle}
+                  onSave={(v) => saveField("heroSubtitle", v)}
+                  multiline
+                  displayClassName="block text-sm leading-6 text-muted-foreground sm:text-base"
+                  inputClassName="text-base leading-6 text-muted-foreground"
+                />
               </div>
             </div>
 
-            {/* Desktop hero image */}
+            {/* Desktop hero image — with "Change Photo" overlay */}
             <div className="relative hidden w-full lg:block lg:pl-8">
               <HeroDishCard
                 item={signatureDish ?? null}
-                className="aspect-[4/3] shadow-xl hover-lift"
+                className="aspect-[4/3] shadow-xl"
                 sizes="(max-width: 1024px) 50vw, 800px"
                 priority
                 fallbackBlurDataURL={HERO_BLUR.heroMobile}
               />
+              {/* Hover overlay for desktop */}
+              <div className="absolute inset-0 lg:pl-8">
+                <div className="relative h-full w-full">
+                  <div className="absolute inset-0 flex flex-col items-center justify-end gap-2 rounded-2xl pb-4 opacity-0 transition-opacity hover:opacity-100">
+                    {signatureDish ? (
+                      <button
+                        type="button"
+                        onClick={() => heroFileRef.current?.click()}
+                        disabled={heroUploading}
+                        className="flex items-center gap-2 rounded-full bg-black/70 px-4 py-2 text-sm font-semibold text-white hover:bg-black/90 disabled:opacity-50"
+                      >
+                        {heroUploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
+                        Change Hero Photo
+                      </button>
+                    ) : (
+                      <Link
+                        href="/menu"
+                        className="flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600"
+                      >
+                        ⭐ Select a Hero Dish on Menu →
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Highlights section preview */}
+      {/* Highlights section */}
       <section className="mx-auto max-w-6xl px-4 py-16">
         <div className="mb-8">
           <div className="mb-3">
-            <label className="mb-1 block text-xs font-medium uppercase tracking-widest text-muted-foreground">
-              Highlights Section Title
-            </label>
-            {editing ? (
-              <input
-                value={fields.highlightsTitle}
-                onChange={(e) => setField("highlightsTitle", e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 font-display text-3xl font-bold outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                placeholder="Crowd Favourites"
-              />
-            ) : (
-              <h2 className="font-display text-3xl font-bold">{fields.highlightsTitle}</h2>
-            )}
+            <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+              Highlights Title
+            </p>
+            <InlineField
+              value={content.highlightsTitle}
+              onSave={(v) => saveField("highlightsTitle", v)}
+              displayClassName="block font-display text-3xl font-bold"
+              inputClassName="font-display text-3xl font-bold"
+            />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-medium uppercase tracking-widest text-muted-foreground">
+            <p className="mb-1 text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
               Highlights Subtitle
-            </label>
-            {editing ? (
-              <input
-                value={fields.highlightsSubtitle}
-                onChange={(e) => setField("highlightsSubtitle", e.target.value)}
-                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-muted-foreground outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400"
-                placeholder="The dishes our regulars keep coming back for"
-              />
-            ) : (
-              <p className="mt-2 text-muted-foreground">{fields.highlightsSubtitle}</p>
-            )}
+            </p>
+            <InlineField
+              value={content.highlightsSubtitle}
+              onSave={(v) => saveField("highlightsSubtitle", v)}
+              displayClassName="block text-muted-foreground"
+              inputClassName="text-muted-foreground"
+            />
           </div>
         </div>
 
         {featuredItems.length > 0 ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {featuredItems.slice(0, 6).map((item, index) => (
-              <MenuCard key={item.id} item={item} priority={index < 3} />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 opacity-60">
+            {featuredItems.slice(0, 3).map((item) => (
+              <div key={item.id} className="rounded-xl border bg-card p-3 text-sm">
+                <p className="font-semibold">{item.nameEn}</p>
+                <p className="text-xs text-muted-foreground">RM {item.price.toFixed(2)}</p>
+              </div>
             ))}
+            {featuredItems.length > 3 && (
+              <p className="self-center text-xs text-muted-foreground">+{featuredItems.length - 3} more featured items</p>
+            )}
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
-            No featured items — toggle the Featured flag on items in Admin → Menu to show them here.
+            No featured items — toggle the Featured flag on items in Admin → Menu.
           </div>
         )}
 
@@ -249,15 +363,6 @@ export function HomeInlineEditor({ content, featuredItems, signatureDish }: Home
           Manage featured items in Admin → Menu → toggle the Featured flag on any item.
         </p>
       </section>
-
-      {/* Mobile-only floating gear icon — navigates to /admin */}
-      <Link
-        href="/admin"
-        aria-label="Go to Admin Panel"
-        className="fixed bottom-20 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg lg:hidden"
-      >
-        <Settings size={20} />
-      </Link>
     </div>
   );
 }

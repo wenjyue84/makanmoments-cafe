@@ -10,11 +10,11 @@ neonConfig.fetchConnectionCache = true;
 let _db: ReturnType<typeof neon> | undefined;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const sql = (strings: TemplateStringsArray, ...values: any[]): any => {
+const sql = <T = Record<string, unknown>>(strings: TemplateStringsArray, ...values: any[]): Promise<T[]> => {
   if (!_db) {
     _db = neon(env.DATABASE_URL);
   }
-  return _db(strings, ...values);
+  return _db(strings, ...values) as unknown as Promise<T[]>;
 };
 
 export default sql;

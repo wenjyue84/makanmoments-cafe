@@ -15,7 +15,7 @@ export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const { isScrolling } = useScrolling();
+  const { scrollPhase } = useScrolling();
 
   useEffect(() => {
     fetch("/api/admin/verify", { credentials: "include", redirect: "manual" })
@@ -61,9 +61,10 @@ export function ChatWidget() {
       <button
         onClick={() => (open ? setOpen(false) : handleOpen())}
         className={cn(
-          "fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-[transform,opacity] hover:scale-110 active:scale-95",
+          "fixed bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-[transform,opacity] hover:scale-110 active:scale-95 sm:bottom-4",
           open && "md:flex hidden",
-          isScrolling && "opacity-20"
+          scrollPhase === "scrolling" && "opacity-0 transition-opacity duration-150 pointer-events-none",
+          scrollPhase === "resting" && "scroll-fade-in"
         )}
         aria-label="Open AI Waiter chat"
       >
