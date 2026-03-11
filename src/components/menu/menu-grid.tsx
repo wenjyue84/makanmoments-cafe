@@ -267,7 +267,7 @@ export function MenuGrid({
       const dcItems = items.filter((i) => i.displayCategories.includes(cat) && i.code);
       for (const item of dcItems) {
         const img = new window.Image();
-        img.src = `/images/menu/${item.code}.jpg`;
+        img.src = item.photo ?? `/images/menu/${item.code}.jpg`;
       }
     },
     [items]
@@ -330,7 +330,9 @@ export function MenuGrid({
     function fetchNext() {
       if (cancelled || idx >= uniqueCodes.length) return;
       const img = new window.Image();
-      img.src = `/images/menu/${uniqueCodes[idx++]}.jpg`;
+      const code = uniqueCodes[idx++];
+      const nextItem = items.find((i) => i.code === code);
+      img.src = nextItem?.photo ?? `/images/menu/${code}.jpg`;
       schedule();
     }
     function schedule() {

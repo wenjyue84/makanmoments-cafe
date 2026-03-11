@@ -69,7 +69,7 @@ export function ChefPickCard({ item, priority = false, compact = false, isAdmin 
   const hasPhoto = !!item.code && !imgError;
   const hasRecipe = !!getRecipeInfo(item.nameEn);
   const imgVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
-  const imgSrc = `/images/menu/${item.code}.jpg${imgVersion ? `?v=${imgVersion}` : ""}`;
+  const imgSrc = `${item.photo}${imgVersion ? `?v=${imgVersion}` : ""}`;
 
   return (
     <>

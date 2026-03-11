@@ -7,35 +7,89 @@ import { join } from "path";
 
 const MENU_IMAGES_DIR = join(process.cwd(), "public", "images", "menu");
 
-/** Read public/images/menu/ and return a map of code → [secondary photo paths] */
-function getSecondaryPhotosMap(): Record<string, string[]> {
+// Idempotent migration — ensures the archived column exists before any SELECT references it
+let _archivedColumnReady = false;
+async function ensureArchivedColumn() {
+  if (_archivedColumnReady) return;
+  await sql`ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS archived BOOLEAN DEFAULT false`;
+  _archivedColumnReady = true;
+}
+
+/** Cached filesystem scan for primary + secondary photos (5-min TTL) */
+let _photosCache: {
+  primary: Record<string, string>;
+  secondary: Record<string, string[]>;
+  ts: number;
+} | null = null;
+const PHOTOS_CACHE_TTL = 5 * 60 * 1000;
+
+function buildPhotosCache(): { primary: Record<string, string>; secondary: Record<string, string[]> } {
   try {
     const files = readdirSync(MENU_IMAGES_DIR);
-    const map: Record<string, string[]> = {};
+    const primary: Record<string, string> = {};
+    const secondary: Record<string, string[]> = {};
+
     for (const file of files) {
-      // Match pattern: {code}-{index}.ext where index is 2 or 3
-      const match = file.match(/^(.+)-(\d+)\.(jpe?g|png|webp)$/i);
-      if (match) {
-        const code = match[1];
-        const index = parseInt(match[2]);
-        if (index >= 2 && index <= 3) {
-          if (!map[code]) map[code] = [];
-          map[code].push(`/images/menu/${file}`);
+      if (!/\.(jpe?g|png|webp)$/i.test(file)) continue;
+
+      // Secondary: {code}-{digits}.ext  (index >= 2)
+      const secMatch = file.match(/^(.+)-(\d+)\.(jpe?g|png|webp)$/i);
+      if (secMatch) {
+        const code = secMatch[1];
+        const index = parseInt(secMatch[2]);
+        if (index >= 2) {
+          if (!secondary[code]) secondary[code] = [];
+          secondary[code].push(`/images/menu/${file}`);
         }
+        continue;
+      }
+
+      // Primary exact: {code}.ext  (no hyphen in name before extension)
+      const exactMatch = file.match(/^([^-]+)\.(jpe?g|png|webp)$/i);
+      if (exactMatch) {
+        const code = exactMatch[1];
+        const ext = file.split(".").pop()!.toLowerCase();
+        // Prefer webp over jpg/jpeg/png
+        if (!primary[code] || ext === "webp") primary[code] = `/images/menu/${file}`;
+        continue;
+      }
+
+      // Primary descriptive: {code}-{name-starting-with-non-digit}.ext
+      const descMatch = file.match(/^([^-]+)-([^0-9].+)\.(jpe?g|png|webp)$/i);
+      if (descMatch) {
+        const code = descMatch[1];
+        const ext = file.split(".").pop()!.toLowerCase();
+        if (!primary[code] || ext === "webp") primary[code] = `/images/menu/${file}`;
       }
     }
-    // Sort each list so -2 comes before -3
-    for (const code in map) map[code].sort();
-    return map;
+
+    for (const code in secondary) secondary[code].sort();
+    return { primary, secondary };
   } catch {
-    return {};
+    return { primary: {}, secondary: {} };
   }
 }
 
+function getPhotosCache() {
+  if (_photosCache && Date.now() - _photosCache.ts < PHOTOS_CACHE_TTL) return _photosCache;
+  const { primary, secondary } = buildPhotosCache();
+  _photosCache = { primary, secondary, ts: Date.now() };
+  return _photosCache;
+}
+
+function getSecondaryPhotosMap(): Record<string, string[]> {
+  return getPhotosCache().secondary;
+}
+
+/** Invalidate the photos cache (call after image upload or rename) */
+export function invalidatePhotosCache() {
+  _photosCache = null;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function rowToMenuItem(row: any, displayCatMap: Record<string, string[]> = {}, secondaryPhotosMap: Record<string, string[]> = {}): MenuItem {
+function rowToMenuItem(row: any, displayCatMap: Record<string, string[]> = {}, primaryPhotosMap: Record<string, string> = {}, secondaryPhotosMap: Record<string, string[]> = {}): MenuItem {
   const code = row.code as string;
-  const primary = `/images/menu/${code}.jpg`;
+  const primary = primaryPhotosMap[code] ?? `/images/menu/${code}.jpg`;
   const secondary = secondaryPhotosMap[code] ?? [];
   return {
     id: row.id,
@@ -60,6 +114,7 @@ function rowToMenuItem(row: any, displayCatMap: Record<string, string[]> = {}, s
     imagePosition: row.image_position ?? "50% 50%",
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : new Date().toISOString(),
     isSignature: row.is_signature ?? false,
+    archived: row.archived ?? false,
   };
 }
 
@@ -71,10 +126,9 @@ export async function getDisplayCategories(): Promise<DisplayCategory[]> {
     VALUES ('Vegetarian', 6, true)
     ON CONFLICT (name) DO NOTHING
   `;
-  const rows = await sql`
+  return sql<DisplayCategory>`
     SELECT * FROM display_categories ORDER BY sort_order ASC, name ASC
   `;
-  return rows as DisplayCategory[];
 }
 
 // Build a map of item_id → display category names from DB
@@ -97,14 +151,15 @@ async function getItemDisplayCategoryMap(): Promise<Record<string, string[]>> {
 
 // Public menu — available items filtered by Malaysia time, with rules applied
 export async function getMenuItems(): Promise<MenuItemWithRules[]> {
+  await ensureArchivedColumn();
   const [rows, rules, displayCatMap] = await Promise.all([
-    sql`SELECT * FROM menu_items WHERE available = true ORDER BY sort_order ASC, name_en ASC`,
+    sql`SELECT * FROM menu_items WHERE available = true AND (archived IS NULL OR archived = false) ORDER BY sort_order ASC, name_en ASC`,
     getActiveRules(),
     getItemDisplayCategoryMap(),
   ]);
-  const secondaryPhotosMap = getSecondaryPhotosMap();
+  const { primary: primaryPhotosMap, secondary: secondaryPhotosMap } = getPhotosCache();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items = rows.map((r: any) => rowToMenuItem(r, displayCatMap, secondaryPhotosMap));
+  const items = rows.map((r: any) => rowToMenuItem(r, displayCatMap, primaryPhotosMap, secondaryPhotosMap));
   const withRules = applyRules(items, rules);
   return filterByAvailability(withRules.filter((i) => !i.disabledByRule));
 }
@@ -113,14 +168,15 @@ export async function getMenuItems(): Promise<MenuItemWithRules[]> {
 const MIN_HIGHLIGHTS = 6;
 
 export async function getFeaturedItems(): Promise<MenuItemWithRules[]> {
+  await ensureArchivedColumn();
   const [rows, rules, displayCatMap] = await Promise.all([
-    sql`SELECT * FROM menu_items WHERE available = true ORDER BY sort_order ASC`,
+    sql`SELECT * FROM menu_items WHERE available = true AND (archived IS NULL OR archived = false) ORDER BY sort_order ASC`,
     getActiveRules(),
     getItemDisplayCategoryMap(),
   ]);
-  const secondaryPhotosMap = getSecondaryPhotosMap();
+  const { primary: primaryPhotosMap, secondary: secondaryPhotosMap } = getPhotosCache();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const items = rows.map((r: any) => rowToMenuItem(r, displayCatMap, secondaryPhotosMap));
+  const items = rows.map((r: any) => rowToMenuItem(r, displayCatMap, primaryPhotosMap, secondaryPhotosMap));
   const withRules = applyRules(items, rules);
   const available = filterByAvailability(withRules.filter((i) => !i.disabledByRule));
 
@@ -138,25 +194,27 @@ export async function getFeaturedItems(): Promise<MenuItemWithRules[]> {
 
 // Admin — all items, no availability filter
 export async function getAllMenuItemsForAdmin(): Promise<MenuItem[]> {
+  await ensureArchivedColumn();
   const [rows, displayCatMap] = await Promise.all([
     sql`SELECT * FROM menu_items ORDER BY sort_order ASC, name_en ASC`,
     getItemDisplayCategoryMap(),
   ]);
-  const secondaryPhotosMap = getSecondaryPhotosMap();
+  const { primary: primaryPhotosMap, secondary: secondaryPhotosMap } = getPhotosCache();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return rows.map((r: any) => rowToMenuItem(r, displayCatMap, secondaryPhotosMap));
+  return rows.map((r: any) => rowToMenuItem(r, displayCatMap, primaryPhotosMap, secondaryPhotosMap));
 }
 
 // Admin — all items with rule effects computed (for admin visibility)
 export async function getAllMenuItemsWithRulesForAdmin(): Promise<MenuItemWithRules[]> {
+  await ensureArchivedColumn();
   const [rows, rules, displayCatMap] = await Promise.all([
     sql`SELECT * FROM menu_items ORDER BY sort_order ASC, name_en ASC`,
     getActiveRules(),
     getItemDisplayCategoryMap(),
   ]);
-  const secondaryPhotosMap = getSecondaryPhotosMap();
+  const { primary: primaryPhotosMap, secondary: secondaryPhotosMap } = getPhotosCache();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return applyRules(rows.map((r: any) => rowToMenuItem(r, displayCatMap, secondaryPhotosMap)), rules);
+  return applyRules(rows.map((r: any) => rowToMenuItem(r, displayCatMap, primaryPhotosMap, secondaryPhotosMap)), rules);
 }
 
 // Signature dish — the one item marked is_signature=true (used as hero on landing page)
@@ -164,12 +222,10 @@ export async function getSignatureDish(): Promise<MenuItem | null> {
   try {
     const rows = await sql`SELECT * FROM menu_items WHERE is_signature = true LIMIT 1`;
     if (!rows[0]) return null;
-    const [displayCatMap, secondaryPhotosMap] = await Promise.all([
-      getItemDisplayCategoryMap(),
-      Promise.resolve(getSecondaryPhotosMap()),
-    ]);
+    const displayCatMap = await getItemDisplayCategoryMap();
+    const { primary: primaryPhotosMap, secondary: secondaryPhotosMap } = getPhotosCache();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return rowToMenuItem(rows[0] as any, displayCatMap, secondaryPhotosMap);
+    return rowToMenuItem(rows[0] as any, displayCatMap, primaryPhotosMap, secondaryPhotosMap);
   } catch {
     // Column may not exist yet (migration runs on first PATCH)
     return null;

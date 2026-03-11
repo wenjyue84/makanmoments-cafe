@@ -3,7 +3,9 @@ import { revalidatePath } from "next/cache";
 import { readdir, writeFile, unlink } from "fs/promises";
 import { existsSync } from "fs";
 import { join } from "path";
+import sharp from "sharp";
 import sql from "@/lib/db";
+import { invalidatePhotosCache } from "@/lib/menu";
 
 export const runtime = "nodejs";
 
@@ -37,9 +39,9 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  if (isNaN(imageIndex) || imageIndex < 1 || imageIndex > 3) {
+  if (isNaN(imageIndex) || imageIndex < 1) {
     return NextResponse.json(
-      { error: "imageIndex must be 1, 2, or 3" },
+      { error: "imageIndex must be a positive integer" },
       { status: 400 }
     );
   }
@@ -60,12 +62,30 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  // Resolve item name for descriptive filename
+  let itemSlug = "";
+  try {
+    const rows = await sql`SELECT name_en FROM menu_items WHERE code = ${code} LIMIT 1`;
+    if (rows[0]) {
+      itemSlug = "-" + (rows[0].name_en as string)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 40);
+    }
+  } catch { /* best-effort */ }
+
+  // Always output as WebP — compress to 800px wide, quality 82
   const filename =
-    imageIndex === 1 ? `${code}.${ext}` : `${code}-${imageIndex}.${ext}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+    imageIndex === 1 ? `${code}${itemSlug}.webp` : `${code}-${imageIndex}.webp`;
+  const raw = Buffer.from(await file.arrayBuffer());
+  const buffer = await sharp(raw)
+    .resize({ width: 800, withoutEnlargement: true })
+    .webp({ quality: 82 })
+    .toBuffer();
 
   await writeFile(join(MENU_IMAGES_DIR, filename), buffer);
+  invalidatePhotosCache();
 
   // Touch updated_at so the image cache-busting version changes on next page render
   await sql`UPDATE menu_items SET updated_at = NOW() WHERE code = ${code}`;
@@ -78,23 +98,29 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ filename, path: `/images/menu/${filename}` });
 }
 
-/** DELETE /api/admin/images — delete a secondary image ({code}-2 or {code}-3) */
+/** DELETE /api/admin/images — delete a menu item image (primary=1, secondary=2|3) */
 export async function DELETE(request: NextRequest) {
   const body = (await request.json()) as { code?: string; imageIndex?: number };
   const { code, imageIndex } = body;
 
-  if (!code || !imageIndex || imageIndex < 2 || imageIndex > 3) {
+  if (!code || !imageIndex || imageIndex < 1) {
     return NextResponse.json(
-      { error: "code and imageIndex (2 or 3) are required" },
+      { error: "code and imageIndex (positive integer) are required" },
       { status: 400 }
     );
   }
 
-  // Try common extensions
-  for (const ext of ["jpg", "jpeg", "png", "webp"]) {
-    const filepath = join(MENU_IMAGES_DIR, `${code}-${imageIndex}.${ext}`);
+  // Primary image: {code}.ext, secondary: {code}-{index}.ext
+  const patterns =
+    imageIndex === 1
+      ? ["jpg", "jpeg", "png", "webp"].map((ext) => `${code}.${ext}`)
+      : ["jpg", "jpeg", "png", "webp"].map((ext) => `${code}-${imageIndex}.${ext}`);
+
+  for (const filename of patterns) {
+    const filepath = join(MENU_IMAGES_DIR, filename);
     if (existsSync(filepath)) {
       await unlink(filepath);
+      invalidatePhotosCache();
       await sql`UPDATE menu_items SET updated_at = NOW() WHERE code = ${code}`;
       revalidatePath("/en/menu");
       revalidatePath("/ms/menu");

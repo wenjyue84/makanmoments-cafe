@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { X, ZoomIn } from "lucide-react";
+import { X, ZoomIn, Plus, Minus } from "lucide-react";
+import { useLocale } from "next-intl";
 import type { MenuItem } from "@/types/menu";
 import { getRecipeInfo } from "@/data/recipe-info";
-import { cn } from "@/lib/utils";
+import { cn, getLocalizedName } from "@/lib/utils";
+import { useTray } from "@/lib/tray-context";
 
 interface HeroDishCardProps {
   item: MenuItem | null;
@@ -24,11 +26,17 @@ export function HeroDishCard({
   priority = false,
   fallbackBlurDataURL,
 }: HeroDishCardProps) {
+  const locale = useLocale();
+  const { addItem, decrementItem, items } = useTray();
   const [panelOpen, setPanelOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [activeImg, setActiveImg] = useState(0);
 
-  const mainSrc = item ? `/images/menu/${item.code}.jpg` : "/images/hero/hero-mobile.webp";
+  const itemName = item ? getLocalizedName(item, locale) : "";
+  const trayItem = item ? items.find((i) => i.id === item.code) : undefined;
+  const isInTray = !!trayItem;
+
+  const mainSrc = item ? (item.photo ?? `/images/menu/${item.code}.jpg`) : "/images/hero/hero-mobile.webp";
   const recipe = item ? getRecipeInfo(item.nameEn) : null;
   // Use the pre-computed photos array from the DB (primary + up to 2 secondary)
   const photos = item?.photos?.length ? item.photos : item ? [mainSrc] : [];
@@ -117,7 +125,7 @@ export function HeroDishCard({
         <div
           className={cn(
             "absolute bottom-0 left-0 right-0 overflow-hidden transition-all duration-300 ease-in-out",
-            panelOpen ? "max-h-24" : "max-h-0",
+            panelOpen ? "max-h-28" : "max-h-0",
           )}
         >
           <div className="flex items-center justify-between bg-background/90 px-4 py-3 backdrop-blur-md">
@@ -125,16 +133,48 @@ export function HeroDishCard({
               <p className="text-sm font-semibold text-foreground">{item.nameEn}</p>
               <p className="text-xs text-muted-foreground">RM {item.price.toFixed(2)}</p>
             </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                setLightboxOpen(true);
-              }}
-              className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90"
-              aria-label="Open full view"
-            >
-              <ZoomIn className="h-4 w-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLightboxOpen(true);
+                }}
+                className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-full bg-background/80 text-foreground border border-border hover:bg-muted"
+                aria-label="Open full view"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </button>
+              {isInTray ? (
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); decrementItem(item.code); }}
+                    className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all active:scale-95"
+                    aria-label="Remove one"
+                  >
+                    <Minus className="h-3.5 w-3.5" />
+                  </button>
+                  <span className="w-5 text-center text-sm font-semibold tabular-nums">{trayItem?.quantity}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); addItem({ id: item.code, name: itemName, price: item.price }); }}
+                    className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+                    aria-label="Add one more"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); addItem({ id: item.code, name: itemName, price: item.price }); }}
+                  className="flex h-9 w-9 min-h-[36px] min-w-[36px] items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+                  aria-label="Add to order"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -197,6 +237,42 @@ export function HeroDishCard({
               <div className="flex items-baseline justify-between">
                 <h3 className="text-base font-semibold text-foreground">{item.nameEn}</h3>
                 <span className="text-sm font-medium text-primary">RM {item.price.toFixed(2)}</span>
+              </div>
+
+              {/* Add to tray */}
+              <div className="mt-3 flex items-center gap-2">
+                {isInTray ? (
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => decrementItem(item.code)}
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground transition-all active:scale-95"
+                      aria-label="Remove one"
+                    >
+                      <Minus className="h-4 w-4" />
+                    </button>
+                    <span className="w-8 text-center text-base font-semibold tabular-nums">{trayItem?.quantity}</span>
+                    <button
+                      type="button"
+                      onClick={() => addItem({ id: item.code, name: itemName, price: item.price })}
+                      className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+                      aria-label="Add one more"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </button>
+                    <span className="text-sm text-muted-foreground">in order</span>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => addItem({ id: item.code, name: itemName, price: item.price })}
+                    className="flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-all active:scale-95"
+                    aria-label="Add to order"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Add to order
+                  </button>
+                )}
               </div>
 
               {recipe && (

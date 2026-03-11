@@ -9,7 +9,6 @@ const DIETARY_OPTIONS = ["Spicy", "Vegetarian", "Vegan", "Gluten Free"];
 
 interface AdminMenuTableRowProps {
   item: EditableItem;
-  categories: string[];
   imgVersion: number;
   highlightedCode: string | null;
   saving: string | null;
@@ -20,14 +19,12 @@ interface AdminMenuTableRowProps {
   onDelete: (id: string) => void;
   onToggleDay: (item: EditableItem, day: string) => void;
   onToggleDietary: (item: EditableItem, d: string) => void;
-  onToggleCategory: (item: EditableItem, cat: string) => void;
   onSuggestTranslation: (item: EditableItem, lang: "ms" | "zh") => void;
   variant: "desktop" | "mobile";
 }
 
 export function AdminMenuTableRow({
   item,
-  categories,
   imgVersion,
   highlightedCode,
   saving,
@@ -38,7 +35,6 @@ export function AdminMenuTableRow({
   onDelete,
   onToggleDay,
   onToggleDietary,
-  onToggleCategory,
   onSuggestTranslation,
   variant,
 }: AdminMenuTableRowProps) {
@@ -66,7 +62,7 @@ export function AdminMenuTableRow({
     >
       {item.code && (
         <Image
-          src={`/images/menu/${item.code}.jpg?v=${imgVersion}`}
+          src={`${item.photo ?? `/images/menu/${item.code}.jpg`}?v=${imgVersion}`}
           alt={item.code}
           fill
           className="object-cover"
@@ -217,24 +213,6 @@ export function AdminMenuTableRow({
           </div>
         </div>
 
-        <div className="mt-2 flex flex-wrap items-center gap-1">
-          <span className="text-xs text-gray-500 shrink-0">In:</span>
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => onToggleCategory(item, cat)}
-              className={cn(
-                "rounded-full border px-2 py-0.5 text-xs font-medium transition-colors",
-                item.categories.includes(cat)
-                  ? "border-orange-400 bg-orange-100 text-orange-800"
-                  : "border-gray-300 bg-gray-100 text-gray-500"
-              )}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
         {actionsButtons(true)}
       </div>
     );
@@ -353,28 +331,6 @@ export function AdminMenuTableRow({
             Rule
           </span>
         )}
-      </td>
-
-      <td className="px-3 py-2">
-        <div className="relative group">
-          <button className="rounded border border-gray-300 px-2 py-1 text-xs">
-            {item.categories.length > 0
-              ? item.categories.join(", ").slice(0, 20) + (item.categories.join(", ").length > 20 ? "…" : "")
-              : "None"}
-          </button>
-          <div className="absolute left-0 top-8 z-10 hidden max-h-48 w-48 overflow-y-auto rounded-lg border bg-white p-2 shadow-lg group-focus-within:block group-hover:block">
-            {categories.map((cat) => (
-              <label key={cat} className="flex items-center gap-1.5 py-0.5 text-xs cursor-pointer hover:bg-gray-50 rounded px-1">
-                <input
-                  type="checkbox"
-                  checked={item.categories.includes(cat)}
-                  onChange={() => onToggleCategory(item, cat)}
-                />
-                {cat}
-              </label>
-            ))}
-          </div>
-        </div>
       </td>
 
       <td className="px-3 py-2">

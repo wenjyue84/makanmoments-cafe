@@ -66,7 +66,7 @@ export function RecipeModal({ item, open, onClose }: RecipeModalProps) {
           {hasPhoto && (
             <div className="relative aspect-video w-full overflow-hidden rounded-t-2xl">
               <Image
-                src={`/images/menu/${item.code}.jpg`}
+                src={item.photo ?? ""}
                 alt={name}
                 fill
                 className="object-cover"
@@ -80,7 +80,14 @@ export function RecipeModal({ item, open, onClose }: RecipeModalProps) {
           <div className="space-y-4 p-5">
             {/* Title + price */}
             <div className="flex items-start justify-between gap-3">
-              <h2 className="text-lg font-bold leading-snug">{name}</h2>
+              <div className="flex flex-col gap-1 min-w-0">
+                <h2 className="text-lg font-bold leading-snug">{name}</h2>
+                {item.code && (
+                  <span className="text-xs font-mono text-muted-foreground/60 bg-muted px-1.5 py-0.5 rounded self-start">
+                    {item.code}
+                  </span>
+                )}
+              </div>
               <span className="shrink-0 text-base font-bold text-primary">
                 {formatPrice(item.price)}
               </span>
