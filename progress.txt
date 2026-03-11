@@ -13808,3 +13808,163 @@ This user story pertains to the **Next.js/React frontend**, not a Frappe/Python 
 ## Iteration 1 - Wed, Mar 11, 2026 11:28:13 AM
 Completed: Home Page — Signature Dish Hero Card Hover UX & Lightbox (ID: US-146) in 10m
 
+## Iteration 2 - Wed, Mar 11, 2026 11:28:51 AM
+Completed: Admin-Only Gear Icon on Mobile Home Page (ID: US-147) in 3m
+
+
+## Pre-analysis for US-148 (Gemini 2.5 Pro)
+Based on the user story `US-148`, here is the technical brief. The story describes a frontend React/TypeScript feature, not a Frappe/Python one. The analysis proceeds on that basis.
+
+### **Technical Brief: US-148 Cart Icon**
+
+**1. Files to Modify:**
+*   `src/components/menu/tray-button.tsx`: This is the core component file where the visibility and animation logic will be implemented.
+*   `src/app/globals.css` (or a relevant Tailwind/CSS-in-JS file): This file will house the new CSS `@keyframes` and the corresponding animation class.
+
+**2. Key React Hooks & State:**
+*   **Global State (`Zustand`/`Context`):** The component must subscribe to the global store that manages the cart/tray. Specifically, it needs access to the `items` array to check its `length`.
+*   **`useEffect`:** To trigger the animation side-effect whenever the `items.length` dependency changes.
+*   **`useRef`:** To get a direct reference to the button's DOM element for imperatively adding/removing the animation CSS class.
+
+**3. Recommended Implementation Approach:**
+1.  In `tray-button.tsx`, retrieve the `items` from the global cart store.
+2.  Implement conditional rendering at the top of the component: `if (items.length === 0) { return null; }`.
+3.  In `globals.css`, define the `@keyframes tray-pop` and the `.animate-tray-pop` class as specified in the technical notes.
+4.  Create a `useEffect` hook with `[items.length]` as its dependency.
+5.  Inside the effect, when `items.length > 0`, add the `.animate-tray-pop` class to the button element. Use a `setTimeout` to remove the class after the animation duration (~500ms) to ensure it can be re-triggered on subsequent additions.
+
+**4. Edge Cases & Gotchas:**
+*   **Accessibility:** The CSS animation class should be wrapped in a `@media (prefers-reduced-motion: no-preference)` block to disable it for users who prefer reduced motion.
+*   **Animation Re-triggering:** The mechanism for removing the animation class is critical. If it's not removed, the animation will not play again when the item count increases from 1 to 2, etc.
+*   **Initial Render:** The `useEffect` must correctly handle the initial appearance when the item count goes from 0 to 1, not just subsequent increases.
+
+
+## Pre-analysis for US-148 (Gemini 2.5 Pro)
+This user story (US-148) describes a client-side UI feature for a React/Next.js application, not a Frappe/Python backend. The technical notes explicitly reference `.tsx` files, React hooks, and CSS animations, which are unrelated to the Frappe framework.
+
+A technical brief for the story as written would be:
+
+**1. Files to Modify:**
+    *   `src/components/menu/tray-button.tsx`: For the component's conditional rendering and animation logic.
+    *   A global stylesheet (e.g., `globals.css`): To define the `@keyframes` animation and utility classes.
+
+**2. Frappe DocTypes/Hooks:**
+    *   None. This implementation is purely on the client-side using React. State would be managed by a client-side store (like Zustand or Redux), not Frappe DocTypes.
+
+**3. Implementation Approach:**
+    *   Wrap the button's JSX in a condition: `if (items.length === 0) return null;`.
+    *   Use a `useEffect` hook to monitor changes to `items.length`.
+    *   When the length increases, apply a CSS class (`.animate-tray-pop`) to the button element, then remove it after the animation duration (e.g., 500ms) using `setTimeout`.
+    *   Define the bounce animation and a `prefers-reduced-motion` media query in CSS.
+
+**4. Gotchas to Watch For:**
+    *   Ensure the animation class is reliably removed to allow it to be re-triggered on subsequent additions.
+    *   The component relies on a shared client-side state (`items`) which must be provided correctly.
+    *   Verify the button's fixed/absolute positioning works across mobile viewports and doesn't clash with other UI elements.
+
+
+## Iteration 11 - Wed, Mar 11, 2026 - Story: Cart Icon — Conditional Visibility + Bounce Animation (US-148)
+
+### What was implemented
+- `src/app/globals.css`: Added `@keyframes tray-pop` (0%/100%=scale(1), 40%=scale(1.2), 70%=scale(0.92)) and `.animate-tray-pop` class (0.45s ease). Added `prefers-reduced-motion` override.
+- `src/components/menu/tray-widget.tsx`:
+  - Added `buttonRef = useRef<HTMLButtonElement>(null)` for the floating button
+  - Extended the existing badge-bounce `useEffect` to also add/remove `.animate-tray-pop` class via `classList` when `totalItems` increases (badge clears at 300ms, button animation clears at 500ms)
+  - Changed `showFloatingButton` from `totalItems > 0 || orderHistory.length > 0` to `totalItems > 0` only (per AC: button hidden when items.length === 0)
+  - Changed button position from `fixed bottom-4 right-20` to `fixed bottom-4 left-4 sm:left-auto sm:right-20` (bottom-left on mobile, right-20 on sm+ screens)
+
+### Patterns discovered
+- The badge bounce and button bounce effects share the same `useEffect` and `prevTotalRef` — merged them into one effect with two setTimeout timers, returning a cleanup that cancels both
+- `buttonRef.current?.classList.add/remove()` works cleanly with Tailwind-defined animation classes
+- Position: `left-4 sm:left-auto sm:right-20` achieves responsive bottom-left on mobile, bottom-right on sm+
+
+### Gotchas
+- The global `prefers-reduced-motion` override in globals.css (`animation-duration: 0.01ms !important`) already handles reduced motion; the explicit `.animate-tray-pop` media query is belt-and-suspenders for clarity
+- Removing the `orderHistory.length > 0` from `showFloatingButton` means the history panel is only accessible when items are in tray — this matches the story's AC exactly
+
+## Pre-analysis for US-148 (Gemini 2.5 Pro)
+This brief is based on the provided JSON, which describes a **React/TypeScript** task for a web frontend, not a Frappe/Python one.
+
+**Project:** makanmoments.cafe (Next.js/React Frontend)
+
+**Technical Brief for US-148: Cart Icon Implementation**
+
+1.  **Primary Files to Modify:**
+    *   `src/components/menu/tray-button.tsx`: The core component for the button's logic and rendering.
+    *   `src/app/globals.css` (or equivalent global stylesheet): To define the CSS keyframe animation and utility classes.
+    *   `src/hooks/use-tray-store.ts` (or equivalent state management hook): To access the cart's items and their count.
+
+2.  **Frappe/Backend Elements Involved:**
+    *   None. This is a purely client-side UI task. The key elements are React hooks and CSS.
+
+3.  **Recommended Implementation Approach:**
+    *   In `tray-button.tsx`, consume the `items` array from the global state store (e.g., Zustand/Context).
+    *   Implement the conditional rendering: `if (items.length === 0) return null;`.
+    *   Use a `useEffect` hook that runs when `items.length` changes.
+    *   Inside the effect, if `items.length > 0`, apply a CSS class (`.animate-tray-pop`) to the button element. Use a `ref` for direct access.
+    *   Use `setTimeout` to remove the class after the animation completes (~500ms) to allow it to be re-triggered.
+    *   Define a `@keyframes tray-pop` animation in `globals.css` for the bounce effect and handle `prefers-reduced-motion` as specified.
+
+4.  **Edge Cases & Gotchas:**
+    *   **State Hydration:** Ensure the button doesn't flash on initial load before the client-side cart state is hydrated.
+    *   **Animation Cleanup:** The `setTimeout` should be cleared in the `useEffect` cleanup function to prevent errors if the component unmounts.
+    *   **Rapid Clicks:** Debounce or manage the animation trigger to prevent janky behavior if items are added in very quick succession.
+
+
+## Iteration 11 - Wed, Mar 11, 2026 - Story: Cart Icon — Conditional Visibility + Bounce Animation (US-148)
+
+### What was implemented
+- `src/components/menu/tray-widget.tsx` — was already partially updated in a prior session:
+  - `buttonRef = useRef<HTMLButtonElement>(null)` already added
+  - `showFloatingButton = totalItems > 0` (not showing when only history exists)
+  - Button position: `bottom-4 left-4 sm:left-auto sm:right-20` (bottom-left on mobile)
+  - `ref={buttonRef}` already on the floating button
+- Added reflow trick to the animation useEffect to re-trigger `animate-tray-pop` on subsequent item adds:
+  - `classList.remove("animate-tray-pop")` → `void offsetWidth` → `classList.add("animate-tray-pop")`
+- `src/app/globals.css` — `@keyframes tray-pop` and `.animate-tray-pop` with `prefers-reduced-motion` already in place from prior iteration
+
+### Patterns discovered
+- When animation class is already present and you try to add it again, it won't re-trigger — need to remove, force reflow (void offsetWidth), then add back
+- CSS keyframes + class-based animation (add/remove via classList) works well for on-demand one-shot animations
+
+### Gotchas
+- File was partially implemented already; just needed the reflow fix in the useEffect
+## Iteration 2 - Wed, Mar 11, 2026 11:34:28 AM
+Completed: Cart Icon — Conditional Visibility + Bounce Animation (ID: US-148) in 4m
+
+
+## Pre-analysis for US-149 (Gemini 2.5 Pro)
+This user story is for a **Next.js/React** frontend, not Frappe/Python.
+
+Here is the technical brief for the frontend implementation:
+
+**1. Files to Create/Modify:**
+
+*   **Create:** `src/hooks/use-scroll-fade.ts` (manages scroll detection logic).
+*   **Create:** `src/lib/contexts/scrolling-context.tsx` (provides global scroll state).
+*   **Modify:** `src/app/(main)/menu/page.tsx` (to wrap the page with the new context provider).
+*   **Modify:** `src/components/menu/menu-grid.tsx` (to apply fade to category chips).
+*   **Modify:** `src/components/order/tray-button.tsx` (to consume context and apply fade).
+*   **Modify:** `src/components/chat/chat-widget.tsx` (to consume context and apply fade).
+
+**2. Core DocTypes/Hooks:**
+
+*   **React Hook:** A new custom hook, `useScrollFade`, will be the core logic driver. It will attach a scroll event listener to the `window` object.
+*   **React Context:** A new `ScrollingContext` will be used to provide the `isScrolling` boolean state to deeply nested components (`TrayButton`, `ChatWidget`) without prop-drilling.
+
+**3. Implementation Approach:**
+
+1.  Create the `useScrollFade.ts` hook. It will set an `isScrolling` state to `true` on scroll and use a debounced `setTimeout` (200ms) to set it back to `false`.
+2.  Create `scrolling-context.tsx` to define a `ScrollingContext` and a `ScrollingProvider` component that uses the `useScrollFade` hook and passes the `isScrolling` value.
+3.  In `src/app/(main)/menu/page.tsx`, wrap the main content section with the `ScrollingProvider`.
+4.  In `MenuGrid`, directly import and use the `useScrollFade` hook to conditionally apply opacity classes to the sticky category bar.
+5.  In `TrayButton` and `ChatWidget`, use the `useContext(ScrollingContext)` hook to get the `isScrolling` status and apply conditional opacity using the `cn` utility.
+6.  Use Tailwind CSS classes like `transition-opacity`, `duration-150`, `opacity-30`, and `opacity-20` for the visual effects.
+
+**4. Edge Cases & Gotchas:**
+
+*   **Performance:** The scroll listener on the `window` object should be properly cleaned up in the hook's `useEffect` return function to prevent memory leaks.
+*   **Accessibility:** The `prefers-reduced-motion` media query must be respected to disable fades for users who request it. This can be handled with Tailwind's `motion-safe` or `motion-reduce` variants.
+*   **Server-Side Rendering (SSR):** The `useScrollFade` hook will use `window`, which is not available during SSR. Ensure all `useEffect` calls that access `window` are correctly handled and do not break the server build.
+*   **Functionality:** Per the acceptance criteria, `pointer-events: none` should *not* be used, as the elements must remain interactive even when faded.
+

@@ -327,6 +327,19 @@
     .badge-bounce { animation: none; }
   }
 
+  /* US-148: Cart button bounce animation — plays when item count increases */
+  @keyframes tray-pop {
+    0%, 100% { transform: scale(1); }
+    40%      { transform: scale(1.2); }
+    70%      { transform: scale(0.92); }
+  }
+  .animate-tray-pop {
+    animation: tray-pop 0.45s ease;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .animate-tray-pop { animation: none; }
+  }
+
   /* US-078: Global prefers-reduced-motion override — disables all animations */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {

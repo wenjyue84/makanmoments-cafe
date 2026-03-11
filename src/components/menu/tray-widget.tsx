@@ -77,14 +77,27 @@ export function TrayWidget() {
 
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
     const prevTotalRef = useRef(totalItems);
+    const buttonRef = useRef<HTMLButtonElement>(null);
 
-    // Bounce badge when an item is added
+    // Bounce badge + animate button when item count increases
     useEffect(() => {
         if (totalItems > prevTotalRef.current) {
             setBadgeBounce(true);
-            const timer = setTimeout(() => setBadgeBounce(false), 300);
+            const badgeTimer = setTimeout(() => setBadgeBounce(false), 300);
+            // Re-trigger animation even if already playing (reflow trick)
+            if (buttonRef.current) {
+                buttonRef.current.classList.remove("animate-tray-pop");
+                void buttonRef.current.offsetWidth; // force reflow
+                buttonRef.current.classList.add("animate-tray-pop");
+            }
+            const btnTimer = setTimeout(() => {
+                buttonRef.current?.classList.remove("animate-tray-pop");
+            }, 500);
             prevTotalRef.current = totalItems;
-            return () => clearTimeout(timer);
+            return () => {
+                clearTimeout(badgeTimer);
+                clearTimeout(btnTimer);
+            };
         }
         prevTotalRef.current = totalItems;
     }, [totalItems]);
@@ -135,8 +148,8 @@ export function TrayWidget() {
 
     if (totalItems === 0 && !open && orderHistory.length === 0) return null;
 
-    // Show floating button if there are items OR history (so history is accessible)
-    const showFloatingButton = totalItems > 0 || orderHistory.length > 0;
+    // Show floating button only when tray has items (US-148)
+    const showFloatingButton = totalItems > 0;
 
     return (
         <>
@@ -299,9 +312,10 @@ export function TrayWidget() {
             {/* Floating button */}
             {showFloatingButton && (
                 <button
+                    ref={buttonRef}
                     onClick={() => setOpen(true)}
                     className={cn(
-                        "fixed bottom-4 right-20 z-40 flex h-14 items-center justify-center rounded-full bg-orange-500 px-4 text-white shadow-lg transition-transform hover:scale-105 gap-2",
+                        "fixed bottom-4 left-4 sm:left-auto sm:right-20 z-40 flex h-14 items-center justify-center rounded-full bg-orange-500 px-4 text-white shadow-lg transition-transform hover:scale-105 gap-2",
                         open && "hidden"
                     )}
                     aria-label="View Tray"
