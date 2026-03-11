@@ -1,25 +1,34 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useTranslations } from "next-intl";
-import { Eye, EyeOff, X, GripHorizontal } from "lucide-react";
+import { useState, useCallback, useEffect, useMemo, useTransition } from "react";
+import { useTranslations, useLocale } from "next-intl";
+import { Eye, EyeOff, X, ArchiveRestore, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import type { MenuItem } from "@/types/menu";
+import { getLocalizedName, formatPrice } from "@/lib/utils";
 import { MenuCard } from "./menu-card";
-import { ChefPickCard } from "./chef-pick-card";
 import { EditableMenuCard } from "./editable-menu-card";
 import { MenuFilter } from "./menu-filter";
 import { FadeUp } from "@/components/ui/fade-up";
-import { cn, getCategoryEmoji } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { useFavorites } from "@/hooks/use-favorites";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SPECIAL_DISPLAY_CATEGORIES } from "@/lib/constants";
 import { useMenuFiltering, DC_PREFIX, isAvailableAtTime } from "@/hooks/useMenuFiltering";
-import { useScrolling } from "@/lib/scrolling-context";
-import { BottomSearchBar } from "./bottom-search-bar";
+
+// Display categories that are auto-computed from item data (not the junction table)
+const COMPUTED_DC_NAMES = [
+  SPECIAL_DISPLAY_CATEGORIES.VEGETARIAN,
+  SPECIAL_DISPLAY_CATEGORIES.UNDER_RM15,
+  SPECIAL_DISPLAY_CATEGORIES.FAVORITES,
+];
+
+// Sanitize a display category name for use as an HTML id
+function dcSectionId(name: string) {
+  return `section-dc-${name.replace(/[^a-z0-9]/gi, "-").toLowerCase()}`;
+}
 
 interface MenuGridProps {
   items: MenuItem[];
-  categories: string[];
   displayCategories?: string[];
   isAdmin?: boolean;
   highlightedByCategory?: Record<string, string>;
@@ -31,7 +40,6 @@ interface MenuGridProps {
 
 export function MenuGrid({
   items,
-  categories,
   displayCategories = [],
   isAdmin = false,
   highlightedByCategory: initialHighlights = {},
@@ -46,24 +54,51 @@ export function MenuGrid({
   const hasPreviewTime = previewHour !== null && previewMinute !== null && !isNaN(previewHour) && !isNaN(previewMinute);
   const t = useTranslations("common");
   const { favorites, toggleFavorite, isFavorite } = useFavorites();
-  // Validate initialCategory — fall back to null if the category doesn't exist in known lists
+
+  const [isPending, startTransition] = useTransition();
+
+  // Filter mode only: Vegetarian/Favorites filters change this value.
+  // Navigation pills (display categories as sections) do NOT change this — they just scroll.
   const [category, setCategory] = useState<string | null>(() => {
     if (!initialCategory) return null;
-    if (categories.includes(initialCategory)) return initialCategory;
-    const dcPrefixed = displayCategories.map((dc) => `${DC_PREFIX}${dc}`);
-    if (dcPrefixed.includes(initialCategory)) return initialCategory;
+    if (initialCategory === "__favorites__") return initialCategory;
+    if (initialCategory.startsWith(DC_PREFIX)) {
+      const dcName = initialCategory.slice(DC_PREFIX.length);
+      if (!dcName.toLowerCase().includes("chef")) return initialCategory;
+    }
     return null;
   });
   const [isEditMode, setIsEditMode] = useState(true);
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebounce(search, 300);
-  const [highlights, setHighlights] = useState<Record<string, string>>(initialHighlights);
+  const [highlights] = useState<Record<string, string>>(initialHighlights);
+
+  // Archive state — track items archived/restored in this session
+  const [sessionArchived, setSessionArchived] = useState<Set<string>>(
+    () => new Set(items.filter((i) => i.archived).map((i) => i.id))
+  );
+  const [sessionRestored, setSessionRestored] = useState<Set<string>>(new Set());
+  const [archivedSectionOpen, setArchivedSectionOpen] = useState(false);
   const [removedFromChefsPick, setRemovedFromChefsPick] = useState<Set<string>>(new Set());
+  const [addedToChefsPick, setAddedToChefsPick] = useState<Set<string>>(new Set());
   const [chefPickOrder, setChefPickOrder] = useState<string[]>([]);
-  const [dragHeroIdx, setDragHeroIdx] = useState<number | null>(null);
-  const [dragOverHeroIdx, setDragOverHeroIdx] = useState<number | null>(null);
-  const [signatureItemId, setSignatureItemId] = useState<string | null>(
-    () => items.find((i) => i.isSignature)?.id ?? null
+  // Which section is currently visible (from scroll detection)
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+
+  // ── Display category classification ─────────────────────────────────────────
+  // Chef's Picks: special section at top (regular grid, no hero cards)
+  const chefsPickDCName = displayCategories.find((dc) => dc.toLowerCase().includes("chef")) ?? null;
+  // Computed DCs (Vegetarian, Under RM15): filter pills only
+  const filterDCNames = useMemo(
+    () => displayCategories.filter((dc) => COMPUTED_DC_NAMES.includes(dc as typeof COMPUTED_DC_NAMES[number])),
+    [displayCategories]
+  );
+  // Manual DCs that are NOT Chef's Picks and NOT computed: navigation pills + section headers
+  const navDCNames = useMemo(
+    () => displayCategories.filter(
+      (dc) => dc !== chefsPickDCName && !COMPUTED_DC_NAMES.includes(dc as typeof COMPUTED_DC_NAMES[number])
+    ),
+    [displayCategories, chefsPickDCName]
   );
 
   // Fetch saved Chef's Pick order from DB (admin mode only)
@@ -81,51 +116,110 @@ export function MenuGrid({
 
   const handleRemoveChefsPick = useCallback(
     async (itemId: string) => {
-      setRemovedFromChefsPick((prev) => new Set([...prev, itemId]));
+      if (addedToChefsPick.has(itemId)) {
+        setAddedToChefsPick((prev) => { const next = new Set(prev); next.delete(itemId); return next; });
+      } else {
+        setRemovedFromChefsPick((prev) => new Set([...prev, itemId]));
+      }
       if (chefsCatId) {
         await fetch(`/api/admin/display-categories/${chefsCatId}/items?itemId=${itemId}`, { method: "DELETE" });
       }
     },
+    [chefsCatId, addedToChefsPick]
+  );
+  const handleAddChefsPick = useCallback(
+    async (itemId: string) => {
+      setAddedToChefsPick((prev) => new Set([...prev, itemId]));
+      if (chefsCatId) {
+        await fetch(`/api/admin/display-categories/${chefsCatId}/items`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ itemId }),
+        });
+      }
+    },
     [chefsCatId]
   );
-  const handleSetSignature = useCallback(async (itemId: string) => {
-    setSignatureItemId(itemId); // optimistic update
-    await fetch(`/api/admin/menu/${itemId}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isSignature: true }),
-    });
+  const [highlightError, setHighlightError] = useState<string | null>(null);
+
+  // Returns true if an item should be treated as archived (locally)
+  const isItemArchived = useCallback(
+    (item: MenuItem) => {
+      if (sessionRestored.has(item.id)) return false;
+      return item.archived || sessionArchived.has(item.id);
+    },
+    [sessionArchived, sessionRestored]
+  );
+
+  const handleArchive = useCallback((itemId: string) => {
+    setSessionArchived((prev) => new Set([...prev, itemId]));
+    setSessionRestored((prev) => { const next = new Set(prev); next.delete(itemId); return next; });
+    setArchivedSectionOpen(true);
   }, []);
 
-  const [highlightError, setHighlightError] = useState<string | null>(null);
-  const [activeSection, setActiveSection] = useState<string | null>(null);
-  const chipBarScrollRef = useRef<HTMLDivElement>(null);
-  const { isScrolling } = useScrolling();
+  const [restoringId, setRestoringId] = useState<string | null>(null);
+  const handleRestore = useCallback(async (itemId: string) => {
+    setRestoringId(itemId);
+    try {
+      await fetch(`/api/admin/menu/${itemId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived: false }),
+      });
+      setSessionRestored((prev) => new Set([...prev, itemId]));
+      setSessionArchived((prev) => { const next = new Set(prev); next.delete(itemId); return next; });
+    } finally {
+      setRestoringId(null);
+    }
+  }, []);
+
+  // ── Non-archived items only — used for all regular sections ─────────────────
+  const visibleItems = useMemo(
+    () => items.filter((i) => !isItemArchived(i)),
+    [items, isItemArchived]
+  );
 
   const {
     filtered,
-    categorySections,
-    heroItems,
-    regularFlatItems,
     isFlatView,
     isFavoritesSelected,
     selectedDisplayCat,
     isChefsPick,
   } = useMenuFiltering({
-    items,
+    items: visibleItems,
     selectedCategory: category,
     searchQuery: debouncedSearch,
     highlights,
     displayCategories,
-    categories,
     favorites,
     removedFromChefsPick,
   });
 
-  // Apply saved DB order to heroItems (admin only; falls back to natural order)
-  const orderedHeroItems = useMemo(() => {
-    if (!isAdmin || chefPickOrder.length === 0) return heroItems;
-    return [...heroItems].sort((a, b) => {
+  // ── Archived items list ──────────────────────────────────────────────────────
+  const archivedItems = useMemo(
+    () => items.filter((i) => isItemArchived(i)),
+    [items, isItemArchived]
+  );
+
+  const isChefPickLocal = useCallback(
+    (item: MenuItem) =>
+      (item.displayCategories.includes(SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) || addedToChefsPick.has(item.id)) &&
+      !removedFromChefsPick.has(item.id),
+    [addedToChefsPick, removedFromChefsPick]
+  );
+
+  // ── Chef's Picks section items ───────────────────────────────────────────────
+  const chefsPickItems = useMemo(() => {
+    return visibleItems.filter(
+      (item) =>
+        (item.displayCategories.includes(SPECIAL_DISPLAY_CATEGORIES.CHEFS_PICKS) || addedToChefsPick.has(item.id)) &&
+        !removedFromChefsPick.has(item.id)
+    );
+  }, [visibleItems, removedFromChefsPick, addedToChefsPick]);
+
+  const orderedChefsPickItems = useMemo(() => {
+    if (!isAdmin || chefPickOrder.length === 0) return chefsPickItems;
+    return [...chefsPickItems].sort((a, b) => {
       const ai = chefPickOrder.indexOf(a.id);
       const bi = chefPickOrder.indexOf(b.id);
       if (ai === -1 && bi === -1) return 0;
@@ -133,175 +227,146 @@ export function MenuGrid({
       if (bi === -1) return -1;
       return ai - bi;
     });
-  }, [heroItems, chefPickOrder, isAdmin]);
+  }, [chefsPickItems, chefPickOrder, isAdmin]);
 
-  // Persist new Chef's Pick hero order after drag-and-drop
-  const handleHeroDrop = useCallback(
-    async (dropIdx: number) => {
-      if (dragHeroIdx === null || dragHeroIdx === dropIdx) return;
-      const newOrder = [...orderedHeroItems];
-      const [removed] = newOrder.splice(dragHeroIdx, 1);
-      newOrder.splice(dropIdx, 0, removed);
-      const newIds = newOrder.map((i) => i.id);
-      setChefPickOrder(newIds); // optimistic update
-      setDragHeroIdx(null);
-      setDragOverHeroIdx(null);
-      if (chefsCatId) {
-        await fetch(`/api/admin/display-categories/${chefsCatId}/items`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ itemIds: newIds }),
-        });
+  // ── Other DC sections ────────────────────────────────────────────────────────
+  const otherDCSections = useMemo(() => {
+    return navDCNames
+      .map((dcName) => ({
+        dcName,
+        items: visibleItems.filter((item) => item.displayCategories.includes(dcName)),
+      }))
+      .filter((s) => s.items.length > 0);
+  }, [visibleItems, navDCNames]);
+
+  // ── Unassigned items (not in any section) ─────────────────────────────────
+  const unassignedItems = useMemo(() => {
+    const sectionIds = new Set<string>();
+    orderedChefsPickItems.forEach((i) => sectionIds.add(i.id));
+    otherDCSections.forEach((s) => s.items.forEach((i) => sectionIds.add(i.id)));
+    return visibleItems.filter((i) => !sectionIds.has(i.id));
+  }, [visibleItems, orderedChefsPickItems, otherDCSections]);
+
+  // ── Scroll-to-section ────────────────────────────────────────────────────────
+  const handleScrollToSection = useCallback(
+    (cat: string | null) => {
+      setCategory(null); // clear any active filter
+
+      if (cat === null) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        return;
+      }
+      if (cat === "__chefs__") {
+        document.getElementById("section-chefs-picks")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      // cat is a DC name — scroll to its section
+      document.getElementById(dcSectionId(cat))?.scrollIntoView({ behavior: "smooth", block: "start" });
+
+      // Immediately prefetch images for this DC's items
+      const dcItems = items.filter((i) => i.displayCategories.includes(cat) && i.code);
+      for (const item of dcItems) {
+        const img = new window.Image();
+        img.src = `/images/menu/${item.code}.jpg`;
       }
     },
-    [dragHeroIdx, orderedHeroItems, chefsCatId]
+    [items]
   );
 
-  const handleSetHighlight = useCallback(async (itemId: string, itemCategories: string[]) => {
-    const prevHighlights = { ...highlights };
-    // Optimistic update
-    const newHighlights = { ...highlights };
-    for (const cat of itemCategories) {
-      newHighlights[cat] = itemId;
-    }
-    setHighlights(newHighlights);
-    setHighlightError(null);
+  // ── Scroll detection: update activeSection ───────────────────────────────────
+  useEffect(() => {
+    if (isFlatView) return;
 
-    try {
-      await Promise.all(
-        itemCategories.map(async (cat) => {
-          const res = await fetch("/api/admin/highlights", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ category: cat, itemId }),
-          });
-          if (!res.ok) throw new Error("Failed to save highlight");
-        })
-      );
-    } catch {
-      // Rollback on error
-      setHighlights(prevHighlights);
-      setHighlightError("Failed to save Chef's Pick — change reverted");
-    }
-  }, [highlights]);
+    const THRESHOLD = 160;
 
-  const handleRemoveHighlight = useCallback(async (itemId: string, itemCategories: string[]) => {
-    const prevHighlights = { ...highlights };
-    // Optimistic update: remove this item from highlights for its categories
-    const newHighlights = { ...highlights };
-    for (const cat of itemCategories) {
-      if (newHighlights[cat] === itemId) {
-        delete newHighlights[cat];
+    function updateActiveSection() {
+      const chefsEl = document.getElementById("section-chefs-picks");
+
+      if (!chefsEl) {
+        let current: string | null = null;
+        for (const { dcName } of otherDCSections) {
+          const el = document.getElementById(dcSectionId(dcName));
+          if (el && el.getBoundingClientRect().top <= THRESHOLD) current = dcName;
+        }
+        setActiveSection(current);
+        return;
+      }
+
+      if (chefsEl.getBoundingClientRect().top > THRESHOLD) {
+        setActiveSection(null);
+        return;
+      }
+
+      let current: string | null = "__chefs__";
+      for (const { dcName } of otherDCSections) {
+        const el = document.getElementById(dcSectionId(dcName));
+        if (el && el.getBoundingClientRect().top <= THRESHOLD) current = dcName;
+      }
+      setActiveSection(current);
+    }
+
+    window.addEventListener("scroll", updateActiveSection, { passive: true });
+    updateActiveSection();
+    return () => window.removeEventListener("scroll", updateActiveSection);
+  }, [isFlatView, otherDCSections]);
+
+  // ── Background image prefetch by DC order ────────────────────────────────────
+  useEffect(() => {
+    const chefsPickIds = new Set(chefsPickItems.map((i) => i.id));
+    const codes: string[] = [];
+    for (const { items: sectionItems } of otherDCSections) {
+      for (const item of sectionItems) {
+        if (!chefsPickIds.has(item.id) && item.code) codes.push(item.code);
       }
     }
-    setHighlights(newHighlights);
-    setHighlightError(null);
-
-    try {
-      const categoriesToClear = itemCategories.filter((cat) => prevHighlights[cat] === itemId);
-      await Promise.all(
-        categoriesToClear.map(async (cat) => {
-          const res = await fetch("/api/admin/highlights", {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ category: cat }),
-          });
-          if (!res.ok) throw new Error("Failed to remove highlight");
-        })
-      );
-    } catch {
-      // Rollback on error
-      setHighlights(prevHighlights);
-      setHighlightError("Failed to remove Chef's Pick — change reverted");
+    // Also include unassigned items
+    for (const item of unassignedItems) {
+      if (item.code) codes.push(item.code);
     }
-  }, [highlights]);
-
-  // IntersectionObserver: update active chip as user scrolls through sections
-  useEffect(() => {
-    if (isFlatView || categorySections.length <= 1) {
-      setActiveSection(null);
-      return;
-    }
-    // Init first section as active
-    setActiveSection((prev) => prev ?? (categorySections[0]?.cat ?? null));
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveSection(entry.target.id.replace("section-", ""));
-            break;
-          }
-        }
-      },
-      { rootMargin: "-108px 0px -50% 0px", threshold: 0 }
-    );
-
-    categorySections.forEach(({ cat }) => {
-      const el = document.getElementById(`section-${cat}`);
-      if (el) observer.observe(el);
-    });
-
-    return () => observer.disconnect();
-  }, [categorySections, isFlatView]);
-
-  // Auto-scroll chip bar to keep the active chip visible
-  useEffect(() => {
-    if (!chipBarScrollRef.current || !activeSection) return;
-    const chip = chipBarScrollRef.current.querySelector<HTMLElement>(`[data-chip="${activeSection}"]`);
-    chip?.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
-  }, [activeSection]);
-
-  // Background image prefetch — silently load non-hero images after mount so category switches feel instant
-  useEffect(() => {
-    const heroIds = new Set(heroItems.map((h) => h.id));
-    const codes = items
-      .filter((item) => !heroIds.has(item.id) && item.code)
-      .map((item) => item.code);
+    const uniqueCodes = [...new Set(codes)];
 
     let idx = 0;
+    let cancelled = false;
     function fetchNext() {
-      if (idx >= codes.length) return;
+      if (cancelled || idx >= uniqueCodes.length) return;
       const img = new window.Image();
-      img.src = `/images/menu/${codes[idx++]}.jpg`;
+      img.src = `/images/menu/${uniqueCodes[idx++]}.jpg`;
       schedule();
     }
     function schedule() {
-      if (idx >= codes.length) return;
+      if (cancelled || idx >= uniqueCodes.length) return;
       if (typeof requestIdleCallback !== "undefined") {
         requestIdleCallback(fetchNext);
       } else {
         setTimeout(fetchNext, 16);
       }
     }
-
-    // Wait 1s after mount before starting prefetch to avoid competing with initial render
     const start = setTimeout(() => {
+      if (cancelled) return;
       if (typeof requestIdleCallback !== "undefined") {
         requestIdleCallback(fetchNext);
       } else {
         setTimeout(fetchNext, 0);
       }
     }, 1000);
-
-    return () => clearTimeout(start);
+    return () => { cancelled = true; clearTimeout(start); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleChipClick = useCallback((cat: string) => {
-    setActiveSection(cat);
-    document.getElementById(`section-${cat}`)?.scrollIntoView({ behavior: "smooth" });
-  }, []);
+  const hasChefsPicks = orderedChefsPickItems.length > 0;
 
   return (
     <div className="pb-48 md:pb-0">
       <MenuFilter
-        categories={categories}
-        displayCategories={displayCategories}
+        categories={navDCNames}
+        displayCategories={filterDCNames}
+        hasChefsPicks={hasChefsPicks}
+        activeSection={activeSection}
+        onScrollToSection={handleScrollToSection}
         selectedCategory={category}
-        searchQuery={search}
-        onCategoryChange={setCategory}
+        onCategoryChange={(cat) => startTransition(() => setCategory(cat))}
         onSearchChange={setSearch}
+        searchQuery={search}
         itemCount={filtered.length}
         servingNowCategories={servingNowCategories}
         favoritesCount={favorites.length}
@@ -339,36 +404,7 @@ export function MenuGrid({
         </div>
       )}
 
-      {/* Quick-jump chip bar — shown when browsing all sections (mobile + desktop) */}
-      {!isFlatView && categorySections.length > 1 && (
-        <div className={cn(
-          "sticky top-16 md:top-[68px] z-30 bg-background/95 backdrop-blur-sm border-b border-border -mx-4 px-4 py-2 mb-2 transition-opacity duration-150",
-          isScrolling && "opacity-30"
-        )}>
-          <div
-            ref={chipBarScrollRef}
-            className="flex gap-2 overflow-x-auto pb-0.5 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"
-          >
-            {categorySections.map(({ cat }) => (
-              <button
-                key={cat}
-                data-chip={cat}
-                onClick={() => handleChipClick(cat)}
-                className={cn(
-                  "flex-shrink-0 rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
-                  activeSection === cat
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                )}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && isFlatView ? (
         <div className="py-20 text-center">
           <p className="text-lg text-muted-foreground">
             {isFavoritesSelected
@@ -379,89 +415,21 @@ export function MenuGrid({
           </p>
         </div>
       ) : isFlatView ? (
-        /* Search results or display category: hero cards + flat grid */
-        <div className="mt-6">
-          {/* Chef's Pick hero cards — shown in all modes; admin sees remove button + drag handle */}
-          {orderedHeroItems.length > 0 && (
-            <div className={cn(
-              "mb-6",
-              orderedHeroItems.length === 2
-                ? "grid grid-cols-2 gap-3 items-stretch"
-                : "space-y-4"
-            )}>
-              {orderedHeroItems.map((item, idx) => {
-                const removeCallback = isAdmin && isEditMode
-                  ? (isChefsPick(item)
-                    ? () => handleRemoveChefsPick(item.id)
-                    : item.categories.some((cat) => highlights[cat] === item.id)
-                      ? () => handleRemoveHighlight(item.id, item.categories)
-                      : undefined)
-                  : undefined;
-                const isDraggable = isAdmin && isEditMode && orderedHeroItems.length > 1 && isChefsPick(item);
-                return (
-                  <FadeUp key={item.id} delay={idx * 50} className={orderedHeroItems.length === 2 ? "h-full" : ""}>
-                    <div
-                      draggable={isDraggable}
-                      onDragStart={(e) => {
-                        if (!isDraggable) return;
-                        setDragHeroIdx(idx);
-                        e.dataTransfer.effectAllowed = "move";
-                      }}
-                      onDragOver={(e) => {
-                        if (!isDraggable) return;
-                        e.preventDefault();
-                        e.dataTransfer.dropEffect = "move";
-                        if (dragHeroIdx !== null && dragHeroIdx !== idx) setDragOverHeroIdx(idx);
-                      }}
-                      onDrop={(e) => { e.preventDefault(); handleHeroDrop(idx); }}
-                      onDragEnd={() => { setDragHeroIdx(null); setDragOverHeroIdx(null); }}
-                      className={cn(
-                        "relative",
-                        orderedHeroItems.length === 2 ? "h-full" : "",
-                        isDraggable && "cursor-grab active:cursor-grabbing",
-                        dragOverHeroIdx === idx && dragHeroIdx !== idx && "ring-2 ring-primary ring-offset-2 rounded-xl",
-                        dragHeroIdx === idx && "opacity-50"
-                      )}
-                    >
-                      {isDraggable && (
-                        <div className="absolute bottom-3 left-3 z-20 pointer-events-none rounded-md bg-black/50 p-1.5 text-white opacity-60">
-                          <GripHorizontal className="h-4 w-4" />
-                        </div>
-                      )}
-                      <ChefPickCard
-                        item={item}
-                        priority={idx === 0}
-                        compact={orderedHeroItems.length === 2}
-                        isAdmin={isAdmin && isEditMode}
-                        isSignature={signatureItemId === item.id}
-                        onRemoveChefsPick={removeCallback}
-                        onSetSignature={isAdmin && isEditMode ? () => handleSetSignature(item.id) : undefined}
-                      />
-                    </div>
-                  </FadeUp>
-                );
-              })}
-            </div>
-          )}
-
-          {/* Regular grid — heroes excluded via regularFlatItems in both admin and customer mode */}
+        /* Search results or filter (Vegetarian, Favorites): flat grid — no hero cards */
+        <div className={cn("mt-6", isPending && "opacity-70 transition-opacity duration-150")}>
           <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {regularFlatItems.map((item, index) => {
-              const isHighlighted =
-                item.categories.some((cat) => highlights[cat] === item.id) ||
-                isChefsPick(item);
-              const isUnavailableAtPreview =
-                isAdmin && hasPreviewTime
-                  ? !isAvailableAtTime(item, previewHour!, previewMinute!)
-                  : false;
+            {filtered.map((item, index) => {
+              const isHighlighted = isChefPickLocal(item);
+              const isUnavailableAtPreview = isAdmin && hasPreviewTime ? !isAvailableAtTime(item, previewHour!, previewMinute!) : false;
               return isAdmin && isEditMode ? (
                 <EditableMenuCard
                   key={item.id}
                   item={item}
                   isHighlighted={isHighlighted}
-                  onSetHighlight={() => handleSetHighlight(item.id, item.categories)}
-                  onRemoveChefsPick={isChefsPick(item) ? () => handleRemoveChefsPick(item.id) : undefined}
+                  onSetHighlight={!isHighlighted && chefsCatId ? () => void handleAddChefsPick(item.id) : undefined}
+                  onRemoveChefsPick={isHighlighted ? () => void handleRemoveChefsPick(item.id) : undefined}
                   isUnavailableAtPreview={isUnavailableAtPreview}
+                  onArchive={handleArchive}
                 />
               ) : (
                 <FadeUp key={item.id} delay={(index % 3) * 50}>
@@ -472,7 +440,7 @@ export function MenuGrid({
                     isFavorited={isFavorite(item.code)}
                     onToggleFavorite={() => toggleFavorite(item.code)}
                     isAdmin={isAdmin}
-                    onRemoveHighlight={isHighlighted ? () => handleRemoveHighlight(item.id, item.categories) : undefined}
+                    onRemoveHighlight={undefined}
                   />
                 </FadeUp>
               );
@@ -480,89 +448,201 @@ export function MenuGrid({
           </div>
         </div>
       ) : (
-        /* Category sections: Chef's Pick hero cards (max 2) + regular grid */
-        <div className="mt-6 space-y-10">
-          {categorySections.map(({ cat, heroItems: sectionHeroItems, rest }, sectionIdx) => (
-            <section key={cat} id={`section-${cat}`} aria-labelledby={`cat-${cat}`} className="scroll-mt-[108px] pt-2">
+        /* All-sections view: sections organised by display category */
+        <div className={cn("mt-6 space-y-10", isPending && "opacity-70 transition-opacity duration-150")}>
+
+          {/* ── Chef's Picks section (regular grid — hero image removed) ── */}
+          {orderedChefsPickItems.length > 0 && (
+            <section id="section-chefs-picks" aria-labelledby="cat-chefs-picks" className="scroll-mt-[108px] pt-2" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 600px" }}>
               <h2
-                id={`cat-${cat}`}
-                className="bg-muted/30 -mx-4 px-4 py-3 mb-4 border-b border-border"
+                id="cat-chefs-picks"
+                className="bg-amber-50/60 dark:bg-amber-950/20 -mx-4 px-4 py-3 mb-4 border-b border-amber-200 dark:border-amber-800"
               >
-                <span className="flex items-center gap-2 border-l-4 border-primary pl-3 text-sm font-semibold tracking-widest uppercase text-foreground">
-                  <span aria-hidden="true">{getCategoryEmoji([cat])}</span>
-                  {cat}
+                <span className="flex items-center gap-2 border-l-4 border-amber-400 pl-3 text-sm font-semibold tracking-widest uppercase text-foreground">
+                  <span aria-hidden="true">⭐</span>
+                  Chef&apos;s Picks
                 </span>
               </h2>
-
-              {/* Chef's Pick hero cards — up to 2 per category, shown in all modes */}
-              <div className={cn(
-                sectionHeroItems.length === 2
-                  ? "grid grid-cols-2 gap-3 items-stretch"
-                  : "space-y-4"
-              )}>
-                {sectionHeroItems.map((hero, heroIdx) => {
-                  const removeCallback = isAdmin && isEditMode
-                    ? (isChefsPick(hero)
-                      ? () => handleRemoveChefsPick(hero.id)
-                      : hero.categories.some((cat) => highlights[cat] === hero.id)
-                        ? () => handleRemoveHighlight(hero.id, hero.categories)
-                        : undefined)
-                    : undefined;
-                  return (
-                    <FadeUp key={hero.id} className={sectionHeroItems.length === 2 ? "h-full" : ""}>
-                      <ChefPickCard
-                        item={hero}
-                        priority={sectionIdx === 0 && heroIdx === 0}
-                        compact={sectionHeroItems.length === 2}
-                        isAdmin={isAdmin && isEditMode}
-                        isSignature={signatureItemId === hero.id}
-                        onRemoveChefsPick={removeCallback}
-                        onSetSignature={isAdmin && isEditMode ? () => handleSetSignature(hero.id) : undefined}
+              <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {orderedChefsPickItems.map((item, idx) => {
+                  return isAdmin && isEditMode ? (
+                    <EditableMenuCard
+                      key={item.id}
+                      item={item}
+                      isHighlighted={true}
+                      onSetHighlight={undefined}
+                      onRemoveChefsPick={() => void handleRemoveChefsPick(item.id)}
+                      isUnavailableAtPreview={hasPreviewTime ? !isAvailableAtTime(item, previewHour!, previewMinute!) : false}
+                      onArchive={handleArchive}
+                    />
+                  ) : (
+                    <FadeUp key={item.id} delay={idx * 50}>
+                      <MenuCard
+                        item={item}
+                        priority={idx === 0}
+                        isHighlighted={true}
+                        isFavorited={isFavorite(item.code)}
+                        onToggleFavorite={() => toggleFavorite(item.code)}
+                        isAdmin={isAdmin}
+                        onRemoveHighlight={undefined}
                       />
                     </FadeUp>
                   );
                 })}
               </div>
+            </section>
+          )}
 
-              {/* Remaining items in standard grid (overflow Chef's Picks appear at top-left with badge) */}
-              {rest.length > 0 && (
-                <div className="mt-4 grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  {rest.map((item, index) => {
-                    const isHighlighted =
-                      item.categories.some((c) => highlights[c] === item.id) ||
-                      isChefsPick(item);
-                    const isUnavailableAtPreview =
-                      hasPreviewTime ? !isAvailableAtTime(item, previewHour!, previewMinute!) : false;
-                    return isAdmin && isEditMode ? (
-                      <EditableMenuCard
-                        key={item.id}
+          {/* ── Other display category sections ── */}
+          {otherDCSections.map(({ dcName, items: sectionItems }) => (
+            <section
+              key={dcName}
+              id={dcSectionId(dcName)}
+              aria-labelledby={`cat-dc-${dcName}`}
+              className="scroll-mt-[108px] pt-2"
+              style={{ contentVisibility: "auto", containIntrinsicSize: "auto 600px" }}
+            >
+              <h2
+                id={`cat-dc-${dcName}`}
+                className="bg-muted/30 -mx-4 px-4 py-3 mb-4 border-b border-border"
+              >
+                <span className="flex items-center gap-2 border-l-4 border-primary pl-3 text-sm font-semibold tracking-widest uppercase text-foreground">
+                  {dcName}
+                </span>
+              </h2>
+              <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {sectionItems.map((item, index) => {
+                  const isHighlighted = isChefPickLocal(item);
+                  const isUnavailableAtPreview = hasPreviewTime ? !isAvailableAtTime(item, previewHour!, previewMinute!) : false;
+                  return isAdmin && isEditMode ? (
+                    <EditableMenuCard
+                      key={item.id}
+                      item={item}
+                      isHighlighted={isHighlighted}
+                      onSetHighlight={!isHighlighted && chefsCatId ? () => void handleAddChefsPick(item.id) : undefined}
+                      onRemoveChefsPick={isHighlighted ? () => void handleRemoveChefsPick(item.id) : undefined}
+                      isUnavailableAtPreview={isUnavailableAtPreview}
+                      onArchive={handleArchive}
+                    />
+                  ) : (
+                    <FadeUp key={item.id} delay={(index % 3) * 50}>
+                      <MenuCard
                         item={item}
                         isHighlighted={isHighlighted}
-                        onSetHighlight={() => handleSetHighlight(item.id, item.categories)}
-                        onRemoveChefsPick={isChefsPick(item) ? () => handleRemoveChefsPick(item.id) : undefined}
-                        isUnavailableAtPreview={isUnavailableAtPreview}
+                        isFavorited={isFavorite(item.code)}
+                        onToggleFavorite={() => toggleFavorite(item.code)}
+                        isAdmin={isAdmin}
+                        onRemoveHighlight={undefined}
                       />
-                    ) : (
-                      <FadeUp key={item.id} delay={(index % 3) * 50}>
-                        <MenuCard
-                          item={item}
-                          isHighlighted={isHighlighted}
-                          isFavorited={isFavorite(item.code)}
-                          onToggleFavorite={() => toggleFavorite(item.code)}
-                          isAdmin={isAdmin}
-                          onRemoveHighlight={isHighlighted ? () => handleRemoveHighlight(item.id, item.categories) : undefined}
-                        />
-                      </FadeUp>
-                    );
-                  })}
-                </div>
-              )}
+                    </FadeUp>
+                  );
+                })}
+              </div>
             </section>
           ))}
+
+          {/* ── Unassigned items (no display category) ── */}
+          {unassignedItems.length > 0 && (
+            <section id="section-other" className="scroll-mt-[108px] pt-2" style={{ contentVisibility: "auto", containIntrinsicSize: "auto 600px" }}>
+              <h2 className="bg-muted/30 -mx-4 px-4 py-3 mb-4 border-b border-border">
+                <span className="flex items-center gap-2 border-l-4 border-muted-foreground/40 pl-3 text-sm font-semibold tracking-widest uppercase text-muted-foreground">
+                  Other Items
+                </span>
+              </h2>
+              <div className="grid gap-4 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {unassignedItems.map((item, index) => {
+                  const isHighlighted = isChefPickLocal(item);
+                  return isAdmin && isEditMode ? (
+                    <EditableMenuCard
+                      key={item.id}
+                      item={item}
+                      isHighlighted={isHighlighted}
+                      onSetHighlight={!isHighlighted && chefsCatId ? () => void handleAddChefsPick(item.id) : undefined}
+                      onRemoveChefsPick={isHighlighted ? () => void handleRemoveChefsPick(item.id) : undefined}
+                      isUnavailableAtPreview={hasPreviewTime ? !isAvailableAtTime(item, previewHour!, previewMinute!) : false}
+                      onArchive={handleArchive}
+                    />
+                  ) : (
+                    <FadeUp key={item.id} delay={(index % 3) * 50}>
+                      <MenuCard
+                        item={item}
+                        isHighlighted={isHighlighted}
+                        isFavorited={isFavorite(item.code)}
+                        onToggleFavorite={() => toggleFavorite(item.code)}
+                        isAdmin={isAdmin}
+                        onRemoveHighlight={undefined}
+                      />
+                    </FadeUp>
+                  );
+                })}
+              </div>
+            </section>
+          )}
         </div>
       )}
-      {/* Bottom search pill — mobile only, synced with top MenuFilter search */}
-      <BottomSearchBar search={search} onSearchChange={setSearch} />
+
+      {/* ── Archived Items section (admin edit mode only) ── */}
+      {isAdmin && isEditMode && archivedItems.length > 0 && (
+        <section className="mt-10 border-t-2 border-dashed border-orange-200 pt-6 dark:border-orange-800/40">
+          <button
+            type="button"
+            onClick={() => setArchivedSectionOpen((v) => !v)}
+            className="mb-4 flex w-full items-center gap-2 text-left"
+          >
+            <span className="flex items-center gap-2 text-sm font-semibold tracking-widest uppercase text-orange-700 dark:text-orange-400">
+              <span>📦</span> Archived Items
+              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-700 dark:bg-orange-900/40 dark:text-orange-400">
+                {archivedItems.length}
+              </span>
+            </span>
+            <span className="ml-auto text-orange-400">
+              {archivedSectionOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </span>
+          </button>
+          {archivedSectionOpen && (
+            <div className="space-y-2">
+              {archivedItems.map((item) => (
+                <ArchivedItemRow
+                  key={item.id}
+                  item={item}
+                  isRestoring={restoringId === item.id}
+                  onRestore={() => void handleRestore(item.id)}
+                />
+              ))}
+            </div>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
+
+function ArchivedItemRow({
+  item,
+  isRestoring,
+  onRestore,
+}: {
+  item: MenuItem;
+  isRestoring: boolean;
+  onRestore: () => void;
+}) {
+  const locale = useLocale();
+  const name = getLocalizedName(item, locale);
+  return (
+    <div className="flex items-center gap-3 rounded-lg border border-dashed border-orange-200 bg-orange-50/40 px-3 py-2 dark:border-orange-800/30 dark:bg-orange-950/20">
+      <div className="flex-1 min-w-0">
+        <p className="truncate text-sm font-medium text-foreground/70">{name}</p>
+        <p className="text-xs text-muted-foreground">{item.code} · {formatPrice(item.price)}</p>
+      </div>
+      <button
+        type="button"
+        onClick={onRestore}
+        disabled={isRestoring}
+        className="flex shrink-0 items-center gap-1.5 rounded-full border border-orange-300 bg-white px-3 py-1.5 text-xs font-semibold text-orange-700 transition-colors hover:bg-orange-500 hover:text-white disabled:opacity-50 dark:border-orange-700 dark:bg-orange-950/40 dark:text-orange-300 dark:hover:bg-orange-600 dark:hover:text-white"
+      >
+        {isRestoring ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArchiveRestore className="h-3 w-3" />}
+        Restore
+      </button>
     </div>
   );
 }
