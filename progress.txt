@@ -13652,3 +13652,140 @@ This story requires running automated or manual browser tests on critical pages 
 ## Iteration 7 - Wed, Mar 11, 2026  3:40:17 AM
 Completed: Browser Test All Key Pages and Fix Errors (ID: US-145) in 11m
 
+
+## Pre-analysis for US-146 (Gemini 2.5 Pro)
+This user story is for a **Next.js/TypeScript** frontend, not a Frappe/Python app. Here is the technical brief based on the provided JSON for a Next.js implementation.
+
+**Project:** Next.js / React
+**Objective:** Create an interactive hero-section dish card with hover/tap-to-reveal info and a click/tap-to-open lightbox.
+
+**1. Files to Modify/Create:**
+*   **Create:** `src/components/home/hero-dish-card.tsx` (as a 'use client' component).
+*   **Modify:** `src/components/home/hero-section.tsx` (Customer view).
+*   **Modify:** `src/app/(admin)/admin/home/home-inline-editor.tsx` (Admin view).
+*   **Reference:** `src/data/recipe-info.ts` for the `getRecipeInfo` function.
+
+**2. Core Components & Data:**
+*   **`HeroDishCard`:** The primary new component. It will receive the signature dish `MenuItem` as a prop.
+*   **`Lightbox`:** A modal component, likely local to `HeroDishCard`, to display the full-size image, secondary images, and recipe.
+*   **Data Function:** `getRecipeInfo(itemCode)` will be imported and called to fetch recipe details for the lightbox.
+
+**3. Implementation Approach:**
+*   Build `HeroDishCard` to accept an `item` prop. If the prop is null, it should render a static fallback image.
+*   Use `onMouseEnter`/`onMouseLeave` (or CSS `group-hover`) to trigger a `max-height` transition for the slide-down info panel.
+*   Use `useState` to manage the open/closed state of the lightbox, triggered by `onClick`.
+*   Inside the lightbox, fetch and display data from `getRecipeInfo()`.
+*   Replace the static image blocks in `hero-section.tsx` and `home-inline-editor.tsx` with the new `<HeroDishCard>` component.
+
+**4. Edge Cases & Gotchas:**
+*   **Mobile UX:** Differentiate between a single tap (reveal info panel) and a second tap (open lightbox).
+*   **Image Fallbacks:** Gracefully handle cases where secondary images (`-2.jpg`, `-3.jpg`) do not exist.
+*   **Null Data:** The component must render correctly when the `item` prop is null or `getRecipeInfo` returns no data.
+*   **Accessibility:** Ensure the lightbox is keyboard-navigable and can be closed with the 'Escape' key.
+
+
+## Pre-analysis for US-146 (Gemini 2.5 Pro)
+This user story is for a **Next.js/React frontend**, not a Frappe/Python backend. The technical notes refer to `.tsx` components, `'use client'`, and Next.js-specific features.
+
+Here is the technical brief based on the actual story content:
+
+**Project:** Makan Moments Cafe (Next.js Frontend)
+**Story:** US-146 - Hero Dish Card UX
+
+**1. Primary Files to Create/Modify:**
+*   **Create:** `src/components/home/hero-dish-card.tsx`
+*   **Modify:** `src/app/(main)/page.tsx` (to integrate the new component in the `HeroSection`)
+*   **Modify:** `src/components/admin/home-inline-editor.tsx` (to use the new component)
+*   **Reference:** `src/components/ui/menu-card.tsx` (for hover animation style)
+
+**2. Key Components & Data Hooks:**
+*   **Components:** `HeroDishCard` (new client component), `HeroSection` (server component), `HomeInlineEditor` (client component).
+*   **Data Function:** `getRecipeInfo` from `@/data/recipe-info` will be used to fetch recipe details.
+*   **Data Type:** `MenuItem` from `@/types/menu.ts` (assumed).
+
+**3. Implementation Approach:**
+1.  Build `HeroDishCard.tsx` as a client component (`'use client'`).
+2.  It will take a `MenuItem` prop and handle a `null` state by showing a static fallback image.
+3.  Use Framer Motion or CSS for the on-hover slide-down panel (`max-h` transition).
+4.  Implement a stateful lightbox/modal (`useState`) triggered on-click.
+5.  The lightbox will display the primary image, conditionally load secondary images (`{code}-2.jpg`), and show data from `getRecipeInfo()`.
+6.  Replace the static `next/image` in `HeroSection` and `HomeInlineEditor` with `<HeroDishCard>`.
+
+**4. Gotchas & Edge Cases:**
+*   **Mobile Behavior:** Requires specific state logic to differentiate a `tap` (reveal info panel) from a subsequent `tap` (open lightbox).
+*   **Data Passing:** The `signatureDish` object (a `MenuItem`) must be fetched server-side in `page.tsx` and passed down as a prop.
+*   **Styling Parity:** The hover panel's animation and appearance must exactly match the existing `MenuCard` component for UI consistency.
+*   **Accessibility:** The lightbox needs to trap focus and be dismissible with the `Escape` key.
+
+
+## Iteration 9 - Wed, Mar 11, 2026 - Story: Home Page Hero Dish Card (US-146)
+
+### What was implemented
+- Created `src/components/home/hero-dish-card.tsx` — 'use client' component
+  - Props: item (MenuItem | null), className, sizes, priority, fallbackBlurDataURL
+  - Static fallback when item is null (renders hero-mobile.webp with no interactivity)
+  - Interactive card: hover/mouseenter reveals slide-down panel (max-h-0 → max-h-24 transition)
+  - Panel shows item.nameEn + price + ZoomIn button
+  - Click behavior: if panelOpen=true → open lightbox; if false → open panel
+  - Works for both desktop (hover then click) and mobile (first tap shows panel, second tap opens lightbox)
+  - Lightbox: fixed overlay, main image, thumbnail strip from item.photos[], recipe accordion via getRecipeInfo()
+  - Escape key closes lightbox
+- Updated `src/components/home/hero-section.tsx`: removed heroLabel/heroSrc/heroAlt calcs, replaced both mobile (aspect-[2/1]) and desktop (aspect-[4/3]) Image blocks with HeroDishCard
+- Updated `src/components/admin/home-inline-editor.tsx`: same replacement, removed CSSProperties/Image imports
+
+### Patterns discovered
+- `MenuItem.photos[]` already contains all images including secondary ones — no need to probe for -2/-3.jpg
+- `MenuItem.imagePosition` CSS string can be passed to `objectPosition` style
+- Server component (hero-section.tsx) can render 'use client' HeroDishCard fine — MenuItem is all serializable strings/numbers
+- Encoding: use `encoding='utf-8'` when reading/writing prd.json on Windows (cp1252 default fails)
+
+### Gotchas
+- hero-section.tsx is async server component — cannot add useState directly; must delegate interactivity to client child
+- Keep CSSProperties import in hero-section.tsx — still used for animation delay CSS vars
+## Iteration 1 - Wed, Mar 11, 2026 11:24:43 AM
+Completed: Home Page — Signature Dish Hero Card Hover UX & Lightbox (ID: US-146) in 8m
+
+
+## Pre-analysis for US-147 (Gemini 2.5 Pro)
+Here is the technical brief for implementing user story US-147.
+
+### Technical Brief: US-147 Admin-Only Gear Icon
+
+This user story pertains to the **Next.js/React frontend**, not a Frappe/Python backend. All modifications will be in TypeScript/React (`.tsx`) files.
+
+**1. Primary File to Modify:**
+*   `src/components/admin/HomeInlineEditor.tsx`: This is the most likely candidate. It's an admin-only, client-side component where the new floating icon should be added.
+
+**2. Involved DocTypes & Framework Components:**
+*   **Frappe DocTypes/Hooks:** None.
+*   **Next.js:** `<Link>` component from `next/link` for client-side navigation.
+*   **Icon Library:** `Settings` icon from `lucide-react`.
+
+**3. Recommended Implementation Approach:**
+1.  In `HomeInlineEditor.tsx`, import `Link` from `next/link` and `Settings` from `lucide-react`.
+2.  Within the component's JSX, add a `<Link>` component wrapping the `Settings` icon.
+3.  Set the `href` attribute of the `Link` to `"/admin"`.
+4.  Apply the exact `className` from the technical notes to the `Link` element to handle styling, positioning, and mobile-only visibility (`lg:hidden`).
+5.  Add the `aria-label='Go to Admin Panel'` for accessibility.
+
+**4. Edge Cases & Gotchas:**
+*   **Z-Index Stacking:** The `z-50` class should place the icon above other elements. Verify it appears on top of the existing chat widget.
+*   **Positioning:** The `bottom-20` class is designed to avoid the chat button. Confirm the final mobile layout to ensure there is no overlap.
+*   **Component Scope:** Since `HomeInlineEditor` is already admin-only, no additional user role checks are required to render the icon.
+
+
+## Iteration 2 - Story: Home Page — Signature Dish Hero Card Hover UX & Lightbox (US-146)
+
+### What was implemented
+- `src/components/home/hero-dish-card.tsx` already fully implemented (created in a prior session)
+- Both `hero-section.tsx` and `home-inline-editor.tsx` already import and use `HeroDishCard`
+- TypeScript passes clean, no lint errors in the component
+
+### Patterns discovered
+- `MenuItem.photos[]` already includes primary + up to 2 secondary images from DB — lightbox thumbnail strip uses this directly
+- `getRecipeInfo(nameEn)` returns ingredients + preparation text — rendered in lightbox via `<details>` accordion
+- `handleClick` logic: if panel already showing → open lightbox; else → show panel (works for both desktop hover+click and mobile tap+tap)
+- `fallbackBlurDataURL` prop passed from parent for static fallback image (HERO_BLUR.heroMobile)
+
+### Gotchas
+- Story was already implemented; `passes` was not updated. Verified via TypeScript + lint checks before marking complete.

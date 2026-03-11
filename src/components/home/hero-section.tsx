@@ -1,11 +1,11 @@
 import type { CSSProperties } from "react";
-import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { HERO_BLUR } from "@/data/hero-blur";
 import { CAFE } from "@/lib/constants";
 import type { MenuItem } from "@/types/menu";
+import { HeroDishCard } from "@/components/home/hero-dish-card";
 
 interface HeroSectionProps {
   heroTitle?: string;
@@ -22,36 +22,20 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle, signat
   const tagline = heroTagline || CAFE.tagline.en;
   const subtitle = heroSubtitle || t("heroSubtitle");
 
-  const heroSrc = signatureDish
-    ? `/images/menu/${signatureDish.code}.jpg`
-    : "/images/hero/hero-mobile.webp";
-  const heroAlt = signatureDish
-    ? `${signatureDish.nameEn} — Signature dish at Makan Moments Cafe`
-    : "RM55.90 Steamed Fish Promo Set — premium Thai-style steamed fish at Makan Moments Cafe";
-  const heroLabel = signatureDish
-    ? `${signatureDish.nameEn} — RM${signatureDish.price.toFixed(2)}`
-    : "RM55.90 Steamed Fish Promo Set";
-
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-primary/8 via-background to-accent/15">
       <div className="mx-auto max-w-6xl px-4 py-3 sm:py-16 lg:py-24">
         <div className="flex flex-col gap-4 lg:grid lg:grid-cols-2 lg:items-center lg:gap-16">
 
           {/* Mobile hero image — FIRST so food is above the fold on mobile. No fade-in: LCP element must be immediately visible */}
-          <div className="relative aspect-[2/1] w-full overflow-hidden rounded-2xl shadow-2xl lg:hidden">
-            <Image
-              src={heroSrc}
-              alt={heroAlt}
-              fill
-              className="object-cover img-scale"
+          <div className="lg:hidden">
+            <HeroDishCard
+              item={signatureDish ?? null}
+              className="aspect-[2/1] shadow-2xl"
               sizes="100vw"
               priority
-              fetchPriority="high"
+              fallbackBlurDataURL={HERO_BLUR.heroMobile}
             />
-            {/* /delight: Overlay label on mobile image — hidden on mobile, shown on sm+ */}
-            <div className="absolute bottom-3 left-3 hidden rounded-full bg-background/80 px-3 py-1 text-xs font-medium backdrop-blur-sm sm:block">
-              {heroLabel}
-            </div>
           </div>
 
           {/* Text — /bolder: much larger h1, Playfair Display, italic tagline */}
@@ -125,24 +109,12 @@ export async function HeroSection({ heroTitle, heroTagline, heroSubtitle, signat
 
           {/* Desktop hero image — /bolder + /delight: hover lift */}
           <div className="relative hidden w-full lg:block lg:pl-8">
-            <div
-              className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-xl hover-lift"
-              style={{ "--delay": "0ms" } as CSSProperties}
-            >
-              <Image
-                src={heroSrc}
-                alt={heroAlt}
-                fill
-                className="object-cover img-scale"
-                sizes="(max-width: 1024px) 50vw, 800px"
-                loading="lazy"
-                {...(!signatureDish && { placeholder: "blur" as const, blurDataURL: HERO_BLUR.heroMobile })}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/5 to-transparent" />
-              <div className="absolute bottom-4 left-4 rounded-full bg-background/90 px-4 py-1.5 text-sm font-semibold text-foreground backdrop-blur-md shadow-sm">
-                {heroLabel}
-              </div>
-            </div>
+            <HeroDishCard
+              item={signatureDish ?? null}
+              className="aspect-[4/3] shadow-xl hover-lift"
+              sizes="(max-width: 1024px) 50vw, 800px"
+              fallbackBlurDataURL={HERO_BLUR.heroMobile}
+            />
           </div>
         </div>
       </div>
