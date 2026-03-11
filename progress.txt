@@ -14413,3 +14413,47 @@ Completed: Scroll-Based Category Chip Auto-Highlight (ID: US-152) in 5m
 *   **Function Relocation:** Ensure that moving `getCategoryEmoji` doesn't introduce circular dependencies and that its import is correctly updated in all consuming files.
 *   **Visual Consistency:** Double-check that the new divider style looks correct on both mobile (`top-[108px]`) and desktop (`md:top-[68px]`) breakpoints.
 
+## Iteration 5 - Wed, Mar 11, 2026 11:52:36 AM
+Completed: Scroll-Based Category Chip Auto-Highlight (ID: US-152) in 6m
+
+
+## Iteration - Wed, Mar 11, 2026 - Story: Category Section Dividers with Labels in All-Items View (US-153)
+
+### What was implemented
+- Added `getCategoryEmoji(categories: string[])` to `src/lib/utils.ts` as a shared export
+- Removed duplicate local `getCategoryEmoji` functions from `menu-card.tsx` and `chef-pick-card.tsx`; both now import from `@/lib/utils`
+- Updated `menu-grid.tsx`: imported `getCategoryEmoji` from utils
+- Enhanced `<section>` element: added `pt-2` for breathing room
+- Enhanced `<h2>` section divider: removed `sticky` (chip bar handles nav context), replaced `bg-background/95 backdrop-blur-sm` with `bg-muted/30`, changed `text-xs text-muted-foreground` to `text-sm text-foreground`, added inner `<span>` with `border-l-4 border-primary pl-3` accent + emoji prefix via `getCategoryEmoji([cat])`
+
+### Patterns discovered
+- `getCategoryEmoji` was duplicated in both `menu-card.tsx` and `chef-pick-card.tsx` — now consolidated in `src/lib/utils.ts`
+- Full-width h2 uses `-mx-4 px-4` negative margin trick; border-l accent placed on inner `<span>` to avoid viewport-edge border
+- Removed sticky from section headers since chip bar (sticky `top-16 z-30`) already provides scroll context
+
+### Gotchas
+- TypeScript check: `npx tsc --noEmit` → 0 errors
+
+## Pre-analysis for US-153 (Gemini 2.5 Pro)
+### Technical Brief for US-153: Category Section Dividers
+
+**Note:** The provided story is a frontend task for a **Next.js/TypeScript** application, not Frappe/Python. The following brief is tailored for a frontend developer.
+
+**1. Files to Modify:**
+*   The primary file is the component rendering the menu grid, likely `src/components/menu/menu-grid.tsx`.
+*   The function `getCategoryEmoji` must be moved from `src/components/cards/chef-pick-card.tsx` to a shared utility file like `src/lib/utils.ts`.
+
+**2. Key Components & Data:**
+*   **Component:** `MenuGrid` (or where `categorySections` is mapped).
+*   **Data Structure:** `categorySections`, an array of objects, each containing category details.
+*   **Target Element:** The `<h2>` element that currently displays the category name.
+
+**3. Implementation Approach:**
+1.  Relocate the `getCategoryEmoji` function from its current component-specific location to `src/lib/utils.ts` for global access. Update the import in the original file.
+2.  In the `MenuGrid` component's render method, locate the `<h2>` tag for the category title.
+3.  Prepend the category title with the emoji by calling the newly shared `getCategoryEmoji()` function.
+4.  Modify the `className` of the `<h2>` to add the new styles: `text-sm`, `border-l-4`, `border-primary`, `pl-3`, and `pt-2`.
+
+**4. Gotchas to Watch For:**
+*   **Sticky Positioning Conflict:** The current `sticky` styling on the header (`top-[108px]`) may visually clash with the separate sticky chip bar. This must be tested by scrolling. If they overlap, adjust the `top` offset value or remove the `sticky` property from the header entirely, converting it into a static section divider.
+
