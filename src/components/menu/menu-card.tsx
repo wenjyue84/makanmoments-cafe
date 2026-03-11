@@ -198,7 +198,7 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
               -{item.discountPercent}%
             </span>
           )}
-          {/* Heart / Favorite toggle — top-right of image */}
+          {/* Heart / Favorite toggle — top-right of image; hidden while scrolling */}
           {onToggleFavorite && (
             <button
               type="button"
@@ -206,7 +206,10 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
                 e.stopPropagation();
                 onToggleFavorite();
               }}
-              className="absolute top-2 right-2 z-10 rounded-full bg-black/40 p-1.5 transition-colors hover:bg-black/60"
+              className={cn(
+                "absolute top-2 right-2 z-10 rounded-full bg-black/40 p-1.5 transition-[background-color,opacity] duration-150 hover:bg-black/60",
+                isScrolling && !localShowFav ? "opacity-0" : "opacity-100"
+              )}
               aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
             >
               <Heart

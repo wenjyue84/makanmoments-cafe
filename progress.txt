@@ -14048,3 +14048,106 @@ Already fully implemented in the codebase — no code changes needed, just verif
 ## Iteration 1 - Wed, Mar 11, 2026 11:39:06 AM
 Completed: Cart Icon — Conditional Visibility + Bounce Animation (ID: US-148) in 5m
 
+## Iteration 3 - Wed, Mar 11, 2026 11:39:45 AM
+Completed: Menu Page Scroll-Aware UI Fade (ID: US-149) in 3m
+
+
+## Pre-analysis for US-150 (Gemini 2.5 Pro)
+Okay, I've analyzed the user story against the project structure. It seems there's a disconnect; the user story describes a frontend feature for a Next.js application (React, `useScrolling` hook, etc.), not a Frappe/Python one.
+
+I'll provide the technical brief based on the actual Next.js project context. Here is the analysis:
+
+***
+
+### **Technical Brief: US-150 Menu Card Favorite Icon**
+
+This user story focuses on enhancing the menu card's user interface by making the "favorite" icon's visibility dependent on user scrolling and interaction.
+
+*   **Files to Modify:**
+    *   `src/components/menu/MenuCard.tsx`: This is the primary component to update. It will consume the scrolling state and manage the local hover/touch state for the favorite icon.
+    *   `src/hooks/use-scrolling.ts` (or similar, from US-149): This file should provide the `ScrollingContext` and `useScrolling` hook, which indicates if the user is actively scrolling. It may need to be created if `US-149` is not implemented.
+    *   `src/components/menu/MenuGrid.tsx`: This component likely renders the list of `MenuCard` components. It might be the location where the `ScrollingProvider` is implemented to wrap the grid.
+
+*   **Involved Hooks & State:**
+    *   **`useScrolling()` hook:** To get the `isScrolling` boolean state.
+    *   **`useState` (local to `MenuCard.tsx`):** To manage a `localShowFav` boolean state, triggered by a long press/hover.
+    *   **`setTimeout` / `clearTimeout`:** To handle the 2-second timer for the long press/hover gesture.
+
+*   **Implementation Approach:**
+    1.  In `MenuCard.tsx`, import and call the `useScrolling()` hook to get the global `isScrolling` status.
+    2.  Create a local state `const [localShowFav, setLocalShowFav] = useState(false);`
+    3.  Wrap the card's root element with `onMouseEnter`, `onTouchStart`, `onMouseLeave`, and `onTouchEnd` handlers.
+    4.  On `MouseEnter`/`TouchStart`, start a 2-second `setTimeout` that calls `setLocalShowFav(true)`.
+    5.  On `MouseLeave`/`TouchEnd`, clear the timeout to prevent it from firing if the user leaves the card early. Reset `localShowFav` to `false`.
+    6.  The favorite icon's visibility should be determined by the condition `!isScrolling || localShowFav`.
+    7.  Apply the conditional class to the favorite icon button: `cn('transition-opacity duration-200', { 'opacity-0': isScrolling && !localShowFav, 'opacity-100': !isScrolling || localShowFav })`. Ensure the button itself is always present in the DOM to avoid layout shifts and to catch click events.
+
+*   **Edge Cases & Gotchas:**
+    *   **Performance:** Ensure the `useScrolling` hook is optimized to avoid excessive re-renders of the menu grid.
+    *   **Touch vs. Hover:** Be mindful of "sticky hover" states on mobile. The `onTouchEnd` and `onMouseLeave` events must reliably reset the `localShowFav` state.
+    *   **Accessibility:** The icon is hidden with `opacity-0` but remains in the accessibility tree. Confirm this doesn't negatively impact screen reader users. The button should still be focusable, even when invisible.
+
+
+## Pre-analysis for US-150 (Gemini 2.5 Pro)
+This user story is for a **React/Next.js** frontend, not a Frappe/Python backend. Here is the technical brief for the frontend developer:
+
+**Subject: Technical Brief for US-150: Menu Card Favorite Icon — Scroll-Aware Visibility**
+
+### 1. Files to Modify
+
+*   **`src/components/menu/MenuCard.tsx`**: This is the primary component where the favorite icon's visibility logic will be implemented.
+*   **`src/hooks/use-scrolling.ts` / `src/context/ScrollingContext.tsx`**: You will consume the `useScrolling` hook, which was created in `US-149`. No modifications are needed here, just consumption.
+*   **`src/app/(main)/menu/page.tsx`**: Verify this page or its layout includes the `ScrollingProvider` to make the context available to `MenuCard`.
+
+### 2. Involved Components & Hooks
+
+*   **DocTypes/Models**: N/A (Frontend story)
+*   **Components**: `MenuCard`, potentially a parent `MenuGrid` or `Card` component.
+*   **Hooks**: `useScrolling()` for scroll state, `useState` for hover/tap state, `useRef` or `useEffect` for managing the `setTimeout`.
+
+### 3. Implementation Approach
+
+1.  **Consume Scroll Context**: In `MenuCard.tsx`, import and call `useScrolling()` to get the `isScrolling` boolean.
+2.  **Add Hover/Tap State**: Introduce a local state, e.g., `const [showIcon, setShowIcon] = useState(false)`.
+3.  **Implement Timers**:
+    *   On the main card wrapper, add `onMouseEnter` and `onTouchStart` event handlers. These handlers will initiate a `2000ms` `setTimeout` that calls `setShowIcon(true)`.
+    *   Store the timer ID in a `useRef` to manage it.
+    *   Add `onMouseLeave` and `onTouchEnd` handlers to clear the timeout, preventing the icon from appearing if the user moves away before the 2 seconds are up. Also, reset the icon visibility by calling `setShowIcon(false)`.
+4.  **Apply Conditional Opacity**:
+    *   Locate the favorite (heart) icon button within `MenuCard`.
+    *   Use the `cn` utility to apply classes:
+        ```jsx
+        cn('transition-opacity duration-200',
+           isScrolling && !showIcon ? 'opacity-0' : 'opacity-100')
+        ```
+    *   The icon should be visible if `!isScrolling || showIcon`.
+
+### 4. Edge Cases & Gotchas
+
+*   **Timer Cleanup**: It is critical to clear the `setTimeout` in a `useEffect` cleanup function or on `onMouseLeave`/`onTouchEnd` to prevent memory leaks and incorrect state changes after the component unmounts or the interaction ends.
+*   **Layout Shift**: The acceptance criteria demand using `opacity` and not `display: none` or conditional rendering to avoid layout shifts.
+*   **Fast Interactions**: Ensure that rapidly entering/leaving the card or starting/stopping scroll doesn't lead to a race condition where the icon gets stuck in the wrong state. The logic should be clean and simple: scrolling hides it, hovering/tapping reveals it.
+*   **Context Provider**: Double-check that the `ScrollingProvider` wraps the component tree where `MenuCard` is rendered, otherwise the `useScrolling` hook will fail.
+
+
+## Iteration 13 - Wed, Mar 11, 2026 - Story: Menu Card Favorite Icon — Scroll-Aware Visibility (US-150)
+
+### What was implemented
+- Modified `src/components/menu/menu-card.tsx`:
+  - Imported `useScrolling` from `@/lib/scrolling-context`
+  - Added `localShowFav` state and `favRevealTimer` ref
+  - Called `const { isScrolling } = useScrolling()`
+  - Extended card `onMouseEnter`: starts 2s `favRevealTimer` → sets `localShowFav=true`
+  - Extended card `onMouseLeave`: clears `favRevealTimer`, resets `localShowFav=false`
+  - Added `onTouchStart`/`onTouchEnd`/`onTouchCancel` to outer card div for touch-hold fav reveal (same 2s pattern)
+  - Favorite button: applied `cn("...", isScrolling && !localShowFav ? "opacity-0" : "opacity-100")` + `transition-[background-color,opacity] duration-150`
+  - No layout shift: opacity-based, button remains interactive when invisible
+
+### Patterns discovered
+- `ChefPickCard` has no favorite button — only `MenuCard` needed changes
+- Touch events on outer card div bubble correctly alongside inner image div's own touch handlers (they handle different things: outer for fav reveal, inner for info longPress reveal)
+- `transition-[background-color,opacity]` syntax works in Tailwind v4 for multiple transition properties
+
+### Gotchas
+- `prd.json` requires `encoding='utf-8'` when reading/writing with Python on Windows (cp1252 default fails)
+- The `favRevealTimer` is separate from `hoverTimer` (which handles description reveal) — they both start at 2s on hover but control different state
