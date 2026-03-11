@@ -459,10 +459,563 @@ const testPWAManifest: TestDefinition = {
   },
 };
 
+// US-146: Signature dish card — no badge, hover state, lightbox
+const testSignatureDishCard: TestDefinition = {
+  id: "nf-146-signature-dish-card",
+  name: "US-146: Signature dish card (no badge, hover, lightbox)",
+  description:
+    "chef-pick-card.tsx: isSignature prop hides chef-pick badge, group hover class present, RecipeModal imported as lightbox",
+  category: "new-features",
+  run: async (): Promise<TestResult> => {
+    const start = Date.now();
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+      const filePath = path.join(
+        process.cwd(),
+        "src",
+        "components",
+        "menu",
+        "chef-pick-card.tsx"
+      );
+      const src = fs.readFileSync(filePath, "utf-8");
+      const logs: string[] = [];
+      let allPassed = true;
+
+      // Has isSignature prop
+      const hasIsSignatureProp = src.includes("isSignature");
+      if (!hasIsSignatureProp) {
+        logs.push("FAIL: isSignature prop not found in chef-pick-card.tsx");
+        allPassed = false;
+      } else {
+        logs.push("PASS: isSignature prop declared in ChefPickCard");
+      }
+
+      // When isSignature=true, chef pick badge is hidden — check conditional rendering
+      const signatureHidesBadge =
+        src.includes("isSignature ?") || src.includes("isSignature &&") ||
+        src.includes("!isSignature");
+      if (!signatureHidesBadge) {
+        logs.push("FAIL: No conditional badge hiding based on isSignature");
+        allPassed = false;
+      } else {
+        logs.push("PASS: Badge conditional rendering based on isSignature found");
+      }
+
+      // Has group class for hover state
+      const hasGroupHover = src.includes("group-hover") || src.includes('"group"') || src.includes('"group ') || src.includes(" group ");
+      if (!hasGroupHover) {
+        logs.push("FAIL: No group/group-hover class found for hover state");
+        allPassed = false;
+      } else {
+        logs.push("PASS: group/group-hover hover state class found");
+      }
+
+      // Has RecipeModal (lightbox)
+      const hasRecipeModal = src.includes("RecipeModal");
+      if (!hasRecipeModal) {
+        logs.push("FAIL: RecipeModal (lightbox) not imported/used in chef-pick-card.tsx");
+        allPassed = false;
+      } else {
+        logs.push("PASS: RecipeModal lightbox imported and used");
+      }
+
+      return { pass: allPassed, log: logs.join("\n"), duration: Date.now() - start };
+    } catch (err) {
+      return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+    }
+  },
+};
+
+// US-147: Admin gear icon present when admin, absent for non-admin
+const testAdminGearIcon: TestDefinition = {
+  id: "nf-147-admin-gear-icon",
+  name: "US-147: Admin gear/toggle icon conditional on isAdmin",
+  description:
+    "menu-grid.tsx: admin mode toggle button is conditionally rendered only when isAdmin=true",
+  category: "new-features",
+  run: async (): Promise<TestResult> => {
+    const start = Date.now();
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+      const filePath = path.join(
+        process.cwd(),
+        "src",
+        "components",
+        "menu",
+        "menu-grid.tsx"
+      );
+      const src = fs.readFileSync(filePath, "utf-8");
+      const logs: string[] = [];
+      let allPassed = true;
+
+      // isAdmin prop accepted
+      const hasIsAdminProp = src.includes("isAdmin") && src.includes("isAdmin = false");
+      if (!hasIsAdminProp) {
+        logs.push("FAIL: isAdmin prop not declared with default false in MenuGrid");
+        allPassed = false;
+      } else {
+        logs.push("PASS: isAdmin prop declared (defaults to false)");
+      }
+
+      // Admin toggle button conditionally rendered with {isAdmin && (
+      const hasConditionalAdmin = src.includes("{isAdmin && (");
+      if (!hasConditionalAdmin) {
+        logs.push("FAIL: {isAdmin && ( block not found — admin controls not conditionally hidden");
+        allPassed = false;
+      } else {
+        logs.push("PASS: Admin controls wrapped in {isAdmin && ( guard");
+      }
+
+      // Toggle button uses Eye/EyeOff icons for Customer View / Edit Mode
+      const hasEyeIcon = src.includes("Eye") && (src.includes("EyeOff") || src.includes("Eye className"));
+      if (!hasEyeIcon) {
+        logs.push("FAIL: Eye/EyeOff icon not found in admin toggle button");
+        allPassed = false;
+      } else {
+        logs.push("PASS: Eye/EyeOff icons found for admin mode toggle");
+      }
+
+      return { pass: allPassed, log: logs.join("\n"), duration: Date.now() - start };
+    } catch (err) {
+      return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+    }
+  },
+};
+
+// US-148: Tray button hidden when cart empty, visible when item added
+const testTrayButtonVisibility: TestDefinition = {
+  id: "nf-148-tray-button-visibility",
+  name: "US-148: Tray button hidden when cart empty",
+  description:
+    "tray-widget.tsx: returns null when totalItems=0 and tray closed; showFloatingButton tied to totalItems > 0",
+  category: "new-features",
+  run: async (): Promise<TestResult> => {
+    const start = Date.now();
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+      const filePath = path.join(
+        process.cwd(),
+        "src",
+        "components",
+        "menu",
+        "tray-widget.tsx"
+      );
+      const src = fs.readFileSync(filePath, "utf-8");
+      const logs: string[] = [];
+      let allPassed = true;
+
+      // Returns null when tray empty
+      const hasEarlyReturn =
+        src.includes("totalItems === 0") && src.includes("return null");
+      if (!hasEarlyReturn) {
+        logs.push("FAIL: No early return null when totalItems === 0 found");
+        allPassed = false;
+      } else {
+        logs.push("PASS: Early return null when cart is empty");
+      }
+
+      // showFloatingButton or equivalent tied to totalItems
+      const hasFloatingButtonLogic =
+        src.includes("totalItems > 0") ||
+        src.includes("showFloatingButton");
+      if (!hasFloatingButtonLogic) {
+        logs.push("FAIL: No showFloatingButton / totalItems > 0 logic found");
+        allPassed = false;
+      } else {
+        logs.push("PASS: Floating button visibility tied to totalItems > 0");
+      }
+
+      return { pass: allPassed, log: logs.join("\n"), duration: Date.now() - start };
+    } catch (err) {
+      return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+    }
+  },
+};
+
+// US-149: isScrolling context provided on menu page
+const testScrollingContext: TestDefinition = {
+  id: "nf-149-scrolling-context",
+  name: "US-149: ScrollingProvider wraps menu page",
+  description:
+    "scrolling-context.tsx exports ScrollingProvider and useScrolling; locale layout wraps children in ScrollingProvider",
+  category: "new-features",
+  run: async (): Promise<TestResult> => {
+    const start = Date.now();
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+      const logs: string[] = [];
+      let allPassed = true;
+
+      // Check scrolling-context.tsx exists and exports provider
+      const ctxPath = path.join(process.cwd(), "src", "lib", "scrolling-context.tsx");
+      if (!fs.existsSync(ctxPath)) {
+        return {
+          pass: false,
+          log: "FAIL: src/lib/scrolling-context.tsx not found",
+          duration: Date.now() - start,
+        };
+      }
+      const ctxSrc = fs.readFileSync(ctxPath, "utf-8");
+      const hasProvider = ctxSrc.includes("export function ScrollingProvider");
+      const hasHook = ctxSrc.includes("export function useScrolling");
+      const hasIsScrolling = ctxSrc.includes("isScrolling");
+      if (!hasProvider) { logs.push("FAIL: ScrollingProvider not exported from scrolling-context.tsx"); allPassed = false; }
+      else { logs.push("PASS: ScrollingProvider exported"); }
+      if (!hasHook) { logs.push("FAIL: useScrolling hook not exported"); allPassed = false; }
+      else { logs.push("PASS: useScrolling hook exported"); }
+      if (!hasIsScrolling) { logs.push("FAIL: isScrolling state not found in context"); allPassed = false; }
+      else { logs.push("PASS: isScrolling state in context"); }
+
+      // Check locale layout uses ScrollingProvider
+      const layoutPath = path.join(process.cwd(), "src", "app", "[locale]", "layout.tsx");
+      if (!fs.existsSync(layoutPath)) {
+        logs.push("FAIL: src/app/[locale]/layout.tsx not found");
+        allPassed = false;
+      } else {
+        const layoutSrc = fs.readFileSync(layoutPath, "utf-8");
+        const layoutHasProvider =
+          layoutSrc.includes("ScrollingProvider") &&
+          layoutSrc.includes("<ScrollingProvider>");
+        if (!layoutHasProvider) {
+          logs.push("FAIL: Layout does not render <ScrollingProvider>");
+          allPassed = false;
+        } else {
+          logs.push("PASS: <ScrollingProvider> found in locale layout");
+        }
+      }
+
+      return { pass: allPassed, log: logs.join("\n"), duration: Date.now() - start };
+    } catch (err) {
+      return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+    }
+  },
+};
+
+// US-150: Favorite icon has opacity-0 class when isScrolling
+const testFavoriteIconScrollingOpacity: TestDefinition = {
+  id: "nf-150-favorite-icon-scrolling-opacity",
+  name: "US-150: Favorite icon hidden while scrolling",
+  description:
+    "menu-card.tsx: favorite button applies opacity-0 when isScrolling=true and the user hasn't revealed it",
+  category: "new-features",
+  run: async (): Promise<TestResult> => {
+    const start = Date.now();
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+      const filePath = path.join(
+        process.cwd(),
+        "src",
+        "components",
+        "menu",
+        "menu-card.tsx"
+      );
+      const src = fs.readFileSync(filePath, "utf-8");
+      const logs: string[] = [];
+      let allPassed = true;
+
+      // Uses useScrolling hook
+      const importsScrolling = src.includes('from "@/lib/scrolling-context"') || src.includes("useScrolling");
+      if (!importsScrolling) {
+        logs.push("FAIL: useScrolling not imported in menu-card.tsx");
+        allPassed = false;
+      } else {
+        logs.push("PASS: useScrolling imported");
+      }
+
+      // Applies opacity-0 conditionally
+      const hasOpacity0 = src.includes("opacity-0") && src.includes("isScrolling");
+      if (!hasOpacity0) {
+        logs.push("FAIL: opacity-0 class not found with isScrolling condition in menu-card.tsx");
+        allPassed = false;
+      } else {
+        logs.push("PASS: opacity-0 applied when isScrolling");
+      }
+
+      // Applies opacity-100 otherwise
+      const hasOpacity100 = src.includes("opacity-100");
+      if (!hasOpacity100) {
+        logs.push("FAIL: opacity-100 fallback not found in menu-card.tsx");
+        allPassed = false;
+      } else {
+        logs.push("PASS: opacity-100 fallback found");
+      }
+
+      return { pass: allPassed, log: logs.join("\n"), duration: Date.now() - start };
+    } catch (err) {
+      return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+    }
+  },
+};
+
+// US-151: Bottom search bar renders and syncs with filter
+const testBottomSearchBar: TestDefinition = {
+  id: "nf-151-bottom-search-bar",
+  name: "US-151: Bottom search bar renders and syncs filter",
+  description:
+    "bottom-search-bar.tsx exists; menu-grid.tsx imports BottomSearchBar and passes search/onSearchChange props",
+  category: "new-features",
+  run: async (): Promise<TestResult> => {
+    const start = Date.now();
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+      const logs: string[] = [];
+      let allPassed = true;
+
+      // Check bottom-search-bar.tsx exists
+      const barPath = path.join(
+        process.cwd(),
+        "src",
+        "components",
+        "menu",
+        "bottom-search-bar.tsx"
+      );
+      if (!fs.existsSync(barPath)) {
+        return {
+          pass: false,
+          log: "FAIL: src/components/menu/bottom-search-bar.tsx not found",
+          duration: Date.now() - start,
+        };
+      }
+      const barSrc = fs.readFileSync(barPath, "utf-8");
+      const hasInput = barSrc.includes("<input") && barSrc.includes("onSearchChange");
+      if (!hasInput) {
+        logs.push("FAIL: BottomSearchBar missing input or onSearchChange handler");
+        allPassed = false;
+      } else {
+        logs.push("PASS: BottomSearchBar has input connected to onSearchChange");
+      }
+
+      // Check menu-grid.tsx imports and renders BottomSearchBar
+      const gridPath = path.join(process.cwd(), "src", "components", "menu", "menu-grid.tsx");
+      const gridSrc = fs.readFileSync(gridPath, "utf-8");
+      const importsBar = gridSrc.includes('BottomSearchBar');
+      const rendersBar = gridSrc.includes("<BottomSearchBar");
+      if (!importsBar) {
+        logs.push("FAIL: menu-grid.tsx does not import BottomSearchBar");
+        allPassed = false;
+      } else {
+        logs.push("PASS: BottomSearchBar imported in menu-grid.tsx");
+      }
+      if (!rendersBar) {
+        logs.push("FAIL: menu-grid.tsx does not render <BottomSearchBar>");
+        allPassed = false;
+      } else {
+        logs.push("PASS: <BottomSearchBar> rendered in MenuGrid");
+      }
+
+      // Verify it's synced via onSearchChange prop
+      const hasSyncProp = gridSrc.includes("onSearchChange") && gridSrc.includes("setSearch");
+      if (!hasSyncProp) {
+        logs.push("FAIL: onSearchChange not wired to setSearch in menu-grid.tsx");
+        allPassed = false;
+      } else {
+        logs.push("PASS: onSearchChange wired to setSearch (filter synced)");
+      }
+
+      return { pass: allPassed, log: logs.join("\n"), duration: Date.now() - start };
+    } catch (err) {
+      return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+    }
+  },
+};
+
+// US-152: Category chip bar renders in default all-items view
+const testCategoryChipBar: TestDefinition = {
+  id: "nf-152-category-chip-bar",
+  name: "US-152: Category chip bar in all-items view",
+  description:
+    "menu-grid.tsx: chip bar with data-chip attributes shown when !isFlatView and multiple categorySections exist",
+  category: "new-features",
+  run: async (): Promise<TestResult> => {
+    const start = Date.now();
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+      const filePath = path.join(
+        process.cwd(),
+        "src",
+        "components",
+        "menu",
+        "menu-grid.tsx"
+      );
+      const src = fs.readFileSync(filePath, "utf-8");
+      const logs: string[] = [];
+      let allPassed = true;
+
+      // Chip bar condition: !isFlatView && categorySections.length > 1
+      const hasCondition =
+        src.includes("!isFlatView") && src.includes("categorySections.length > 1");
+      if (!hasCondition) {
+        logs.push("FAIL: Chip bar condition (!isFlatView && categorySections.length > 1) not found");
+        allPassed = false;
+      } else {
+        logs.push("PASS: Chip bar conditionally shown when !isFlatView and multiple sections");
+      }
+
+      // data-chip attribute on chip buttons
+      const hasDataChip = src.includes('data-chip={cat}') || src.includes('data-chip=');
+      if (!hasDataChip) {
+        logs.push("FAIL: data-chip attribute not found on chip buttons");
+        allPassed = false;
+      } else {
+        logs.push("PASS: data-chip attribute found on category chip buttons");
+      }
+
+      // Chip bar has scroll ref for auto-scroll
+      const hasScrollRef = src.includes("chipBarScrollRef");
+      if (!hasScrollRef) {
+        logs.push("FAIL: chipBarScrollRef not found — chip auto-scroll not implemented");
+        allPassed = false;
+      } else {
+        logs.push("PASS: chipBarScrollRef present for auto-scroll behaviour");
+      }
+
+      return { pass: allPassed, log: logs.join("\n"), duration: Date.now() - start };
+    } catch (err) {
+      return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+    }
+  },
+};
+
+// US-153: Category section headers contain emoji and styled border
+const testCategorySectionDividers: TestDefinition = {
+  id: "nf-153-category-section-dividers",
+  name: "US-153: Category section dividers with emoji and border",
+  description:
+    "menu-grid.tsx: section h2 uses border-l-4 border-primary accent; getCategoryEmoji from utils; no sticky on divider",
+  category: "new-features",
+  run: async (): Promise<TestResult> => {
+    const start = Date.now();
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+      const logs: string[] = [];
+      let allPassed = true;
+
+      // Check getCategoryEmoji is in utils.ts
+      const utilsPath = path.join(process.cwd(), "src", "lib", "utils.ts");
+      const utilsSrc = fs.readFileSync(utilsPath, "utf-8");
+      const hasEmojiInUtils = utilsSrc.includes("getCategoryEmoji");
+      if (!hasEmojiInUtils) {
+        logs.push("FAIL: getCategoryEmoji not exported from src/lib/utils.ts");
+        allPassed = false;
+      } else {
+        logs.push("PASS: getCategoryEmoji exported from utils.ts");
+      }
+
+      // Check menu-grid.tsx uses border-l-4 border-primary
+      const gridPath = path.join(process.cwd(), "src", "components", "menu", "menu-grid.tsx");
+      const gridSrc = fs.readFileSync(gridPath, "utf-8");
+      const hasBorderAccent = gridSrc.includes("border-l-4") && gridSrc.includes("border-primary");
+      if (!hasBorderAccent) {
+        logs.push("FAIL: Section divider missing border-l-4 border-primary accent");
+        allPassed = false;
+      } else {
+        logs.push("PASS: Section divider has border-l-4 border-primary accent");
+      }
+
+      // Check getCategoryEmoji used in menu-grid.tsx
+      const hasEmojiCall = gridSrc.includes("getCategoryEmoji");
+      if (!hasEmojiCall) {
+        logs.push("FAIL: getCategoryEmoji not called in menu-grid.tsx section headers");
+        allPassed = false;
+      } else {
+        logs.push("PASS: getCategoryEmoji called in section headers");
+      }
+
+      return { pass: allPassed, log: logs.join("\n"), duration: Date.now() - start };
+    } catch (err) {
+      return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+    }
+  },
+};
+
+// US-154: Initial category is Chef's Pick on menu load
+const testInitialChefsPick: TestDefinition = {
+  id: "nf-154-initial-chefs-pick",
+  name: "US-154: Menu defaults to Chef's Pick category on load",
+  description:
+    "menu/page.tsx: finds Chef's Pick display category and passes __dc__ prefixed initialCategory to MenuGrid",
+  category: "new-features",
+  run: async (): Promise<TestResult> => {
+    const start = Date.now();
+    try {
+      const fs = await import("fs");
+      const path = await import("path");
+      const filePath = path.join(
+        process.cwd(),
+        "src",
+        "app",
+        "[locale]",
+        "menu",
+        "page.tsx"
+      );
+      if (!fs.existsSync(filePath)) {
+        return {
+          pass: false,
+          log: "FAIL: src/app/[locale]/menu/page.tsx not found",
+          duration: Date.now() - start,
+        };
+      }
+      const src = fs.readFileSync(filePath, "utf-8");
+      const logs: string[] = [];
+      let allPassed = true;
+
+      // Finds Chef's Pick display category by name
+      const findsChefsCat =
+        src.includes("chefsCat") &&
+        (src.includes('"chef"') || src.includes("chef") && src.includes("toLowerCase"));
+      if (!findsChefsCat) {
+        logs.push("FAIL: Menu page does not look up Chef's Pick display category");
+        allPassed = false;
+      } else {
+        logs.push("PASS: Menu page looks up Chef's Pick display category");
+      }
+
+      // Uses __dc__ prefix for display category initialCategory
+      const hasDisplayCatPrefix = src.includes("__dc__");
+      if (!hasDisplayCatPrefix) {
+        logs.push("FAIL: __dc__ prefix not used for initialCategory (Chef's Pick display cat)");
+        allPassed = false;
+      } else {
+        logs.push("PASS: __dc__ prefix used for Chef's Pick initialCategory");
+      }
+
+      // Passes initialCategory prop to MenuGrid
+      const passesInitialCategory = src.includes("initialCategory={initialCategory}");
+      if (!passesInitialCategory) {
+        logs.push("FAIL: initialCategory prop not passed to MenuGrid");
+        allPassed = false;
+      } else {
+        logs.push("PASS: initialCategory passed to MenuGrid component");
+      }
+
+      return { pass: allPassed, log: logs.join("\n"), duration: Date.now() - start };
+    } catch (err) {
+      return { pass: false, log: `Error: ${String(err)}`, duration: Date.now() - start };
+    }
+  },
+};
+
 export const newFeaturesTests: TestDefinition[] = [
   testMenuCardLayout,
   testAdminTranslationFields,
   testMultiLanguageSearch,
   testOrderNotificationBell,
   testPWAManifest,
+  testSignatureDishCard,
+  testAdminGearIcon,
+  testTrayButtonVisibility,
+  testScrollingContext,
+  testFavoriteIconScrollingOpacity,
+  testBottomSearchBar,
+  testCategoryChipBar,
+  testCategorySectionDividers,
+  testInitialChefsPick,
 ];

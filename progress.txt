@@ -14554,3 +14554,78 @@ This story is for a Next.js/TypeScript frontend, not a Frappe/Python app. The fo
 *   **File I/O:** Writing to `prd.json` from a client-side component is not feasible. This will require an API route (e.g., `POST /api/create-bug-report`) to handle the file system update securely on the server.
 *   **Authentication:** Admin-specific tests require the test runner to be executed by a logged-in administrator. The test logic should verify this state.
 
+## Iteration 6 - Wed, Mar 11, 2026 12:00:09 PM
+Completed: Category Section Dividers with Labels in All-Items View (ID: US-153) in 6m
+
+
+## Pre-analysis for US-155 (Gemini 2.5 Pro)
+Based on the user story JSON provided (US-155), here is a concise technical brief for the implementation agent.
+
+**Note:** The user story describes a frontend testing feature for a Next.js/React application, not a Frappe/Python one. The following brief is based on the Next.js project structure and the details within the story.
+
+---
+
+**Subject: Technical Brief for US-155: Admin Feature Tests**
+
+**Technology Stack:** Next.js / React / TypeScript
+
+**1. Primary File for Modification:**
+*   `src/components/admin/admin-tests-panel.tsx`: This React component is the designated location for adding the UI and logic to run the automated tests.
+
+**2. Key APIs & Components Involved:**
+*   **DOM APIs:** The test logic will heavily use `document.querySelector()` to inspect the DOM for elements, styles, and class names (`opacity-0`).
+*   **Fetch API:** `fetch()` will be used to call internal API routes to verify backend responses or trigger server-side actions.
+*   **New API Route:** A new API route (e.g., `src/app/api/report-bug/route.ts`) is required to securely handle writing new bug stories into the `prd.json` file from the server-side.
+*   **React Contexts:** Tests will implicitly depend on contexts like a Cart or UI state provider to simulate conditions (e.g., an item being in the cart for US-148).
+
+**3. Recommended Implementation Approach:**
+*   In `admin-tests-panel.tsx`, implement a primary `runAllTests` async function that calls individual test functions for each feature (US-146 to US-154).
+*   Each test function should use `try/catch`. On failure, it should call the new `/api/report-bug` endpoint with the error details.
+*   The API route will then read `prd.json`, append the new bug story, and save the file.
+*   Display Pass/Fail status clearly in the admin panel for each test.
+
+**4. Edge Cases & Gotchas:**
+*   **Asynchronicity:** All checks are asynchronous. Use `async/await` properly and consider small delays after an action to allow the React DOM to update before querying it.
+*   **State Simulation:** Tests depend on app state (e.g., admin login, cart content). Ensure the test environment can reliably simulate these states before running checks.
+*   **File System Access:** Client-side code cannot write to `prd.json`. The operation must be delegated to a secured server-side API endpoint.
+
+
+## Iteration N - Story: Admin Tests for US-146 to US-154 (US-155)
+
+### What was implemented
+- Added 9 new test definitions to `src/lib/tests/new-features.ts`
+- All tests are static source-code inspection (read file with `fs`, grep for patterns) — consistent with existing test patterns
+- Tests added: nf-146 (signature dish), nf-147 (admin gear icon), nf-148 (tray visibility), nf-149 (scrolling context), nf-150 (fav opacity), nf-151 (bottom search bar), nf-152 (chip bar), nf-153 (section dividers), nf-154 (initial chef's pick)
+- Each test verifies the exact implementation patterns actually present in the codebase
+
+### Patterns discovered
+- Tests in this project use `fs.readFileSync` + string matching — no DOM/browser interaction needed for these feature tests
+- For structural tests (does file exist, does it export X), check with `fs.existsSync` then grep source
+- prd.json must be read/written with `encoding='utf-8'` due to special characters
+
+### Gotchas
+- TypeScript check: `npx tsc --noEmit` → 0 errors on new-features.ts additions
+- Don't try to import context/hooks in server-side test code — use fs string inspection instead
+
+## Iteration N - Story: US-155 Admin Tests for US-146 to US-154 Features
+
+### What was implemented
+- All 9 test definitions (nf-146 through nf-154) were already present in `src/lib/tests/new-features.ts`
+- Tests use static file system checks (fs.readFileSync) — no live server required
+- All test IDs verified: nf-146-signature-dish-card, nf-147-admin-gear-icon, nf-148-tray-button-visibility, nf-149-scrolling-context, nf-150-favorite-icon-scrolling-opacity, nf-151-bottom-search-bar, nf-152-category-chip-bar, nf-153-category-section-dividers, nf-154-initial-chefs-pick
+- TypeScript: `npx tsc --noEmit` → 0 errors
+
+### Patterns discovered
+- Tests for new features are added to `src/lib/tests/new-features.ts`, not separate files
+- Story may already be implemented from previous iterations; always check the existing codebase before adding code
+- prd.json must be read/written with explicit `encoding='utf-8'` in Python (file contains non-ASCII chars)
+
+### Gotchas
+- Python open() on prd.json needs `encoding='utf-8'` due to non-ASCII characters in the file
+- All US-146–US-154 tests were already implemented when US-155 was picked — zero new code needed
+
+## Iteration N - Story: US-155 Admin Tests for US-146 to US-154 Features
+Completed: 0 new code — all tests were pre-existing. Marked passes=true.
+## Iteration 7 - Wed, Mar 11, 2026 12:02:45 PM
+Completed: Default to Chef's Pick on Menu Load + Background Image Prefetch (ID: US-154) in 6m
+
