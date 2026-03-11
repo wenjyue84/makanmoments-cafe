@@ -13789,3 +13789,22 @@ This user story pertains to the **Next.js/React frontend**, not a Frappe/Python 
 
 ### Gotchas
 - Story was already implemented; `passes` was not updated. Verified via TypeScript + lint checks before marking complete.
+
+## Iteration 10 - Wed, Mar 11, 2026 - Story: Admin-Only Gear Icon on Mobile Home Page (US-147)
+
+### What was implemented
+- Modified `src/components/admin/home-inline-editor.tsx`:
+  - Added `import Link from "next/link"` and `import { Settings } from "lucide-react"`
+  - Added fixed gear icon button: `<Link href="/admin" aria-label="Go to Admin Panel" className="fixed bottom-20 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg lg:hidden">`
+  - Renders `<Settings size={20} />` inside the Link
+
+### Patterns discovered
+- HomeInlineEditor is already admin-only (rendered only when admin is logged in), so no extra auth check needed
+- `bottom-20` (80px) clears the chat widget at `bottom-4 right-4` with room to spare
+- `lg:hidden` keeps it mobile-only; desktop admins already have the edit banner
+
+### Gotchas
+- No new dependencies needed — Link and Settings already in the project
+## Iteration 1 - Wed, Mar 11, 2026 11:28:13 AM
+Completed: Home Page — Signature Dish Hero Card Hover UX & Lightbox (ID: US-146) in 10m
+

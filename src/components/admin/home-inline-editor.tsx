@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Settings } from "lucide-react";
 import type { MenuItem } from "@/types/menu";
 import { MenuCard } from "@/components/menu/menu-card";
 import { HeroDishCard } from "@/components/home/hero-dish-card";
@@ -247,6 +249,15 @@ export function HomeInlineEditor({ content, featuredItems, signatureDish }: Home
           Manage featured items in Admin → Menu → toggle the Featured flag on any item.
         </p>
       </section>
+
+      {/* Mobile-only floating gear icon — navigates to /admin */}
+      <Link
+        href="/admin"
+        aria-label="Go to Admin Panel"
+        className="fixed bottom-20 right-4 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-amber-500 text-white shadow-lg lg:hidden"
+      >
+        <Settings size={20} />
+      </Link>
     </div>
   );
 }
