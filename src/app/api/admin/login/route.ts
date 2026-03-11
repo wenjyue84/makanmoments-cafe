@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { scryptSync, timingSafeEqual } from "crypto";
 import { signAdminToken, COOKIE_NAME } from "@/lib/auth";
 import { createRateLimiter } from "@/lib/chat/rate-limit";
+import sql from "@/lib/db";
 
-// Must use nodejs runtime — edge runtime does not support in-memory state
+// Must use nodejs runtime — edge runtime does not support crypto or in-memory state
 export const runtime = "nodejs";
 
 // 10 attempts per 15 minutes per IP
@@ -11,6 +13,15 @@ const loginRateLimiter = createRateLimiter({
   max: 10,
   name: "POST /api/admin/login",
 });
+
+function verifyPassword(password: string, salt: string, storedHash: string): boolean {
+  try {
+    const hash = scryptSync(password, salt, 64).toString("hex");
+    return timingSafeEqual(Buffer.from(hash, "hex"), Buffer.from(storedHash, "hex"));
+  } catch {
+    return false;
+  }
+}
 
 export async function POST(request: NextRequest) {
   const ip =
@@ -29,15 +40,18 @@ export async function POST(request: NextRequest) {
 
   const { username, password } = await request.json();
 
-  const isAdmin =
-    username === process.env.ADMIN_USERNAME &&
-    password === process.env.ADMIN_PASSWORD;
-  const isDemo =
-    process.env.ENABLE_DEMO_LOGIN === "true" &&
-    username === "admin" &&
-    password === "admin123";
+  // Check credentials against admin_users table in Neon
+  const rows = await sql<{ salt: string; password_hash: string }>`
+    SELECT salt, password_hash
+    FROM admin_users
+    WHERE username = ${username}
+    LIMIT 1
+  `;
 
-  if (!isAdmin && !isDemo) {
+  const valid =
+    rows.length > 0 && verifyPassword(password, rows[0].salt, rows[0].password_hash);
+
+  if (!valid) {
     return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
   }
 
