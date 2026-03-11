@@ -14,6 +14,7 @@ import { useFavorites } from "@/hooks/use-favorites";
 import { useDebounce } from "@/hooks/use-debounce";
 import { SPECIAL_DISPLAY_CATEGORIES } from "@/lib/constants";
 import { useMenuFiltering, DC_PREFIX, isAvailableAtTime } from "@/hooks/useMenuFiltering";
+import { useScrolling } from "@/lib/scrolling-context";
 
 interface MenuGridProps {
   items: MenuItem[];
@@ -98,6 +99,7 @@ export function MenuGrid({
   const [highlightError, setHighlightError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const chipBarScrollRef = useRef<HTMLDivElement>(null);
+  const { isScrolling } = useScrolling();
 
   const {
     filtered,
@@ -301,7 +303,10 @@ export function MenuGrid({
 
       {/* Quick-jump chip bar — mobile only, shown when browsing all sections */}
       {!isFlatView && categorySections.length > 1 && (
-        <div className="sticky top-16 z-30 md:hidden bg-background/95 backdrop-blur-sm border-b border-border -mx-4 px-4 py-2 mb-2">
+        <div className={cn(
+          "sticky top-16 z-30 md:hidden bg-background/95 backdrop-blur-sm border-b border-border -mx-4 px-4 py-2 mb-2 transition-opacity duration-150",
+          isScrolling && "opacity-30"
+        )}>
           <div
             ref={chipBarScrollRef}
             className="flex gap-2 overflow-x-auto pb-0.5 [&::-webkit-scrollbar]:hidden [scrollbar-width:none]"

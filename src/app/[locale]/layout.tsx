@@ -16,6 +16,7 @@ import { COOKIE_NAME, verifyAdminToken } from "@/lib/auth";
 import { getOperatingStatus } from "@/lib/availability";
 import "../globals.css";
 import { TrayProvider } from "@/lib/tray-context";
+import { ScrollingProvider } from "@/lib/scrolling-context";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { PwaInit } from "@/components/pwa/pwa-init";
 import { SplashOnboarding } from "@/components/home/splash-onboarding";
@@ -126,14 +127,16 @@ export default async function LocaleLayout({
       >
         <NextIntlClientProvider locale={locale} messages={messages}>
           <TrayProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <OperatingHoursAlert status={opStatus} />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
-            <ErrorBoundary fallback={null}><ChatWidgetLoader /></ErrorBoundary>
-            <ErrorBoundary fallback={null}><TrayWidget /></ErrorBoundary>
+            <ScrollingProvider>
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <OperatingHoursAlert status={opStatus} />
+                <main className="flex-1">{children}</main>
+                <Footer />
+              </div>
+              <ErrorBoundary fallback={null}><ChatWidgetLoader /></ErrorBoundary>
+              <ErrorBoundary fallback={null}><TrayWidget /></ErrorBoundary>
+            </ScrollingProvider>
             <PwaInit />
             <SplashOnboarding />
           </TrayProvider>

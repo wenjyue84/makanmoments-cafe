@@ -11,6 +11,7 @@ import { DietaryBadge } from "./dietary-badge";
 import { RecipeModal } from "./recipe-modal";
 import { getRecipeInfo } from "@/data/recipe-info";
 import { ImageCarousel } from "./image-carousel";
+import { useScrolling } from "@/lib/scrolling-context";
 
 function getCategoryEmoji(categories: string[]): string {
   const cat = (categories[0] ?? "").toLowerCase();
@@ -47,8 +48,11 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
   const [pulsing, setPulsing] = useState(false);
   const [showDesc, setShowDesc] = useState(false);
   const [showInfo, setShowInfo] = useState(false);
+  const [localShowFav, setLocalShowFav] = useState(false);
   const hoverTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const favRevealTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const { isScrolling } = useScrolling();
   const longPressTriggered = useRef(false);
   const prevQuantityRef = useRef<number>(0);
   const imgVersion = item.updatedAt ? new Date(item.updatedAt).getTime() : 0;
@@ -80,10 +84,24 @@ export function MenuCard({ item, priority = false, isHighlighted = false, isFavo
         onMouseEnter={() => {
           setShowInfo(true);
           hoverTimer.current = setTimeout(() => setShowDesc(true), 2000);
+          favRevealTimer.current = setTimeout(() => setLocalShowFav(true), 2000);
         }}
         onMouseLeave={() => {
           setShowInfo(false);
           if (hoverTimer.current) clearTimeout(hoverTimer.current);
+          if (favRevealTimer.current) clearTimeout(favRevealTimer.current);
+          setLocalShowFav(false);
+        }}
+        onTouchStart={() => {
+          favRevealTimer.current = setTimeout(() => setLocalShowFav(true), 2000);
+        }}
+        onTouchEnd={() => {
+          if (favRevealTimer.current) clearTimeout(favRevealTimer.current);
+          setLocalShowFav(false);
+        }}
+        onTouchCancel={() => {
+          if (favRevealTimer.current) clearTimeout(favRevealTimer.current);
+          setLocalShowFav(false);
         }}
       >
         {/* Photo — click to toggle description, touch-hold 2s to reveal info */}

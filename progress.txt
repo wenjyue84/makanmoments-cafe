@@ -13968,3 +13968,83 @@ Here is the technical brief for the frontend implementation:
 *   **Server-Side Rendering (SSR):** The `useScrollFade` hook will use `window`, which is not available during SSR. Ensure all `useEffect` calls that access `window` are correctly handled and do not break the server build.
 *   **Functionality:** Per the acceptance criteria, `pointer-events: none` should *not* be used, as the elements must remain interactive even when faded.
 
+## Iteration 3 - Wed, Mar 11, 2026 11:35:16 AM
+Completed: Cart Icon — Conditional Visibility + Bounce Animation (ID: US-148) in 5m
+
+
+## Pre-analysis for US-149 (Gemini 2.5 Pro)
+This user story is for a **Next.js/React frontend**, not Frappe/Python. The technical implementation will involve TypeScript, React Hooks, and CSS, with no backend changes.
+
+Here is the technical brief based on the actual story requirements:
+
+**Technical Brief: US-149 Scroll-Aware UI Fade**
+
+*   **Target Framework:** Next.js / React
+*   **Core Task:** Implement a scroll-driven fade effect on UI elements on the menu page.
+
+**1. Files to Create / Modify:**
+*   **Create:** `src/hooks/use-scroll-fade.ts` - A new custom hook to detect scroll activity with a debounce mechanism.
+*   **Create:** `src/lib/scrolling-context.tsx` - A new React Context to provide the `isScrolling` state to nested components.
+*   **Modify:** `src/components/menu/menu-grid.tsx` (or similar) - The component containing the category filter chips. Will use the `use-scroll-fade` hook directly.
+*   **Modify:** The main menu page component (likely `src/app/(main)/menu/page.tsx`) - To wrap the content with the new `ScrollingProvider`.
+*   **Modify:** `src/components/common/tray-button.tsx` (or similar) - To consume the `ScrollingContext` and apply opacity changes.
+*   **Modify:** `src/components/common/chat-widget.tsx` (or similar) - To consume the `ScrollingContext` and apply opacity changes.
+
+**2. Implementation Approach:**
+1.  Develop the `useScrollFade` hook. It should attach a `scroll` event listener to the `window` object. On scroll, set an `isScrolling` state to `true` and use a `setTimeout` with a 200ms debounce to set it back to `false`.
+2.  Create a `ScrollingContext` that provides the `isScrolling` boolean.
+3.  In the `MenuGrid` component, use the `useScrollFade` hook and apply conditional Tailwind CSS classes (`opacity-30`) to the sticky chip bar.
+4.  Wrap the primary content of the menu page with the `ScrollingProvider`.
+5.  Refactor `TrayButton` and `ChatWidget` to use `useContext(ScrollingContext)` to retrieve the `isScrolling` state and apply their respective opacity classes (`opacity-20`).
+
+**3. Edge Cases & Gotchas:**
+*   **Performance:** The scroll listener must be properly debounced and cleaned up in the hook's return function to prevent performance issues.
+*   **Accessibility:** Use a `@media (prefers-reduced-motion: reduce)` query to disable the fade effect and ensure elements remain at `opacity-100` for users who prefer reduced motion.
+*   **Functionality:** Ensure `pointer-events: none` is **not** used, as the acceptance criteria require the elements to remain functional even when faded.
+*   **Component Scope:** The `ScrollingProvider` must wrap all three components (chip bar, tray, chat) for the context to be available.
+
+
+## Iteration 12 - Wed, Mar 11, 2026 - Story: Menu Page Scroll-Aware UI Fade (US-149)
+
+### What was implemented
+- Created `src/lib/scrolling-context.tsx`: `ScrollingProvider` + `useScrolling()` hook
+  - Listens on window scroll only when `pathname.includes("/menu")`
+  - Sets `isScrolling=true` on scroll, resets to false after 200ms debounce
+  - Respects `prefers-reduced-motion`: skips fade entirely if reduced motion is preferred
+  - Resets to false when navigating away from menu page
+- Updated `src/app/[locale]/layout.tsx`: wrapped floating widgets (ChatWidgetLoader, TrayWidget) + page content in `<ScrollingProvider>`
+- Updated `src/components/menu/menu-grid.tsx`: imported `useScrolling`, applies `opacity-30` to sticky category chip bar during scroll
+- Updated `src/components/menu/tray-widget.tsx`: imported `useScrolling`, applies `opacity-20` to floating button during scroll; changed `transition-transform` to `transition-[transform,opacity]`
+- Updated `src/components/chat/chat-widget.tsx`: imported `useScrolling`, applies `opacity-20` to floating button during scroll; changed `transition-transform` to `transition-[transform,opacity]`
+
+### Patterns discovered
+- `ScrollingProvider` in layout wraps both global floating widgets and page content — clean way to share scroll state without prop drilling
+- `usePathname()` inside a client component context provider is safe and reactive to navigation
+- `transition-[transform,opacity]` handles multiple transition properties in Tailwind v4
+- `window.matchMedia("(prefers-reduced-motion: reduce)").matches` is a one-time check at effect setup — fine since user preference rarely changes mid-session
+
+### Gotchas
+- The `setIsScrolling(false)` call in the cleanup function resets state when navigating away from menu; prevents stale `isScrolling: true` on other pages
+- Chat widget needed `useScrolling` import added — it wasn't consuming any context before
+
+## Iteration - Wed, Mar 11, 2026 - Story: Menu Page Scroll-Aware UI Fade (US-149)
+
+### What was implemented
+Already fully implemented in the codebase — no code changes needed, just verification.
+
+- `src/lib/scrolling-context.tsx` — ScrollingProvider with 200ms debounce, prefers-reduced-motion guard, menu-page-only activation
+- `src/components/menu/menu-grid.tsx` — imports `useScrolling()`, applies `opacity-30 transition-opacity duration-150` to sticky chip bar
+- `src/components/menu/tray-widget.tsx` — imports `useScrolling()`, applies `opacity-20` to floating tray button
+- `src/components/chat/chat-widget.tsx` — imports `useScrolling()`, applies `opacity-20` to floating chat button
+- `src/app/[locale]/layout.tsx` — `<ScrollingProvider>` wraps both `<TrayWidget>` and `<ChatWidgetLoader>`
+
+### Patterns discovered
+- All 3 floating elements (chip bar, tray button, chat button) use `transition-[transform,opacity]` (or `transition-opacity`) so the fade is smooth
+- `ScrollingProvider` detects menu pages via `usePathname().includes("/menu")` — activates only on menu page, resets to false on other pages
+- `prefers-reduced-motion` is checked at provider level (one check), not in each consumer
+
+### Gotchas
+- Story was pre-implemented; just needed TypeScript check to confirm clean build
+## Iteration 1 - Wed, Mar 11, 2026 11:39:06 AM
+Completed: Cart Icon — Conditional Visibility + Bounce Animation (ID: US-148) in 5m
+

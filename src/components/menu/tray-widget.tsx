@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ShoppingCart, X, Minus, Plus, ChevronDown, ChevronUp, Clock } from "lucide-react";
 import { useTray } from "@/lib/tray-context";
+import { useScrolling } from "@/lib/scrolling-context";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 import { OrderFormModal } from "./order-form-modal";
@@ -73,6 +74,7 @@ export function TrayWidget() {
     const [historyOpen, setHistoryOpen] = useState(false);
     const [badgeBounce, setBadgeBounce] = useState(false);
     const { items, addItem, removeItem, clearTray, totalPrice } = useTray();
+    const { isScrolling } = useScrolling();
     const t = useTranslations("tray");
 
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -315,8 +317,9 @@ export function TrayWidget() {
                     ref={buttonRef}
                     onClick={() => setOpen(true)}
                     className={cn(
-                        "fixed bottom-4 left-4 sm:left-auto sm:right-20 z-40 flex h-14 items-center justify-center rounded-full bg-orange-500 px-4 text-white shadow-lg transition-transform hover:scale-105 gap-2",
-                        open && "hidden"
+                        "fixed bottom-4 left-4 sm:left-auto sm:right-20 z-40 flex h-14 items-center justify-center rounded-full bg-orange-500 px-4 text-white shadow-lg transition-[transform,opacity] hover:scale-105 gap-2",
+                        open && "hidden",
+                        isScrolling && "opacity-20"
                     )}
                     aria-label="View Tray"
                 >

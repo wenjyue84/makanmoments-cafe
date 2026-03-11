@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useScrolling } from "@/lib/scrolling-context";
 import { MessageCircle, X, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
@@ -14,6 +15,7 @@ export function ChatWidget() {
   const [open, setOpen] = useState(false);
   const [hasUnread, setHasUnread] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const { isScrolling } = useScrolling();
 
   useEffect(() => {
     fetch("/api/admin/verify", { credentials: "include", redirect: "manual" })
@@ -59,8 +61,9 @@ export function ChatWidget() {
       <button
         onClick={() => (open ? setOpen(false) : handleOpen())}
         className={cn(
-          "fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform hover:scale-110 active:scale-95",
-          open && "md:flex hidden"
+          "fixed bottom-4 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-[transform,opacity] hover:scale-110 active:scale-95",
+          open && "md:flex hidden",
+          isScrolling && "opacity-20"
         )}
         aria-label="Open AI Waiter chat"
       >
