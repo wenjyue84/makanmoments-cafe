@@ -3,19 +3,28 @@ import sql from "@/lib/db";
 
 export const runtime = "nodejs";
 
+// Lazy migration: ensure sort_order column exists on item_display_categories
+let schemaReady = false;
+async function ensureSchema() {
+  if (schemaReady) return;
+  await sql`ALTER TABLE item_display_categories ADD COLUMN IF NOT EXISTS sort_order INT NOT NULL DEFAULT 0`;
+  schemaReady = true;
+}
+
 // GET /api/admin/display-categories/[id]/items — list items in a display category
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  await ensureSchema();
 
   const rows = await sql`
-    SELECT mi.id, mi.name_en, mi.code, mi.price
+    SELECT mi.id, mi.name_en, mi.code, mi.price, idc.sort_order
     FROM menu_items mi
     JOIN item_display_categories idc ON idc.item_id = mi.id
     WHERE idc.display_category_id = ${id}
-    ORDER BY mi.sort_order ASC, mi.name_en ASC
+    ORDER BY idc.sort_order ASC, mi.sort_order ASC, mi.name_en ASC
   `;
   return NextResponse.json(rows);
 }
@@ -38,6 +47,32 @@ export async function POST(
     ON CONFLICT DO NOTHING
   `;
   return NextResponse.json({ ok: true }, { status: 201 });
+}
+
+// PATCH /api/admin/display-categories/[id]/items — reorder items
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const { itemIds } = await request.json() as { itemIds: string[] };
+
+  if (!Array.isArray(itemIds)) {
+    return NextResponse.json({ error: "itemIds must be an array" }, { status: 400 });
+  }
+
+  await ensureSchema();
+  await Promise.all(
+    itemIds.map((itemId, idx) =>
+      sql`
+        UPDATE item_display_categories
+        SET sort_order = ${idx}
+        WHERE item_id = ${itemId} AND display_category_id = ${id}
+      `
+    )
+  );
+
+  return NextResponse.json({ ok: true });
 }
 
 // DELETE /api/admin/display-categories/[id]/items?itemId=... — remove an item
