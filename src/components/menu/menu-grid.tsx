@@ -15,6 +15,7 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { SPECIAL_DISPLAY_CATEGORIES } from "@/lib/constants";
 import { useMenuFiltering, DC_PREFIX, isAvailableAtTime } from "@/hooks/useMenuFiltering";
 import { useScrolling } from "@/lib/scrolling-context";
+import { BottomSearchBar } from "./bottom-search-bar";
 
 interface MenuGridProps {
   items: MenuItem[];
@@ -520,6 +521,8 @@ export function MenuGrid({
           ))}
         </div>
       )}
+      {/* Bottom search pill — mobile only, synced with top MenuFilter search */}
+      <BottomSearchBar search={search} onSearchChange={setSearch} />
     </div>
   );
 }

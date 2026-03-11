@@ -14151,3 +14151,76 @@ This user story is for a **React/Next.js** frontend, not a Frappe/Python backend
 ### Gotchas
 - `prd.json` requires `encoding='utf-8'` when reading/writing with Python on Windows (cp1252 default fails)
 - The `favRevealTimer` is separate from `hoverTimer` (which handles description reveal) — they both start at 2s on hover but control different state
+## Iteration 4 - Wed, Mar 11, 2026 11:42:37 AM
+Completed: Menu Page Scroll-Aware UI Fade (ID: US-149) in 5m
+
+
+## Iteration 14 - Wed, Mar 11, 2026 - Story: Compact Search Bar Adjacent to Cart Icon on Menu Page (US-151)
+
+### What was implemented
+- Created `src/components/menu/bottom-search-bar.tsx`: pill-shaped controlled search input
+  - `Search` icon prefix, plain `<input>` with transparent bg, `X` clear button (conditional)
+  - `fixed bottom-6 left-4 z-50 lg:hidden` — mobile only, no overlap with cart (cart is bottom-4 right-20)
+  - Consumes `useScrolling()` → `opacity-30` when scrolling (matches US-149 fade behavior)
+- Modified `src/components/menu/menu-grid.tsx`:
+  - Imported `BottomSearchBar` from `./bottom-search-bar`
+  - Rendered `<BottomSearchBar search={search} onSearchChange={setSearch} />` at the bottom of the returned div
+  - No new state needed — reuses existing `search` / `setSearch` already in MenuGrid
+
+### Patterns discovered
+- Shared search state between top MenuFilter and bottom BottomSearchBar is automatic: both read from `search`, both call `onSearchChange`/`setSearch` — React re-renders both on every keystroke
+- `lg:hidden` is the correct Tailwind class to hide on desktop (≥1024px)
+- The pill is fully controlled — no local state needed in BottomSearchBar itself
+
+### Gotchas
+- Cart icon is at `bottom-4 right-20`; BottomSearchBar is at `bottom-6 left-4` — no overlap
+- `debouncedSearch` is used by `useMenuFiltering`; `setSearch` updates the raw `search` state which `useDebounce` reads — so typing in either input triggers the same debounced filter path
+
+## Iteration 14 - Wed, Mar 11, 2026 - Story: Compact Search Bar Adjacent to Cart Icon on Menu Page (US-151)
+
+### What was implemented
+- `src/components/menu/bottom-search-bar.tsx` was already fully built:
+  - Fixed position: `bottom-6 left-4 z-50 lg:hidden` (mobile only, hidden on lg+)
+  - Pill-shaped: `rounded-full bg-background border border-input shadow-md px-3 py-2`
+  - Search icon prefix (lucide Search), input with placeholder "Search menu..."
+  - X clear button shown when search !== ''
+  - Fades during scroll via `useScrolling()` context (applies `opacity-30`)
+- `src/components/menu/menu-grid.tsx` already imports and renders `<BottomSearchBar search={search} onSearchChange={setSearch} />` at the bottom of the component, synced with the top MenuFilter's search state
+
+### Patterns discovered
+- Both the `BottomSearchBar` component and its integration in `menu-grid.tsx` were pre-implemented
+- Controlled state sync between top MenuFilter and bottom pill is via shared `search` + `setSearch` in MenuGrid parent — clean one-way data flow
+- `min-w-0 w-32` on the input provides good compact width without overflow
+
+### Gotchas
+- Story was pre-implemented; just needed TypeScript check to confirm clean build (`npx tsc --noEmit` passes)
+
+## Pre-analysis for US-152 (Gemini 2.5 Pro)
+This user story is for the **React/Next.js frontend**, not the Frappe/Python backend. The implementation will involve client-side components and hooks.
+
+Here is the technical brief based on the React codebase:
+
+**1. Files to Modify:**
+*   `src/components/menu/MenuGrid.tsx`: Main logic for the menu, contains the `IntersectionObserver` to detect the active section.
+*   `src/components/menu/CategoryChips.tsx` (or similar): Renders the scrollable chip bar; its rendering logic needs to be updated.
+*   `src/hooks/useMenuFiltering.ts`: This hook likely controls when to show a sectioned vs. flat menu (`isFlatView`).
+
+**2. Key Components & Hooks:**
+*   **Components:** `MenuGrid`, `CategoryChips`
+*   **Hooks:** `useMenuFiltering`, `useState` (for `activeSection`), `useEffect` (for the observer and chip auto-scrolling).
+
+**3. Implementation Approach:**
+*   In `useMenuFiltering.ts`, ensure `isFlatView` is `false` when no category or search is active. This is the root cause.
+*   Update the `CategoryChips` component to always render when `isFlatView` is `false`, which it now will be by default.
+*   The existing `IntersectionObserver` in `MenuGrid` already updates an `activeSection` state variable.
+*   Pass this `activeSection` state to `CategoryChips`.
+*   The `CategoryChips` component should use this prop to apply a highlight style to the matching chip.
+*   Use a `useEffect` hook in `CategoryChips` to trigger the existing `chip.scrollIntoView()` logic whenever `activeSection` changes.
+
+**4. Gotchas:**
+*   Ensure the `IntersectionObserver` threshold is tuned for a smooth "feel".
+*   Verify that clicking a chip still works and correctly overrides the scroll-based highlighting.
+
+## Iteration 2 - Wed, Mar 11, 2026 11:44:06 AM
+Completed: Menu Card Favorite Icon — Scroll-Aware Visibility (ID: US-150) in 3m
+
