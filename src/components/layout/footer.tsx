@@ -18,16 +18,16 @@ export async function Footer() {
                 alt="Makan Moments Cafe logo"
                 width={80}
                 height={80}
-                className="h-20 w-20 object-contain"
+                className="h-10 w-10 object-contain sm:h-20 sm:w-20"
               />
             </div>
             <h3 className="mt-2 text-lg font-bold text-primary">
               {t("cafeName")}
             </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
               {t("tagline")}
             </p>
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className="mt-3 hidden text-xs text-muted-foreground sm:block">
               {CAFE.dietary.join(" · ")}
             </p>
           </div>

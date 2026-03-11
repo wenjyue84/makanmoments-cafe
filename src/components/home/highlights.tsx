@@ -20,10 +20,10 @@ export async function Highlights({ items, highlightsTitle, highlightsSubtitle }:
   const subtitle = highlightsSubtitle || t("highlightsSubtitle");
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-16">
-      <div className="mb-8">
+    <section className="mx-auto max-w-6xl px-4 py-10 sm:py-16">
+      <div className="mb-4 sm:mb-8">
         <h2 className="font-display text-3xl font-bold">{title}</h2>
-        <p className="mt-2 text-muted-foreground">{subtitle}</p>
+        <p className="mt-2 hidden text-muted-foreground sm:block">{subtitle}</p>
       </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {items.slice(0, 6).map((item, index) => (
