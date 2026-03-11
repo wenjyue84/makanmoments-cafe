@@ -66,7 +66,6 @@ interface AdminTabsProps {
 
 const TABS = [
   "Orders",
-  "AI Waiter",
   "Menu",
   "Categories",
   "Rules",
@@ -74,6 +73,7 @@ const TABS = [
   "Tests",
   "Settings",
   "KDS",
+  "AI Waiter",
 ] as const;
 type Tab = (typeof TABS)[number];
 
@@ -129,6 +129,11 @@ export function AdminTabs({ items, categories, displayCategories, posts }: Admin
   const handleTabClick = (tab: Tab) => {
     if (tab === "KDS") {
       window.open(KDS_URL, "_blank");
+      setSidebarOpen(false);
+      return;
+    }
+    if (tab === "AI Waiter") {
+      window.open("/admin/ai-waiter-hub", "_blank");
       setSidebarOpen(false);
       return;
     }

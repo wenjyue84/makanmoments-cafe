@@ -19,9 +19,10 @@ export interface HomeContent {
 interface HomeInlineEditorProps {
   content: HomeContent;
   featuredItems: MenuItem[];
+  signatureDish?: MenuItem | null;
 }
 
-export function HomeInlineEditor({ content, featuredItems }: HomeInlineEditorProps) {
+export function HomeInlineEditor({ content, featuredItems, signatureDish }: HomeInlineEditorProps) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [fields, setFields] = useState<HomeContent>(content);
@@ -114,17 +115,16 @@ export function HomeInlineEditor({ content, featuredItems }: HomeInlineEditorPro
             {/* Mobile hero image — FIRST so food is above the fold on mobile */}
             <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl shadow-2xl lg:hidden animate-fade-in">
               <Image
-                src="/images/hero/hero-mobile.webp"
-                alt="RM55.90 Steamed Fish Promo Set — premium Thai-style steamed fish at Makan Moments Cafe"
+                src={signatureDish ? `/images/menu/${signatureDish.code}.jpg` : "/images/hero/hero-mobile.webp"}
+                alt={signatureDish ? `${signatureDish.nameEn} — Signature dish` : "RM55.90 Steamed Fish Promo Set"}
                 fill
                 className="object-cover img-scale"
                 sizes="100vw"
                 priority
-                placeholder="blur"
-                blurDataURL={HERO_BLUR.heroMobile}
+                {...(!signatureDish && { placeholder: "blur" as const, blurDataURL: HERO_BLUR.heroMobile })}
               />
               <div className="absolute bottom-3 left-3 rounded-full bg-background/80 px-3 py-1 text-xs font-medium backdrop-blur-sm">
-                RM55.90 Steamed Fish Promo
+                {signatureDish ? `${signatureDish.nameEn} — RM${signatureDish.price.toFixed(2)}` : "RM55.90 Steamed Fish Promo"}
               </div>
             </div>
 
@@ -195,18 +195,17 @@ export function HomeInlineEditor({ content, featuredItems }: HomeInlineEditorPro
                 style={{ "--delay": "0ms" } as CSSProperties}
               >
                 <Image
-                  src="/images/hero/hero-mobile.webp"
-                  alt="RM55.90 Steamed Fish Promo Set — premium Thai-style steamed fish at Makan Moments Cafe"
+                  src={signatureDish ? `/images/menu/${signatureDish.code}.jpg` : "/images/hero/hero-mobile.webp"}
+                  alt={signatureDish ? `${signatureDish.nameEn} — Signature dish` : "RM55.90 Steamed Fish Promo Set"}
                   fill
                   className="object-cover img-scale"
                   sizes="(max-width: 1024px) 50vw, 800px"
                   priority
-                  placeholder="blur"
-                  blurDataURL={HERO_BLUR.heroMobile}
+                  {...(!signatureDish && { placeholder: "blur" as const, blurDataURL: HERO_BLUR.heroMobile })}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/5 to-transparent" />
                 <div className="absolute bottom-4 left-4 rounded-full bg-background/90 px-4 py-1.5 text-sm font-semibold text-foreground backdrop-blur-md shadow-sm">
-                  RM55.90 Steamed Fish Promo
+                  {signatureDish ? `${signatureDish.nameEn} — RM${signatureDish.price.toFixed(2)}` : "RM55.90 Steamed Fish Promo"}
                 </div>
               </div>
             </div>
